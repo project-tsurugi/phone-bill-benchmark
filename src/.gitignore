@@ -1,0 +1,9 @@
+/bin
+/build
+/.classpath
+/.factorypath
+/.project
+/.settings
+/.gradle
+/logs
+/log.dir_IS_UNDEFINED
