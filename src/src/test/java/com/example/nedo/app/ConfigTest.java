@@ -14,6 +14,7 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
+import com.example.nedo.app.Config.DistributionFunction;
 import com.example.nedo.app.Config.TransactionScope;
 import com.example.nedo.db.DBUtils;
 
@@ -115,6 +116,16 @@ class ConfigTest {
 
 		/* 通話履歴生成に関するパラメータ */
 		assertEquals(1000, config.numberOfHistoryRecords);
+		assertEquals(DistributionFunction.UNIFORM, config.callerPhoneNumberDistribution);
+		assertEquals(DistributionFunction.UNIFORM, config.recipientPhoneNumberDistribution);
+		assertEquals(DistributionFunction.UNIFORM, config.callTimeDistribution);
+		assertEquals(0d, config.callerPhoneNumberScale);
+		assertEquals(0d, config.recipientPhoneNumberScale);
+		assertEquals(4.5d, config.callTimeScale);
+		assertEquals(0d, config.callerPhoneNumberShape);
+		assertEquals(0d, config.recipientPhoneNumberShape);
+		assertEquals(1.5d, config.callTimeShape);
+		assertEquals(3600, config.maxCallTimeSecs);
 
 		/* JDBCに関するパラメータ*/
 		assertEquals("jdbc:postgresql://127.0.0.1/phonebill", config.url);
@@ -164,6 +175,16 @@ class ConfigTest {
 
 		/* 通話履歴生成に関するパラメータ */
 		assertEquals((int) 1e7, config.numberOfHistoryRecords);
+		assertEquals(DistributionFunction.LOGNORMAL, config.callerPhoneNumberDistribution);
+		assertEquals(DistributionFunction.LOGNORMAL, config.recipientPhoneNumberDistribution);
+		assertEquals(DistributionFunction.LOGNORMAL, config.callTimeDistribution);
+		assertEquals(5d, config.callerPhoneNumberScale);
+		assertEquals(1.25d, config.recipientPhoneNumberScale);
+		assertEquals(7.5d, config.callTimeScale);
+		assertEquals(6d, config.callerPhoneNumberShape);
+		assertEquals(2.5d, config.recipientPhoneNumberShape);
+		assertEquals(8.5d, config.callTimeShape);
+		assertEquals(1192, config.maxCallTimeSecs);
 
 		/* その他のパラメータ */
 		assertEquals(1969, config.randomSeed);

@@ -19,10 +19,6 @@ import com.example.nedo.db.DBUtils;
 import com.example.nedo.db.Duration;
 import com.example.nedo.db.History;
 
-/**
- * @author umega
- *
- */
 public class TestDataGenerator {
 	private Config config;
 
