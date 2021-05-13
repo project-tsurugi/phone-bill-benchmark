@@ -19,8 +19,6 @@ import com.example.nedo.app.Config;
 import com.example.nedo.db.Contract;
 
 public class MasterUpdateApp extends AbstractOnlineApp {
-	// TODO 更新した結果、マスタが矛盾した状態になる可能性があるので、矛盾が起きないように修正する。
-
     private static final Logger LOG = LoggerFactory.getLogger(MasterUpdateApp.class);
 
 	private static final long DAY_IN_MILLS = 24 * 3600 * 1000;
@@ -58,7 +56,7 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 			Contract contract = orgContract.clone();
 			Updater updater = updaters[random.nextInt(updaters.length)];
 			updater.update(contract);
-			// 契約期間の重複がなければDBを更新する
+			// 契約期間の重複がなければOK
 			if (!commonDuration(contract, set)) {
 				return contract;
 			}

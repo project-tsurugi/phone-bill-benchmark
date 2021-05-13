@@ -76,8 +76,7 @@ public class CalculationTask implements Callable<Exception> {
 					LOG.debug("Calculation task finished normally.");
 					return null;
 				}
-				// TODO リトライ可能なException発生時にリトライするコードを入れる => リトライ回数を指定可能にする
-				// TODO トランザクションスコープがwholeの場合、このコードではNG
+				// リトライ回数を指定可能にする
 				for(;;) {
 					try {
 						doCalc(target);
