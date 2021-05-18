@@ -18,13 +18,13 @@
 ソースコードをgithubから取得
 
 ```
-git clone -b phone-bill git@github.com:project-tsurugi/cost-batch-benchmark.git
+git clone git@github.com:project-tsurugi/phone-bill-benchmark.git
 ```
 
 ビルド
 
 ```
-cost-batch-benchmark/phone-bill/java/
+cd src
 ./gradlew clean distTar
 ```
 ビルドに成功すると、インストール用のアーカイブ`build/distributions/phone-bill.tar`が生成される。
