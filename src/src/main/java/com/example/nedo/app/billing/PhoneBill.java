@@ -85,16 +85,16 @@ public class PhoneBill implements ExecutableCommand {
 		Random random = new Random(config.randomSeed);
 		List<AbstractOnlineApp> list = new ArrayList<AbstractOnlineApp>();
 		if (config.historyInsertTransactionPerMin > 0) {
-			list.add(new HistoryInsertApp(config, new Random(random.nextLong())));
+			list.add(new HistoryInsertApp(config, random.nextInt()));
 		}
 		if (config.historyUpdateRecordsPerMin > 0) {
-			list.add(new HistoryUpdateApp(getContractKeyHolder(), config, new Random(random.nextLong())));
+			list.add(new HistoryUpdateApp(getContractKeyHolder(), config, random.nextInt()));
 		}
 		if (config.masterInsertReccrdsPerMin > 0) {
-			list.add(new MasterInsertApp(getContractKeyHolder(), config, new Random(random.nextLong())));
+			list.add(new MasterInsertApp(getContractKeyHolder(), config, random.nextInt()));
 		}
 		if (config.masterUpdateRecordsPerMin > 0) {
-			list.add(new MasterUpdateApp(getContractKeyHolder(), config, new Random(random.nextLong())));
+			list.add(new MasterUpdateApp(getContractKeyHolder(), config, random.nextInt()));
 		}
 		return list;
 	}

@@ -198,7 +198,7 @@ public class Config implements Cloneable {
 	/**
 	 * 乱数のシード
 	 */
-	public long randomSeed;
+	public int randomSeed;
 	private static final String RANDOM_SEED = "random.seed";
 
 	/**
@@ -272,7 +272,7 @@ public class Config implements Cloneable {
 		historyInsertRecordsPerTransaction = getInt(HISTORY_INSERT_RECORDS_PER_TRANSACTION, 1);
 
 		// その他のパラメータ
-		randomSeed = getLong(RANDOM_SEED, 0);
+		randomSeed = getInt(RANDOM_SEED, 0);
 		transactionScope = getTransactionScope(TRANSACTION_SCOPE, TransactionScope.WHOLE);
 
 		// パラメータ間の矛盾のチェック
@@ -378,21 +378,6 @@ public class Config implements Cloneable {
 		return value;
 	}
 
-	/**
-	 * long型のプロパティの値を取得する
-	 *
-	 * @param key プロパティ名
-	 * @param defaultValue プロパティが存在しない時のデフォルト値
-	 * @return
-	 */
-	private long getLong(String key, long defaultValue) {
-		long value = defaultValue;
-		if (prop.containsKey(key)) {
-			String s = prop.getProperty(key);
-			value = Long.parseLong(s);
-		}
-		return value;
-	}
 
 	/**
 	 * double型のプロパティの値を取得する

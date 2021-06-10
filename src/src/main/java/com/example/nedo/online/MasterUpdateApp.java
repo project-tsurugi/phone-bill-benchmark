@@ -30,10 +30,10 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 	private Contract updatingContract;
 
 
-	public MasterUpdateApp(ContractKeyHolder contractKeyHolder, Config config, Random random) throws SQLException {
-		super(config.masterUpdateRecordsPerMin, config, random);
+	public MasterUpdateApp(ContractKeyHolder contractKeyHolder, Config config, int seed) throws SQLException {
+		super(config.masterUpdateRecordsPerMin, config);
 		this.config = config;
-		this.random = random;
+		this.random = new Random(seed);
 		this.contractKeyHolder = contractKeyHolder;
 	}
 

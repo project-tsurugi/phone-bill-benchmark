@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Random;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
@@ -35,9 +34,8 @@ class HistoryUpdateAppTest extends AbstractDbTestCase {
 		new CreateTestData().execute(config);
 
 		// アプリケーションの初期化
-		Random random = new Random(0);
 		ContractKeyHolder contractKeyHolder = new ContractKeyHolder(config);
-		app = new HistoryUpdateApp(contractKeyHolder, config, random);
+		app = new HistoryUpdateApp(contractKeyHolder, config, 0);
 	}
 
 	@AfterEach
@@ -191,8 +189,7 @@ class HistoryUpdateAppTest extends AbstractDbTestCase {
 	@Test
 	void testUpdater1() throws SQLException, IOException {
 		Config config = Config.getConfig();
-		Random random = new Random();
-		Updater updater = new HistoryUpdateApp(null, config, random).new Updater1();
+		Updater updater = new HistoryUpdateApp(null, config, 0).new Updater1();
 
 		History history = toHistory("00000000391", "00000000105", "R", "2020-11-02 06:25:57.430", 1688, null, false);
 		History expected = history.clone();
@@ -216,8 +213,7 @@ class HistoryUpdateAppTest extends AbstractDbTestCase {
 	@Test
 	void testUpdater2() throws SQLException, IOException {
 		Config config = Config.getConfig();
-		Random random = new Random(0);
-		Updater updater = new HistoryUpdateApp(null, config, random).new Updater2();
+		Updater updater = new HistoryUpdateApp(null, config, 0).new Updater2();
 
 		History history = toHistory("00000000391", "00000000105", "R", "2020-11-02 06:25:57.430", 1688, null, false);
 		History expected = history.clone();

@@ -12,6 +12,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -19,6 +20,7 @@ import org.junit.jupiter.api.Test;
 
 import com.example.nedo.AbstractDbTestCase;
 import com.example.nedo.app.Config;
+import com.example.nedo.app.Config.DistributionFunction;
 import com.example.nedo.app.CreateTable;
 import com.example.nedo.db.DBUtils;
 import com.example.nedo.db.Duration;
@@ -409,5 +411,32 @@ class TestDataGeneratorTest extends AbstractDbTestCase {
 			actual.add(generator.getDate(start, end));
 		}
 		assertEquals(expected, actual);
+	}
+
+	/**
+	 * createCallTimeGenerator()のテスト
+	 * @throws IOException
+	 */
+	@Test
+	void testCreateCallTimeGenerator() throws IOException {
+		Config config = Config.getConfig();
+		CallTimeGenerator callTimeGenerator;
+
+		// UniformCallTimeGeneratorが生成されるケース
+		Random random = new Random();
+		int maxCallTimeSecs = 100;
+
+		config.callTimeDistribution = DistributionFunction.UNIFORM;
+		config.maxCallTimeSecs = maxCallTimeSecs;
+
+		callTimeGenerator= TestDataGenerator.createCallTimeGenerator(random, config);
+		assertEquals(UniformCallTimeGenerator.class, callTimeGenerator.getClass());
+		assertEquals(random, ((UniformCallTimeGenerator)callTimeGenerator).random);
+		assertEquals(maxCallTimeSecs, ((UniformCallTimeGenerator)callTimeGenerator).maxCallTimeSecs);
+
+		// LogNormalCallTimeGeneratorが生成されるケース
+		config.callTimeDistribution = DistributionFunction.LOGNORMAL;
+		callTimeGenerator = TestDataGenerator.createCallTimeGenerator(random, config);
+		assertEquals(LogNormalCallTimeGenerator.class, callTimeGenerator.getClass());
 	}
 }

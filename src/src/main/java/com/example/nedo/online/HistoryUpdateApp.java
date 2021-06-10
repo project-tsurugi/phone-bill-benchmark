@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import com.example.nedo.app.Config;
 import com.example.nedo.db.History;
 import com.example.nedo.online.ContractKeyHolder.Key;
+import com.example.nedo.testdata.CallTimeGenerator;
 import com.example.nedo.testdata.TestDataGenerator;
 
 public class HistoryUpdateApp extends AbstractOnlineApp {
@@ -23,13 +24,15 @@ public class HistoryUpdateApp extends AbstractOnlineApp {
 
 	private ContractKeyHolder contractKeyHolder;
 	private Random random;
+	private CallTimeGenerator callTimeGenerator;
 	private Updater[] updaters = {new Updater1(), new Updater2()};
 	private History history;
 
 
-	public HistoryUpdateApp(ContractKeyHolder contractKeyHolder, Config config, Random random) throws SQLException {
-		super(config.historyUpdateRecordsPerMin, config, random);
-		this.random = random;
+	public HistoryUpdateApp(ContractKeyHolder contractKeyHolder, Config config, int seed) throws SQLException {
+		super(config.historyUpdateRecordsPerMin, config);
+		this.random = new Random(seed);
+		this.callTimeGenerator = TestDataGenerator.createCallTimeGenerator(random, config);
 		this.contractKeyHolder = contractKeyHolder;
 	}
 
@@ -157,7 +160,7 @@ public class HistoryUpdateApp extends AbstractOnlineApp {
 	class Updater2 implements Updater {
 		@Override
 		public void update(History history) {
-			history.timeSecs = TestDataGenerator.getTimeSecs(random);
+			history.timeSecs = callTimeGenerator.getTimeSecs();
 			history.charge = null;
 		}
 	}

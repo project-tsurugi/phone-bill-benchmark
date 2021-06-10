@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.Random;
 
 import org.junit.jupiter.api.Test;
 
@@ -19,8 +18,7 @@ class HistoryInsertAppTest extends AbstractDbTestCase {
 
 		Config config = Config.getConfig();
 		config.historyInsertRecordsPerTransaction = 33;
-		Random random = new Random();
-		HistoryInsertApp app = new HistoryInsertApp(config, random);
+		HistoryInsertApp app = new HistoryInsertApp(config, 0);
 
 		int expected = 0;
 		for (int i = 0; i < 10; i++) {
