@@ -31,6 +31,16 @@ compileTestJava {
     options.encoding = 'UTF-8'
 }
 
+test {
+    useJUnitPlatform()
+
+    testLogging {
+        showStandardStreams true
+        events 'started', 'skipped', 'passed', 'failed'
+        exceptionFormat 'full'
+    }
+}
+
 repositories {
   mavenCentral()
 }
@@ -44,8 +54,8 @@ dependencies {
   // https://mvnrepository.com/artifact/com.oracle.ojdbc/orai18n
   runtimeOnly group: 'com.oracle.ojdbc', name: 'orai18n', version: '19.3.0.0'
 
-  testCompileOnly("org.junit.jupiter:junit-jupiter-api:5.7.0")
-  testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.7.0")
+  testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.2")
+  testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.7.2")
   testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.0.0") // for IDE
 
   implementation "commons-cli:commons-cli:1.4"
