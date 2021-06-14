@@ -208,6 +208,11 @@ public class Config implements Cloneable {
 	private static final String TRANSACTION_SCOPE = "transaction.scope";
 
 	/**
+	 * システムプロパティ経由で設定する場合のプロパティキープレフィックス
+	 */
+	private static final String SYSPROP_PREFIX = "phone-bill.";
+
+	/**
 	 * コンストラクタ
 	 *
 	 * @param configFileName
@@ -218,6 +223,9 @@ public class Config implements Cloneable {
 		if (configFileName != null) {
 			prop.load(Files.newBufferedReader(Paths.get(configFileName), StandardCharsets.UTF_8));
 		}
+		System.getProperties().stringPropertyNames().stream()
+			.filter(k -> k.startsWith(SYSPROP_PREFIX))
+			.forEach(k -> prop.put(k.substring(SYSPROP_PREFIX.length()), System.getProperty(k)));
 		init();
 
 		Logger logger = LoggerFactory.getLogger(Config.class);
