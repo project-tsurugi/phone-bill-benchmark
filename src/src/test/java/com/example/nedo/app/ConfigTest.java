@@ -213,8 +213,8 @@ class ConfigTest {
 	 * @param string
 	 */
 	private void assertEqualsIgnoreLineSeparator(String expected, String actual) {
-		String e = expected.replaceAll("[\r\n]+$", System.lineSeparator());
-		String a = actual.replaceAll("[\r\n]+$", System.lineSeparator());
+		String e = expected.replaceAll("[\r\n]+", System.lineSeparator());
+		String a = actual.replaceAll("[\r\n]+", System.lineSeparator());
 		assertEquals(e, a);
 	}
 
