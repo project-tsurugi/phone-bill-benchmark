@@ -19,10 +19,6 @@ import com.example.nedo.db.DBUtils;
 import com.example.nedo.db.Duration;
 import com.example.nedo.db.History;
 
-/**
- * @author umega
- *
- */
 public class TestDataGenerator {
 	private Config config;
 
@@ -57,7 +53,17 @@ public class TestDataGenerator {
 	 */
 	private List<Duration> durationList = new ArrayList<>();
 
+
+	/**
+	 * 乱数生成器
+	 */
 	private Random random;
+
+	/**
+	 * 通話時間生成器
+	 */
+	private CallTimeGenerator callTimeGenerator;
+
 
 	/**
 	 * テストデータ生成のためのパラメータを指定してContractsGeneratorのインスタンスを生成する.
@@ -65,26 +71,45 @@ public class TestDataGenerator {
 	 * @param config
 	 */
 	public TestDataGenerator(Config config) {
-		this(config, new Random(config.randomSeed));
+		this(config, config.randomSeed);
 	}
 
 	/**
-	 * 使用する乱数発生器を指定可能なコンストラクタ
+	 * 乱数のシードを指定可能なコンストラクタ
 	 *
 	 * @param config
 	 * @param random
 	 */
-	public TestDataGenerator(Config config, Random random) {
+	public TestDataGenerator(Config config, int seed) {
 		this.config = config;
 		if (config.minDate.getTime() >= config.maxDate.getTime()) {
 			new RuntimeException("maxDate is less than or equal to minDate, minDate =" + config.minDate + ", maxDate = "
 					+ config.maxDate);
 		}
-		this.random = random;
+		this.random = new Random(seed);
+		this.callTimeGenerator = createCallTimeGenerator(random, config);
 		this.startTimeSet = new HashSet<Long>(config.numberOfHistoryRecords);
 		initDurationList();
 	}
 
+
+	/**
+	 * 通話時間生成器を作成する
+	 *
+	 * @param random 特定の通話時間生成器が使用する乱数生成器
+	 * @param config
+	 * @return
+	 */
+	public static CallTimeGenerator createCallTimeGenerator(Random random, Config config) {
+		switch (config.callTimeDistribution) {
+		case LOGNORMAL:
+			return new LogNormalCallTimeGenerator(config);
+		case UNIFORM:
+			return new UniformCallTimeGenerator(random, config.maxCallTimeSecs);
+		default:
+			throw new AssertionError(config.callTimeDistribution.name());
+		}
+	}
 
 
 	/**
@@ -284,25 +309,10 @@ public class TestDataGenerator {
 		history.paymentCategorty = random.nextInt(2) == 0 ? "C" : "R";
 
 		// 通話時間
-		history.timeSecs = getTimeSecs(random);
+		history.timeSecs = callTimeGenerator.getTimeSecs();
 
 		return history;
 	}
-
-
-
-
-	/**
-	 * 指定の乱数発生器を使用して、ランダムな通話時間を生成する
-	 *
-	 * @param random
-	 * @return
-	 */
-	static public int getTimeSecs(Random random) {
-		// TODO 分布関数を指定可能にする
-		return random.nextInt(3600) + 1;
-	}
-
 
 	/**
 	 * 指定の通話開始時刻が契約範囲に含まれる選択する。

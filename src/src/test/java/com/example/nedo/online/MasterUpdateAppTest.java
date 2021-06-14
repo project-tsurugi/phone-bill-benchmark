@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Random;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
@@ -35,7 +34,7 @@ class MasterUpdateAppTest extends AbstractDbTestCase {
 		generator.generateContracts();
 
 		ContractKeyHolder keyHolder = new ContractKeyHolder(config);
-		MasterUpdateApp app = new MasterUpdateApp(keyHolder, config, new Random(0));
+		MasterUpdateApp app = new MasterUpdateApp(keyHolder, config, 0);
 		List<Contract> expected = getContracts();
 
 
@@ -253,7 +252,7 @@ class MasterUpdateAppTest extends AbstractDbTestCase {
 
 	@Test
 	void testUpdater1() throws SQLException, IOException {
-		MasterUpdateApp app = new MasterUpdateApp(null, Config.getConfig(), new Random());
+		MasterUpdateApp app = new MasterUpdateApp(null, Config.getConfig(), 0);
 		Updater updater = app.new Updater1();
 
 		Contract contract = new Contract();
@@ -267,7 +266,7 @@ class MasterUpdateAppTest extends AbstractDbTestCase {
 		Config config = Config.getConfig();
 		config.minDate = DBUtils.toDate("2010-12-15");
 		config.maxDate = DBUtils.toDate("2020-02-15");
-		MasterUpdateApp app = new MasterUpdateApp(null, config, new Random());
+		MasterUpdateApp app = new MasterUpdateApp(null, config, 0);
 		Updater updater = app.new Updater2();
 
 		// ContractのstartDateと、ConfigのmaxDateが等しい場合、Contract.endDateも同じ値になる

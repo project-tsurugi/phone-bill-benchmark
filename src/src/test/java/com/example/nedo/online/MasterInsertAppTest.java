@@ -6,7 +6,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 import org.junit.jupiter.api.Test;
 
@@ -38,9 +37,8 @@ class MasterInsertAppTest extends AbstractDbTestCase {
 
 		// MasterInsertAppで5レコード生成し、Generatorで生成したレコードと一致することを確認
 		truncateTable("contracts");
-		Random random = new Random(config.randomSeed);
 		ContractKeyHolder contractKeyHolder = new ContractKeyHolder(config);
-		MasterInsertApp app = new MasterInsertApp(contractKeyHolder, config, random);
+		MasterInsertApp app = new MasterInsertApp(contractKeyHolder, config, config.randomSeed);
 		app.exec();
 		app.exec();
 		app.exec();

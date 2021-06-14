@@ -3,7 +3,6 @@ package com.example.nedo.online;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.Random;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,9 +21,9 @@ public class MasterInsertApp extends AbstractOnlineApp {
 	private TestDataGenerator testDataGenerator;
 	private ContractKeyHolder contractKeyHolder;
 
-	public MasterInsertApp(ContractKeyHolder contractKeyHolder, Config config, Random random) throws SQLException {
-		super(config.masterInsertReccrdsPerMin, config, random);
-		testDataGenerator = new TestDataGenerator(config, random);
+	public MasterInsertApp(ContractKeyHolder contractKeyHolder, Config config, int seed) throws SQLException {
+		super(config.masterInsertReccrdsPerMin, config);
+		testDataGenerator = new TestDataGenerator(config, seed);
 		this.contractKeyHolder = contractKeyHolder;
 	}
 

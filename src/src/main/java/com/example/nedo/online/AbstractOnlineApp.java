@@ -49,9 +49,9 @@ public abstract class AbstractOnlineApp implements Runnable{
 	private List<Long> scheduleList = new LinkedList<Long>();
 
 
-	public AbstractOnlineApp(int recordsPerMin, Config config, Random random) throws SQLException {
+	public AbstractOnlineApp(int recordsPerMin, Config config) throws SQLException {
 		this.recordsPerMin = recordsPerMin;
-		this.random = random;
+		this.random = new Random(config.randomSeed);
 		conn = DBUtils.getConnection(config);
 	}
 

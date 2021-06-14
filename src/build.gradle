@@ -46,10 +46,12 @@ dependencies {
 
   testCompileOnly("org.junit.jupiter:junit-jupiter-api:5.7.0")
   testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.7.0")
+
   testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.0.0") // for IDE
 
   compile "commons-cli:commons-cli:1.4"
   compile "ch.qos.logback:logback-classic:1.2.3"
+  compile "org.apache.commons:commons-math3:3.6.1"
 }
 
 startScripts {

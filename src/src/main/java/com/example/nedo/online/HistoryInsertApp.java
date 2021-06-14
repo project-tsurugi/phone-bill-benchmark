@@ -32,11 +32,11 @@ public class HistoryInsertApp extends AbstractOnlineApp {
 	 */
 	private Set<Key> startTimeSet;
 
-	public HistoryInsertApp(Config config, Random random) throws SQLException {
-		super(config.historyInsertTransactionPerMin, config, random);
-		this.random = random;
+	public HistoryInsertApp(Config config, int seed) throws SQLException {
+		super(config.historyInsertTransactionPerMin, config);
+		this.random = new Random(seed);
 		historyInsertRecordsPerTransaction = config.historyInsertRecordsPerTransaction;
-		testDataGenerator = new TestDataGenerator(config, random);
+		testDataGenerator = new TestDataGenerator(config, seed);
 		baseTime = getMaxStartTime(); // 通話履歴中の最新の通話開始時刻をベースに新規に作成する通話履歴の通話開始時刻を生成する
 		conn = getConnection();
 		startTimeSet = new HashSet<Key>(); // 同一の時刻のレコードを生成しないために時刻を記録するためのセット

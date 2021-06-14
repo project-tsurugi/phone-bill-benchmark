@@ -68,40 +68,104 @@ public class Config implements Cloneable {
 	/**
 	 * 通話履歴のレコード数
 	 */
-	private static final String NUMBER_OF_HISTORY_RECORDS = "number.of.history.records";
 	public int numberOfHistoryRecords;
+	private static final String NUMBER_OF_HISTORY_RECORDS = "number.of.history.records";
+
+	/**
+	 * 発信電話番号の分布関数
+	 */
+	public DistributionFunction callerPhoneNumberDistribution;
+	private static final String CALLER_PHONE_NUMBER_DISTRIBUTION = "caller.phone.number.distribution";
+
+	/**
+	 * 発信電話番号の分布関数に対数正規分布を指定したときに用いるscaleの値
+	 */
+	public double callerPhoneNumberScale;
+	private static final String CALLER_PHONE_NUMBER_SCALE = "caller.phone.number.scale";
+
+	/**
+	 * 発信電話番号の分布関数に対数正規分布を指定したときに用いるshapeの値
+	 */
+	public double callerPhoneNumberShape;
+	private static final String CALLER_PHONE_NUMBER_SHAPE = "caller.phone.number.shape";
+
+	/**
+	 * 受信電話番号の分布関数
+	 */
+	public DistributionFunction recipientPhoneNumberDistribution;
+	private static final String RECIPIENT_PHONE_NUMBER_DISTRIBUTION = "recipient.phone.number.distribution";
+
+	/**
+	 * 受信電話番号の分布関数に対数正規分布を指定したときに用いるscaleの値
+	 */
+	public double recipientPhoneNumberScale;
+	private static final String RECIPIENT_PHONE_NUMBER_SCALE = "recipient.phone.number.scale";
+
+	/**
+	 * 受信電話番号の分布関数に対数正規分布を指定したときに用いるshapeの値
+	 */
+	public double recipientPhoneNumberShape;
+	private static final String RECIPIENT_PHONE_NUMBER_SHAPE = "recipient.phone.number.shape";
+
+	/**
+	 * 通話時間の分布関数
+	 */
+	public DistributionFunction callTimeDistribution;
+	private static final String CALL_TIME_DISTRIBUTION = "call.time.distribution";
+
+	/**
+	 * 通話時間の分布関数に対数正規分布を指定したときに用いるscaleの値
+	 */
+	public double callTimeScale;
+	private static final String CALL_TIME_SCALE = "call.time.scale";
+
+	/**
+	 * 通話時間の分布関数に対数正規分布を指定したときに用いるshapeの値
+	 */
+	public double callTimeShape;
+	private static final String CALL_TIME_SHAPE = "call.time.shape";
+
+
+	/**
+	 * 通話時間の最大値(秒)
+	 */
+	public int maxCallTimeSecs;
+	private static final String MAX_CALL_TIME_SECS = "max.call.time.secs";
+
 
 	/* オンラインアプリケーションに関するパラメータ */
 
 	/**
 	 * 1分間に更新するマスタレコード数
 	 */
-	private static final String MASTER_UPDATE_RECORDS_PER_MIN = "master.update.records.per.min";
 	public int masterUpdateRecordsPerMin;
+	private static final String MASTER_UPDATE_RECORDS_PER_MIN = "master.update.records.per.min";
 
 	/**
 	 * 1分間に追加するレコード数
 	 */
-	private static final String MASTER_INSERT_RECCRDS_PER_MIN = "master.insert.reccrds.per.min";
 	public int masterInsertReccrdsPerMin;
+	private static final String MASTER_INSERT_RECCRDS_PER_MIN = "master.insert.reccrds.per.min";
 
 	/**
 	 * 1分間に追加する通話履歴レコード数
 	 */
-	private static final String HISTORY_UPDATE_RECORDS_PER_MIN = "history.update.records.per.min";
 	public int historyUpdateRecordsPerMin;
+	private static final String HISTORY_UPDATE_RECORDS_PER_MIN = "history.update.records.per.min";
 
 	/**
 	 * 1分間に発生する通話履歴インサートのトランザクション数
 	 */
-	private static final String HISTORY_INSERT_TRANSACTION_PER_MIN = "history.insert.transaction.per.min";
 	public int historyInsertTransactionPerMin;
+	private static final String HISTORY_INSERT_TRANSACTION_PER_MIN = "history.insert.transaction.per.min";
 
 	/**
 	 * 一回の通話履歴インサートのトランザックションで、インサートするレコード数
 	 */
-	private static final String HISTORY_INSERT_RECORDS_PER_TRANSACTION = "history.insert.records.per.transaction";
 	public int historyInsertRecordsPerTransaction;
+	private static final String HISTORY_INSERT_RECORDS_PER_TRANSACTION = "history.insert.records.per.transaction";
+
+
 
 	/* jdbcのパラメータ */
 	public String url;
@@ -111,7 +175,6 @@ public class Config implements Cloneable {
 	private static final String URL = "url";
 	private static final String USER = "user";
 	private static final String PASSWORD = "password";
-	private static final String THREAD_COUNT = "thread.count";
 	private static final String ISOLATION_LEVEL = "isolation.level";
 	private static final String STR_SERIALIZABLE = "SERIALIZABLE";
 	private static final String STR_READ_COMMITTED = "READ_COMMITTED";
@@ -122,6 +185,7 @@ public class Config implements Cloneable {
 	 * 料金計算スレッドのスレッド数
 	 */
 	public int threadCount;
+	private static final String THREAD_COUNT = "thread.count";
 
 	/**
 	 * 料金計算のスレッドが、メインスレッドとJDBC Connectionを共有することを示すフラグ
@@ -134,7 +198,7 @@ public class Config implements Cloneable {
 	/**
 	 * 乱数のシード
 	 */
-	public long randomSeed;
+	public int randomSeed;
 	private static final String RANDOM_SEED = "random.seed";
 
 	/**
@@ -178,6 +242,16 @@ public class Config implements Cloneable {
 
 		// 通話履歴生成に関するパラメータ
 		numberOfHistoryRecords = getInt(NUMBER_OF_HISTORY_RECORDS, 1000);
+		callerPhoneNumberDistribution = getDistributionFunction(CALLER_PHONE_NUMBER_DISTRIBUTION, DistributionFunction.UNIFORM);
+		callerPhoneNumberScale = getDouble(CALLER_PHONE_NUMBER_SCALE, 0);
+		callerPhoneNumberShape = getDouble(CALLER_PHONE_NUMBER_SHAPE, 0);
+		recipientPhoneNumberDistribution = getDistributionFunction(RECIPIENT_PHONE_NUMBER_DISTRIBUTION, DistributionFunction.UNIFORM);
+		recipientPhoneNumberScale = getDouble(RECIPIENT_PHONE_NUMBER_SCALE, 0d);
+		recipientPhoneNumberShape = getDouble(RECIPIENT_PHONE_NUMBER_SHAPE, 0d);
+		callTimeDistribution = getDistributionFunction(CALL_TIME_DISTRIBUTION, DistributionFunction.UNIFORM);
+		callTimeScale = getDouble(CALL_TIME_SCALE, 4.5d);
+		callTimeShape = getDouble(CALL_TIME_SHAPE, 1.5d);
+		maxCallTimeSecs = getInt(MAX_CALL_TIME_SECS, 3600);
 
 		// JDBCに関するパラメータ
 		url = getString(URL, "jdbc:postgresql://127.0.0.1/phonebill");
@@ -198,8 +272,8 @@ public class Config implements Cloneable {
 		historyInsertRecordsPerTransaction = getInt(HISTORY_INSERT_RECORDS_PER_TRANSACTION, 1);
 
 		// その他のパラメータ
-		randomSeed = getLong(RANDOM_SEED, 0);
-		transactionScope = gettransactionScope(TRANSACTION_SCOPE, TransactionScope.WHOLE);
+		randomSeed = getInt(RANDOM_SEED, 0);
+		transactionScope = getTransactionScope(TRANSACTION_SCOPE, TransactionScope.WHOLE);
 
 		// パラメータ間の矛盾のチェック
 		if (transactionScope == TransactionScope.CONTRACT && sharedConnection) {
@@ -212,11 +286,11 @@ public class Config implements Cloneable {
 	/**
 	 * トランザックションスコープを取得する
 	 *
-	 * @param transactionScope
-	 * @param whole
+	 * @param key プロパティ名
+	 * @param defaultValue プロパティが存在しない時のデフォルト値
 	 * @return
 	 */
-	private TransactionScope gettransactionScope(String key, TransactionScope defaultValue) {
+	private TransactionScope getTransactionScope(String key, TransactionScope defaultValue) {
 		if (!prop.containsKey(key)) {
 			return defaultValue;
 		}
@@ -230,6 +304,29 @@ public class Config implements Cloneable {
 					+ TransactionScope.CONTRACT + "' or '" + TransactionScope.WHOLE + "' are supported.");
 		}
 	}
+
+	/**
+	 * 分布関数を取得する
+	 *
+	 * @param key プロパティ名
+	 * @param defaultValue プロパティが存在しない時のデフォルト値
+	 * @return
+	 */
+	private DistributionFunction getDistributionFunction(String key, DistributionFunction defaultValue) {
+		if (!prop.containsKey(key)) {
+			return defaultValue;
+		}
+		if (prop.getProperty(key).equalsIgnoreCase(DistributionFunction.UNIFORM.toString())) {
+			return DistributionFunction.UNIFORM;
+		} else if (prop.getProperty(key).equalsIgnoreCase(DistributionFunction.LOGNORMAL.toString())) {
+			return DistributionFunction.LOGNORMAL;
+		} else {
+			throw new RuntimeException("Unknown distribution function type: " + prop.getProperty(key) + ", only '"
+					+ DistributionFunction.UNIFORM + "' or '" + DistributionFunction.LOGNORMAL
+					+ "' are supported.");
+		}
+	}
+
 
 	/**
 	 * Transaction Isolation Levelを取得する
@@ -281,20 +378,20 @@ public class Config implements Cloneable {
 		return value;
 	}
 
+
 	/**
-	 * long型のプロパティの値を取得する
+	 * double型のプロパティの値を取得する
 	 *
 	 * @param key プロパティ名
 	 * @param defaultValue プロパティが存在しない時のデフォルト値
 	 * @return
 	 */
-	private long getLong(String key, long defaultValue) {
-		long value = defaultValue;
+	private double getDouble(String key, double defaultValue) {
 		if (prop.containsKey(key)) {
-			String s = prop.getProperty(key);
-			value = Long.parseLong(s);
+			String value = prop.getProperty(key);
+			return Double.parseDouble(value);
 		}
-		return value;
+		return defaultValue;
 	}
 
 	/**
@@ -410,6 +507,16 @@ public class Config implements Cloneable {
 		sb.append(System.lineSeparator());
 		sb.append(String.format(commentFormat, "通話履歴生成に関するパラメータ"));
 		sb.append(String.format(format, NUMBER_OF_HISTORY_RECORDS, numberOfHistoryRecords));
+		sb.append(String.format(format, RECIPIENT_PHONE_NUMBER_DISTRIBUTION, recipientPhoneNumberDistribution));
+		sb.append(String.format(format, RECIPIENT_PHONE_NUMBER_SCALE, recipientPhoneNumberScale));
+		sb.append(String.format(format, RECIPIENT_PHONE_NUMBER_SHAPE, recipientPhoneNumberShape));
+		sb.append(String.format(format, CALLER_PHONE_NUMBER_DISTRIBUTION, callerPhoneNumberDistribution));
+		sb.append(String.format(format, CALLER_PHONE_NUMBER_SCALE, callerPhoneNumberScale));
+		sb.append(String.format(format, CALLER_PHONE_NUMBER_SHAPE, callerPhoneNumberShape));
+		sb.append(String.format(format, CALL_TIME_DISTRIBUTION, callTimeDistribution));
+		sb.append(String.format(format, CALL_TIME_SCALE, callTimeScale));
+		sb.append(String.format(format, CALL_TIME_SHAPE, callTimeShape));
+		sb.append(String.format(format, MAX_CALL_TIME_SECS, maxCallTimeSecs));
 		sb.append(System.lineSeparator());
 		sb.append(String.format(commentFormat, "JDBCに関するパラメータ"));
 		sb.append(String.format(format, URL, url));
@@ -434,9 +541,37 @@ public class Config implements Cloneable {
 		return sb.toString();
 	}
 
+	/**
+	 * トランザクションスコープ
+	 *
+	 */
 	public static enum TransactionScope {
-		WHOLE, CONTRACT
+		/**
+		 * バッチ全体をトランザクションとする
+		 */
+		WHOLE,
+
+		/**
+		 * 1契約の処理を1トランザクションとする
+		 */
+		CONTRACT
 	}
+
+	/**
+	 * テストデータ生成時に使用する分布関数
+	 *
+	 */
+	public static enum DistributionFunction {
+		/**
+		 * 一様分布
+		 */
+		UNIFORM,
+		/**
+		 * 対数正規分布
+		 */
+		LOGNORMAL
+	}
+
 
 	@Override
 	public Config clone()  {
