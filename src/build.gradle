@@ -37,9 +37,9 @@ repositories {
 
 dependencies {
   // https://mvnrepository.com/artifact/org.postgresql/postgresql
-  compile group: 'org.postgresql', name: 'postgresql', version: '42.2.16'
+  implementation group: 'org.postgresql', name: 'postgresql', version: '42.2.16'
   // https://mvnrepository.com/artifact/com.oracle.ojdbc/ojdbc8
-  compile group: 'com.oracle.ojdbc', name: 'ojdbc8', version: '19.3.0.0'
+  implementation group: 'com.oracle.ojdbc', name: 'ojdbc8', version: '19.3.0.0'
 
   // https://mvnrepository.com/artifact/com.oracle.ojdbc/orai18n
   runtimeOnly group: 'com.oracle.ojdbc', name: 'orai18n', version: '19.3.0.0'
@@ -48,8 +48,8 @@ dependencies {
   testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.7.0")
   testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.0.0") // for IDE
 
-  compile "commons-cli:commons-cli:1.4"
-  compile "ch.qos.logback:logback-classic:1.2.3"
+  implementation "commons-cli:commons-cli:1.4"
+  implementation "ch.qos.logback:logback-classic:1.2.3"
 }
 
 startScripts {
