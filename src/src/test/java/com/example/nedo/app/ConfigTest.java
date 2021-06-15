@@ -238,4 +238,30 @@ class ConfigTest {
 		RuntimeException e = assertThrows(RuntimeException.class, () -> Config.toBoolan("badValue"));
 		assertEquals("Illegal property value: badValue", e.getMessage());
 	}
+
+	/**
+	 * システムプロパティによる設定変更のテスト
+	 */
+	@Test
+	void testSystemProperty() throws IOException {
+		int changedRecords = 999;
+		String changedUrl = "jdbc:postgresql://test/testdb";
+
+		System.setProperty("phone-bill.number.of.contracts.records", String.valueOf(changedRecords));
+		System.setProperty("phone-bill.url", changedUrl);
+
+		Config config = Config.getConfig(new String[] {DEFALUT_CONFIG_PATH} );
+		assertEquals(changedRecords, config.numberOfContractsRecords);
+		assertEquals(changedUrl, config.url);
+
+		System.clearProperty("phone-bill.number.of.contracts.records");
+		System.clearProperty("phone-bill.url");
+
+		Config defaultConfig = Config.getConfig(new String[] {DEFALUT_CONFIG_PATH} );
+		config.numberOfContractsRecords = defaultConfig.numberOfContractsRecords;
+		config.url = defaultConfig.url;
+
+		checkDefault(config);
+	}
+
 }
