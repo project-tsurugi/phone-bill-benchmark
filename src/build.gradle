@@ -39,6 +39,10 @@ test {
         events 'started', 'skipped', 'passed', 'failed'
         exceptionFormat 'full'
     }
+
+    if (project.hasProperty("phone-bill.url")) {
+        systemProperty "phone-bill.url", project.getProperty("phone-bill.url")
+    }
 }
 
 repositories {
