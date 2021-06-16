@@ -1,0 +1,21 @@
+package com.example.nedo.testdata;
+
+import java.util.Random;
+
+/**
+ * テストデータ生成に使用するUtilクラス
+ *
+ */
+public class TestDataUtils {
+	/**
+	 * 指定の乱数生成器を使用してmin以上max未満のランダムなlong値を取得する
+	 *
+	 * @param min
+	 * @param max
+	 * @return
+	 */
+	public static long getRandomLong(Random random, long min, long max) {
+		return min + (long) (random.nextDouble() * (max - min));
+	}
+
+}

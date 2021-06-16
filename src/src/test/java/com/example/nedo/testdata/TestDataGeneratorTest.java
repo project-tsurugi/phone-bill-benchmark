@@ -25,71 +25,7 @@ import com.example.nedo.app.CreateTable;
 import com.example.nedo.db.DBUtils;
 import com.example.nedo.db.Duration;
 
-/**
- * @author umega
- *
- */
 class TestDataGeneratorTest extends AbstractDbTestCase {
-
-	/**
-	 * selectContract()のテスト
-	 * @throws IOException
-	 */
-	@Test
-	void testSelectContract() throws IOException {
-		Config config = Config.getConfig();
-		config.expirationDateRate =4;
-		config.noExpirationDateRate = 0;
-		config.duplicatePhoneNumberRatio = 0;
-		config.minDate = DBUtils.toDate("2010-01-11");
-		config.maxDate = DBUtils.toDate("2020-12-21");
-		TestDataGenerator generator = new TestDataGenerator(config);
-
-		// 契約期間をテスト用の値に書き換える
-		List<Duration> list = generator.getDurationList();
-		assertEquals(4, list.size()); // 要素数が想定通りか確認
-		list.get(0).start = config.minDate;
-		list.get(1).start = config.minDate;
-		list.get(2).start = config.minDate;
-		list.get(3).start = config.minDate;
-		list.get(0).end = DBUtils.toDate("2010-02-11");
-		list.get(1).end = DBUtils.toDate("2010-03-11");
-		list.get(2).end = null;
-		list.get(3).end = DBUtils.toDate("2010-04-11");
-
-
-		for(Duration d: list) {
-			System.out.println(""  + d.start +","+ d.end);
-		}
-		// 指定されたstartPosをそのまま返すケース
-		assertEquals(400, generator.selectContract(DBUtils.toDate("2010-01-13").getTime(), -1, 400));
-		assertEquals(401, generator.selectContract(DBUtils.toDate("2010-01-13").getTime(), -1, 401));
-		assertEquals(402, generator.selectContract(DBUtils.toDate("2010-01-13").getTime(), -1, 402));
-		assertEquals(403, generator.selectContract(DBUtils.toDate("2010-01-13").getTime(), -1, 403));
-
-		// 契約期間がマッチするまで探すケース
-		assertEquals(402, generator.selectContract(DBUtils.toDate("2010-03-13").getTime(), -1, 400));
-		assertEquals(402, generator.selectContract(DBUtils.toDate("2010-03-13").getTime(), -1, 401));
-		assertEquals(402, generator.selectContract(DBUtils.toDate("2010-03-13").getTime(), -1, 402));
-		assertEquals(403, generator.selectContract(DBUtils.toDate("2010-03-13").getTime(), -1, 403));
-
-		assertEquals(402, generator.selectContract(DBUtils.toDate("2011-03-13").getTime(), -1, 402));
-		assertEquals(406, generator.selectContract(DBUtils.toDate("2011-03-13").getTime(), -1, 403));
-		assertEquals(406, generator.selectContract(DBUtils.toDate("2011-03-13").getTime(), -1, 404));
-		assertEquals(406, generator.selectContract(DBUtils.toDate("2011-03-13").getTime(), -1, 405));
-
-		// 契約番号が一巡するケース
-		assertEquals(2, generator.selectContract(DBUtils.toDate("2011-03-13").getTime(), -1, 9999));
-
-		// startTimeが不正で、対応する契約が見つからないケース
-		Exception e1 = assertThrows(RuntimeException.class,
-				() -> generator.selectContract(DBUtils.toDate("2001-01-13").getTime(), -1, 400));
-		assertTrue(e1.getMessage().startsWith("Not found!"));
-		Exception e2 = assertThrows(RuntimeException.class,
-				() -> generator.selectContract(DBUtils.toDate("2012-01-11").getTime(), 402, 400));
-		assertTrue(e2.getMessage().startsWith("Not found!"));
-
-	}
 
 	/**
 	 * isValidDurationList()のテスト
