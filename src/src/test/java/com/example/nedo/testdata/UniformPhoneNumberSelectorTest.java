@@ -96,7 +96,7 @@ class UniformPhoneNumberSelectorTest {
 	 */
 	void testSelectContract(int expect, String DateString, int except, int choose) {
 		random.setNextValue(((double)choose)/NUMBER_OF_CONTRACTS_RECORDS);
-		assertEquals(choose, TestDataUtils.getRandomLong(random, 0, 1000)); // 乱数発生器が想定した値を返すことを確認
+		assertEquals(choose, TestDataUtils.getRandomLong(random, 0, NUMBER_OF_CONTRACTS_RECORDS)); // 乱数発生器が想定した値を返すことを確認
 		String exceptPhoneNumber = except == -1 ? null : generator.getPhoneNumber(except);
 		String expectPhoneNumber = generator.getPhoneNumber(expect);
 		long startTime = DBUtils.toDate(DateString).getTime();
