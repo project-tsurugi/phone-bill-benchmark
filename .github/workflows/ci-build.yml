@@ -1,0 +1,78 @@
+name: phone-bill-benchmark-CI
+
+on:
+  push:
+    paths:
+    - 'src/**'
+    - '.github/**'
+  pull_request:
+
+jobs:
+  Build:
+    runs-on: [self-hosted, docker]
+    timeout-minutes: 30
+    container:
+      image:  ghcr.io/project-tsurugi/oltp-sandbox:latest
+      credentials:
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GHCR_PAT }}
+      volumes:
+        - /work/docker-cache/.gradle:/root/.gradle
+    defaults:
+      run:
+        shell: bash
+        working-directory: src
+    env:
+      JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF8
+
+    services:
+      postgres:
+        image: postgres:12
+        env:
+          POSTGRES_USER: phonebill
+          POSTGRES_PASSWORD: phonebill
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - id: Checkout
+        name: Checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+          token: ${{ secrets.GHA_PAT }}
+
+      - id: Assemble
+        name: Assemble
+        run: |
+          ./gradlew -i clean assemble
+
+      - id: Test
+        name: Test
+        continue-on-error: false
+        run: |
+          ./gradlew -i test -Pphone-bill.url="jdbc:postgresql://postgres/phonebill"
+
+      - id: Generate_Annotations
+        name: Generate_Annotations
+        uses: ./.github/actions/tsurugi-annotations-action
+        if: always()
+        with:
+          junit_input: 'src/build/test-results/**/TEST-*.xml'
+          junit_test_src_dir: 'src/src/test/java'
+
+      - id: Notify_Slack
+        name: Notify_Slack
+        uses: ./.github/actions/tsurugi-slack-action
+        if: always() && (contains(github.ref, '/tags/') || contains(github.ref, '/pull/') || contains(github.ref, '/heads/master'))
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        with:
+          kind: 'job-result'
+          channel: 'tsurugi-batchapp-benchmark'
+          status: ${{ job.status }}
+          step_context: ${{ toJson(steps) }}
+          username: ${{ github.workflow }}

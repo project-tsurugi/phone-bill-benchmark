@@ -33,18 +33,32 @@ class ConfigTest {
 	 */
 	@Test
 	void test() throws IOException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
-		Config defaultConfig = Config.getConfig();
-		checkDefault(defaultConfig);
+		// phone-bill.プレフィックスを持つシステムプロパティはテスト実行前に除外し、テスト終了時に元に戻す
+		Map<String, String> sysPropBackup = new HashMap<String, String>();
+		System.getProperties().stringPropertyNames().stream()
+			.filter(k -> k.startsWith("phone-bill."))
+			.forEach(k -> {
+				sysPropBackup.put(k, System.getProperty(k));
+				System.clearProperty(k);
+			});
+		try {
+			Config defaultConfig = Config.getConfig();
+			checkDefault(defaultConfig);
 
-		String[] args = { NOT_DEFALUT_CONFIG_PATH };
-		Config config = Config.getConfig(args);
-		checkConfig(config);
+			String[] args = { NOT_DEFALUT_CONFIG_PATH };
+			Config config = Config.getConfig(args);
+			checkConfig(config);
 
-		// 引数なしのgetConfig()と空配列を引数に持つgetConfig(String[])は同じ結果を返す
-		assertEqualsIgnoreLineSeparator(defaultConfig.toString(), Config.getConfig(new String[0]).toString());
+			// 引数なしのgetConfig()と空配列を引数に持つgetConfig(String[])は同じ結果を返す
+			assertEqualsIgnoreLineSeparator(defaultConfig.toString(), Config.getConfig(new String[0]).toString());
 
-		// テストケースの作成漏れ確認のため、configにデフォルト値以外が指定されていることを確認する
-		checkDifferent(defaultConfig, config);
+			// テストケースの作成漏れ確認のため、configにデフォルト値以外が指定されていることを確認する
+			checkDifferent(defaultConfig, config);
+		} finally {
+			sysPropBackup.keySet().stream().forEach(k -> {
+				System.setProperty(k, sysPropBackup.get(k));
+			});
+		}
 	}
 
 	/**
@@ -246,22 +260,32 @@ class ConfigTest {
 	void testSystemProperty() throws IOException {
 		int changedRecords = 999;
 		String changedUrl = "jdbc:postgresql://test/testdb";
+		String originalSysPropRecords = System.getProperty("phone-bill.number.of.contracts.records");
+		String originalSysPropUrl = System.getProperty("phone-bill.url");
+		try {
+			System.setProperty("phone-bill.number.of.contracts.records", String.valueOf(changedRecords));
+			System.setProperty("phone-bill.url", changedUrl);
 
-		System.setProperty("phone-bill.number.of.contracts.records", String.valueOf(changedRecords));
-		System.setProperty("phone-bill.url", changedUrl);
+			Config config = Config.getConfig(new String[] {DEFALUT_CONFIG_PATH} );
+			assertEquals(changedRecords, config.numberOfContractsRecords);
+			assertEquals(changedUrl, config.url);
 
-		Config config = Config.getConfig(new String[] {DEFALUT_CONFIG_PATH} );
-		assertEquals(changedRecords, config.numberOfContractsRecords);
-		assertEquals(changedUrl, config.url);
+			System.clearProperty("phone-bill.number.of.contracts.records");
+			System.clearProperty("phone-bill.url");
 
-		System.clearProperty("phone-bill.number.of.contracts.records");
-		System.clearProperty("phone-bill.url");
+			Config defaultConfig = Config.getConfig(new String[] {DEFALUT_CONFIG_PATH} );
+			config.numberOfContractsRecords = defaultConfig.numberOfContractsRecords;
+			config.url = defaultConfig.url;
 
-		Config defaultConfig = Config.getConfig(new String[] {DEFALUT_CONFIG_PATH} );
-		config.numberOfContractsRecords = defaultConfig.numberOfContractsRecords;
-		config.url = defaultConfig.url;
-
-		checkDefault(config);
+			checkDefault(config);
+		} finally {
+			if (originalSysPropRecords != null) {
+				System.setProperty("phone-bill.number.of.contracts.records", originalSysPropRecords);
+			}
+			if (originalSysPropUrl != null) {
+				System.setProperty("phone-bill.url", originalSysPropUrl);
+			}
+		}
 	}
 
 }
