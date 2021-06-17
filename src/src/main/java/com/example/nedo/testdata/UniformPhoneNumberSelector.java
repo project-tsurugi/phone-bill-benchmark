@@ -1,68 +1,39 @@
 package com.example.nedo.testdata;
 
 import java.util.Random;
-
-import com.example.nedo.db.Duration;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * 一様分布の乱数発生器を使用して電話番号を選択するPhoneNumberSelector
  *
  */
-public class UniformPhoneNumberSelector implements PhoneNumberSelector {
+public class UniformPhoneNumberSelector extends AbstractPhoneNumberSelector {
 	/**
 	 * 乱数生成器
 	 */
 	private Random random;
 
-
 	/**
-	 * 契約情報取得
+	 * 契約数
 	 */
-	private ContractReader contractReader;
-
-
-	/**
-	 * 選択した契約が通話開始時刻に無効な契約だった場合に、違う契約を選択する回数
-	 */
-	private int tryCount;
-
-
+	private int numberOfContracts;
 
 	public UniformPhoneNumberSelector(Random random, ContractReader contractReader, int tryCount) {
+		super(contractReader,
+				IntStream.range(0, contractReader.getNumberOfContracts()).boxed().collect(Collectors.toList()),
+				tryCount);
 		this.random = random;
-		this.contractReader = contractReader;
-		this.tryCount = tryCount;
+		this.numberOfContracts = contractReader.getNumberOfContracts();
 	}
 
-
-
+	/*
+	 * logNormalDistributionを使用して契約を選択する
+	 *
+	 * @return 何番目の契約か表す整数値
+	 */
 	@Override
-	public String selectPhoneNumber(long startTime, String exceptPhoneNumber) {
-		long pos = 	TestDataUtils.getRandomLong(random, 0, contractReader.getNumberOfContracts());
-
-		int c = 0;
-		for (;;) {
-			if (exceptPhoneNumber == null || !exceptPhoneNumber.equals(contractReader.getPhoneNumberByPos(pos))) {
-				Duration d = contractReader.getDurationByPos(pos);
-				if (d.end == null) {
-					if (d.start.getTime() <= startTime) {
-						break;
-					}
-				} else {
-					if (d.start.getTime() <= startTime && startTime < d.end.getTime()) {
-						break;
-					}
-				}
-			}
-			pos++;
-			if (pos >= contractReader.getNumberOfContracts()) {
-				pos = 0;
-			}
-			if (++c >= tryCount) {
-				throw new RuntimeException("Not found! start time = " + new java.util.Date(startTime));
-			}
-		}
-		return contractReader.getPhoneNumberByPos(pos);
+	protected int getContractPos() {
+		return TestDataUtils.getRandomInt(random, 0, numberOfContracts);
 	}
-
 }

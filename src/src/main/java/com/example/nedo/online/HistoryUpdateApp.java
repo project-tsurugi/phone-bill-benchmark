@@ -17,7 +17,6 @@ import com.example.nedo.app.Config;
 import com.example.nedo.db.History;
 import com.example.nedo.online.ContractKeyHolder.Key;
 import com.example.nedo.testdata.CallTimeGenerator;
-import com.example.nedo.testdata.TestDataGenerator;
 
 public class HistoryUpdateApp extends AbstractOnlineApp {
     private static final Logger LOG = LoggerFactory.getLogger(HistoryUpdateApp.class);
@@ -32,7 +31,7 @@ public class HistoryUpdateApp extends AbstractOnlineApp {
 	public HistoryUpdateApp(ContractKeyHolder contractKeyHolder, Config config, int seed) throws SQLException {
 		super(config.historyUpdateRecordsPerMin, config);
 		this.random = new Random(seed);
-		this.callTimeGenerator = TestDataGenerator.createCallTimeGenerator(random, config);
+		this.callTimeGenerator = CallTimeGenerator.createCallTimeGenerator(random, config);
 		this.contractKeyHolder = contractKeyHolder;
 	}
 

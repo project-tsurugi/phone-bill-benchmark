@@ -100,31 +100,19 @@ public class TestDataGenerator {
 		}
 		this.random = new Random(seed);
 		this.startTimeSet = new HashSet<Long>(config.numberOfHistoryRecords);
-		callTimeGenerator = createCallTimeGenerator(random, config);
+		callTimeGenerator = CallTimeGenerator.createCallTimeGenerator(random, config);
 		initDurationList();
 		ContractReader contractReader = new ContractReaderImpl();
-		callerPhoneNumberSelector = new UniformPhoneNumberSelector(random, contractReader, durationList.size());
-		recipientPhoneNumberSelector = new UniformPhoneNumberSelector(random, contractReader, durationList.size());
+		callerPhoneNumberSelector = PhoneNumberSelector.createSelector(random,
+				config.callerPhoneNumberDistribution,
+				config.callerPhoneNumberScale,
+				config.callerPhoneNumberShape, contractReader, durationList.size());
+		recipientPhoneNumberSelector = PhoneNumberSelector.createSelector(random,
+				config.recipientPhoneNumberDistribution,
+				config.recipientPhoneNumberScale,
+				config.recipientPhoneNumberShape, contractReader, durationList.size());
 	}
 
-
-	/**
-	 * 通話時間生成器を作成する
-	 *
-	 * @param random 特定の通話時間生成器が使用する乱数生成器
-	 * @param config
-	 * @return
-	 */
-	public static CallTimeGenerator createCallTimeGenerator(Random random, Config config) {
-		switch (config.callTimeDistribution) {
-		case LOGNORMAL:
-			return new LogNormalCallTimeGenerator(config);
-		case UNIFORM:
-			return new UniformCallTimeGenerator(random, config.maxCallTimeSecs);
-		default:
-			throw new AssertionError(config.callTimeDistribution.name());
-		}
-	}
 
 
 	/**

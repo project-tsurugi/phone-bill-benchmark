@@ -18,4 +18,16 @@ public class TestDataUtils {
 		return min + (long) (random.nextDouble() * (max - min));
 	}
 
+	/**
+	 * 指定の乱数生成器を使用してmin以上max未満のランダムなint値を取得する
+	 *
+	 * @param min
+	 * @param max
+	 * @return
+	 */
+	public static int getRandomInt(Random random, int min, int max) {
+		return min + (int) (random.nextDouble() * (max - min));
+	}
+
+
 }

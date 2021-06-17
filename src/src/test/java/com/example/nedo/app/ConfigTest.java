@@ -136,8 +136,8 @@ class ConfigTest {
 		assertEquals(0d, config.callerPhoneNumberScale);
 		assertEquals(0d, config.recipientPhoneNumberScale);
 		assertEquals(4.5d, config.callTimeScale);
-		assertEquals(0d, config.callerPhoneNumberShape);
-		assertEquals(0d, config.recipientPhoneNumberShape);
+		assertEquals(1d, config.callerPhoneNumberShape);
+		assertEquals(1d, config.recipientPhoneNumberShape);
 		assertEquals(1.5d, config.callTimeShape);
 		assertEquals(3600, config.maxCallTimeSecs);
 

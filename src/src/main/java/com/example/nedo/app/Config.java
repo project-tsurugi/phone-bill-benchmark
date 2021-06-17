@@ -252,10 +252,10 @@ public class Config implements Cloneable {
 		numberOfHistoryRecords = getInt(NUMBER_OF_HISTORY_RECORDS, 1000);
 		callerPhoneNumberDistribution = getDistributionFunction(CALLER_PHONE_NUMBER_DISTRIBUTION, DistributionFunction.UNIFORM);
 		callerPhoneNumberScale = getDouble(CALLER_PHONE_NUMBER_SCALE, 0);
-		callerPhoneNumberShape = getDouble(CALLER_PHONE_NUMBER_SHAPE, 0);
+		callerPhoneNumberShape = getDouble(CALLER_PHONE_NUMBER_SHAPE, 1);
 		recipientPhoneNumberDistribution = getDistributionFunction(RECIPIENT_PHONE_NUMBER_DISTRIBUTION, DistributionFunction.UNIFORM);
 		recipientPhoneNumberScale = getDouble(RECIPIENT_PHONE_NUMBER_SCALE, 0d);
-		recipientPhoneNumberShape = getDouble(RECIPIENT_PHONE_NUMBER_SHAPE, 0d);
+		recipientPhoneNumberShape = getDouble(RECIPIENT_PHONE_NUMBER_SHAPE, 1d);
 		callTimeDistribution = getDistributionFunction(CALL_TIME_DISTRIBUTION, DistributionFunction.UNIFORM);
 		callTimeScale = getDouble(CALL_TIME_SCALE, 4.5d);
 		callTimeShape = getDouble(CALL_TIME_SHAPE, 1.5d);
