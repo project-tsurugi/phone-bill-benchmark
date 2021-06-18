@@ -93,6 +93,18 @@ public class TestDataGenerator {
 	 * @param random
 	 */
 	public TestDataGenerator(Config config, int seed) {
+		this(config, config.randomSeed, null);
+	}
+
+	/**
+	 * 乱数のシードとContractReaderを指定可能なコンストラクタ。ContractReaderにnullが
+	 * 指定された場合は、デフォルトのContractReaderを使用する。
+	 *
+	 * @param config
+	 * @param seed
+	 * @param contractReader
+	 */
+	public TestDataGenerator(Config config, int seed, ContractReader contractReader) {
 		this.config = config;
 		if (config.minDate.getTime() >= config.maxDate.getTime()) {
 			new RuntimeException("maxDate is less than or equal to minDate, minDate =" + config.minDate + ", maxDate = "
@@ -102,7 +114,9 @@ public class TestDataGenerator {
 		this.startTimeSet = new HashSet<Long>(config.numberOfHistoryRecords);
 		callTimeGenerator = CallTimeGenerator.createCallTimeGenerator(random, config);
 		initDurationList();
-		ContractReader contractReader = new ContractReaderImpl();
+		if (contractReader == null) {
+			contractReader = new ContractReaderImpl();
+		}
 		callerPhoneNumberSelector = PhoneNumberSelector.createSelector(random,
 				config.callerPhoneNumberDistribution,
 				config.callerPhoneNumberScale,
@@ -112,7 +126,6 @@ public class TestDataGenerator {
 				config.recipientPhoneNumberScale,
 				config.recipientPhoneNumberShape, contractReader, durationList.size());
 	}
-
 
 
 	/**
