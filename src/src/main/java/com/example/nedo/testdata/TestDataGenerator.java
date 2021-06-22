@@ -446,12 +446,12 @@ public class TestDataGenerator {
 		}
 
 		@Override
-		public Duration getDurationByPos(long n) {
+		public Duration getDurationByPos(int n) {
 			return getDuration(n);
 		}
 
 		@Override
-		public String getPhoneNumberByPos(long n) {
+		public String getPhoneNumberByPos(int n) {
 			return getPhoneNumber(n);
 		}
 	}

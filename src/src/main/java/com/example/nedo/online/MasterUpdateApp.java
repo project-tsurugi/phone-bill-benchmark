@@ -23,18 +23,18 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 
 	private static final long DAY_IN_MILLS = 24 * 3600 * 1000;
 
-	private ContractKeyHolder contractKeyHolder;
+	private ContractHolder contractHolder;
 	private Config config;
 	private Random random;
 	private Updater[] updaters = {new Updater1(), new Updater2()};
 	private Contract updatingContract;
 
 
-	public MasterUpdateApp(ContractKeyHolder contractKeyHolder, Config config, int seed) throws SQLException {
+	public MasterUpdateApp(ContractHolder contractHolder, Config config, int seed) throws SQLException {
 		super(config.masterUpdateRecordsPerMin, config);
 		this.config = config;
 		this.random = new Random(seed);
-		this.contractKeyHolder = contractKeyHolder;
+		this.contractHolder = contractHolder;
 	}
 
 
@@ -120,8 +120,8 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 	@Override
 	protected void createData() throws SQLException {
 		// 更新対象の電話番号を取得
-		int n = random.nextInt(contractKeyHolder.size());
-		String phoneNumber = contractKeyHolder.get(n).phoneNumber;
+		int n = random.nextInt(contractHolder.size());
+		String phoneNumber = contractHolder.get(n).phoneNumber;
 		List<Contract> contracts = getContracts(phoneNumber);
 		// 更新する契約を取得する
 		updatingContract = getUpdatingContract(contracts);
@@ -148,6 +148,7 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 				LOG.debug("ONLINE APP: Update 1 record from contracs.");
 			}
 		}
+		contractHolder.replace(updatingContract);
 	}
 
 	// 契約を更新するInterfaceと、Interfaceを実装したクラス

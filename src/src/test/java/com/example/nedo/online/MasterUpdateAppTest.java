@@ -33,7 +33,7 @@ class MasterUpdateAppTest extends AbstractDbTestCase {
 		TestDataGenerator generator = new TestDataGenerator(config);
 		generator.generateContracts();
 
-		ContractKeyHolder keyHolder = new ContractKeyHolder(config);
+		ContractHolder keyHolder = new ContractHolder(config);
 		MasterUpdateApp app = new MasterUpdateApp(keyHolder, config, 0);
 		List<Contract> expected = getContracts();
 

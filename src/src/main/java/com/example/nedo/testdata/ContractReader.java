@@ -19,7 +19,7 @@ public interface ContractReader {
 	 * @param n
 	 * @return
 	 */
-	Duration getDurationByPos(long n);
+	Duration getDurationByPos(int n);
 
 
 	/**
@@ -28,5 +28,5 @@ public interface ContractReader {
 	 * @param n
 	 * @return
 	 */
-	String getPhoneNumberByPos(long n);
+	String getPhoneNumberByPos(int n);
 }

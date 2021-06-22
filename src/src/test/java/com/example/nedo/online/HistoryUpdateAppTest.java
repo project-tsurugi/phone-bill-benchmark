@@ -15,9 +15,10 @@ import org.junit.jupiter.api.Test;
 import com.example.nedo.AbstractDbTestCase;
 import com.example.nedo.app.Config;
 import com.example.nedo.app.CreateTable;
+import com.example.nedo.db.Contract;
+import com.example.nedo.db.Contract.Key;
 import com.example.nedo.db.DBUtils;
 import com.example.nedo.db.History;
-import com.example.nedo.online.ContractKeyHolder.Key;
 import com.example.nedo.online.HistoryUpdateApp.Updater;
 import com.example.nedo.testdata.CreateTestData;
 
@@ -34,8 +35,8 @@ class HistoryUpdateAppTest extends AbstractDbTestCase {
 		new CreateTestData().execute(config);
 
 		// アプリケーションの初期化
-		ContractKeyHolder contractKeyHolder = new ContractKeyHolder(config);
-		app = new HistoryUpdateApp(contractKeyHolder, config, 0);
+		ContractHolder contractHolder = new ContractHolder(config);
+		app = new HistoryUpdateApp(contractHolder, config, 0);
 	}
 
 	@AfterEach
@@ -99,7 +100,7 @@ class HistoryUpdateAppTest extends AbstractDbTestCase {
 		Set<History> expected = new HashSet<History>();
 
 		// 同一電話番号のレコードが1レコード、end_dateがnullの契約
-		key = ContractKeyHolder.createKey("00000000015", DBUtils.toDate("2013-12-09"));
+		key = Contract.createKey("00000000015", DBUtils.toDate("2013-12-09"));
 		actual = new HashSet<History>(app.getHistories(key));
 		expected.clear();
 		expected.add(toHistory("00000000015", "00000000165", "R", "2020-12-17 18:15:40.035", 2982, null, false));
@@ -108,7 +109,7 @@ class HistoryUpdateAppTest extends AbstractDbTestCase {
 		assertEquals(expected, actual);
 
 		// 同一電話番号のレコードが1レコード、end_dateがnullでない契約
-		key = ContractKeyHolder.createKey("00000000375", DBUtils.toDate("2017-03-11"));
+		key = Contract.createKey("00000000375", DBUtils.toDate("2017-03-11"));
 		actual = new HashSet<History>(app.getHistories(key));
 		expected.clear();
 		expected.add(toHistory("00000000375", "00000000865", "C", "2020-11-08 05:54:24.471", 3078, null, false));
@@ -116,12 +117,12 @@ class HistoryUpdateAppTest extends AbstractDbTestCase {
 		assertEquals(expected, actual);
 
 		// 同一電話番号のレコードが2レコードの契約
-		key = ContractKeyHolder.createKey("00000000391", DBUtils.toDate("2010-11-11"));
+		key = Contract.createKey("00000000391", DBUtils.toDate("2010-11-11"));
 		actual = new HashSet<History>(app.getHistories(key));
 		expected.clear();
 		assertEquals(expected, actual);
 
-		key = ContractKeyHolder.createKey("00000000391", DBUtils.toDate("2014-10-16"));
+		key = Contract.createKey("00000000391", DBUtils.toDate("2014-10-16"));
 		actual = new HashSet<History>(app.getHistories(key));
 		expected.clear();
 		expected.add(toHistory("00000000391", "00000000265", "R", "2020-12-27 03:59:18.747", 2492, null, false));
@@ -134,13 +135,13 @@ class HistoryUpdateAppTest extends AbstractDbTestCase {
 				+ " where caller_phone_number = '00000000391'"
 				+ " and start_time = to_timestamp('2020-12-27 03:59:18.747','YYYY-MM-DD HH24:MI:SS.MS')");
 
-		key = ContractKeyHolder.createKey("00000000391", DBUtils.toDate("2010-11-11"));
+		key = Contract.createKey("00000000391", DBUtils.toDate("2010-11-11"));
 		actual = new HashSet<History>(app.getHistories(key));
 		expected.clear();
 		expected.add(toHistory("00000000391", "00000000265", "R", "2011-11-12 06:25:57.430", 2492, null, false));
 		assertEquals(expected, actual);
 
-		key = ContractKeyHolder.createKey("00000000391", DBUtils.toDate("2014-10-16"));
+		key = Contract.createKey("00000000391", DBUtils.toDate("2014-10-16"));
 		actual = new HashSet<History>(app.getHistories(key));
 		expected.clear();
 		expected.add(toHistory("00000000391", "00000000273", "R", "2021-01-04 06:46:59.250", 951, null, false));
@@ -155,7 +156,7 @@ class HistoryUpdateAppTest extends AbstractDbTestCase {
 	@Test
 	void testUpdateDatabase() throws Exception {
 		// 指定のキーで通話履歴を検索した値が想定通りであることの確認
-		Key key = ContractKeyHolder.createKey("00000000391", DBUtils.toDate("2014-10-16"));
+		Key key = Contract.createKey("00000000391", DBUtils.toDate("2014-10-16"));
 		HashSet<History> actual;
 		Set<History> expected = new HashSet<History>();
 		expected.add(toHistory("00000000391", "00000000265", "R", "2020-12-27 03:59:18.747", 2492, null, false));

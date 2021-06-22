@@ -19,12 +19,12 @@ public class MasterInsertApp extends AbstractOnlineApp {
     private static final Logger LOG = LoggerFactory.getLogger(MasterInsertApp.class);
 
 	private TestDataGenerator testDataGenerator;
-	private ContractKeyHolder contractKeyHolder;
+	private ContractHolder contractHolder;
 
-	public MasterInsertApp(ContractKeyHolder contractKeyHolder, Config config, int seed) throws SQLException {
+	public MasterInsertApp(ContractHolder contractHolder, Config config, int seed) throws SQLException {
 		super(config.masterInsertReccrdsPerMin, config);
-		testDataGenerator = new TestDataGenerator(config, seed);
-		this.contractKeyHolder = contractKeyHolder;
+		testDataGenerator = new TestDataGenerator(config, seed, contractHolder);
+		this.contractHolder = contractHolder;
 	}
 
 	@Override
@@ -36,10 +36,10 @@ public class MasterInsertApp extends AbstractOnlineApp {
 	protected void updateDatabase() throws SQLException {
 		Connection conn = getConnection();
 		try (PreparedStatement ps = conn.prepareStatement(TestDataGenerator.SQL_INSERT_TO_CONTRACT)) {
-			int n = contractKeyHolder.size();
+			int n = contractHolder.size();
 			Contract c = testDataGenerator.setContract(ps, n);
 			ps.executeUpdate();
-			contractKeyHolder.add(ContractKeyHolder.createKey(c.phoneNumber, c.startDate));
+			contractHolder.add(c);
 			if (LOG.isDebugEnabled()) {
 				LOG.debug("ONLINE APP: Insert 1 record to contracs.");
 			}

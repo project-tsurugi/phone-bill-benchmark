@@ -37,8 +37,8 @@ class MasterInsertAppTest extends AbstractDbTestCase {
 
 		// MasterInsertAppで5レコード生成し、Generatorで生成したレコードと一致することを確認
 		truncateTable("contracts");
-		ContractKeyHolder contractKeyHolder = new ContractKeyHolder(config);
-		MasterInsertApp app = new MasterInsertApp(contractKeyHolder, config, config.randomSeed);
+		ContractHolder contractHolder = new ContractHolder(config);
+		MasterInsertApp app = new MasterInsertApp(contractHolder, config, config.randomSeed);
 		app.exec();
 		app.exec();
 		app.exec();

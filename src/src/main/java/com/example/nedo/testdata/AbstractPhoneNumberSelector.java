@@ -56,7 +56,6 @@ public abstract class  AbstractPhoneNumberSelector implements PhoneNumberSelecto
 					}
 				}
 			}
-			System.out.println(pos);
 			pos++;
 			if (pos >= contracts.size()) {
 				pos = 0;

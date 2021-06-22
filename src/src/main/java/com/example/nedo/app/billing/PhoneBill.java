@@ -32,7 +32,7 @@ import com.example.nedo.db.Contract;
 import com.example.nedo.db.DBUtils;
 import com.example.nedo.db.Duration;
 import com.example.nedo.online.AbstractOnlineApp;
-import com.example.nedo.online.ContractKeyHolder;
+import com.example.nedo.online.ContractHolder;
 import com.example.nedo.online.HistoryInsertApp;
 import com.example.nedo.online.HistoryUpdateApp;
 import com.example.nedo.online.MasterInsertApp;
@@ -44,7 +44,7 @@ import com.example.nedo.online.MasterUpdateApp;
  */
 public class PhoneBill implements ExecutableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(PhoneBill.class);
-	private ContractKeyHolder contractKeyHolder = null;
+	private ContractHolder contractHolder = null;
 	private long elapsedTime = 0; // バッチの処理時間
 	Config config;
 
@@ -88,28 +88,28 @@ public class PhoneBill implements ExecutableCommand {
 			list.add(new HistoryInsertApp(config, random.nextInt()));
 		}
 		if (config.historyUpdateRecordsPerMin > 0) {
-			list.add(new HistoryUpdateApp(getContractKeyHolder(), config, random.nextInt()));
+			list.add(new HistoryUpdateApp(getContractHolder(), config, random.nextInt()));
 		}
 		if (config.masterInsertReccrdsPerMin > 0) {
-			list.add(new MasterInsertApp(getContractKeyHolder(), config, random.nextInt()));
+			list.add(new MasterInsertApp(getContractHolder(), config, random.nextInt()));
 		}
 		if (config.masterUpdateRecordsPerMin > 0) {
-			list.add(new MasterUpdateApp(getContractKeyHolder(), config, random.nextInt()));
+			list.add(new MasterUpdateApp(getContractHolder(), config, random.nextInt()));
 		}
 		return list;
 	}
 
 	/**
-	 * 必要に応じてContractKeyHolderを初期化し、ContractKeyHolderを返す。
+	 * 必要に応じてContractHolderを初期化し、ContractHolderを返す。
 	 *
 	 * @return
 	 * @throws SQLException
 	 */
-	ContractKeyHolder getContractKeyHolder() throws SQLException {
-		if (contractKeyHolder == null) {
-			contractKeyHolder = new ContractKeyHolder(config);
+	ContractHolder getContractHolder() throws SQLException {
+		if (contractHolder == null) {
+			contractHolder = new ContractHolder(config);
 		}
-		return contractKeyHolder;
+		return contractHolder;
 	}
 
 

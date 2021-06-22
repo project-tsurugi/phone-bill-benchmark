@@ -14,25 +14,26 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.example.nedo.app.Config;
+import com.example.nedo.db.Contract;
+import com.example.nedo.db.Contract.Key;
 import com.example.nedo.db.History;
-import com.example.nedo.online.ContractKeyHolder.Key;
 import com.example.nedo.testdata.CallTimeGenerator;
 
 public class HistoryUpdateApp extends AbstractOnlineApp {
     private static final Logger LOG = LoggerFactory.getLogger(HistoryUpdateApp.class);
 
-	private ContractKeyHolder contractKeyHolder;
+	private ContractHolder contractHolder;
 	private Random random;
 	private CallTimeGenerator callTimeGenerator;
 	private Updater[] updaters = {new Updater1(), new Updater2()};
 	private History history;
 
 
-	public HistoryUpdateApp(ContractKeyHolder contractKeyHolder, Config config, int seed) throws SQLException {
+	public HistoryUpdateApp(ContractHolder contractHolder, Config config, int seed) throws SQLException {
 		super(config.historyUpdateRecordsPerMin, config);
 		this.random = new Random(seed);
 		this.callTimeGenerator = CallTimeGenerator.createCallTimeGenerator(random, config);
-		this.contractKeyHolder = contractKeyHolder;
+		this.contractHolder = contractHolder;
 	}
 
 
@@ -105,11 +106,11 @@ public class HistoryUpdateApp extends AbstractOnlineApp {
 		List<History> histories = Collections.emptyList();
 		while (histories.isEmpty()) {
 			// 更新対象となる契約を選択
-			int n = random.nextInt(contractKeyHolder.size());
-			Key key = contractKeyHolder.get(n);
+			int n = random.nextInt(contractHolder.size());
+			Contract contract = contractHolder.get(n);
 
 			// 通話履歴テーブルから、当該契約の有効期間内に当該契約の電話番号で発信した履歴を取り出す
-			histories = getHistories(key);
+			histories = getHistories(contract.getKey());
 		}
 
 		// 取り出した履歴から1レコードを取り出し更新する
