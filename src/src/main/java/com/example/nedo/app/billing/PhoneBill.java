@@ -85,7 +85,7 @@ public class PhoneBill implements ExecutableCommand {
 		Random random = new Random(config.randomSeed);
 		List<AbstractOnlineApp> list = new ArrayList<AbstractOnlineApp>();
 		if (config.historyInsertTransactionPerMin > 0) {
-			list.add(new HistoryInsertApp(config, random.nextInt()));
+			list.add(new HistoryInsertApp(getContractHolder(), config, random.nextInt()));
 		}
 		if (config.historyUpdateRecordsPerMin > 0) {
 			list.add(new HistoryUpdateApp(getContractHolder(), config, random.nextInt()));

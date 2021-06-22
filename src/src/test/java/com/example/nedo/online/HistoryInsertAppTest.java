@@ -17,8 +17,9 @@ class HistoryInsertAppTest extends AbstractDbTestCase {
 		truncateTable("history");
 
 		Config config = Config.getConfig();
+		ContractHolder contractHolder = new ContractHolder(config);
 		config.historyInsertRecordsPerTransaction = 33;
-		HistoryInsertApp app = new HistoryInsertApp(config, 0);
+		HistoryInsertApp app = new HistoryInsertApp(contractHolder, config, 0);
 
 		int expected = 0;
 		for (int i = 0; i < 10; i++) {
