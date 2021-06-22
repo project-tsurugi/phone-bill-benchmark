@@ -35,13 +35,14 @@ public class MasterInsertApp extends AbstractOnlineApp {
 	@Override
 	protected void updateDatabase() throws SQLException {
 		Connection conn = getConnection();
-		PreparedStatement ps = conn.prepareStatement(TestDataGenerator.SQL_INSERT_TO_CONTRACT);
-		int n = contractKeyHolder.size();
-		Contract c = testDataGenerator.setContract(ps, n);
-		ps.executeUpdate();
-		contractKeyHolder.add(ContractKeyHolder.createKey(c.phoneNumber, c.startDate));
-		if (LOG.isDebugEnabled()) {
-			LOG.debug("ONLINE APP: Insert 1 record to contracs.");
+		try (PreparedStatement ps = conn.prepareStatement(TestDataGenerator.SQL_INSERT_TO_CONTRACT)) {
+			int n = contractKeyHolder.size();
+			Contract c = testDataGenerator.setContract(ps, n);
+			ps.executeUpdate();
+			contractKeyHolder.add(ContractKeyHolder.createKey(c.phoneNumber, c.startDate));
+			if (LOG.isDebugEnabled()) {
+				LOG.debug("ONLINE APP: Insert 1 record to contracs.");
+			}
 		}
 	}
 }
