@@ -137,8 +137,6 @@ public class TestDataGenerator {
 		try (Connection conn = DBUtils.getConnection(config);
 				Statement stmt = conn.createStatement();
 				PreparedStatement ps = conn.prepareStatement(SQL_INSERT_TO_CONTRACT)) {
-			stmt.executeUpdate("truncate table contracts");
-
 			int batchSize = 0;
 			for (long n = 0; n < config.numberOfContractsRecords; n++) {
 				setContract(ps, n);
