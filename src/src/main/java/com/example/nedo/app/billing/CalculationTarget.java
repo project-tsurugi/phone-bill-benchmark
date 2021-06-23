@@ -27,11 +27,11 @@ public class CalculationTarget {
 	/**
 	 * 計算対象月の最初の日
 	 */
-	private Date start;
+	private Long start;
 	/**
 	 * 計算対象月の翌月の最初の日
 	 */
-	private Date end;
+	private Long end;
 
 	/**
 	 * 計算対象がないことを示すフラグ
@@ -52,8 +52,8 @@ public class CalculationTarget {
 		this.contract = contract;
 		this.billingCalculator = billingCalculator;
 		this.callChargeCalculator = callChargeCalculator;
-		this.start = start;
-		this.end = end;
+		this.start = start == null ? null : start.getTime();
+		this.end = end == null ? null : end.getTime();
 		this.endOfTask = endOfTask;
 	}
 
@@ -99,14 +99,13 @@ public class CalculationTarget {
 	 * @return start
 	 */
 	public Date getStart() {
-		return start;
+		return start == null ? null : new Date(start);
 	}
-
 
 	/**
 	 * @return end
 	 */
 	public Date getEnd() {
-		return end;
+		return end == null ? null : new Date(end);
 	}
 }

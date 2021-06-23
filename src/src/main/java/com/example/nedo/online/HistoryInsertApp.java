@@ -32,11 +32,11 @@ public class HistoryInsertApp extends AbstractOnlineApp {
 	 */
 	private Set<Key> startTimeSet;
 
-	public HistoryInsertApp(Config config, int seed) throws SQLException {
+	public HistoryInsertApp(ContractHolder contractHolder, Config config, int seed) throws SQLException {
 		super(config.historyInsertTransactionPerMin, config);
 		this.random = new Random(seed);
 		historyInsertRecordsPerTransaction = config.historyInsertRecordsPerTransaction;
-		testDataGenerator = new TestDataGenerator(config, seed);
+		testDataGenerator = new TestDataGenerator(config, seed, contractHolder);
 		baseTime = getMaxStartTime(); // 通話履歴中の最新の通話開始時刻をベースに新規に作成する通話履歴の通話開始時刻を生成する
 		conn = getConnection();
 		startTimeSet = new HashSet<Key>(); // 同一の時刻のレコードを生成しないために時刻を記録するためのセット
@@ -50,11 +50,12 @@ public class HistoryInsertApp extends AbstractOnlineApp {
 
 	long getMaxStartTime() throws SQLException {
 		Connection conn = getConnection();
-		Statement stmt = conn.createStatement();
-		ResultSet rs = stmt.executeQuery("select max(start_time) from history");
-		if (rs.next()) {
-			Timestamp ts = rs.getTimestamp(1);
-			return ts == null ? System.currentTimeMillis() : ts.getTime();
+		try (Statement stmt = conn.createStatement();
+				ResultSet rs = stmt.executeQuery("select max(start_time) from history");) {
+			if (rs.next()) {
+				Timestamp ts = rs.getTimestamp(1);
+				return ts == null ? System.currentTimeMillis() : ts.getTime();
+			}
 		}
 		conn.commit();
 		throw new IllegalStateException();

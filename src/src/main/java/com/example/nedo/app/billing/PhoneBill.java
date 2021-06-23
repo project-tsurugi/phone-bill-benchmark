@@ -32,7 +32,7 @@ import com.example.nedo.db.Contract;
 import com.example.nedo.db.DBUtils;
 import com.example.nedo.db.Duration;
 import com.example.nedo.online.AbstractOnlineApp;
-import com.example.nedo.online.ContractKeyHolder;
+import com.example.nedo.online.ContractHolder;
 import com.example.nedo.online.HistoryInsertApp;
 import com.example.nedo.online.HistoryUpdateApp;
 import com.example.nedo.online.MasterInsertApp;
@@ -44,7 +44,7 @@ import com.example.nedo.online.MasterUpdateApp;
  */
 public class PhoneBill implements ExecutableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(PhoneBill.class);
-	private ContractKeyHolder contractKeyHolder = null;
+	private ContractHolder contractHolder = null;
 	private long elapsedTime = 0; // バッチの処理時間
 	Config config;
 
@@ -85,31 +85,31 @@ public class PhoneBill implements ExecutableCommand {
 		Random random = new Random(config.randomSeed);
 		List<AbstractOnlineApp> list = new ArrayList<AbstractOnlineApp>();
 		if (config.historyInsertTransactionPerMin > 0) {
-			list.add(new HistoryInsertApp(config, random.nextInt()));
+			list.add(new HistoryInsertApp(getContractHolder(), config, random.nextInt()));
 		}
 		if (config.historyUpdateRecordsPerMin > 0) {
-			list.add(new HistoryUpdateApp(getContractKeyHolder(), config, random.nextInt()));
+			list.add(new HistoryUpdateApp(getContractHolder(), config, random.nextInt()));
 		}
 		if (config.masterInsertReccrdsPerMin > 0) {
-			list.add(new MasterInsertApp(getContractKeyHolder(), config, random.nextInt()));
+			list.add(new MasterInsertApp(getContractHolder(), config, random.nextInt()));
 		}
 		if (config.masterUpdateRecordsPerMin > 0) {
-			list.add(new MasterUpdateApp(getContractKeyHolder(), config, random.nextInt()));
+			list.add(new MasterUpdateApp(getContractHolder(), config, random.nextInt()));
 		}
 		return list;
 	}
 
 	/**
-	 * 必要に応じてContractKeyHolderを初期化し、ContractKeyHolderを返す。
+	 * 必要に応じてContractHolderを初期化し、ContractHolderを返す。
 	 *
 	 * @return
 	 * @throws SQLException
 	 */
-	ContractKeyHolder getContractKeyHolder() throws SQLException {
-		if (contractKeyHolder == null) {
-			contractKeyHolder = new ContractKeyHolder(config);
+	ContractHolder getContractHolder() throws SQLException {
+		if (contractHolder == null) {
+			contractHolder = new ContractHolder(config);
 		}
-		return contractKeyHolder;
+		return contractHolder;
 	}
 
 
@@ -168,16 +168,24 @@ public class PhoneBill implements ExecutableCommand {
 			// Billingテーブルの計算対象月のレコードを削除する
 			deleteTargetManthRecords(conn, start);
 			// 計算対象の契約を取りだし、キューに入れる
-			try (ResultSet contractResultSet = getContractResultSet(conn, start, end)) {
-				while (contractResultSet.next()) {
-					Contract contract = getContract(contractResultSet);
-					LOG.debug(contract.toString());
-					// TODO 契約内容に合致した、CallChargeCalculator, BillingCalculatorを生成するようにする。
-					CallChargeCalculator callChargeCalculator = new SimpleCallChargeCalculator();
-					BillingCalculator billingCalculator = new SimpleBillingCalculator();
-					CalculationTarget target = new CalculationTarget(contract, billingCalculator,
-							callChargeCalculator, start, end, false);
-					putToQueue(queue, target);;
+			String sql = "select phone_number, start_date, end_date, charge_rule"
+					+ " from contracts where start_date <= ? and ( end_date is null or end_date >= ?)"
+					+ " order by phone_number";
+			try (PreparedStatement ps = conn.prepareStatement(sql)) {
+				ps.setDate(1, end);
+				ps.setDate(2, start);
+				try (ResultSet contractResultSet = ps.executeQuery()) {
+					while (contractResultSet.next()) {
+						Contract contract = getContract(contractResultSet);
+						LOG.debug(contract.toString());
+						// TODO 契約内容に合致した、CallChargeCalculator, BillingCalculatorを生成するようにする。
+						CallChargeCalculator callChargeCalculator = new SimpleCallChargeCalculator();
+						BillingCalculator billingCalculator = new SimpleBillingCalculator();
+						CalculationTarget target = new CalculationTarget(contract, billingCalculator,
+								callChargeCalculator, start, end, false);
+						putToQueue(queue, target);
+						;
+					}
 				}
 			}
 		} finally {
@@ -290,28 +298,6 @@ public class PhoneBill implements ExecutableCommand {
 		contract.endDate = rs.getDate(3);
 		contract.rule = rs.getString(4);
 		return contract;
-	}
-
-
-
-
-	/**
-	 * 契約期間がstart～endと被るcontractテーブルのレコードのResultSetを取得する
-	 *
-	 * @param start 検索対象期間の開始日
-	 * @param end 検索対象期間の最終日
-	 * @return
-	 * @throws SQLException
-	 */
-	private ResultSet getContractResultSet(Connection conn, Date start, Date end) throws SQLException {
-		String sql = "select phone_number, start_date, end_date, charge_rule"
-				+ " from contracts where start_date <= ? and ( end_date is null or end_date >= ?)"
-				+ " order by phone_number";
-		PreparedStatement ps = conn.prepareStatement(sql);
-		ps.setDate(1, end);
-		ps.setDate(2, start);
-		ResultSet rs = ps.executeQuery();
-		return rs;
 	}
 
 	/**

@@ -3,6 +3,7 @@ package com.example.nedo.app;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -16,6 +17,7 @@ class CreateTableTest extends AbstractDbTestCase {
 	@Test
 	void test() throws SQLException, IOException {
 		CreateTable createTable = new CreateTable();
+		Statement stmt = getStmt();
 		createTable.dropTables(stmt);
 		// テーブルが存在しないことを確認
 		assertFalse(exists("billing"));
@@ -52,14 +54,16 @@ class CreateTableTest extends AbstractDbTestCase {
 	 * @throws SQLException
 	 */
 	private boolean exists(String tablename) throws SQLException {
-		String sql = "SELECT count(*) from pg_class WHERE relkind = 'r' AND relname = '"+tablename+"'";
-		Statement stmt = conn.createStatement();
-		ResultSet rs = stmt.executeQuery(sql);
+		String sql = "SELECT count(*) from pg_class WHERE relkind = 'r' AND relname = ?";
 		int c = 0;
-		if (rs.next()) {
-			c = rs.getInt(1);
+		try (PreparedStatement ps = getConn().prepareStatement(sql)) {
+			ps.setString(1, tablename);
+			try (ResultSet rs = ps.executeQuery()) {
+				if (rs.next()) {
+					c = rs.getInt(1);
+				}
+			}
 		}
 		return c == 1;
 	}
-
 }

@@ -18,23 +18,25 @@ import org.slf4j.LoggerFactory;
 import com.example.nedo.app.Config;
 import com.example.nedo.db.Contract;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 public class MasterUpdateApp extends AbstractOnlineApp {
     private static final Logger LOG = LoggerFactory.getLogger(MasterUpdateApp.class);
 
 	private static final long DAY_IN_MILLS = 24 * 3600 * 1000;
 
-	private ContractKeyHolder contractKeyHolder;
+	private ContractHolder contractHolder;
 	private Config config;
 	private Random random;
 	private Updater[] updaters = {new Updater1(), new Updater2()};
 	private Contract updatingContract;
 
 
-	public MasterUpdateApp(ContractKeyHolder contractKeyHolder, Config config, int seed) throws SQLException {
+	public MasterUpdateApp(ContractHolder contractHolder, Config config, int seed) throws SQLException {
 		super(config.masterUpdateRecordsPerMin, config);
 		this.config = config;
 		this.random = new Random(seed);
-		this.contractKeyHolder = contractKeyHolder;
+		this.contractHolder = contractHolder;
 	}
 
 
@@ -104,14 +106,15 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 		String sql = "select start_date, end_date, charge_rule from contracts where phone_number = ?";
 		try (PreparedStatement ps = conn.prepareStatement(sql)) {
 			ps.setString(1, phoneNumber);
-			ResultSet rs = ps.executeQuery();
-			while (rs.next()) {
-				Contract c = new Contract();
-				c.phoneNumber = phoneNumber;
-				c.startDate = rs.getDate(1);
-				c.endDate = rs.getDate(2);
-				c.rule = rs.getString(3);
-				list.add(c);
+			try (ResultSet rs = ps.executeQuery()) {
+				while (rs.next()) {
+					Contract c = new Contract();
+					c.phoneNumber = phoneNumber;
+					c.startDate = rs.getDate(1);
+					c.endDate = rs.getDate(2);
+					c.rule = rs.getString(3);
+					list.add(c);
+				}
 			}
 		}
 		return list;
@@ -120,8 +123,8 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 	@Override
 	protected void createData() throws SQLException {
 		// 更新対象の電話番号を取得
-		int n = random.nextInt(contractKeyHolder.size());
-		String phoneNumber = contractKeyHolder.get(n).phoneNumber;
+		int n = random.nextInt(contractHolder.size());
+		String phoneNumber = contractHolder.get(n).phoneNumber;
 		List<Contract> contracts = getContracts(phoneNumber);
 		// 更新する契約を取得する
 		updatingContract = getUpdatingContract(contracts);
@@ -148,6 +151,7 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 				LOG.debug("ONLINE APP: Update 1 record from contracs.");
 			}
 		}
+		contractHolder.replace(updatingContract);
 	}
 
 	// 契約を更新するInterfaceと、Interfaceを実装したクラス
@@ -164,6 +168,7 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 	 * 契約終了日を削除する
 	 *
 	 */
+	@SuppressFBWarnings("SIC_INNER_SHOULD_BE_STATIC")
 	class Updater1 implements Updater {
 		@Override
 		public void update(Contract contract) {

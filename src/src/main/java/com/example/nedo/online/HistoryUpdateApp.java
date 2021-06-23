@@ -14,26 +14,28 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.example.nedo.app.Config;
+import com.example.nedo.db.Contract;
+import com.example.nedo.db.Contract.Key;
 import com.example.nedo.db.History;
-import com.example.nedo.online.ContractKeyHolder.Key;
 import com.example.nedo.testdata.CallTimeGenerator;
-import com.example.nedo.testdata.TestDataGenerator;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public class HistoryUpdateApp extends AbstractOnlineApp {
     private static final Logger LOG = LoggerFactory.getLogger(HistoryUpdateApp.class);
 
-	private ContractKeyHolder contractKeyHolder;
+	private ContractHolder contractHolder;
 	private Random random;
 	private CallTimeGenerator callTimeGenerator;
 	private Updater[] updaters = {new Updater1(), new Updater2()};
 	private History history;
 
 
-	public HistoryUpdateApp(ContractKeyHolder contractKeyHolder, Config config, int seed) throws SQLException {
+	public HistoryUpdateApp(ContractHolder contractHolder, Config config, int seed) throws SQLException {
 		super(config.historyUpdateRecordsPerMin, config);
 		this.random = new Random(seed);
-		this.callTimeGenerator = TestDataGenerator.createCallTimeGenerator(random, config);
-		this.contractKeyHolder = contractKeyHolder;
+		this.callTimeGenerator = CallTimeGenerator.createCallTimeGenerator(random, config);
+		this.contractHolder = contractHolder;
 	}
 
 
@@ -78,20 +80,21 @@ public class HistoryUpdateApp extends AbstractOnlineApp {
 		try (PreparedStatement ps = conn.prepareStatement(sql)) {
 			ps.setString(1, key.phoneNumber);
 			ps.setDate(2, key.startDate);
-			ResultSet rs = ps.executeQuery();
-			while (rs.next()) {
-				History h = new History();
-				h.callerPhoneNumber = key.phoneNumber;
-				h.recipientPhoneNumber = rs.getString(1);
-				h.paymentCategorty = rs.getString(2);
-				h.startTime = rs.getTimestamp(3);
-				h.timeSecs = rs.getInt(4);
-				h.charge = rs.getInt(5);
-				if (rs.wasNull()) {
-					h.charge = null;
+			try (ResultSet rs = ps.executeQuery()) {
+				while (rs.next()) {
+					History h = new History();
+					h.callerPhoneNumber = key.phoneNumber;
+					h.recipientPhoneNumber = rs.getString(1);
+					h.paymentCategorty = rs.getString(2);
+					h.startTime = rs.getTimestamp(3);
+					h.timeSecs = rs.getInt(4);
+					h.charge = rs.getInt(5);
+					if (rs.wasNull()) {
+						h.charge = null;
+					}
+					h.df = rs.getInt(6) == 1;
+					list.add(h);
 				}
-				h.df = rs.getInt(6) == 1;
-				list.add(h);
 			}
 		}
 		conn.commit();
@@ -106,11 +109,11 @@ public class HistoryUpdateApp extends AbstractOnlineApp {
 		List<History> histories = Collections.emptyList();
 		while (histories.isEmpty()) {
 			// 更新対象となる契約を選択
-			int n = random.nextInt(contractKeyHolder.size());
-			Key key = contractKeyHolder.get(n);
+			int n = random.nextInt(contractHolder.size());
+			Contract contract = contractHolder.get(n);
 
 			// 通話履歴テーブルから、当該契約の有効期間内に当該契約の電話番号で発信した履歴を取り出す
-			histories = getHistories(key);
+			histories = getHistories(contract.getKey());
 		}
 
 		// 取り出した履歴から1レコードを取り出し更新する
@@ -145,6 +148,7 @@ public class HistoryUpdateApp extends AbstractOnlineApp {
 	 * 削除フラグを立てる
 	 *
 	 */
+	@SuppressFBWarnings("SIC_INNER_SHOULD_BE_STATIC")
 	class Updater1 implements Updater {
 
 		@Override

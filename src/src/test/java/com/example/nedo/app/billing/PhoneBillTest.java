@@ -117,7 +117,7 @@ class PhoneBillTest extends AbstractDbTestCase {
 
 		// Exceptionの原因となるレコードを削除して再実行
 		String sql = "delete from history where caller_phone_number = 'Phone-0005' and start_time = '2020-11-10 01:00:00'";
-		stmt.execute(sql);
+		getStmt().execute(sql);
 		phoneBill.doCalc( DBUtils.toDate("2020-11-01"), DBUtils.toDate("2020-11-30"));
 		billings = getBillings();
 		assertEquals(5, billings.size());
@@ -141,7 +141,7 @@ class PhoneBillTest extends AbstractDbTestCase {
 
 		// 論理削除フラグを立てたレコードが計算対象外になることの確認
 		sql = "update history set df = 1 where caller_phone_number = 'Phone-0001' and start_time = '2020-11-30 23:59:59.999'";
-		stmt.execute(sql);
+		getStmt().execute(sql);
 		phoneBill.doCalc( DBUtils.toDate("2020-11-01"), DBUtils.toDate("2020-11-30"));
 		billings = getBillings();
 		assertEquals(5, billings.size());
@@ -167,15 +167,16 @@ class PhoneBillTest extends AbstractDbTestCase {
 		List<Billing> list = new ArrayList<Billing>();
 		String sql = "select phone_number, target_month, basic_charge, metered_charge, billing_amount"
 				+ " from billing order by phone_number, target_month";
-		ResultSet rs = stmt.executeQuery(sql);
-		while (rs.next()) {
-			Billing billing = new Billing();
-			billing.phoneNumber = rs.getString(1);
-			billing.targetMonth = rs.getDate(2);
-			billing.basicCharge = rs.getInt(3);
-			billing.meteredCharge = rs.getInt(4);
-			billing.billingAmount = rs.getInt(5);
-			list.add(billing);
+		try (ResultSet rs = getStmt().executeQuery(sql)) {
+			while (rs.next()) {
+				Billing billing = new Billing();
+				billing.phoneNumber = rs.getString(1);
+				billing.targetMonth = rs.getDate(2);
+				billing.basicCharge = rs.getInt(3);
+				billing.meteredCharge = rs.getInt(4);
+				billing.billingAmount = rs.getInt(5);
+				list.add(billing);
+			}
 		}
 		return list;
 	}
@@ -204,7 +205,7 @@ class PhoneBillTest extends AbstractDbTestCase {
 	private void insertToContracts(String phoneNumber, String startDate, String endDate, String chargeRule)
 			throws SQLException {
 		String sql = "insert into contracts(phone_number, start_date, end_date, charge_rule) values(?, ?, ?, ?)";
-		try (PreparedStatement ps = conn.prepareStatement(sql)) {
+		try (PreparedStatement ps = getConn().prepareStatement(sql)) {
 			ps.setString(1, phoneNumber);
 			ps.setDate(2, DBUtils.toDate(startDate));
 			if (endDate == null) {
@@ -232,7 +233,7 @@ class PhoneBillTest extends AbstractDbTestCase {
 	private void insertToHistory(String caller_phone_number, String recipient_phone_number, String payment_categorty, String start_time, Integer time_secs, boolean df)
 			throws SQLException {
 		String sql = "insert into history(caller_phone_number, recipient_phone_number, payment_categorty, start_time, time_secs, charge, df) values(?, ?, ?, ?, ?, ?, ?)";
-		try (PreparedStatement ps = conn.prepareStatement(sql)) {
+		try (PreparedStatement ps = getConn().prepareStatement(sql)) {
 			ps.setString(1, caller_phone_number);
 			ps.setString(2, recipient_phone_number);
 			ps.setString(3, payment_categorty);

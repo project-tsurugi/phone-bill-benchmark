@@ -64,6 +64,18 @@ public class TestDataGenerator {
 	 */
 	private CallTimeGenerator callTimeGenerator;
 
+	/**
+	 * 発信者電話番号のSelector
+	 */
+	private PhoneNumberSelector callerPhoneNumberSelector;
+
+	/**
+	 * 受信者電話番号のSelector
+	 */
+	private PhoneNumberSelector recipientPhoneNumberSelector;
+
+
+
 
 	/**
 	 * テストデータ生成のためのパラメータを指定してContractsGeneratorのインスタンスを生成する.
@@ -81,34 +93,38 @@ public class TestDataGenerator {
 	 * @param random
 	 */
 	public TestDataGenerator(Config config, int seed) {
+		this(config, config.randomSeed, null);
+	}
+
+	/**
+	 * 乱数のシードとContractReaderを指定可能なコンストラクタ。ContractReaderにnullが
+	 * 指定された場合は、デフォルトのContractReaderを使用する。
+	 *
+	 * @param config
+	 * @param seed
+	 * @param contractReader
+	 */
+	public TestDataGenerator(Config config, int seed, ContractReader contractReader) {
 		this.config = config;
 		if (config.minDate.getTime() >= config.maxDate.getTime()) {
-			new RuntimeException("maxDate is less than or equal to minDate, minDate =" + config.minDate + ", maxDate = "
+			throw new RuntimeException("maxDate is less than or equal to minDate, minDate =" + config.minDate + ", maxDate = "
 					+ config.maxDate);
 		}
 		this.random = new Random(seed);
-		this.callTimeGenerator = createCallTimeGenerator(random, config);
 		this.startTimeSet = new HashSet<Long>(config.numberOfHistoryRecords);
+		callTimeGenerator = CallTimeGenerator.createCallTimeGenerator(random, config);
 		initDurationList();
-	}
-
-
-	/**
-	 * 通話時間生成器を作成する
-	 *
-	 * @param random 特定の通話時間生成器が使用する乱数生成器
-	 * @param config
-	 * @return
-	 */
-	public static CallTimeGenerator createCallTimeGenerator(Random random, Config config) {
-		switch (config.callTimeDistribution) {
-		case LOGNORMAL:
-			return new LogNormalCallTimeGenerator(config);
-		case UNIFORM:
-			return new UniformCallTimeGenerator(random, config.maxCallTimeSecs);
-		default:
-			throw new AssertionError(config.callTimeDistribution.name());
+		if (contractReader == null) {
+			contractReader = new ContractReaderImpl();
 		}
+		callerPhoneNumberSelector = PhoneNumberSelector.createSelector(random,
+				config.callerPhoneNumberDistribution,
+				config.callerPhoneNumberScale,
+				config.callerPhoneNumberShape, contractReader, durationList.size());
+		recipientPhoneNumberSelector = PhoneNumberSelector.createSelector(random,
+				config.recipientPhoneNumberDistribution,
+				config.recipientPhoneNumberScale,
+				config.recipientPhoneNumberShape, contractReader, durationList.size());
 	}
 
 
@@ -118,13 +134,12 @@ public class TestDataGenerator {
 	 * @throws SQLException
 	 */
 	public void generateContracts() throws SQLException {
-		try (Connection conn = DBUtils.getConnection(config)) {
-			Statement stmt = conn.createStatement();
+		try (Connection conn = DBUtils.getConnection(config);
+				Statement stmt = conn.createStatement();
+				PreparedStatement ps = conn.prepareStatement(SQL_INSERT_TO_CONTRACT)) {
 			stmt.executeUpdate("truncate table contracts");
 
-			PreparedStatement ps = conn.prepareStatement(SQL_INSERT_TO_CONTRACT);
 			int batchSize = 0;
-
 			for (long n = 0; n < config.numberOfContractsRecords; n++) {
 				setContract(ps, n);
 				ps.addBatch();
@@ -282,7 +297,7 @@ public class TestDataGenerator {
 		// 通話開始時刻
 		long startTime;
 		do {
-			startTime = getRandomLong(targetDuration.start.getTime(), targetDuration.end.getTime());
+			startTime = TestDataUtils.getRandomLong(random, targetDuration.start.getTime(), targetDuration.end.getTime());
 		} while (startTimeSet.contains(startTime));
 		startTimeSet.add(startTime);
 		return createHistoryRecord(startTime);
@@ -299,10 +314,8 @@ public class TestDataGenerator {
 		history.startTime = new Timestamp(startTime);
 
 		// 電話番号の生成
-		long caller = selectContract(startTime, -1, getRandomLong(0, config.numberOfContractsRecords));
-		long recipient = selectContract(startTime, caller, getRandomLong(0, config.numberOfContractsRecords));
-		history.callerPhoneNumber = getPhoneNumber(caller);
-		history.recipientPhoneNumber = getPhoneNumber(recipient);
+		history.callerPhoneNumber = callerPhoneNumberSelector.selectPhoneNumber(startTime, null);
+		history.recipientPhoneNumber = recipientPhoneNumberSelector.selectPhoneNumber(startTime, history.callerPhoneNumber);
 
 		// 料金区分(発信者負担、受信社負担)
 		// TODO 割合を指定可能にする
@@ -312,47 +325,6 @@ public class TestDataGenerator {
 		history.timeSecs = callTimeGenerator.getTimeSecs();
 
 		return history;
-	}
-
-	/**
-	 * 指定の通話開始時刻が契約範囲に含まれる選択する。
-	 * <br>
-	 * 発信者電話番号、受信者電話番号の順にこのメソッドを使用して電話番号を選択する。
-	 * 発信者電話番号の選択時には、exceptPhoneNumberに-1を指定する。受信者電話番号の
-	 * 選択時には、exceptPhoneNumberに発信者電話番号を指定することにより、受信者電話番号と
-	 * 発信者電話番号が等しくなるのを避ける。
-	 *
-	 *
-	 * @param startTime 通話開始時刻
-	 * @param exceptPhoneNumber 選択しない電話番号。
-	 * @param startPos 0以上numberOfContractsRecords以下のランダムな値を指定する
-	 * @return 選択為た電話番号
-	 */
-	long selectContract(long startTime, long exceptPhoneNumber, long startPos) {
-		long pos = startPos;
-		int c = 0;
-		for (;;) {
-			if (pos != exceptPhoneNumber) {
-				Duration d = getDuration(pos);
-				if (d.end == null) {
-					if (d.start.getTime() <= startTime) {
-						break;
-					}
-				} else {
-					if (d.start.getTime() <= startTime && startTime < d.end.getTime()) {
-						break;
-					}
-				}
-			}
-			pos++;
-			if (pos >= config.numberOfContractsRecords) {
-				pos = 0;
-			}
-			if (++c >= durationList.size()) {
-				throw new RuntimeException("Not found! start time = " + new java.util.Date(startTime));
-			}
-		}
-		return pos;
 	}
 
 	private void execBatch(PreparedStatement ps) throws SQLException {
@@ -444,16 +416,6 @@ public class TestDataGenerator {
 		return durationList.get((int) (n % durationList.size()));
 	}
 
-	/**
-	 * min以上max未満のランダムなlong値を取得する
-	 *
-	 * @param min
-	 * @param max
-	 * @return
-	 */
-	private long getRandomLong(long min, long max) {
-		return min + (long) (random.nextDouble() * (max - min - 1));
-	}
 
 	/**
 	 * n番目の契約レコードを返す
@@ -469,6 +431,28 @@ public class TestDataGenerator {
 		contract.startDate = d.start;
 		contract.endDate = d.end;
 		return contract;
+	}
+
+
+	/**
+	 * 本クラスが保持する情報を用いて情報を取得するContractReader
+	 *
+	 */
+	class ContractReaderImpl implements ContractReader {
+		@Override
+		public int getNumberOfContracts() {
+			return config.numberOfContractsRecords;
+		}
+
+		@Override
+		public Duration getDurationByPos(int n) {
+			return getDuration(n);
+		}
+
+		@Override
+		public String getPhoneNumberByPos(int n) {
+			return getPhoneNumber(n);
+		}
 	}
 }
 

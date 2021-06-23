@@ -36,8 +36,8 @@ public class CreateTestData implements ExecutableCommand {
 
 		// 通話履歴のテストデータを作成
 		startTime = System.currentTimeMillis();
-		try (Connection conn = DBUtils.getConnection(config)) {
-			Statement stmt = conn.createStatement();
+		try (Connection conn = DBUtils.getConnection(config);
+				Statement stmt = conn.createStatement()) {
 			stmt.executeUpdate("truncate table history");
 		}
 		// TODO 日付をハードコードしているが、configで指定可能にする。

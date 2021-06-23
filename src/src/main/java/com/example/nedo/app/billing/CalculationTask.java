@@ -5,7 +5,6 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -114,17 +113,30 @@ public class CalculationTask implements Callable<Exception> {
 		CallChargeCalculator callChargeCalculator = target.getCallChargeCalculator();
 		BillingCalculator billingCalculator = target.getBillingCalculator();
 
-		try (ResultSet historyResultSet = getHistoryResultSet(contract, start, end);
-				Statement stmt = historyResultSet.getStatement();) {
-			while (historyResultSet.next()) {
-				int time = historyResultSet.getInt("time_secs"); // 通話時間を取得
-				if (time < 0) {
-					throw new RuntimeException("Negative time: " + time);
+		String sql = "select caller_phone_number, start_time, time_secs, charge"
+				+ " from history "
+				+ "where start_time >= ? and start_time < ?"
+				+ " and ((caller_phone_number = ? and payment_categorty = 'C') "
+				+ "  or (recipient_phone_number = ? and payment_categorty = 'R'))"
+				+ " and df = 0";
+
+		try (PreparedStatement ps = conn.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY,
+				ResultSet.CONCUR_UPDATABLE)) {
+			ps.setDate(1, start);
+			ps.setDate(2, DBUtils.nextDate(end));
+			ps.setString(3, contract.phoneNumber);
+			ps.setString(4, contract.phoneNumber);
+			try (ResultSet rs = ps.executeQuery()) {
+				while (rs.next()) {
+					int time = rs.getInt("time_secs"); // 通話時間を取得
+					if (time < 0) {
+						throw new RuntimeException("Negative time: " + time);
+					}
+					int callCharge = callChargeCalculator.calc(time);
+					rs.updateInt("charge", callCharge);
+					rs.updateRow();
+					billingCalculator.addCallCharge(callCharge);
 				}
-				int callCharge = callChargeCalculator.calc(time);
-				historyResultSet.updateInt("charge", callCharge);
-				historyResultSet.updateRow();
-				billingCalculator.addCallCharge(callCharge);
 			}
 		}
 		updateBilling(conn, contract, billingCalculator, start);
@@ -134,33 +146,6 @@ public class CalculationTask implements Callable<Exception> {
 		if (LOG.isDebugEnabled()) {
 			LOG.debug("End calcuration for  contract: {}.", contract);
 		}
-	}
-
-	/**
-	 * historyテーブルから指定のcontractの料金計算対象のレコードを操作するためのResultSetを取り出す
-	 *
-	 * @param contract 検索対象の契約
-	 * @param start 検索対象期間の開始日
-	 * @param end 検索対象期間の最終日
-	 * @return
-	 * @throws SQLException
-	 */
-	private ResultSet getHistoryResultSet(Contract contract, Date start, Date end)
-			throws SQLException {
-		String sql = "select caller_phone_number, start_time, time_secs, charge"
-				+ " from history "
-				+ "where start_time >= ? and start_time < ?"
-				+ " and ((caller_phone_number = ? and payment_categorty = 'C') "
-				+ "  or (recipient_phone_number = ? and payment_categorty = 'R'))"
-				+ " and df = 0";
-
-		PreparedStatement ps = conn.prepareStatement(sql,ResultSet.TYPE_FORWARD_ONLY	, ResultSet.CONCUR_UPDATABLE);
-		ps.setDate(1, start);
-		ps.setDate(2, DBUtils.nextDate(end));
-		ps.setString(3, contract.phoneNumber);
-		ps.setString(4, contract.phoneNumber);
-		ResultSet rs = ps.executeQuery();
-		return rs;
 	}
 
 	/**

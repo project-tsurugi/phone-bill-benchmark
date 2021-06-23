@@ -3,8 +3,11 @@ package com.example.nedo.app;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Locale;
 
 import com.example.nedo.db.DBUtils;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public class CreateTable implements ExecutableCommand{
 	private boolean isOracle;
@@ -17,11 +20,11 @@ public class CreateTable implements ExecutableCommand{
 
 	@Override
 	public void execute(Config config) throws Exception {
-		isOracle = config.url.toLowerCase().contains("oracle");
-		try (Connection conn = DBUtils.getConnection(config)) {
+		isOracle = config.url.toLowerCase(Locale.JAPANESE).contains("oracle");
+		try (Connection conn = DBUtils.getConnection(config);
+				Statement stmt = conn.createStatement()) {
 			conn.setAutoCommit(true);
-			Statement stmt = conn.createStatement();
-			dropTables( stmt);
+			dropTables(stmt);
 			createHistoryTable(stmt);
 			createContractsTable(stmt);
 			createBillingTable(stmt);
@@ -87,10 +90,12 @@ public class CreateTable implements ExecutableCommand{
 		}
 	}
 
+	@SuppressFBWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
 	void dropTable(Statement stmt, String table) throws SQLException {
 		stmt.execute("drop table if exists "+ table);
 	}
 
+	@SuppressFBWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
 	void dropTableOracle(Statement stmt, String table) throws SQLException {
 		try {
 			stmt.execute("drop table "+ table);

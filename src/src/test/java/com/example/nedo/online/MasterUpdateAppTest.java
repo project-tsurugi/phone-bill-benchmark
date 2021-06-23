@@ -33,7 +33,7 @@ class MasterUpdateAppTest extends AbstractDbTestCase {
 		TestDataGenerator generator = new TestDataGenerator(config);
 		generator.generateContracts();
 
-		ContractKeyHolder keyHolder = new ContractKeyHolder(config);
+		ContractHolder keyHolder = new ContractHolder(config);
 		MasterUpdateApp app = new MasterUpdateApp(keyHolder, config, 0);
 		List<Contract> expected = getContracts();
 
@@ -84,14 +84,15 @@ class MasterUpdateAppTest extends AbstractDbTestCase {
 		List<Contract> contracts = new ArrayList<Contract>();
 		String sql = "select phone_number, start_date, end_date, charge_rule"
 				+ " from contracts order by phone_number, start_date";
-		ResultSet rs = stmt.executeQuery(sql);
-		while (rs.next()) {
-			Contract c = new Contract();
-			c.phoneNumber = rs.getString(1);
-			c.startDate = rs.getDate(2);
-			c.endDate = rs.getDate(3);
-			c.rule = rs.getString(4);
-			contracts.add(c);
+		try (ResultSet rs = getStmt().executeQuery(sql)) {
+			while (rs.next()) {
+				Contract c = new Contract();
+				c.phoneNumber = rs.getString(1);
+				c.startDate = rs.getDate(2);
+				c.endDate = rs.getDate(3);
+				c.rule = rs.getString(4);
+				contracts.add(c);
+			}
 		}
 		return contracts;
 	}

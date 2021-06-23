@@ -1,11 +1,13 @@
 package com.example.nedo.app;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.Date;
+import java.util.Locale;
 import java.util.Properties;
 
 import org.slf4j.Logger;
@@ -221,7 +223,9 @@ public class Config implements Cloneable {
 	private Config(String configFileName) throws IOException {
 		prop = new Properties();
 		if (configFileName != null) {
-			prop.load(Files.newBufferedReader(Paths.get(configFileName), StandardCharsets.UTF_8));
+			try (BufferedReader br = Files.newBufferedReader(Paths.get(configFileName), StandardCharsets.UTF_8)) {
+				prop.load(br);
+			}
 		}
 		System.getProperties().stringPropertyNames().stream()
 			.filter(k -> k.startsWith(SYSPROP_PREFIX))
@@ -252,10 +256,10 @@ public class Config implements Cloneable {
 		numberOfHistoryRecords = getInt(NUMBER_OF_HISTORY_RECORDS, 1000);
 		callerPhoneNumberDistribution = getDistributionFunction(CALLER_PHONE_NUMBER_DISTRIBUTION, DistributionFunction.UNIFORM);
 		callerPhoneNumberScale = getDouble(CALLER_PHONE_NUMBER_SCALE, 0);
-		callerPhoneNumberShape = getDouble(CALLER_PHONE_NUMBER_SHAPE, 0);
+		callerPhoneNumberShape = getDouble(CALLER_PHONE_NUMBER_SHAPE, 1);
 		recipientPhoneNumberDistribution = getDistributionFunction(RECIPIENT_PHONE_NUMBER_DISTRIBUTION, DistributionFunction.UNIFORM);
 		recipientPhoneNumberScale = getDouble(RECIPIENT_PHONE_NUMBER_SCALE, 0d);
-		recipientPhoneNumberShape = getDouble(RECIPIENT_PHONE_NUMBER_SHAPE, 0d);
+		recipientPhoneNumberShape = getDouble(RECIPIENT_PHONE_NUMBER_SHAPE, 1d);
 		callTimeDistribution = getDistributionFunction(CALL_TIME_DISTRIBUTION, DistributionFunction.UNIFORM);
 		callTimeScale = getDouble(CALL_TIME_SCALE, 4.5d);
 		callTimeShape = getDouble(CALL_TIME_SHAPE, 1.5d);
@@ -424,7 +428,7 @@ public class Config implements Cloneable {
 	 * @return
 	 */
 	static boolean toBoolan(String value) {
-		String s = value.trim().toLowerCase();
+		String s = value.trim().toLowerCase(Locale.JAPANESE);
 		switch (s) {
 		case "yes":
 			return true;

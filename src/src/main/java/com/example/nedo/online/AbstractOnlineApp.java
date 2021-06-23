@@ -13,6 +13,8 @@ import org.slf4j.LoggerFactory;
 import com.example.nedo.app.Config;
 import com.example.nedo.db.DBUtils;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 public abstract class AbstractOnlineApp implements Runnable{
 	/**
 	 * スケジュールを生成するインターバル(ミリ秒)
@@ -99,6 +101,7 @@ public abstract class AbstractOnlineApp implements Runnable{
 
 
 	@Override
+	@SuppressFBWarnings("DM_EXIT")
 	public void run() {
 		String name = this.getClass().getName().replaceAll(".*\\.", "");
 		try {
@@ -116,7 +119,7 @@ public abstract class AbstractOnlineApp implements Runnable{
 			LOG.info("{} terminated.", name);
 		} catch (Exception e) {
 			try {
-				if (conn != null & !conn.isClosed()) {
+				if (conn != null && !conn.isClosed()) {
 					conn.rollback();
 				}
 			} catch (SQLException e1) {
@@ -126,7 +129,7 @@ public abstract class AbstractOnlineApp implements Runnable{
 			System.exit(1);
 		} finally {
 			try {
-				if (conn != null & !conn.isClosed()) {
+				if (conn != null && !conn.isClosed()) {
 					conn.close();
 				}
 			} catch (Exception e) {
