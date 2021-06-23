@@ -3,70 +3,71 @@ plugins {
     id 'java'
     id 'eclipse'
     id 'application'
+    id 'com.github.spotbugs' version '4.7.1'
 }
-
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
     mainClassName = 'com.example.nedo.app.Main'
 }
-
 distTar {
     archiveName = "phone-bill.tar"
 }
-
 distZip {
     archiveName = "phone-bill.zip"
 }
-
 jar {
     archiveName = "phone-bill.jar"
 }
-
 compileJava {
     options.encoding = 'UTF-8'
 }
-
 compileTestJava {
     options.encoding = 'UTF-8'
 }
-
 test {
     useJUnitPlatform()
-
     testLogging {
         showStandardStreams true
         events 'started', 'skipped', 'passed', 'failed'
         exceptionFormat 'full'
     }
-
     if (project.hasProperty("phone-bill.url")) {
         systemProperty "phone-bill.url", project.getProperty("phone-bill.url")
     }
 }
-
 repositories {
   mavenCentral()
 }
-
 dependencies {
   // https://mvnrepository.com/artifact/org.postgresql/postgresql
   implementation group: 'org.postgresql', name: 'postgresql', version: '42.2.16'
   // https://mvnrepository.com/artifact/com.oracle.ojdbc/ojdbc8
   implementation group: 'com.oracle.ojdbc', name: 'ojdbc8', version: '19.3.0.0'
-
   // https://mvnrepository.com/artifact/com.oracle.ojdbc/orai18n
   runtimeOnly group: 'com.oracle.ojdbc', name: 'orai18n', version: '19.3.0.0'
-
   testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.2")
   testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.7.2")
   testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.0.0") // for IDE
-
   implementation "commons-cli:commons-cli:1.4"
   implementation "ch.qos.logback:logback-classic:1.2.3"
   implementation "org.apache.commons:commons-math3:3.6.1"
+  compileOnly "com.github.spotbugs:spotbugs-annotations:4.2.3"
 }
-
 startScripts {
     applicationName = 'run'
+}
+spotbugsMain {
+    ignoreFailures = true
+    reports {
+        html {
+            enabled = true
+            destination = file("$buildDir/reports/spotbugs/main/spotbugs.html")
+            stylesheet = 'fancy-hist.xsl'
+        }
+        //xml {
+        //     enabled = true
+        //     destination = file("$buildDir/reports/spotbugs/main/spotbugs.xml")
+        //}
+    }
 }

@@ -67,14 +67,15 @@ class MasterInsertAppTest extends AbstractDbTestCase {
 	protected List<Contract> getContracts() throws SQLException {
 		List<Contract> list = new ArrayList<Contract>();
 		String sql = "select phone_number, start_date, end_date, charge_rule from contracts";
-		ResultSet rs = stmt.executeQuery(sql);
-		while (rs.next()) {
-			Contract c = new Contract();
-			c.phoneNumber = rs.getString(1);
-			c.startDate = rs.getDate(2);
-			c.endDate = rs.getDate(3);
-			c.rule = rs.getString(4);
-			list.add(c);
+		try (ResultSet rs = getStmt().executeQuery(sql)) {
+			while (rs.next()) {
+				Contract c = new Contract();
+				c.phoneNumber = rs.getString(1);
+				c.startDate = rs.getDate(2);
+				c.endDate = rs.getDate(3);
+				c.rule = rs.getString(4);
+				list.add(c);
+			}
 		}
 		return list;
 	}

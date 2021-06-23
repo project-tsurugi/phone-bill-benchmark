@@ -31,8 +31,8 @@ public class ContractHolder implements ContractReader {
 		String sql = "select phone_number, start_date, end_date, charge_rule from contracts order by phone_number, start_date";
 		list = Collections.synchronizedList(new ArrayList<>());
 		try (Connection conn = DBUtils.getConnection(config);
-				Statement stmt = conn.createStatement()) {
-			ResultSet rs = stmt.executeQuery(sql);
+				Statement stmt = conn.createStatement();
+				ResultSet rs = stmt.executeQuery(sql)) {
 			while (rs.next()) {
 				Contract c = new Contract();
 				c.phoneNumber = rs.getString(1);

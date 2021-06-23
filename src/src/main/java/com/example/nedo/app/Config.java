@@ -1,11 +1,13 @@
 package com.example.nedo.app;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.Date;
+import java.util.Locale;
 import java.util.Properties;
 
 import org.slf4j.Logger;
@@ -221,7 +223,9 @@ public class Config implements Cloneable {
 	private Config(String configFileName) throws IOException {
 		prop = new Properties();
 		if (configFileName != null) {
-			prop.load(Files.newBufferedReader(Paths.get(configFileName), StandardCharsets.UTF_8));
+			try (BufferedReader br = Files.newBufferedReader(Paths.get(configFileName), StandardCharsets.UTF_8)) {
+				prop.load(br);
+			}
 		}
 		System.getProperties().stringPropertyNames().stream()
 			.filter(k -> k.startsWith(SYSPROP_PREFIX))
@@ -424,7 +428,7 @@ public class Config implements Cloneable {
 	 * @return
 	 */
 	static boolean toBoolan(String value) {
-		String s = value.trim().toLowerCase();
+		String s = value.trim().toLowerCase(Locale.JAPANESE);
 		switch (s) {
 		case "yes":
 			return true;

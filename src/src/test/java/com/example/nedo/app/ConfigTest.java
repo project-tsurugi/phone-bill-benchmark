@@ -5,12 +5,14 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.junit.jupiter.api.Test;
 
@@ -78,11 +80,11 @@ class ConfigTest {
 		Map<String, Object> defaultMap = describe(defaultConfig);
 		Map<String, Object> map = describe(config);
 		assertEquals(defaultMap.keySet(), map.keySet());
-		for(String key: defaultMap.keySet()) {
-			System.out.println("key = " + key +
-					", default = " + defaultMap.get(key) +
-					", not default = " + map.get(key));
-			assertNotEquals(defaultMap.get(key), map.get(key));
+		for(Entry<String, Object> entry: defaultMap.entrySet()) {
+			System.out.println("key = " + entry.getKey() +
+					", default = " + entry.getValue() +
+					", not default = " + map.get(entry.getKey()));
+			assertNotEquals(entry.getValue(), map.get(entry.getKey()));
 		}
 	}
 
@@ -165,7 +167,7 @@ class ConfigTest {
 
 		// toStringのチェック
 		Path path = Paths.get(DEFALUT_CONFIG_PATH);
-		String expected = new String(Files.readAllBytes(path));
+		String expected = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
 		assertEqualsIgnoreLineSeparator(expected, config.toString());
 	}
 
@@ -216,7 +218,7 @@ class ConfigTest {
 
 		// toStringのチェック
 		Path path = Paths.get(NOT_DEFALUT_CONFIG_PATH);
-		String expected = new String(Files.readAllBytes(path));
+		String expected = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
 		assertEqualsIgnoreLineSeparator(expected, config.toString());
 	}
 

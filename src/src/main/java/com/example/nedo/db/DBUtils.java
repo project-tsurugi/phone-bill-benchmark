@@ -36,7 +36,7 @@ public class DBUtils {
 		return conn;
 	}
 
-	public static Date toDate(String date) {
+	public static synchronized Date toDate(String date) {
 		try {
 			return new Date(DF_DATE.parse(date).getTime());
 		} catch (ParseException e) {
@@ -44,7 +44,7 @@ public class DBUtils {
 		}
 	}
 
-	public static Timestamp toTimestamp(String date) {
+	public static synchronized Timestamp toTimestamp(String date) {
 		try {
 			return new Timestamp(DF_TIMESTAMP.parse(date).getTime());
 		} catch (ParseException e) {

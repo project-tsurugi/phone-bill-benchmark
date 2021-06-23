@@ -50,11 +50,12 @@ public class HistoryInsertApp extends AbstractOnlineApp {
 
 	long getMaxStartTime() throws SQLException {
 		Connection conn = getConnection();
-		Statement stmt = conn.createStatement();
-		ResultSet rs = stmt.executeQuery("select max(start_time) from history");
-		if (rs.next()) {
-			Timestamp ts = rs.getTimestamp(1);
-			return ts == null ? System.currentTimeMillis() : ts.getTime();
+		try (Statement stmt = conn.createStatement();
+				ResultSet rs = stmt.executeQuery("select max(start_time) from history");) {
+			if (rs.next()) {
+				Timestamp ts = rs.getTimestamp(1);
+				return ts == null ? System.currentTimeMillis() : ts.getTime();
+			}
 		}
 		conn.commit();
 		throw new IllegalStateException();

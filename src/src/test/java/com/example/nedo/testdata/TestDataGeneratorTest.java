@@ -101,9 +101,10 @@ class TestDataGeneratorTest extends AbstractDbTestCase {
 	}
 
 	private String execSqlAndGetString(String sql) throws SQLException {
-		ResultSet rs = stmt.executeQuery(sql);
-		if (rs.next()) {
-			return rs.getString(1);
+		try (ResultSet rs = getStmt().executeQuery(sql)) {
+			if (rs.next()) {
+				return rs.getString(1);
+			}
 		}
 		throw new SQLException("Fail to exece sql:" + sql);
 	}

@@ -15,18 +15,21 @@ import org.slf4j.LoggerFactory;
 
 import com.example.nedo.app.Config;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 /**
  * AbstractOnlineAppのスケジューラの動作確認用サンプルアプリ.
  *
  */
 public class ExampleOnlineApp extends AbstractOnlineApp {
     private static final Logger LOG = LoggerFactory.getLogger(ExampleOnlineApp.class);
-	private static final DateFormat DF = new SimpleDateFormat("HH:mm:ss.SSS");
+	private final DateFormat DF = new SimpleDateFormat("HH:mm:ss.SSS");
 
 	public ExampleOnlineApp() throws SQLException, IOException {
 		super(20, Config.getConfig());
 	}
 
+	@SuppressFBWarnings("RV_RETURN_VALUE_IGNORED_BAD_PRACTICE")
 	public static void main(String[] args) throws InterruptedException, SQLException, IOException {
 		ExampleOnlineApp app = new ExampleOnlineApp();
 		ExecutorService service = Executors.newSingleThreadExecutor();

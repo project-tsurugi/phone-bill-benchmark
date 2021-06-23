@@ -12,12 +12,14 @@ import com.example.nedo.app.Config;
 import com.example.nedo.db.DBUtils;
 import com.example.nedo.db.Duration;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 class UniformPhoneNumberSelectorTest {
 
 	private static final int NUMBER_OF_CONTRACTS_RECORDS = 1000;
 	private MyRandom random = new MyRandom();
-	private UniformPhoneNumberSelector selector;
-	private TestDataGenerator generator;
+	private UniformPhoneNumberSelector selector = null;
+	private TestDataGenerator generator = null;
 
 	/**
 	 * selectPhoneNumber()のテスト
@@ -104,7 +106,8 @@ class UniformPhoneNumberSelectorTest {
 	}
 
 	// テスト用のrandomクラス
-	class MyRandom extends Random {
+	@SuppressFBWarnings("SE_NO_SERIALVERSIONID")
+	static class MyRandom extends Random {
 		double nextValue;
 
 		@Override

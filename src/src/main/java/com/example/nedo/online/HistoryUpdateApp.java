@@ -19,6 +19,8 @@ import com.example.nedo.db.Contract.Key;
 import com.example.nedo.db.History;
 import com.example.nedo.testdata.CallTimeGenerator;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 public class HistoryUpdateApp extends AbstractOnlineApp {
     private static final Logger LOG = LoggerFactory.getLogger(HistoryUpdateApp.class);
 
@@ -78,20 +80,21 @@ public class HistoryUpdateApp extends AbstractOnlineApp {
 		try (PreparedStatement ps = conn.prepareStatement(sql)) {
 			ps.setString(1, key.phoneNumber);
 			ps.setDate(2, key.startDate);
-			ResultSet rs = ps.executeQuery();
-			while (rs.next()) {
-				History h = new History();
-				h.callerPhoneNumber = key.phoneNumber;
-				h.recipientPhoneNumber = rs.getString(1);
-				h.paymentCategorty = rs.getString(2);
-				h.startTime = rs.getTimestamp(3);
-				h.timeSecs = rs.getInt(4);
-				h.charge = rs.getInt(5);
-				if (rs.wasNull()) {
-					h.charge = null;
+			try (ResultSet rs = ps.executeQuery()) {
+				while (rs.next()) {
+					History h = new History();
+					h.callerPhoneNumber = key.phoneNumber;
+					h.recipientPhoneNumber = rs.getString(1);
+					h.paymentCategorty = rs.getString(2);
+					h.startTime = rs.getTimestamp(3);
+					h.timeSecs = rs.getInt(4);
+					h.charge = rs.getInt(5);
+					if (rs.wasNull()) {
+						h.charge = null;
+					}
+					h.df = rs.getInt(6) == 1;
+					list.add(h);
 				}
-				h.df = rs.getInt(6) == 1;
-				list.add(h);
 			}
 		}
 		conn.commit();
@@ -145,6 +148,7 @@ public class HistoryUpdateApp extends AbstractOnlineApp {
 	 * 削除フラグを立てる
 	 *
 	 */
+	@SuppressFBWarnings("SIC_INNER_SHOULD_BE_STATIC")
 	class Updater1 implements Updater {
 
 		@Override

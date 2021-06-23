@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Locale;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +12,8 @@ import org.slf4j.LoggerFactory;
 import com.example.nedo.app.billing.PhoneBill;
 import com.example.nedo.db.DBUtils;
 import com.example.nedo.testdata.CreateTestData;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * 以下の条件を変えて、バッチの処理時間がどう変化するのかを測定する
@@ -28,7 +31,6 @@ public class OnlineAppBench implements ExecutableCommand {
 	public static void main(String[] args) throws Exception {
 		OnlineAppBench threadBench = new OnlineAppBench();
 		Config config = Config.getConfig(args);
-//		Config config = Config.getConfig();
 		threadBench.execute(config);
 	}
 
@@ -107,10 +109,10 @@ public class OnlineAppBench implements ExecutableCommand {
 
 
 	private void afterExec(Config config) throws SQLException {
-		boolean isOracle = config.url.toLowerCase().contains("oracle");
-		try (Connection conn = DBUtils.getConnection(config)) {
+		boolean isOracle = config.url.toLowerCase(Locale.JAPANESE).contains("oracle");
+		try (Connection conn = DBUtils.getConnection(config);
+				Statement stmt = conn.createStatement()) {
 			conn.setAutoCommit(true);
-			Statement stmt = conn.createStatement();
 			int historyUpdated = count(stmt,
 					"select caller_phone_number, recipient_phone_number, payment_categorty, start_time, time_secs, df from history_back",
 					"select caller_phone_number, recipient_phone_number, payment_categorty, start_time, time_secs, df from history",
@@ -130,6 +132,7 @@ public class OnlineAppBench implements ExecutableCommand {
 	}
 
 
+	@SuppressFBWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
 	int count(Statement stmt , String sql1, String sql2, boolean isOracle) throws SQLException {
 		String sql;
 		if (isOracle) {
@@ -137,26 +140,29 @@ public class OnlineAppBench implements ExecutableCommand {
 		} else {
 			sql = "select count(*) from(" + sql1 + " except " + sql2 + ") as subq";
 		}
-		ResultSet rs = stmt.executeQuery(sql);
-		if (rs.next()) {
-			return rs.getInt(1);
+		try (ResultSet rs = stmt.executeQuery(sql)) {
+			if (rs.next()) {
+				return rs.getInt(1);
+			}
 		}
 		throw new RuntimeException("No recoreds selected.");
 	}
 
+	@SuppressFBWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
 	int count(Statement stmt, String table) throws SQLException {
 		String sql = "select count(*) from " + table;
-		ResultSet rs = stmt.executeQuery(sql);
-		if (rs.next()) {
-			return rs.getInt(1);
+		try (ResultSet rs = stmt.executeQuery(sql)) {
+			if (rs.next()) {
+				return rs.getInt(1);
+			}
 		}
 		throw new RuntimeException("No recoreds selected.");
 	}
 
 	private void beforeExec(Config config) throws SQLException {
-		try (Connection conn = DBUtils.getConnection(config)) {
+		try (Connection conn = DBUtils.getConnection(config);
+				Statement stmt = conn.createStatement()) {
 			conn.setAutoCommit(true);
-			Statement stmt = conn.createStatement();
 			dropTable(stmt, "history_back");
 			dropTable(stmt, "contracts_back");
 			stmt.execute("create table history_back as select * from history");
@@ -164,6 +170,7 @@ public class OnlineAppBench implements ExecutableCommand {
 		}
 	}
 
+	@SuppressFBWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
 	void dropTable(Statement stmt, String table) throws SQLException {
 		try {
 			stmt.execute("drop table "+ table);

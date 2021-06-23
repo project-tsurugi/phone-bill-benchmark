@@ -14,13 +14,15 @@ import com.example.nedo.app.Config;
 import com.example.nedo.db.DBUtils;
 import com.example.nedo.db.History;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 /**
  * DBにアクセスするテストケース共通用のクラス。
  *
  */
 public abstract class AbstractDbTestCase {
-	protected static Connection conn;
-	protected static Statement stmt;
+	private static Connection conn;
+	private static Statement stmt;
 
 	@BeforeAll
 	static void setUpBeforeClass() throws Exception {
@@ -34,18 +36,21 @@ public abstract class AbstractDbTestCase {
 		conn.close();
 	}
 
+	@SuppressFBWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
 	protected void truncateTable(String tableName) throws SQLException {
 		String sql = "truncate table " + tableName;
 		stmt.executeUpdate(sql);
 	}
 
+	@SuppressFBWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
 	protected int countRecords(String tableName) throws SQLException {
 		String sql = "select count(*) from " + tableName;
-		ResultSet rs = stmt.executeQuery(sql);
-		if (rs.next()) {
-			return rs.getInt(1);
-		} else {
-			throw new RuntimeException("No records selected.");
+		try (ResultSet rs = stmt.executeQuery(sql)) {
+			if (rs.next()) {
+				return rs.getInt(1);
+			} else {
+				throw new RuntimeException("No records selected.");
+			}
 		}
 	}
 
@@ -54,20 +59,21 @@ public abstract class AbstractDbTestCase {
 		String sql = "select caller_phone_number, recipient_phone_number,"
 				+ " payment_categorty, start_time,time_secs,charge, df"
 				+ " from history order by caller_phone_number, start_time";
-		ResultSet rs = stmt.executeQuery(sql);
-		while (rs.next()) {
-			History history = new History();
-			history.callerPhoneNumber = rs.getString(1);
-			history.recipientPhoneNumber = rs.getString(2);
-			history.paymentCategorty = rs.getString(3);
-			history.startTime = rs.getTimestamp(4);
-			history.timeSecs = rs.getInt(5);
-			history.charge = rs.getInt(6);
-			if (rs.wasNull()) {
-				history.charge = null;
+		try (ResultSet rs = stmt.executeQuery(sql)) {
+			while (rs.next()) {
+				History history = new History();
+				history.callerPhoneNumber = rs.getString(1);
+				history.recipientPhoneNumber = rs.getString(2);
+				history.paymentCategorty = rs.getString(3);
+				history.startTime = rs.getTimestamp(4);
+				history.timeSecs = rs.getInt(5);
+				history.charge = rs.getInt(6);
+				if (rs.wasNull()) {
+					history.charge = null;
+				}
+				history.df = rs.getBoolean(7);
+				list.add(history);
 			}
-			history.df = rs.getBoolean(7);
-			list.add(history);
 		}
 		return list;
 	}
@@ -88,5 +94,19 @@ public abstract class AbstractDbTestCase {
 
 	protected void executeSql(String sql) throws SQLException {
 		stmt.execute(sql);
+	}
+
+	/**
+	 * @return conn
+	 */
+	protected static Connection getConn() {
+		return conn;
+	}
+
+	/**
+	 * @return stmt
+	 */
+	protected static Statement getStmt() {
+		return stmt;
 	}
 }

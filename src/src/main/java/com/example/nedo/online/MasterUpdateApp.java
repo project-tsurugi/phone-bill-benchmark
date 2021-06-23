@@ -18,6 +18,8 @@ import org.slf4j.LoggerFactory;
 import com.example.nedo.app.Config;
 import com.example.nedo.db.Contract;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 public class MasterUpdateApp extends AbstractOnlineApp {
     private static final Logger LOG = LoggerFactory.getLogger(MasterUpdateApp.class);
 
@@ -104,14 +106,15 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 		String sql = "select start_date, end_date, charge_rule from contracts where phone_number = ?";
 		try (PreparedStatement ps = conn.prepareStatement(sql)) {
 			ps.setString(1, phoneNumber);
-			ResultSet rs = ps.executeQuery();
-			while (rs.next()) {
-				Contract c = new Contract();
-				c.phoneNumber = phoneNumber;
-				c.startDate = rs.getDate(1);
-				c.endDate = rs.getDate(2);
-				c.rule = rs.getString(3);
-				list.add(c);
+			try (ResultSet rs = ps.executeQuery()) {
+				while (rs.next()) {
+					Contract c = new Contract();
+					c.phoneNumber = phoneNumber;
+					c.startDate = rs.getDate(1);
+					c.endDate = rs.getDate(2);
+					c.rule = rs.getString(3);
+					list.add(c);
+				}
 			}
 		}
 		return list;
@@ -165,6 +168,7 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 	 * 契約終了日を削除する
 	 *
 	 */
+	@SuppressFBWarnings("SIC_INNER_SHOULD_BE_STATIC")
 	class Updater1 implements Updater {
 		@Override
 		public void update(Contract contract) {
