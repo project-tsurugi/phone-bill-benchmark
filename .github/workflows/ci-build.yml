@@ -56,6 +56,11 @@ jobs:
         run: |
           ./gradlew -i test -Pphone-bill.url="jdbc:postgresql://postgres/phonebill"
 
+      - id: Static_Analysis
+        name: Static_Analysis
+        run: |
+          ./gradlew -i spotbugsMain -Pci
+
       - id: Generate_Annotations
         name: Generate_Annotations
         uses: ./.github/actions/tsurugi-annotations-action
@@ -63,6 +68,7 @@ jobs:
         with:
           junit_input: 'src/build/test-results/**/TEST-*.xml'
           junit_test_src_dir: 'src/src/test/java'
+          spotbugs_input: 'src/build/reports/spotbugs/main/*.xml'
 
       - id: Notify_Slack
         name: Notify_Slack
