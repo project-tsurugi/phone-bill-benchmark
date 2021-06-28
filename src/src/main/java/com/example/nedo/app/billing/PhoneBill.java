@@ -57,20 +57,22 @@ public class PhoneBill implements ExecutableCommand {
 	@Override
 	public void execute(Config config) throws Exception {
 		this.config = config;
-		// オンラインアプリを実行する
 		List<AbstractOnlineApp> list = createOnlineApps();
-		final ExecutorService service = list.isEmpty() ? null :Executors.newFixedThreadPool(list.size());
-		list.parallelStream().forEach(task -> service.submit(task));
+		final ExecutorService service = list.isEmpty() ? null : Executors.newFixedThreadPool(list.size());
+		try {
+			// オンラインアプリを実行する
+			list.parallelStream().forEach(task -> service.submit(task));
 
-		// バッチを実行する
-		Duration d = toDuration(config.targetMonth);
-		doCalc(d.start, d.end);
-
-		// オンラインアプリを終了する
-		list.stream().forEach(task -> task.terminate());
-		if (service != null) {
-			service.shutdown();
-			service.awaitTermination(5, TimeUnit.MINUTES);
+			// バッチを実行する
+			Duration d = toDuration(config.targetMonth);
+			doCalc(d.start, d.end);
+		} finally {
+			// オンラインアプリを終了する
+			list.stream().forEach(task -> task.terminate());
+			if (service != null) {
+				service.shutdown();
+				service.awaitTermination(5, TimeUnit.MINUTES);
+			}
 		}
 	}
 
