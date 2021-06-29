@@ -11,6 +11,9 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 
+import oracle.ucp.jdbc.PoolDataSource;
+import oracle.ucp.jdbc.PoolDataSourceFactory;
+
 import org.postgresql.util.PSQLException;
 
 import com.example.nedo.app.Config;
@@ -27,7 +30,17 @@ public class DBUtils {
 	public static Connection getConnection(Config config) {
         Connection conn;
 		try {
-			conn = DriverManager.getConnection(config.url, config.user, config.password);
+			if (config.url.startsWith("jdbc:oracle")) {
+				PoolDataSource pds = PoolDataSourceFactory.getPoolDataSource();
+				pds.setConnectionFactoryClassName("oracle.jdbc.pool.OracleDataSource");
+				pds.setURL(config.url);
+				pds.setUser(config.user);
+				pds.setPassword(config.password);
+				pds.setMaxStatements(256);
+				conn = pds.getConnection();
+			} else {
+				conn = DriverManager.getConnection(config.url, config.user, config.password);
+			}
 			conn.setAutoCommit(false);
 			conn.setTransactionIsolation(config.isolationLevel);
 		} catch (SQLException e) {
