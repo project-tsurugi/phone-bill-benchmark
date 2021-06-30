@@ -63,13 +63,13 @@ spotbugsMain {
     ignoreFailures = true
     reports {
         html {
-            enabled = true
+            enabled = !project.hasProperty("ci")
             destination = file("$buildDir/reports/spotbugs/main/spotbugs.html")
             stylesheet = 'fancy-hist.xsl'
         }
-        //xml {
-        //     enabled = true
-        //     destination = file("$buildDir/reports/spotbugs/main/spotbugs.xml")
-        //}
+        xml {
+            enabled = project.hasProperty("ci")
+            destination = file("$buildDir/reports/spotbugs/main/spotbugs.xml")
+        }
     }
 }
