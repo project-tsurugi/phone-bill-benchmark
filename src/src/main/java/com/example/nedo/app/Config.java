@@ -174,6 +174,7 @@ public class Config implements Cloneable {
 	public String user;
 	public String password;
 	public int isolationLevel;
+	public  Dbms dbms;
 	private static final String URL = "url";
 	private static final String USER = "user";
 	private static final String PASSWORD = "password";
@@ -267,6 +268,14 @@ public class Config implements Cloneable {
 
 		// JDBCに関するパラメータ
 		url = getString(URL, "jdbc:postgresql://127.0.0.1/phonebill");
+		if (url.toLowerCase().contains("oracle")) {
+			dbms = Dbms.ORACLE;
+		} else if (url.toLowerCase().contains("postgresql")) {
+			dbms = Dbms.POSTGRE_SQL;
+		} else {
+			dbms = Dbms.OTHER;
+		}
+		
 		//		 url = getString(URL, "jdbc:oracle:thin:@localhost:1521:ORCL");
 		user = getString(USER, "phonebill");
 		password = getString(PASSWORD, "phonebill");
@@ -585,6 +594,16 @@ public class Config implements Cloneable {
 	}
 
 
+	/**
+	 * 使用するDBMS
+	 *
+	 */
+	public static enum Dbms {
+		ORACLE,
+		POSTGRE_SQL,
+		OTHER
+	}
+
 	@Override
 	public Config clone()  {
 		try {
@@ -593,4 +612,5 @@ public class Config implements Cloneable {
 			throw new InternalError(e);
 		}
 	}
+
 }

@@ -16,6 +16,7 @@ import java.util.Map.Entry;
 
 import org.junit.jupiter.api.Test;
 
+import com.example.nedo.app.Config.Dbms;
 import com.example.nedo.app.Config.DistributionFunction;
 import com.example.nedo.app.Config.TransactionScope;
 import com.example.nedo.db.DBUtils;
@@ -24,6 +25,7 @@ class ConfigTest {
 	private static String NOT_DEFALUT_CONFIG_PATH = "src/test/config/not-default.properties";
 	private static String DEFALUT_CONFIG_PATH = "src/test/config/default.properties";
 	private static String INCONSISTENT_CONFIG_PATH = "src/test/config/inconsistent.properties";
+	private static String ORACLE_CONFIG_PATH = "src/test/config/oracle.properties";
 
 
 	/**
@@ -62,6 +64,23 @@ class ConfigTest {
 			});
 		}
 	}
+
+	/**
+	 * フィールドdbmsに期待した値がセットされることのテスト
+	 * @throws IOException
+	 */
+	@Test
+	void fieldDbmsTest() throws IOException {
+		Config config;
+
+		config = Config.getConfig();
+		assertEquals(Dbms.POSTGRE_SQL, config.dbms);
+		config = Config.getConfig(new String[]{ORACLE_CONFIG_PATH});
+		assertEquals(Dbms.ORACLE, config.dbms);
+		config = Config.getConfig(new String[]{NOT_DEFALUT_CONFIG_PATH});
+		assertEquals(Dbms.OTHER, config.dbms);
+	}
+
 
 	/**
 	 * パラメータの指定に矛盾がある設定ファイルを指定したときのテスト
@@ -211,10 +230,11 @@ class ConfigTest {
 		assertEquals(false, config.sharedConnection);
 
 		/* JDBCに関するパラメータ*/
-		assertEquals("jdbc:postgresql://127.0.0.1/mydatabase", config.url);
+		assertEquals("jdbc:other://127.0.0.1/mydatabase", config.url);
 		assertEquals("myuser", config.user);
 		assertEquals("mypassword", config.password);
 		assertEquals(Connection.TRANSACTION_SERIALIZABLE, config.isolationLevel);
+		assertEquals(Dbms.OTHER, config.dbms);
 
 		// toStringのチェック
 		Path path = Paths.get(NOT_DEFALUT_CONFIG_PATH);
