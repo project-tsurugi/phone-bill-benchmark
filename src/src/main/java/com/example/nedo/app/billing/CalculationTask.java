@@ -81,9 +81,10 @@ public class CalculationTask implements Callable<Exception> {
 						doCalc(target);
 						break;
 					} catch (SQLException e) {
-						if (DBUtils.isRetriableSQLException(e)) {
+						if (DBUtils.isRetriableSQLException(e)
+								&& config.transactionScope == TransactionScope.CONTRACT) {
 							LOG.debug("Calculation task caught a retriable exception, ErrorCode = {}, SQLStatus = {}.",
-								e.getErrorCode(), e.getSQLState(), e);
+									e.getErrorCode(), e.getSQLState(), e);
 							conn.rollback();
 						} else {
 							throw e;
