@@ -11,12 +11,13 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 
-import oracle.ucp.jdbc.PoolDataSource;
-import oracle.ucp.jdbc.PoolDataSourceFactory;
-
 import org.postgresql.util.PSQLException;
 
 import com.example.nedo.app.Config;
+import com.example.nedo.app.Config.Dbms;
+
+import oracle.ucp.jdbc.PoolDataSource;
+import oracle.ucp.jdbc.PoolDataSourceFactory;
 
 public class DBUtils {
 	/**
@@ -30,7 +31,7 @@ public class DBUtils {
 	public static Connection getConnection(Config config) {
         Connection conn;
 		try {
-			if (config.url.startsWith("jdbc:oracle")) {
+			if (config.dbms == Dbms.ORACLE) {
 				PoolDataSource pds = PoolDataSourceFactory.getPoolDataSource();
 				pds.setConnectionFactoryClassName("oracle.jdbc.pool.OracleDataSource");
 				pds.setURL(config.url);

@@ -4,11 +4,11 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Locale;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.example.nedo.app.Config.Dbms;
 import com.example.nedo.app.billing.PhoneBill;
 import com.example.nedo.db.DBUtils;
 import com.example.nedo.testdata.CreateTestData;
@@ -109,7 +109,7 @@ public class OnlineAppBench implements ExecutableCommand {
 
 
 	private void afterExec(Config config) throws SQLException {
-		boolean isOracle = config.url.toLowerCase(Locale.JAPANESE).contains("oracle");
+		boolean isOracle = config.dbms == Dbms.ORACLE;
 		try (Connection conn = DBUtils.getConnection(config);
 				Statement stmt = conn.createStatement()) {
 			conn.setAutoCommit(true);

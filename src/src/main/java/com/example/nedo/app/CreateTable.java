@@ -3,8 +3,8 @@ package com.example.nedo.app;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Locale;
 
+import com.example.nedo.app.Config.Dbms;
 import com.example.nedo.db.DBUtils;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -20,7 +20,7 @@ public class CreateTable implements ExecutableCommand{
 
 	@Override
 	public void execute(Config config) throws Exception {
-		isOracle = config.url.toLowerCase(Locale.JAPANESE).contains("oracle");
+		isOracle = config.dbms == Dbms.ORACLE;
 		try (Connection conn = DBUtils.getConnection(config);
 				Statement stmt = conn.createStatement()) {
 			conn.setAutoCommit(true);
