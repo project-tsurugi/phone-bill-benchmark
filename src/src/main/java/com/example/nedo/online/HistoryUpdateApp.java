@@ -75,7 +75,8 @@ public class HistoryUpdateApp extends AbstractOnlineApp {
 				+ " where c.start_date < h.start_time and"
 				+ " (h.start_time < c.end_date + 1"
 				+ " or c.end_date is null)"
-				+ " and c.phone_number = ? and c.start_date = ?";
+				+ " and c.phone_number = ? and c.start_date = ?"
+				+ " order by h.start_time";
 		Connection conn = getConnection();
 		try (PreparedStatement ps = conn.prepareStatement(sql)) {
 			ps.setString(1, key.phoneNumber);

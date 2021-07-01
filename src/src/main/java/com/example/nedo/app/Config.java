@@ -268,14 +268,14 @@ public class Config implements Cloneable {
 
 		// JDBCに関するパラメータ
 		url = getString(URL, "jdbc:postgresql://127.0.0.1/phonebill");
-		if (url.toLowerCase().contains("oracle")) {
+		if (url.toLowerCase(Locale.JAPAN).contains("oracle")) {
 			dbms = Dbms.ORACLE;
-		} else if (url.toLowerCase().contains("postgresql")) {
+		} else if (url.toLowerCase(Locale.JAPAN).contains("postgresql")) {
 			dbms = Dbms.POSTGRE_SQL;
 		} else {
 			dbms = Dbms.OTHER;
 		}
-		
+
 		//		 url = getString(URL, "jdbc:oracle:thin:@localhost:1521:ORCL");
 		user = getString(USER, "phonebill");
 		password = getString(PASSWORD, "phonebill");

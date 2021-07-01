@@ -10,6 +10,8 @@ import com.example.nedo.app.Config;
 import com.example.nedo.app.ExecutableCommand;
 import com.example.nedo.db.DBUtils;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 public class CreateTestData implements ExecutableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(CreateTestData.class);
 
@@ -21,6 +23,7 @@ public class CreateTestData implements ExecutableCommand {
 
 
 	@Override
+	@SuppressFBWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
 	public void execute(Config c) throws Exception {
 		// テストデータの作成時は、configの指定にかかわらずTRANSACTION_READ_COMMITTEDを使用する。
 		Config config = c.clone();
@@ -52,5 +55,30 @@ public class CreateTestData implements ExecutableCommand {
 		elapsedTime = System.currentTimeMillis() - startTime;
 		format = "%,d records generated to history table in %,.3f sec ";
 		LOG.info(String.format(format, config.numberOfHistoryRecords, elapsedTime / 1000d));
+
+		// 統計情報を更新する
+		startTime = System.currentTimeMillis();
+		try (Connection conn = DBUtils.getConnection(config);
+				Statement stmt = conn.createStatement()) {
+			switch (config.dbms) {
+			case ORACLE:
+				stmt.executeUpdate("{call DBMS_STATS.GATHER_SCHEMA_STATS(ownname => '" + config.user
+						+ "', cascade => TRUE, no_invalidate => TRUE)}");
+				break;
+			case POSTGRE_SQL:
+				stmt.executeUpdate("analyze history");
+				stmt.executeUpdate("analyze contracts");
+				break;
+			case OTHER:
+				// なにもしない
+				break;
+			default:
+				throw new AssertionError();
+			}
+			conn.commit();
+		}
+		elapsedTime = System.currentTimeMillis() - startTime;
+		format = "Update statistic in %,.3f sec ";
+		LOG.info(String.format(format, elapsedTime / 1000d));
 	}
 }
