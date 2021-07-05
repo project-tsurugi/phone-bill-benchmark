@@ -70,14 +70,19 @@ class ConfigTest {
 	 * @throws IOException
 	 */
 	@Test
-	void fieldDbmsTest() throws IOException {
+	void dbmsFieldTest() throws IOException {
 		Config config;
 
 		config = Config.getConfig();
+		System.out.println(config.url + ":" + config.dbms);
 		assertEquals(Dbms.POSTGRE_SQL, config.dbms);
+
 		config = Config.getConfig(new String[]{ORACLE_CONFIG_PATH});
+		System.out.println(config.url + ":" + config.dbms);
 		assertEquals(Dbms.ORACLE, config.dbms);
+
 		config = Config.getConfig(new String[]{NOT_DEFALUT_CONFIG_PATH});
+		System.out.println(config.url + ":" + config.dbms);
 		assertEquals(Dbms.OTHER, config.dbms);
 	}
 
