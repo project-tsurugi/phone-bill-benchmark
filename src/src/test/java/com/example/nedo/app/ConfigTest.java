@@ -14,6 +14,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.example.nedo.app.Config.Dbms;
@@ -27,6 +29,25 @@ class ConfigTest {
 	private static String INCONSISTENT_CONFIG_PATH = "src/test/config/inconsistent.properties";
 	private static String ORACLE_CONFIG_PATH = "src/test/config/oracle.properties";
 
+	private Map<String, String> sysPropBackup = new HashMap<String, String>();
+
+	@AfterEach
+	private void sysPropBackup() {
+		// phone-bill.プレフィックスを持つシステムプロパティはテスト実行前に除外し、テスト終了時に元に戻す
+		sysPropBackup.keySet().stream().forEach(k -> {
+			System.setProperty(k, sysPropBackup.get(k));
+		});
+	}
+
+	@BeforeEach
+	private void sysPropRestore() {
+		System.getProperties().stringPropertyNames().stream()
+				.filter(k -> k.startsWith("phone-bill."))
+				.forEach(k -> {
+					sysPropBackup.put(k, System.getProperty(k));
+					System.clearProperty(k);
+				});
+	}
 
 	/**
 	 * 設定ファイルを指定しないケースのテスト
@@ -37,33 +58,20 @@ class ConfigTest {
 	 */
 	@Test
 	void test() throws IOException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
-		// phone-bill.プレフィックスを持つシステムプロパティはテスト実行前に除外し、テスト終了時に元に戻す
-		Map<String, String> sysPropBackup = new HashMap<String, String>();
-		System.getProperties().stringPropertyNames().stream()
-			.filter(k -> k.startsWith("phone-bill."))
-			.forEach(k -> {
-				sysPropBackup.put(k, System.getProperty(k));
-				System.clearProperty(k);
-			});
-		try {
-			Config defaultConfig = Config.getConfig();
-			checkDefault(defaultConfig);
+		Config defaultConfig = Config.getConfig();
+		checkDefault(defaultConfig);
 
-			String[] args = { NOT_DEFALUT_CONFIG_PATH };
-			Config config = Config.getConfig(args);
-			checkConfig(config);
+		String[] args = { NOT_DEFALUT_CONFIG_PATH };
+		Config config = Config.getConfig(args);
+		checkConfig(config);
 
-			// 引数なしのgetConfig()と空配列を引数に持つgetConfig(String[])は同じ結果を返す
-			assertEqualsIgnoreLineSeparator(defaultConfig.toString(), Config.getConfig(new String[0]).toString());
+		// 引数なしのgetConfig()と空配列を引数に持つgetConfig(String[])は同じ結果を返す
+		assertEqualsIgnoreLineSeparator(defaultConfig.toString(), Config.getConfig(new String[0]).toString());
 
-			// テストケースの作成漏れ確認のため、configにデフォルト値以外が指定されていることを確認する
-			checkDifferent(defaultConfig, config);
-		} finally {
-			sysPropBackup.keySet().stream().forEach(k -> {
-				System.setProperty(k, sysPropBackup.get(k));
-			});
-		}
+		// テストケースの作成漏れ確認のため、configにデフォルト値以外が指定されていることを確認する
+		checkDifferent(defaultConfig, config);
 	}
+
 
 	/**
 	 * フィールドdbmsに期待した値がセットされることのテスト
