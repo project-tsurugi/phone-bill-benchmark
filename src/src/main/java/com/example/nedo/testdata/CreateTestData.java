@@ -56,7 +56,7 @@ public class CreateTestData implements ExecutableCommand {
 		format = "%,d records generated to history table in %,.3f sec ";
 		LOG.info(String.format(format, config.numberOfHistoryRecords, elapsedTime / 1000d));
 
-		// 統計情報を更新する
+		// DBMSの統計情報を更新する
 		startTime = System.currentTimeMillis();
 		try (Connection conn = DBUtils.getConnection(config);
 				Statement stmt = conn.createStatement()) {
@@ -80,5 +80,8 @@ public class CreateTestData implements ExecutableCommand {
 		elapsedTime = System.currentTimeMillis() - startTime;
 		format = "Update statistic in %,.3f sec ";
 		LOG.info(String.format(format, elapsedTime / 1000d));
+
+		String report = generator.getStatistics().getReport();
+		LOG.info(report);
 	}
 }

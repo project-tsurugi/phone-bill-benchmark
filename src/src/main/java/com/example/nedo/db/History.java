@@ -16,9 +16,9 @@ public class History implements Cloneable{
 	/**
 	 * 料金区分(発信者負担(C)、受信社負担(R))
 	 */
+	public String paymentCategorty; // TODO enumにする
 
-	public String paymentCategorty;
-	 /**
+	/**
 	 * 通話開始時刻
 	 */
 

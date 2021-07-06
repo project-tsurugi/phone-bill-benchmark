@@ -77,8 +77,8 @@ public abstract class AbstractOnlineApp implements Runnable{
 				break;
 			} catch (SQLException e) {
 				if (DBUtils.isRetriableSQLException(e)) {
-					LOG.debug("HistoryInsertApp caught a retriable exception, ErrorCode = {}, SQLStatus = {}.",
-							e.getErrorCode(), e.getSQLState(), e);
+					LOG.debug("{} caught a retriable exception, ErrorCode = {}, SQLStatus = {}.",
+							this.getClass().getName(), e.getErrorCode(), e.getSQLState(), e);
 					conn.rollback();
 				} else {
 					throw e;
@@ -203,6 +203,4 @@ public abstract class AbstractOnlineApp implements Runnable{
 	protected Connection getConnection() {
 		return conn;
 	}
-
-
 }

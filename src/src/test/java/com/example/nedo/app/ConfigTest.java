@@ -32,7 +32,7 @@ class ConfigTest {
 	private Map<String, String> sysPropBackup = new HashMap<String, String>();
 
 	@AfterEach
-	private void sysPropBackup() {
+	void sysPropBackup() {
 		// phone-bill.プレフィックスを持つシステムプロパティはテスト実行前に除外し、テスト終了時に元に戻す
 		sysPropBackup.keySet().stream().forEach(k -> {
 			System.setProperty(k, sysPropBackup.get(k));
@@ -40,7 +40,7 @@ class ConfigTest {
 	}
 
 	@BeforeEach
-	private void sysPropRestore() {
+	void sysPropRestore() {
 		System.getProperties().stringPropertyNames().stream()
 				.filter(k -> k.startsWith("phone-bill."))
 				.forEach(k -> {
@@ -50,7 +50,6 @@ class ConfigTest {
 	}
 
 	/**
-	 * 設定ファイルを指定しないケースのテスト
 	 * @throws IOException
 	 * @throws NoSuchMethodException
 	 * @throws InvocationTargetException
@@ -58,9 +57,11 @@ class ConfigTest {
 	 */
 	@Test
 	void test() throws IOException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+		// 設定ファイルを指定しないケースのテスト
 		Config defaultConfig = Config.getConfig();
 		checkDefault(defaultConfig);
 
+		// デフォルト値以外が設定されている設定ファイルを指定したケース
 		String[] args = { NOT_DEFALUT_CONFIG_PATH };
 		Config config = Config.getConfig(args);
 		checkConfig(config);
@@ -167,13 +168,14 @@ class ConfigTest {
 		assertEquals(DistributionFunction.UNIFORM, config.callerPhoneNumberDistribution);
 		assertEquals(DistributionFunction.UNIFORM, config.recipientPhoneNumberDistribution);
 		assertEquals(DistributionFunction.UNIFORM, config.callTimeDistribution);
-		assertEquals(0d, config.callerPhoneNumberScale);
-		assertEquals(0d, config.recipientPhoneNumberScale);
+		assertEquals(3d, config.callerPhoneNumberScale);
+		assertEquals(3d, config.recipientPhoneNumberScale);
 		assertEquals(4.5d, config.callTimeScale);
-		assertEquals(1d, config.callerPhoneNumberShape);
-		assertEquals(1d, config.recipientPhoneNumberShape);
+		assertEquals(18d, config.callerPhoneNumberShape);
+		assertEquals(18d, config.recipientPhoneNumberShape);
 		assertEquals(1.5d, config.callTimeShape);
 		assertEquals(3600, config.maxCallTimeSecs);
+		assertEquals(null, config.statisticsOutputDir);
 
 		/* JDBCに関するパラメータ*/
 		assertEquals("jdbc:postgresql://127.0.0.1/phonebill", config.url);
@@ -233,6 +235,7 @@ class ConfigTest {
 		assertEquals(2.5d, config.recipientPhoneNumberShape);
 		assertEquals(8.5d, config.callTimeShape);
 		assertEquals(1192, config.maxCallTimeSecs);
+		assertEquals("/tmp/statistics", config.statisticsOutputDir);
 
 		/* その他のパラメータ */
 		assertEquals(1969, config.randomSeed);

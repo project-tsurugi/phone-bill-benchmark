@@ -1,5 +1,6 @@
 package com.example.nedo.testdata;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
@@ -20,6 +21,20 @@ import com.example.nedo.db.Duration;
 import com.example.nedo.db.History;
 
 public class TestDataGenerator {
+	/**
+	 * 統計情報
+	 */
+	private Statistics statistics;
+
+	/**
+	 * trueのときにDBに書き込まず統計情報の更新のみを行うフラグ
+	 */
+	private boolean statisticsOnly;
+
+
+	/**
+	 * コンフィグレーション
+	 */
 	private Config config;
 
 	/**
@@ -36,7 +51,6 @@ public class TestDataGenerator {
 	 * 一度にインサートする行数
 	 */
 	private static final int SQL_BATCH_EXEC_SIZE = 300000;
-
 	/**
 	 * 契約マスタにレコードをインサートするためのSQL
 	 */
@@ -73,9 +87,6 @@ public class TestDataGenerator {
 	 * 受信者電話番号のSelector
 	 */
 	private PhoneNumberSelector recipientPhoneNumberSelector;
-
-
-
 
 	/**
 	 * テストデータ生成のためのパラメータを指定してContractsGeneratorのインスタンスを生成する.
@@ -204,18 +215,22 @@ public class TestDataGenerator {
 	 * @param maxDate
 	 * @param n 生成するレコード数
 	 * @throws SQLException
+	 * @throws IOException
 	 */
-	public void generateHistory(Date minDate, Date maxDate, int n) throws SQLException {
+	public void generateHistory(Date minDate, Date maxDate, int n) throws SQLException, IOException {
 		if (!isValidDurationList(durationList, minDate, maxDate)) {
 			throw new RuntimeException("Invalid duration list.");
 		}
 
 		Duration targetDuration = new Duration(minDate, maxDate);
 		List<History> histories = new ArrayList<History>(SQL_BATCH_EXEC_SIZE);
+		statistics = new Statistics(minDate, maxDate);
 
 		try (Connection conn = DBUtils.getConnection(config)) {
 			for (int i = 0; i < n; i++) {
-				histories.add(createHistoryRecord(targetDuration));
+				History h = createHistoryRecord(targetDuration);
+				statistics.addHistoy(h);
+				histories.add(h);
 				if (histories.size() >= SQL_BATCH_EXEC_SIZE) {
 					insrtHistories(conn, histories);
 					histories.clear();
@@ -326,14 +341,16 @@ public class TestDataGenerator {
 	}
 
 	private void execBatch(PreparedStatement ps) throws SQLException {
-		int rets[] = ps.executeBatch();
-		for (int ret : rets) {
-			if (ret < 0 && ret != PreparedStatement.SUCCESS_NO_INFO) {
-				throw new SQLException("Fail to batch exexecute");
+		if (!statisticsOnly) {
+			int rets[] = ps.executeBatch();
+			for (int ret : rets) {
+				if (ret < 0 && ret != PreparedStatement.SUCCESS_NO_INFO) {
+					throw new SQLException("Fail to batch exexecute");
+				}
 			}
+			ps.getConnection().commit();
+			ps.clearBatch();
 		}
-		ps.getConnection().commit();
-		ps.clearBatch();
 	}
 
 	/**
@@ -452,6 +469,21 @@ public class TestDataGenerator {
 			return getPhoneNumber(n);
 		}
 	}
+
+	/**
+	 * @return statistics
+	 */
+	protected Statistics getStatistics() {
+		return statistics;
+	}
+
+	/**
+	 * @param statisticsOnly セットする statisticsOnly
+	 */
+	protected void setStatisticsOnly(boolean statisticsOnly) {
+		this.statisticsOnly = statisticsOnly;
+	}
+
 }
 
 

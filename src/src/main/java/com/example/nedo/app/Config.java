@@ -134,6 +134,11 @@ public class Config implements Cloneable {
 	public int maxCallTimeSecs;
 	private static final String MAX_CALL_TIME_SECS = "max.call.time.secs";
 
+	/**
+	 * 統計情報を出力するディレクトリのパス
+	 */
+	public String statisticsOutputDir;
+	private static final String STATISTICS_OUTPUT_DIR = "statistics.output.dir";
 
 	/* オンラインアプリケーションに関するパラメータ */
 
@@ -166,8 +171,6 @@ public class Config implements Cloneable {
 	 */
 	public int historyInsertRecordsPerTransaction;
 	private static final String HISTORY_INSERT_RECORDS_PER_TRANSACTION = "history.insert.records.per.transaction";
-
-
 
 	/* jdbcのパラメータ */
 	public String url;
@@ -256,15 +259,16 @@ public class Config implements Cloneable {
 		// 通話履歴生成に関するパラメータ
 		numberOfHistoryRecords = getInt(NUMBER_OF_HISTORY_RECORDS, 1000);
 		callerPhoneNumberDistribution = getDistributionFunction(CALLER_PHONE_NUMBER_DISTRIBUTION, DistributionFunction.UNIFORM);
-		callerPhoneNumberScale = getDouble(CALLER_PHONE_NUMBER_SCALE, 0);
-		callerPhoneNumberShape = getDouble(CALLER_PHONE_NUMBER_SHAPE, 1);
+		callerPhoneNumberScale = getDouble(CALLER_PHONE_NUMBER_SCALE, 3);
+		callerPhoneNumberShape = getDouble(CALLER_PHONE_NUMBER_SHAPE, 18);
 		recipientPhoneNumberDistribution = getDistributionFunction(RECIPIENT_PHONE_NUMBER_DISTRIBUTION, DistributionFunction.UNIFORM);
-		recipientPhoneNumberScale = getDouble(RECIPIENT_PHONE_NUMBER_SCALE, 0d);
-		recipientPhoneNumberShape = getDouble(RECIPIENT_PHONE_NUMBER_SHAPE, 1d);
+		recipientPhoneNumberScale = getDouble(RECIPIENT_PHONE_NUMBER_SCALE, 3d);
+		recipientPhoneNumberShape = getDouble(RECIPIENT_PHONE_NUMBER_SHAPE, 18d);
 		callTimeDistribution = getDistributionFunction(CALL_TIME_DISTRIBUTION, DistributionFunction.UNIFORM);
 		callTimeScale = getDouble(CALL_TIME_SCALE, 4.5d);
 		callTimeShape = getDouble(CALL_TIME_SHAPE, 1.5d);
 		maxCallTimeSecs = getInt(MAX_CALL_TIME_SECS, 3600);
+		statisticsOutputDir  = getString(STATISTICS_OUTPUT_DIR, null);
 
 		// JDBCに関するパラメータ
 		url = getString(URL, "jdbc:postgresql://127.0.0.1/phonebill");
@@ -276,7 +280,6 @@ public class Config implements Cloneable {
 			dbms = Dbms.OTHER;
 		}
 
-		//		 url = getString(URL, "jdbc:oracle:thin:@localhost:1521:ORCL");
 		user = getString(USER, "phonebill");
 		password = getString(PASSWORD, "phonebill");
 		isolationLevel = getIsolationLevel(ISOLATION_LEVEL, Connection.TRANSACTION_READ_COMMITTED);
@@ -464,11 +467,14 @@ public class Config implements Cloneable {
 	 * @return
 	 */
 	private String getString(String key, String defaultValue) {
-		String value = defaultValue;
 		if (prop.containsKey(key)) {
-			value = prop.getProperty(key);
+			String value = prop.getProperty(key);
+			if (value.length() == 0) {
+				return defaultValue;
+			}
+			return value;
 		}
-		return value;
+		return defaultValue;
 	}
 
 	/**
@@ -538,6 +544,8 @@ public class Config implements Cloneable {
 		sb.append(String.format(format, CALL_TIME_SCALE, callTimeScale));
 		sb.append(String.format(format, CALL_TIME_SHAPE, callTimeShape));
 		sb.append(String.format(format, MAX_CALL_TIME_SECS, maxCallTimeSecs));
+		sb.append(String.format(format, STATISTICS_OUTPUT_DIR, statisticsOutputDir == null ? "" : statisticsOutputDir));
+
 		sb.append(System.lineSeparator());
 		sb.append(String.format(commentFormat, "JDBCに関するパラメータ"));
 		sb.append(String.format(format, URL, url));

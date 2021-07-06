@@ -19,6 +19,11 @@ class LogNormalPhoneNumberSelectorTest {
 	void testGetContractPos() throws IOException {
 		Config config = Config.getConfig();
 		config.numberOfContractsRecords = 12;
+		config.callerPhoneNumberScale=0;
+		config.recipientPhoneNumberScale=0;
+		config.callerPhoneNumberShape=1;
+		config.recipientPhoneNumberShape=1;
+
 		TestDataGenerator generator = new TestDataGenerator(config);
 
 		ContractReader contractReader = generator.new ContractReaderImpl();
