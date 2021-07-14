@@ -42,6 +42,9 @@ public class CreateTable implements ExecutableCommand{
 				+ "df integer not null," 							// 論理削除フラグ
 				+ "constraint history_pkey primary key(caller_phone_number, start_time)"
 				+ ")";
+		if (isOracle) {
+			create_table = create_table + "initrans 30";
+		}
 		stmt.execute(create_table);
 
 		String create_index_df = "create index idx_df on history(df)";
