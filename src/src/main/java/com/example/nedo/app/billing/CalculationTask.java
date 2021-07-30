@@ -121,8 +121,10 @@ public class CalculationTask implements Callable<Exception> {
 				+ "  or (recipient_phone_number = ? and payment_categorty = 'R'))"
 				+ " and df = 0";
 
-		try (PreparedStatement ps = conn.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY,
-				ResultSet.CONCUR_UPDATABLE)) {
+		String updateSql = "update history set charge = ? where caller_phone_number = ? and start_time = ?";
+
+		try (
+			PreparedStatement ps = conn.prepareStatement(sql)) {
 			ps.setDate(1, start);
 			ps.setDate(2, DBUtils.nextDate(end));
 			ps.setString(3, contract.phoneNumber);
@@ -134,8 +136,12 @@ public class CalculationTask implements Callable<Exception> {
 						throw new RuntimeException("Negative time: " + time);
 					}
 					int callCharge = callChargeCalculator.calc(time);
-					rs.updateInt("charge", callCharge);
-					rs.updateRow();
+					try (PreparedStatement ps2 = conn.prepareStatement(updateSql)) {
+						ps2.setInt(1, callCharge);
+						ps2.setString(2, rs.getString("caller_phone_number"));
+						ps2.setTimestamp(3, rs.getTimestamp("start_time"));
+						ps2.executeUpdate();
+					}
 					billingCalculator.addCallCharge(callCharge);
 				}
 			}
