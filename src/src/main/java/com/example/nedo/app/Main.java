@@ -15,8 +15,8 @@ public class Main {
 		addCommand("CreateTestData","Create test data", new CreateTestData());
 		addCommand("PhoneBill", "Execute phone bill batch.", new PhoneBill());
 		addCommand("ThreadBench", "Execute PhonBill with multiple thread counts", new ThreadBench());
-		addCommand("OnlineAppBench", "Execute PhonBill with and without online appications.", new OnlineAppBench());
-		addCommand("TestDataStatistics", "Create test data statistics without testdata.", new TestDataStatistics());
+		addCommand("OnlineAppBench", "Execute PhonBill with and without online applications.", new OnlineAppBench());
+		addCommand("TestDataStatistics", "Create test data statistics without test data.", new TestDataStatistics());
 	}
 
 	public static void main(String[] args) throws Exception {

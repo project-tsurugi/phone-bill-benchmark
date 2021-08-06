@@ -50,7 +50,8 @@ COMMAND: Following commands available
   CreateTestData : Create test data
   PhoneBill : Execute phone bill batch.
   ThreadBench : Execute PhonBill with multiple thread counts
-  OnlineAppBench : Execute PhonBill with and without online appications.
+  OnlineAppBench : Execute PhonBill with and without online applications.
+  TestDataStatistics: Create test data statistics without test data.
 
 FILE: The filename of the configuration file, if not specified, the default value is used.
 ```
@@ -73,6 +74,17 @@ max.date=2021-03-01
 
 # 通話履歴生成に関するパラメータ
 number.of.history.records=1000
+recipient.phone.number.distribution=UNIFORM
+recipient.phone.number.scale=3.0
+recipient.phone.number.shape=18.0
+caller.phone.number.distribution=UNIFORM
+caller.phone.number.scale=3.0
+caller.phone.number.shape=18.0
+call.time.distribution=UNIFORM
+call.time.scale=4.5
+call.time.shape=1.5
+max.call.time.secs=3600
+statistics.output.dir=
 
 # JDBCに関するパラメータ
 url=jdbc:postgresql://127.0.0.1/phonebill
@@ -82,7 +94,7 @@ isolation.level=READ_COMMITTED
 
 # オンラインアプリケーションに関するパラメータ
 master.update.records.per.min=0
-master.insert.reccrds.per.min=0
+master.insert.records.per.min=0
 history.update.records.per.min=0
 history.insert.transaction.per.min=0
 history.insert.records.per.transaction=1
@@ -117,6 +129,28 @@ transaction.scope=WHOLE
 
 * number.of.history.records
   - 通話履歴のレコード数
+* recipient.phone.number.distribution
+  - 受信者電話番号生成時に使用する分布関数、`UNIFORM`と`LOGNORMAL`のみが指定可能
+* recipient.phone.number.scale
+  - 受信者電話番号生成時に使用する分布関数の指定が`LOGNORMAL`の場合に使用するscaleの値
+* recipient.phone.number.shape
+  - 受信者電話番号生成時に使用する分布関数の指定が`LOGNORMAL`の場合に使用するshapeの値
+* caller.phone.number.distribution
+  - 発信者電話番号生成時に使用する分布関数、`UNIFORM`と`LOGNORMAL`のみが指定可能
+* caller.phone.number.scale
+  - 発信者電話番号生成時に使用する分布関数の指定が`LOGNORMAL`の場合に使用するscaleの値
+* caller.phone.number.shape
+  - 発信者電話番号生成時に使用する分布関数の指定が`LOGNORMAL`の場合に使用するshapeの値
+* call.time.distribution
+  - 通話時間生成時に使用する分布関数、`UNIFORM`と`LOGNORMAL`のみが指定可能
+* call.time.scale
+  - 通話時間生成時に使用する分布関数の指定が`LOGNORMAL`の場合に使用するscaleの値
+* call.time.shape
+  - 通話時間生成時に使用する分布関数の指定が`LOGNORMAL`の場合に使用するshapeの値
+* max.call.time.secs
+  - 通話時間生成時の最大値
+* statistics.output.dir
+  - 統計情報を出力するディレクトリ、ここで指定したディレクトリに統計情報ファイルを出力する。このパラメータを指定しない場合は統計情報ファイルを出力しない。
 
 ### JDBCに関するパラメータ
 * url
@@ -178,10 +212,43 @@ phone-bill/bin/run CreateTable config.properties
 ./phone-bill/bin/run PhoneBill config.properties
 ```
 
-### 注意点
+## 分布関数の指定
+
+### 分布関数について
+
+通話履歴の生成時に、発信者電話番号、受信者電話番号、通話時間の生成に用いる分布関数を指定可能です。
+
+分布関数に`LOGNORMAL`を指定すると、分布関数に`org.apache.commons.math3.distribution LogNormalDistribution`が使用されます。Cconfigで指定された`scale`と`shape`の値は、`org.apache.commons.math3.distribution LogNormalDistribution`に渡されます。作成したいテストデータの性質に合致したshapeとscaleを指定してください。
+
+分館数に`UNIFORM`を指定すると、一様な乱数を生成する乱数生成器`Java.util.Random`が使用されます。`scale`と`shape`の値は
+無視されます。
+
+発信者電話番号、受信者電話番号のどちらか、または両方の分布関数に`LOGNORMAL`を指定すると、
+契約に紐付く通話履歴数が契約により大きなばらつきがあるテストデータを生成できます。`transaction.scope=CONTRACT`
+を指定するとトランザクションの大きさに大きなあるケースのテストを実行できます。
+
+### 統計情報出力
+
+生成したテストデータが意図した分布になっているかの確認のために統計情報を出力します。
+
+テストデータ生成時に通話時間、発信者電話番号、受信者電話番号について以下の情報をログに出力します
+
+* 生成した値の数
+* 生成した値の最大値、最小値
+* 生成した値の出現頻度(以降単に頻度と記述)の平均値(相加平均)
+* 頻度が大きい値のTOP10
+* 頻度が小さい値のTOP10
+  
+テストデータを生成するコマンド`CreateTestData`の代わりにコマンドを`TestDataStatistics`
+実行すると、テストデータを生成せずに統計情報の出力します。また、コマンド`TestDataStatistics`
+実行時に、Configの`statistics.output.dir`で指定したディレクトリの下に`statistics`という
+名前のディレクトリを作成し、通話時間と電話番号それぞれについて、生成したすべての値と頻度を記録した
+CSVファイルを出力します。
+
+## 注意点
 
 * サンプルバッチを複数回実行する場合、実行の前に都度テストデータの生成を行って
 下さい。テストデータの生成を行わずに、複数回バッチを実行すると、バッチの実行によりデータが書き換わるため、1回目の実行と2回目の条件が変わってしまいます。特に、オンラインアプリケーションにより大量にデータを追加した場合、処理時間が大幅に増えることがあります。
 * テストデータの生成を行うと、通話履歴テーブルと契約マスタの既存データは削除されます。月額利用料金テーブルのデータは削除されずそのまま残ります。
-
+* 分布関数に`UNIFORM`を指定しても、電話番号の頻度に大きなばらつきがあるように見えます。これは当該電話番号の契約期間の長短により電話番号の選択可能性が変わり、電話番号の頻度は電話番号の選択可能性に依存するためです。
 
