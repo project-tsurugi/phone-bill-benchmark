@@ -114,37 +114,36 @@ public class CalculationTask implements Callable<Exception> {
 		CallChargeCalculator callChargeCalculator = target.getCallChargeCalculator();
 		BillingCalculator billingCalculator = target.getBillingCalculator();
 
-		String sql = "select caller_phone_number, start_time, time_secs, charge"
+		String sqlSelect = "select caller_phone_number, start_time, time_secs, charge"
 				+ " from history "
 				+ "where start_time >= ? and start_time < ?"
 				+ " and ((caller_phone_number = ? and payment_categorty = 'C') "
 				+ "  or (recipient_phone_number = ? and payment_categorty = 'R'))"
 				+ " and df = 0";
 
-		String updateSql = "update history set charge = ? where caller_phone_number = ? and start_time = ?";
+		String sqlUpdate = "update history set charge = ? where caller_phone_number = ? and start_time = ?";
 
-		try (
-			PreparedStatement ps = conn.prepareStatement(sql)) {
-			ps.setDate(1, start);
-			ps.setDate(2, DBUtils.nextDate(end));
-			ps.setString(3, contract.phoneNumber);
-			ps.setString(4, contract.phoneNumber);
-			try (ResultSet rs = ps.executeQuery()) {
+		try (PreparedStatement psSelect = conn.prepareStatement(sqlSelect);
+				PreparedStatement psUpdate = conn.prepareStatement(sqlUpdate)) {
+			psSelect.setDate(1, start);
+			psSelect.setDate(2, DBUtils.nextDate(end));
+			psSelect.setString(3, contract.phoneNumber);
+			psSelect.setString(4, contract.phoneNumber);
+			try (ResultSet rs = psSelect.executeQuery()) {
 				while (rs.next()) {
 					int time = rs.getInt("time_secs"); // 通話時間を取得
 					if (time < 0) {
 						throw new RuntimeException("Negative time: " + time);
 					}
 					int callCharge = callChargeCalculator.calc(time);
-					try (PreparedStatement ps2 = conn.prepareStatement(updateSql)) {
-						ps2.setInt(1, callCharge);
-						ps2.setString(2, rs.getString("caller_phone_number"));
-						ps2.setTimestamp(3, rs.getTimestamp("start_time"));
-						ps2.executeUpdate();
-					}
+					psUpdate.setInt(1, callCharge);
+					psUpdate.setString(2, rs.getString("caller_phone_number"));
+					psUpdate.setTimestamp(3, rs.getTimestamp("start_time"));
+					psUpdate.addBatch();
 					billingCalculator.addCallCharge(callCharge);
 				}
 			}
+			psUpdate.executeBatch();
 		}
 		updateBilling(conn, contract, billingCalculator, start);
 		if (config.transactionScope == TransactionScope.CONTRACT) {
