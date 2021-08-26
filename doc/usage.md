@@ -103,6 +103,9 @@ history.insert.records.per.transaction=1
 thread.count=1
 shared.connection=true
 
+# Oracle固有のパラメータ
+oracle.initrans=0
+
 # その他のパラメータ
 random.seed=0
 transaction.scope=WHOLE
@@ -181,10 +184,18 @@ transaction.scope=WHOLE
 指定したレコード数の通話履歴を追加する。
 
 ### スレッドに関するパラメータ
-* thread.count=1
+* thread.count
   - 電話料金計算処理のスレッドのスレッド数
-* shared.connection=true
+* shared.connection
   - true/falseで指定する。trueのとき電話料金計算処理の各スレッド間でコネクションを共有する。
+
+### Oracle固有のパラメータ
+
+* oracle.initrans
+  - Oracleでテーブル生成するときにのみ使用される
+  - historyテーブル生成時のinitransの値を指定する
+  - デフォルト値は0
+  - 0を指定した場合、テーブル生成時にinitransを指定しない。この場合、initransの値はOracleのデフォルト値になる。
 
 ### その他のパラメータ
 * random.seed=0

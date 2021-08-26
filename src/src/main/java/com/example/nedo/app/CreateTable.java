@@ -11,6 +11,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public class CreateTable implements ExecutableCommand{
 	private boolean isOracle;
+	private Config config;
 
 	public static void main(String[] args) throws Exception {
 		Config config = Config.getConfig(args);
@@ -20,6 +21,7 @@ public class CreateTable implements ExecutableCommand{
 
 	@Override
 	public void execute(Config config) throws Exception {
+		this.config = config;
 		isOracle = config.dbms == Dbms.ORACLE;
 		try (Connection conn = DBUtils.getConnection(config);
 				Statement stmt = conn.createStatement()) {
@@ -42,8 +44,8 @@ public class CreateTable implements ExecutableCommand{
 				+ "df integer not null," 							// 論理削除フラグ
 				+ "constraint history_pkey primary key(caller_phone_number, start_time)"
 				+ ")";
-		if (isOracle) {
-			create_table = create_table + "initrans 30";
+		if (isOracle && config.oracleInitran != 0) {
+			create_table = create_table + "initrans " + config.oracleInitran;
 		}
 		stmt.execute(create_table);
 

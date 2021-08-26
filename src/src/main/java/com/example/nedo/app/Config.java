@@ -199,6 +199,16 @@ public class Config implements Cloneable {
 	public boolean sharedConnection;
 	private static final String SHARED_CONNECTION = "shared.connection";
 
+
+	/* Oracle固有のパラメータ */
+
+	/**
+	 * テーブル生成時に指定するinitransの値
+	 */
+	public int oracleInitran;
+	private static final String ORACLE_INITRAN = "oracle.initrans";
+
+
 	/* その他のパラメータ */
 
 	/**
@@ -295,6 +305,9 @@ public class Config implements Cloneable {
 		historyInsertTransactionPerMin = getInt(HISTORY_INSERT_TRANSACTION_PER_MIN, 0);
 		historyInsertRecordsPerTransaction = getInt(HISTORY_INSERT_RECORDS_PER_TRANSACTION, 1);
 
+		// Oracle固有のパラメータ
+		oracleInitran = getInt(ORACLE_INITRAN, 0);
+
 		// その他のパラメータ
 		randomSeed = getInt(RANDOM_SEED, 0);
 		transactionScope = getTransactionScope(TRANSACTION_SCOPE, TransactionScope.WHOLE);
@@ -304,7 +317,6 @@ public class Config implements Cloneable {
 			// トランザクションのスコープが契約単位で、コネクション共有は許されない
 			throw new RuntimeException("TransactionScope Contract and sharedConnection cannot be specified at the same time.");
 		}
-
 	}
 
 	/**
@@ -564,6 +576,8 @@ public class Config implements Cloneable {
 		sb.append(String.format(format, THREAD_COUNT, threadCount));
 		sb.append(String.format(format, SHARED_CONNECTION, sharedConnection));
 		sb.append(System.lineSeparator());
+		sb.append(String.format(commentFormat, "Oracle固有のパラメータ"));
+		sb.append(String.format(format, ORACLE_INITRAN, oracleInitran));
 		sb.append(String.format(commentFormat, "その他のパラメータ"));
 		sb.append(String.format(format, RANDOM_SEED, randomSeed));
 		sb.append(String.format(format, TRANSACTION_SCOPE, transactionScope));

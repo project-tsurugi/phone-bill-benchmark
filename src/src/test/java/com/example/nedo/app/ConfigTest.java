@@ -237,6 +237,9 @@ class ConfigTest {
 		assertEquals(1192, config.maxCallTimeSecs);
 		assertEquals("/tmp/statistics", config.statisticsOutputDir);
 
+		/* Oracle固有のパラメータ */
+		assertEquals(22, config.oracleInitran);
+
 		/* その他のパラメータ */
 		assertEquals(1969, config.randomSeed);
 		assertEquals(TransactionScope.CONTRACT, config.transactionScope);
