@@ -29,7 +29,7 @@ class CreateTableTest extends AbstractDbTestCase {
 		assertTrue(exists("billing"));
 		createTable.createContractsTable(stmt);
 		assertTrue(exists("contracts"));
-		createTable.createHistoryTable(stmt);
+		createTable.createHistoryTable(stmt, Config.getConfig());
 		assertTrue(exists("history"));
 	}
 

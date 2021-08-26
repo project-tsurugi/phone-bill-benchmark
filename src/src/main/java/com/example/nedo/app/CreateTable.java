@@ -11,7 +11,6 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public class CreateTable implements ExecutableCommand{
 	private boolean isOracle;
-	private Config config;
 
 	public static void main(String[] args) throws Exception {
 		Config config = Config.getConfig(args);
@@ -21,19 +20,18 @@ public class CreateTable implements ExecutableCommand{
 
 	@Override
 	public void execute(Config config) throws Exception {
-		this.config = config;
 		isOracle = config.dbms == Dbms.ORACLE;
 		try (Connection conn = DBUtils.getConnection(config);
 				Statement stmt = conn.createStatement()) {
 			conn.setAutoCommit(true);
 			dropTables(stmt);
-			createHistoryTable(stmt);
+			createHistoryTable(stmt, config);
 			createContractsTable(stmt);
 			createBillingTable(stmt);
 		}
 	}
 
-	void createHistoryTable(Statement stmt) throws SQLException {
+	void createHistoryTable(Statement stmt, Config config) throws SQLException {
 		String create_table = "create table history ("
 				+ "caller_phone_number varchar(15) not null," 		// 発信者電話番号
 				+ "recipient_phone_number varchar(15) not null," 	// 受信者電話番号
