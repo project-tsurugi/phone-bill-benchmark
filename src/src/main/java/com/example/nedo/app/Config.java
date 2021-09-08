@@ -200,6 +200,11 @@ public class Config implements Cloneable {
 	private static final String SHARED_CONNECTION = "shared.connection";
 
 
+	/* CSVデータに関するパラメータ */
+	public String csvDir;
+	private static final String CSV_DIR = "csv.dir";
+
+
 	/* Oracle固有のパラメータ */
 
 	/**
@@ -207,6 +212,13 @@ public class Config implements Cloneable {
 	 */
 	public int oracleInitran;
 	private static final String ORACLE_INITRAN = "oracle.initrans";
+
+
+	/**
+	 * SQL*Loaderのパス
+	 */
+	public String oracleSqlLoaderPath;
+	private static final String ORACLE_SQL_LOADER_PATH =  "oracle.sql.loader.path";
 
 
 	/* その他のパラメータ */
@@ -305,8 +317,12 @@ public class Config implements Cloneable {
 		historyInsertTransactionPerMin = getInt(HISTORY_INSERT_TRANSACTION_PER_MIN, 0);
 		historyInsertRecordsPerTransaction = getInt(HISTORY_INSERT_RECORDS_PER_TRANSACTION, 1);
 
+		//  CSVデータに関するパラメータ
+		csvDir = getString(CSV_DIR, "/var/lib/csv");
+
 		// Oracle固有のパラメータ
 		oracleInitran = getInt(ORACLE_INITRAN, 0);
+		oracleSqlLoaderPath = getString(ORACLE_SQL_LOADER_PATH, "sqlldr");
 
 		// その他のパラメータ
 		randomSeed = getInt(RANDOM_SEED, 0);
@@ -576,8 +592,12 @@ public class Config implements Cloneable {
 		sb.append(String.format(format, THREAD_COUNT, threadCount));
 		sb.append(String.format(format, SHARED_CONNECTION, sharedConnection));
 		sb.append(System.lineSeparator());
+		sb.append(String.format(commentFormat, "CSVに関するパラメータ"));
+		sb.append(String.format(format, CSV_DIR, csvDir));
+		sb.append(System.lineSeparator());
 		sb.append(String.format(commentFormat, "Oracle固有のパラメータ"));
 		sb.append(String.format(format, ORACLE_INITRAN, oracleInitran));
+		sb.append(String.format(format, ORACLE_SQL_LOADER_PATH, oracleSqlLoaderPath));
 		sb.append(String.format(commentFormat, "その他のパラメータ"));
 		sb.append(String.format(format, RANDOM_SEED, randomSeed));
 		sb.append(String.format(format, TRANSACTION_SCOPE, transactionScope));

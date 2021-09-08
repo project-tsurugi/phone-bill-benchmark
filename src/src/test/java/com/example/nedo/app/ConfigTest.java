@@ -187,6 +187,13 @@ class ConfigTest {
 		assertEquals(1, config.threadCount);
 		assertEquals(true, config.sharedConnection);
 
+		/* CSVに関するパラメータ */
+		assertEquals("/var/lib/csv", config.csvDir);
+
+		/* Oracle固有のパラメータ */
+		assertEquals(0, config.oracleInitran);
+		assertEquals("sqlldr", config.oracleSqlLoaderPath);
+
 
 		 /* オンラインアプリケーションに関するパラメータ */
 		assertEquals(0, config.masterUpdateRecordsPerMin);
@@ -239,6 +246,10 @@ class ConfigTest {
 
 		/* Oracle固有のパラメータ */
 		assertEquals(22, config.oracleInitran);
+		assertEquals("/usr/local/bin/sqlldr", config.oracleSqlLoaderPath);
+
+		/* CSVに関するパラメータ */
+		assertEquals("/tmp/csv", config.csvDir);
 
 		/* その他のパラメータ */
 		assertEquals(1969, config.randomSeed);
