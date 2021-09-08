@@ -140,6 +140,19 @@ public class Config implements Cloneable {
 	public String statisticsOutputDir;
 	private static final String STATISTICS_OUTPUT_DIR = "statistics.output.dir";
 
+	/**
+	 * 通話履歴の通話開始時刻の最小値
+	 */
+	public Date histortyMinDate;
+	private static final String HISTORTY_MIN_DATE = "history.min.date";
+
+	/**
+	 * 通話履歴の通話開始時刻の最大値
+	 */
+	public Date histortyMaxDate;
+	private static final String HISTORTY_MAX_DATE = "history.max.date";
+
+
 	/* オンラインアプリケーションに関するパラメータ */
 
 	/**
@@ -291,6 +304,8 @@ public class Config implements Cloneable {
 		callTimeShape = getDouble(CALL_TIME_SHAPE, 1.5d);
 		maxCallTimeSecs = getInt(MAX_CALL_TIME_SECS, 3600);
 		statisticsOutputDir  = getString(STATISTICS_OUTPUT_DIR, null);
+		histortyMinDate = getDate(HISTORTY_MIN_DATE, DBUtils.toDate("2020-11-01"));
+		histortyMaxDate = getDate(HISTORTY_MAX_DATE, DBUtils.toDate("2021-01-10"));
 
 		// JDBCに関するパラメータ
 		url = getString(URL, "jdbc:postgresql://127.0.0.1/phonebill");
@@ -573,6 +588,8 @@ public class Config implements Cloneable {
 		sb.append(String.format(format, CALL_TIME_SHAPE, callTimeShape));
 		sb.append(String.format(format, MAX_CALL_TIME_SECS, maxCallTimeSecs));
 		sb.append(String.format(format, STATISTICS_OUTPUT_DIR, statisticsOutputDir == null ? "" : statisticsOutputDir));
+		sb.append(String.format(format, HISTORTY_MIN_DATE, histortyMinDate));
+		sb.append(String.format(format, HISTORTY_MAX_DATE, histortyMaxDate));
 
 		sb.append(System.lineSeparator());
 		sb.append(String.format(commentFormat, "JDBCに関するパラメータ"));

@@ -5,16 +5,23 @@ package com.example.nedo.testdata;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.example.nedo.AbstractDbTestCase;
@@ -22,8 +29,24 @@ import com.example.nedo.app.Config;
 import com.example.nedo.app.CreateTable;
 import com.example.nedo.db.DBUtils;
 import com.example.nedo.db.Duration;
+import com.example.nedo.util.PathUtils;
 
 class TestDataGeneratorTest extends AbstractDbTestCase {
+	private static final Path TEMP_DIR = Paths.get("/tmp/csv");
+
+
+	@BeforeEach
+	void createTempDir() throws IOException {
+		Files.createDirectories(TEMP_DIR);
+	}
+
+	@AfterEach
+	void cleanupTempDir() throws IOException {
+		for(File file: TEMP_DIR.toFile().listFiles()) {
+			file.delete();
+		}
+		Files.deleteIfExists(TEMP_DIR);
+	}
 
 	/**
 	 * isValidDurationList()のテスト
@@ -60,11 +83,11 @@ class TestDataGeneratorTest extends AbstractDbTestCase {
 
 
 	/**
-	 * generateContract()のテスト
+	 * generateContractToDb()のテスト
 	 * @throws Exception
 	 */
 	@Test
-	void testGenerateContract() throws Exception {
+	void testGenerateContractToDb() throws Exception {
 		new CreateTable().execute(Config.getConfig());
 
 		Config config = Config.getConfig();
@@ -75,11 +98,8 @@ class TestDataGeneratorTest extends AbstractDbTestCase {
 		config.noExpirationDateRate = 11;
 		config.duplicatePhoneNumberRatio = 2;
 
-//		Date start =DBUtils.toDate("2010-11-11");
-//		Date end = DBUtils.toDate("2020-12-21");
-//		TestDataGenerator generator = new TestDataGenerator(0, 10000, 0, 2, 5, 11, start, end );
 		TestDataGenerator generator = new TestDataGenerator(config);
-		generator.generateContracts();
+		generator.generateContractsToDb();
 
 		String sql;
 
@@ -347,4 +367,69 @@ class TestDataGeneratorTest extends AbstractDbTestCase {
 		}
 		assertEquals(expected, actual);
 	}
+
+	/**
+	 * generateContractsToCsv()のテスト
+	 * @throws Exception
+	 */
+	@Test
+	void generateContractsToCsv() throws Exception {
+		// DBに生成したテストデータとCSVファイルに生成したテストデータが一致することを確認する
+		Config config = Config.getConfig();
+		config.csvDir = TEMP_DIR.toString();
+		config.numberOfContractsRecords = 5154; // 間違ったデータを参照したときに件数で判別できるように、
+											    // このテストケース固有の値を指定する
+		new CreateTable().execute(config);
+		getStmt().execute("truncate table contracts");
+		new TestDataGenerator(config).generateContractsToDb();
+		Path expectedFilePath = TEMP_DIR.resolve("contracts.db").toAbsolutePath();
+		String expectedFilePathString = PathUtils.toWls(expectedFilePath);
+
+		getStmt().execute("copy contracts to '"+expectedFilePathString+"' with csv");
+		List<String> expected = Files.readAllLines(expectedFilePath);
+		Collections.sort(expected);
+
+		new TestDataGenerator(config).generateContractsToCsv(TEMP_DIR);
+		List<String> actual = Files.readAllLines(TEMP_DIR.resolve("contracts.csv"));
+		Collections.sort(actual);
+
+		assertEquals(expected.size(), actual.size());
+		for (int i = 0; i < expected.size(); i++) {
+			assertEquals(expected.get(i), actual.get(i));
+		}
+	}
+
+	/**
+	 * generateHistoryToCSV
+	 * @throws IOException
+	 * @throws SQLException
+	 */
+	@Test
+	void generateHistoryToCSV() throws IOException, SQLException {
+		// DBに生成したテストデータとCSVファイルに生成したテストデータが一致することを確認する
+		Config config = Config.getConfig();
+		config.csvDir = TEMP_DIR.toString();
+		config.numberOfHistoryRecords = 3964; // 間違ったデータを参照したときに件数で判別できるように、
+                                      		  // このテストケース固有の値を指定する
+		getStmt().execute("truncate table history");
+		new TestDataGenerator(config).generateHistoryToDb();
+		Path expectedFilePath = TEMP_DIR.resolve("history.db").toAbsolutePath();
+		String expectedFilePathString = PathUtils.toWls(expectedFilePath);
+
+		getStmt().execute("copy history to '"+expectedFilePathString+"' with csv");
+		List<String> expected = Files.readAllLines(expectedFilePath);
+		Collections.sort(expected);
+
+		new TestDataGenerator(config).generateHistoryToCsv(TEMP_DIR);
+		List<String> actual = Files.readAllLines(TEMP_DIR.resolve("history.csv"));
+		Collections.sort(actual);
+
+		assertEquals(expected.size(), actual.size());
+		for (int i = 0; i < expected.size(); i++) {
+			String e = expected.get(i);
+			String a = actual.get(i).replaceAll("\\.0,", ","); // ミリ秒が0のときの表現の違いをreplaceAllで吸収する
+			assertEquals(e, a);
+		}
+	}
+
 }

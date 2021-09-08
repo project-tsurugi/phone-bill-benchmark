@@ -4,12 +4,17 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.example.nedo.app.Config.Dbms;
 import com.example.nedo.db.DBUtils;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public class CreateTable implements ExecutableCommand{
+    private static final Logger LOG = LoggerFactory.getLogger(CreateTable.class);
+
 	private boolean isOracle;
 
 	public static void main(String[] args) throws Exception {
@@ -23,11 +28,11 @@ public class CreateTable implements ExecutableCommand{
 		isOracle = config.dbms == Dbms.ORACLE;
 		try (Connection conn = DBUtils.getConnection(config);
 				Statement stmt = conn.createStatement()) {
-			conn.setAutoCommit(true);
 			dropTables(stmt);
 			createHistoryTable(stmt, config);
 			createContractsTable(stmt);
 			createBillingTable(stmt);
+			afterLoadData(stmt, config);
 		}
 	}
 
@@ -39,20 +44,12 @@ public class CreateTable implements ExecutableCommand{
 				+ "start_time timestamp not null,"			 		// 通話開始時刻
 				+ "time_secs integer not null," 					// 通話時間(秒)
 				+ "charge integer," 								// 料金
-				+ "df integer not null," 							// 論理削除フラグ
-				+ "constraint history_pkey primary key(caller_phone_number, start_time)"
+				+ "df integer not null" 							// 論理削除フラグ
 				+ ")";
 		if (isOracle && config.oracleInitran != 0) {
 			create_table = create_table + "initrans " + config.oracleInitran;
 		}
 		stmt.execute(create_table);
-
-		String create_index_df = "create index idx_df on history(df)";
-		stmt.execute(create_index_df);
-		String create_index_st = "create index idx_st on history(start_time)";
-		stmt.execute(create_index_st);
-		String create_index_rp = "create index rp on history(recipient_phone_number, start_time)";
-		stmt.execute(create_index_rp);
 	}
 
 	void createContractsTable(Statement stmt) throws SQLException {
@@ -60,8 +57,7 @@ public class CreateTable implements ExecutableCommand{
 				+ "phone_number varchar(15) not null," 		// 電話番号
 				+ "start_date date not null," 				// 契約開始日
 				+ "end_date date,"							// 契約終了日
-				+ "charge_rule varchar(255) not null,"		// 料金計算ルール
-				+ "primary key(phone_number, start_date)"
+				+ "charge_rule varchar(255) not null"		// 料金計算ルール
 				+ ")";
 		stmt.execute(create_table);
 	}
@@ -91,6 +87,7 @@ public class CreateTable implements ExecutableCommand{
 			dropTable(stmt, "contracts");
 			dropTable(stmt, "billing");
 		}
+		stmt.getConnection().commit();
 	}
 
 	@SuppressFBWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
@@ -109,4 +106,140 @@ public class CreateTable implements ExecutableCommand{
 		}
 	}
 
+	/**
+	 * テストデータのロード前の処理.
+	 * <br>
+	 * プライマリーキー、インデックスとテーブルデータを削除する
+	 *
+	 * @param stmt
+	 * @param config
+	 * @throws SQLException
+	 */
+	static public void prepareLoadData(Statement stmt, Config config) throws SQLException {
+		long startTime = System.currentTimeMillis();
+		stmt.executeUpdate("truncate table history");
+		stmt.executeUpdate("truncate table contracts");
+		stmt.getConnection().commit();
+
+		dropPrimaryKey("history", "history_pkey", stmt, config);
+		dropPrimaryKey("contracts", "contracts_pkey", stmt, config);
+		dropIndex("idx_df", stmt, config);
+		dropIndex("idx_st", stmt, config);
+		dropIndex("idx_rp", stmt, config);
+		stmt.getConnection().commit();
+		long elapsedTime = System.currentTimeMillis() - startTime;
+		String format = "Truncate teable and drop indexies in %,.3f sec ";
+		LOG.info(String.format(format, elapsedTime / 1000d));
+	}
+
+	/**
+	 * テストデータのロード後の処理.
+	 * <br>
+	 * プライマリーキー、インデックスを作成し、統計情報を更新する
+	 *
+	 * @param stmt
+	 * @param config
+	 * @throws SQLException
+	 */
+	static public void afterLoadData(Statement stmt, Config config) throws SQLException {
+		createIndexes(stmt);
+		updateStatistics(config);
+	}
+
+	static void createIndexes(Statement stmt) throws SQLException {
+		long startTime = System.currentTimeMillis();
+
+		String create_index_df = "create index idx_df on history(df)";
+		stmt.execute(create_index_df);
+		String create_index_st = "create index idx_st on history(start_time)";
+		stmt.execute(create_index_st);
+		String create_index_rp = "create index idx_rp on history(recipient_phone_number, start_time)";
+		stmt.execute(create_index_rp);
+		String addPrimaryKeyToHistory = "alter table history add constraint history_pkey primary key (caller_phone_number, start_time)";
+		stmt.execute(addPrimaryKeyToHistory);
+		String addPrimaryKeyToContracts = "alter table contracts add constraint contracts_pkey primary key (phone_number, start_date)";
+		stmt.execute(addPrimaryKeyToContracts);
+		stmt.getConnection().commit();
+
+		long elapsedTime = System.currentTimeMillis() - startTime;
+		String format = "Create indexies in %,.3f sec ";
+		LOG.info(String.format(format, elapsedTime / 1000d));
+
+	}
+
+	/**
+	 * 指定のテーブルからPrimaryKeyを削除する
+	 *
+	 * @param table
+	 * @param pk
+	 * @param stmt
+	 * @param config
+	 * @throws SQLException
+	 */
+	static void dropPrimaryKey(String table, String pk, Statement stmt, Config config) throws SQLException {
+		if (config.dbms == Dbms.ORACLE) {
+			try {
+				stmt.execute("alter table " + table + " drop primary key");
+			} catch (SQLException e) {
+				if (e.getErrorCode() != 2441) { // ORA-02441: 存在しない主キーを削除することはできませんは無視する
+					throw e;
+				}
+			}
+		} else {
+			stmt.execute("alter table " + table + " drop constraint if exists " + pk);
+		}
+	}
+
+	/**
+	 * 指定のテーブルから指定のIndexを削除する
+	 *
+	 * @param index
+	 * @param stmt
+	 * @param config
+	 * @throws SQLException
+	 */
+	static void dropIndex(String index, Statement stmt, Config config) throws SQLException {
+		if (config.dbms == Dbms.ORACLE) {
+			try {
+				stmt.execute("drop index " + index);
+			} catch (SQLException e) {
+				if (e.getErrorCode() != 1418) { // ORA-01418: 指定した索引は存在しませんは無視する
+					throw e;
+				}
+			}
+		} else {
+			stmt.execute("drop index if exists " + index);
+		}
+	}
+
+	/**
+	 * 統計情報を更新する
+	 * @throws SQLException
+	 */
+	public static void updateStatistics(Config config) throws SQLException {
+		// DBMSの統計情報を更新する
+		long startTime = System.currentTimeMillis();
+		try (Connection conn = DBUtils.getConnection(config);
+				Statement stmt = conn.createStatement()) {
+			switch (config.dbms) {
+			case ORACLE:
+				stmt.executeUpdate("{call DBMS_STATS.GATHER_SCHEMA_STATS(ownname => '" + config.user
+						+ "', cascade => TRUE, no_invalidate => TRUE)}");
+				break;
+			case POSTGRE_SQL:
+				stmt.executeUpdate("analyze history");
+				stmt.executeUpdate("analyze contracts");
+				break;
+			case OTHER:
+				// なにもしない
+				break;
+			default:
+				throw new AssertionError();
+			}
+			conn.commit();
+		}
+		long elapsedTime = System.currentTimeMillis() - startTime;
+		String format = "Update statistic in %,.3f sec ";
+		LOG.info(String.format(format, elapsedTime / 1000d));
+	}
 }

@@ -33,7 +33,7 @@ class ContractHolderTest {
 		config.noExpirationDateRate = 11;
 		config.duplicatePhoneNumberRatio = 2;
 		TestDataGenerator generator = new TestDataGenerator(config);
-		generator.generateContracts();
+		generator.generateContractsToDb();
 	}
 
 

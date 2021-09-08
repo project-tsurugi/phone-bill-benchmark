@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 
 import com.example.nedo.app.Config;
 import com.example.nedo.app.ExecutableCommand;
-import com.example.nedo.db.DBUtils;
 import com.example.nedo.testdata.Statistics.Counter;
 
 public class TestDataStatistics implements ExecutableCommand {
@@ -33,11 +32,10 @@ public class TestDataStatistics implements ExecutableCommand {
 		generator.setStatisticsOnly(true);
 
 		// 契約マスタのテストデータ生成
-		generator.generateContracts();
+		generator.generateContractsToDb();
 
 		// 通話履歴のテストデータを作成
-		generator.generateHistory(DBUtils.toDate("2020-11-01"), DBUtils.toDate("2021-01-10"),
-				c.numberOfHistoryRecords);
+		generator.generateHistoryToDb();
 
 		// 統計情報を出力
 		Statistics statistics = generator.getStatistics();

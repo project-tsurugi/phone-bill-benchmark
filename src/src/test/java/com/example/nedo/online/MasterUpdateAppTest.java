@@ -31,7 +31,7 @@ class MasterUpdateAppTest extends AbstractDbTestCase {
 		config.numberOfContractsRecords = 30;
 		new CreateTable().execute(config);
 		TestDataGenerator generator = new TestDataGenerator(config);
-		generator.generateContracts();
+		generator.generateContractsToDb();
 
 		ContractHolder keyHolder = new ContractHolder(config);
 		MasterUpdateApp app = new MasterUpdateApp(keyHolder, config, 0);

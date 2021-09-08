@@ -176,6 +176,8 @@ class ConfigTest {
 		assertEquals(1.5d, config.callTimeShape);
 		assertEquals(3600, config.maxCallTimeSecs);
 		assertEquals(null, config.statisticsOutputDir);
+		assertEquals(DBUtils.toDate("2020-11-01"), config.histortyMinDate);
+		assertEquals(DBUtils.toDate("2021-01-10"), config.histortyMaxDate);
 
 		/* JDBCに関するパラメータ*/
 		assertEquals("jdbc:postgresql://127.0.0.1/phonebill", config.url);
@@ -243,6 +245,8 @@ class ConfigTest {
 		assertEquals(8.5d, config.callTimeShape);
 		assertEquals(1192, config.maxCallTimeSecs);
 		assertEquals("/tmp/statistics", config.statisticsOutputDir);
+		assertEquals(DBUtils.toDate("2010-11-01"), config.histortyMinDate);
+		assertEquals(DBUtils.toDate("2011-01-10"), config.histortyMaxDate);
 
 		/* Oracle固有のパラメータ */
 		assertEquals(22, config.oracleInitran);

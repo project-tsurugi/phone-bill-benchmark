@@ -1,6 +1,11 @@
 package com.example.nedo.testdata;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
@@ -140,11 +145,11 @@ public class TestDataGenerator {
 
 
 	/**
-	 * 契約マスタのテストデータを生成する
+	 * 契約マスタのテストデータをDBに生成する
 	 *
 	 * @throws SQLException
 	 */
-	public void generateContracts() throws SQLException {
+	public void generateContractsToDb() throws SQLException {
 		try (Connection conn = DBUtils.getConnection(config);
 				Statement stmt = conn.createStatement();
 				PreparedStatement ps = conn.prepareStatement(SQL_INSERT_TO_CONTRACT)) {
@@ -207,7 +212,7 @@ public class TestDataGenerator {
 	}
 
 	/**
-	 * 通話履歴のテストデータを作成する
+	 * 通話履歴のテストデータをDBに作成する
 	 *
 	 * 生成する通話履歴の通話開始時刻は、minDate以上、maxDate未満の値にする。
 	 *
@@ -217,7 +222,10 @@ public class TestDataGenerator {
 	 * @throws SQLException
 	 * @throws IOException
 	 */
-	public void generateHistory(Date minDate, Date maxDate, int n) throws SQLException, IOException {
+	public void generateHistoryToDb() throws SQLException, IOException {
+		Date minDate = config.histortyMinDate;
+		Date maxDate = config.histortyMaxDate;
+
 		if (!isValidDurationList(durationList, minDate, maxDate)) {
 			throw new RuntimeException("Invalid duration list.");
 		}
@@ -227,7 +235,7 @@ public class TestDataGenerator {
 		statistics = new Statistics(minDate, maxDate);
 
 		try (Connection conn = DBUtils.getConnection(config)) {
-			for (int i = 0; i < n; i++) {
+			for (int i = 0; i < config.numberOfHistoryRecords; i++) {
 				History h = createHistoryRecord(targetDuration);
 				statistics.addHistoy(h);
 				histories.add(h);
@@ -237,6 +245,86 @@ public class TestDataGenerator {
 				}
 			}
 			insrtHistories(conn, histories);
+		}
+	}
+
+
+	/**
+	 * 契約マスタのテストデータのCSVファイルを生成する
+	 *
+	 * @throws IOException
+	 */
+	public void generateContractsToCsv(Path dir) throws IOException {
+		Path outputPath = dir.resolve("contracts.csv");
+		StringBuilder sb = new StringBuilder();
+		try (BufferedWriter bw = Files.newBufferedWriter(outputPath, StandardCharsets.UTF_8,
+				StandardOpenOption.TRUNCATE_EXISTING,
+				StandardOpenOption.CREATE,
+				StandardOpenOption.WRITE);) {
+			for (long n = 0; n < config.numberOfContractsRecords; n++) {
+				Contract c = getContract(n);
+				sb.setLength(0);
+				sb.append(c.phoneNumber);
+				sb.append(',');
+				sb.append(c.startDate);
+				sb.append(',');
+				if (c.endDate != null) {
+					sb.append(c.endDate);
+				}
+				sb.append(',');
+				sb.append(c.rule);
+				bw.write(sb.toString());
+				bw.newLine();
+			}
+		}
+	}
+
+
+	/**
+	 * 通話履歴のテストデータをCSVファイルに作成する
+	 *
+	 * @throws IOException
+	 */
+	public void generateHistoryToCsv(Path dir) throws IOException {
+		Path outputPath = dir.resolve("history.csv");
+
+		Date minDate = config.histortyMinDate;
+		Date maxDate = config.histortyMaxDate;
+
+		statistics = new Statistics(minDate, maxDate);
+
+		if (!isValidDurationList(durationList, minDate, maxDate)) {
+			throw new RuntimeException("Invalid duration list.");
+		}
+		Duration targetDuration = new Duration(minDate, maxDate);
+
+		StringBuilder sb = new StringBuilder();
+		try (BufferedWriter bw = Files.newBufferedWriter(outputPath, StandardCharsets.UTF_8,
+				StandardOpenOption.TRUNCATE_EXISTING,
+				StandardOpenOption.CREATE,
+				StandardOpenOption.WRITE);) {
+			for (int i = 0; i < config.numberOfHistoryRecords; i++) {
+				History h = createHistoryRecord(targetDuration);
+				statistics.addHistoy(h);
+				sb.setLength(0);
+				sb.append(h.callerPhoneNumber);
+				sb.append(',');
+				sb.append(h.recipientPhoneNumber);
+				sb.append(',');
+				sb.append(h.paymentCategorty);
+				sb.append(',');
+				sb.append(h.startTime);
+				sb.append(',');
+				sb.append(h.timeSecs);
+				sb.append(',');
+				if (h.charge != null) {
+					sb.append(h.charge);
+				}
+				sb.append(',');
+				sb.append(h.df ? 1 : 0);
+				bw.write(sb.toString());
+				bw.newLine();
+			}
 		}
 	}
 

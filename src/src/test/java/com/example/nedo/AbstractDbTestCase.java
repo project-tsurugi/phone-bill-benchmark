@@ -8,7 +8,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 
 import com.example.nedo.app.Config;
 import com.example.nedo.db.DBUtils;
@@ -35,6 +37,19 @@ public abstract class AbstractDbTestCase {
 	static void tearDownAfterClass() throws Exception {
 		conn.close();
 	}
+
+	@BeforeEach
+	void beforeTest() throws SQLException {
+		conn.setAutoCommit(true);
+	}
+
+	@AfterEach
+	void afterTest() throws SQLException {
+		if (!conn.getAutoCommit()) {
+			conn.rollback();
+		}
+	}
+
 
 	@SuppressFBWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
 	protected void truncateTable(String tableName) throws SQLException {

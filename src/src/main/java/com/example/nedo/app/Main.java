@@ -6,17 +6,19 @@ import java.util.Map;
 
 import com.example.nedo.app.billing.PhoneBill;
 import com.example.nedo.testdata.CreateTestData;
+import com.example.nedo.testdata.CreateTestDataCsv;
 import com.example.nedo.testdata.TestDataStatistics;
 
 public class Main {
 	private static final Map<String, Command> COMMAND_MAP = new LinkedHashMap<>();
 	static {
 		addCommand("CreateTable","Create tables", new CreateTable());
-		addCommand("CreateTestData","Create test data", new CreateTestData());
+		addCommand("CreateTestData","Create test data to database.", new CreateTestData());
 		addCommand("PhoneBill", "Execute phone bill batch.", new PhoneBill());
 		addCommand("ThreadBench", "Execute PhonBill with multiple thread counts", new ThreadBench());
 		addCommand("OnlineAppBench", "Execute PhonBill with and without online applications.", new OnlineAppBench());
 		addCommand("TestDataStatistics", "Create test data statistics without test data.", new TestDataStatistics());
+		addCommand("CreateTestDataCsv", "Create test data to csv files.", new CreateTestDataCsv());
 	}
 
 	public static void main(String[] args) throws Exception {
