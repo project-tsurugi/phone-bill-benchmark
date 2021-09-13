@@ -8,6 +8,7 @@ import com.example.nedo.app.billing.PhoneBill;
 import com.example.nedo.testdata.CreateTestData;
 import com.example.nedo.testdata.CreateTestDataCsv;
 import com.example.nedo.testdata.LoadTestDataCsvToOracle;
+import com.example.nedo.testdata.LoadTestDataCsvToPostgreSql;
 import com.example.nedo.testdata.TestDataStatistics;
 
 public class Main {
@@ -21,7 +22,9 @@ public class Main {
 		addCommand("TestDataStatistics", "Create test data statistics without test data.", new TestDataStatistics());
 		addCommand("CreateTestDataCsv", "Create test data to csv files.", new CreateTestDataCsv());
 		addCommand("LoadTestDataCsvToOracle", "Load csv test data to oracle.", new LoadTestDataCsvToOracle());
+		addCommand("LoadTestDataCsvToPostgreSql", "Load csv test data to PostgreSQL.", new LoadTestDataCsvToPostgreSql());
 	}
+
 
 	public static void main(String[] args) throws Exception {
 		if (args.length == 0) {
