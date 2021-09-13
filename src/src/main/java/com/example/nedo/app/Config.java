@@ -15,6 +15,10 @@ import org.slf4j.LoggerFactory;
 
 import com.example.nedo.db.DBUtils;
 
+/**
+ * @author umega
+ *
+ */
 public class Config implements Cloneable {
 
 	private Properties prop;
@@ -233,6 +237,19 @@ public class Config implements Cloneable {
 	public String oracleSqlLoaderPath;
 	private static final String ORACLE_SQL_LOADER_PATH =  "oracle.sql.loader.path";
 
+	/**
+	 * SQL*Loader実行時に指定するSID
+	 */
+	public String oracleSqlLoaderSid;
+	private static final String ORACLE_SQL_LOADER_SID =  "oracle.sql.loader.sid";
+
+
+	/**
+	 * Index生成時に適用するオプション
+	 */
+	public String oracleCreateIndexOption;
+	private static final String ORACLE_CREATE_INDEX_OPTION = "oracle.create.index.option";
+
 
 	/* その他のパラメータ */
 
@@ -338,6 +355,8 @@ public class Config implements Cloneable {
 		// Oracle固有のパラメータ
 		oracleInitran = getInt(ORACLE_INITRAN, 0);
 		oracleSqlLoaderPath = getString(ORACLE_SQL_LOADER_PATH, "sqlldr");
+		oracleSqlLoaderSid = getString(ORACLE_SQL_LOADER_SID, "");
+		oracleCreateIndexOption = getString(ORACLE_CREATE_INDEX_OPTION, "nologging parallel 32");
 
 		// その他のパラメータ
 		randomSeed = getInt(RANDOM_SEED, 0);
@@ -615,6 +634,8 @@ public class Config implements Cloneable {
 		sb.append(String.format(commentFormat, "Oracle固有のパラメータ"));
 		sb.append(String.format(format, ORACLE_INITRAN, oracleInitran));
 		sb.append(String.format(format, ORACLE_SQL_LOADER_PATH, oracleSqlLoaderPath));
+		sb.append(String.format(format, ORACLE_SQL_LOADER_SID, oracleSqlLoaderSid));
+		sb.append(String.format(format, ORACLE_CREATE_INDEX_OPTION, oracleCreateIndexOption));
 		sb.append(String.format(commentFormat, "その他のパラメータ"));
 		sb.append(String.format(format, RANDOM_SEED, randomSeed));
 		sb.append(String.format(format, TRANSACTION_SCOPE, transactionScope));

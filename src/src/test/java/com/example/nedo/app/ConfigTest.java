@@ -195,6 +195,8 @@ class ConfigTest {
 		/* Oracle固有のパラメータ */
 		assertEquals(0, config.oracleInitran);
 		assertEquals("sqlldr", config.oracleSqlLoaderPath);
+		assertEquals("", config.oracleSqlLoaderSid);
+		assertEquals("nologging parallel 32", config.oracleCreateIndexOption);
 
 
 		 /* オンラインアプリケーションに関するパラメータ */
@@ -251,6 +253,8 @@ class ConfigTest {
 		/* Oracle固有のパラメータ */
 		assertEquals(22, config.oracleInitran);
 		assertEquals("/usr/local/bin/sqlldr", config.oracleSqlLoaderPath);
+		assertEquals("orcl", config.oracleSqlLoaderSid);
+		assertEquals("nologging", config.oracleCreateIndexOption);
 
 		/* CSVに関するパラメータ */
 		assertEquals("/tmp/csv", config.csvDir);

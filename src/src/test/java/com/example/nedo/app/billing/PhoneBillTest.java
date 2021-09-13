@@ -293,11 +293,12 @@ class PhoneBillTest extends AbstractDbTestCase {
 		int[] threadCounts = { 1, 2, 4, 8, 16 };
 		for (boolean sharedConnection : sharedConnections) {
 			for (int threadCount : threadCounts) {
-				config.threadCount = threadCount;
-				config.sharedConnection = sharedConnection;
+				Config newConfig = config.clone();
+				newConfig.threadCount = threadCount;
+				newConfig.sharedConnection = sharedConnection;
 				LOG.info("Executing phoneBill.exec() with threadCount =" + threadCount +
 						", sharedConnection = " + sharedConnection);
-				phoneBill.execute(config);
+				phoneBill.execute(newConfig);
 				List<Billing> actual = getBillings();
 				assertEquals(expected, actual);
 			}

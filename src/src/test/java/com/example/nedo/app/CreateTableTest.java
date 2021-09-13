@@ -13,6 +13,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import com.example.nedo.AbstractDbTestCase;
@@ -27,7 +28,7 @@ class CreateTableTest extends AbstractDbTestCase {
 		CreateTable createTable = new CreateTable();
 		Statement stmt = getStmt();
 		stmt.getConnection().setAutoCommit(false);
-		createTable.dropTables(stmt);
+		createTable.dropTables(stmt, Config.getConfig());
 		// テーブルが存在しないことを確認
 		assertFalse(existsTable("billing"));
 		assertFalse(existsTable("contracts"));
@@ -62,8 +63,19 @@ class CreateTableTest extends AbstractDbTestCase {
 	@Test
 	void testPrepareAndAfterLoadData() throws Exception {
 		testPrepareAndAfterLoadDataSub(Config.getConfig());
-		testPrepareAndAfterLoadDataSub(Config.getConfig(new String[]{ORACLE_CONFIG_PATH}));  // Oracleでのテスト
 	}
+
+	/**
+	 * prepareLoadData()とafterLoadData()のテスト(oracle)
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag("oracle")
+	void testPrepareAndAfterLoadDataOracle() throws Exception {
+		testPrepareAndAfterLoadDataSub(Config.getConfig(new String[]{ORACLE_CONFIG_PATH}));
+	}
+
 
 
 	private void testPrepareAndAfterLoadDataSub(Config config) throws Exception {
@@ -112,7 +124,17 @@ class CreateTableTest extends AbstractDbTestCase {
 	@Test
 	void testDropIndexAndDropPrimaryKey() throws Exception {
 		testDropIndexAndDropPrimaryKeySub(Config.getConfig());
-		testDropIndexAndDropPrimaryKeySub(Config.getConfig(new String[]{ORACLE_CONFIG_PATH}));  // Oracleでのテスト
+	}
+
+	/**
+	 * dropIndex()とdropPrimaryKey()のテスト(oracle)
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag("oracle")
+	void testDropIndexAndDropPrimaryKeyOracle() throws Exception {
+		testDropIndexAndDropPrimaryKeySub(Config.getConfig(new String[]{ORACLE_CONFIG_PATH}));
 	}
 
 	void testDropIndexAndDropPrimaryKeySub(Config config) throws Exception {

@@ -7,6 +7,7 @@ import java.util.Map;
 import com.example.nedo.app.billing.PhoneBill;
 import com.example.nedo.testdata.CreateTestData;
 import com.example.nedo.testdata.CreateTestDataCsv;
+import com.example.nedo.testdata.LoadTestDataCsvToOracle;
 import com.example.nedo.testdata.TestDataStatistics;
 
 public class Main {
@@ -19,6 +20,7 @@ public class Main {
 		addCommand("OnlineAppBench", "Execute PhonBill with and without online applications.", new OnlineAppBench());
 		addCommand("TestDataStatistics", "Create test data statistics without test data.", new TestDataStatistics());
 		addCommand("CreateTestDataCsv", "Create test data to csv files.", new CreateTestDataCsv());
+		addCommand("LoadTestDataCsvToOracle", "Load csv test data to oracle.", new LoadTestDataCsvToOracle());
 	}
 
 	public static void main(String[] args) throws Exception {

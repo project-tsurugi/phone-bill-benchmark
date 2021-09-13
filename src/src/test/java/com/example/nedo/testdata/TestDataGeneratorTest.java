@@ -7,9 +7,13 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -37,7 +41,13 @@ class TestDataGeneratorTest extends AbstractDbTestCase {
 
 	@BeforeEach
 	void createTempDir() throws IOException {
+		Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxrwxrwx");
 		Files.createDirectories(TEMP_DIR);
+		FileStore fileStore = Files.getFileStore(TEMP_DIR);
+		if (fileStore.supportsFileAttributeView(PosixFileAttributeView.class)) {
+			Files.setPosixFilePermissions(TEMP_DIR, perms);
+		}
+        System.out.format("Permissions after:  %s%n",  PosixFilePermissions.toString(perms));
 	}
 
 	@AfterEach

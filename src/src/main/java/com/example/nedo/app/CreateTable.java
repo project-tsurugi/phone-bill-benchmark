@@ -15,8 +15,6 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 public class CreateTable implements ExecutableCommand{
     private static final Logger LOG = LoggerFactory.getLogger(CreateTable.class);
 
-	private boolean isOracle;
-
 	public static void main(String[] args) throws Exception {
 		Config config = Config.getConfig(args);
 		CreateTable createTable = new CreateTable();
@@ -25,10 +23,10 @@ public class CreateTable implements ExecutableCommand{
 
 	@Override
 	public void execute(Config config) throws Exception {
-		isOracle = config.dbms == Dbms.ORACLE;
+//		boolean isOracle = config.dbms == Dbms.ORACLE;
 		try (Connection conn = DBUtils.getConnection(config);
 				Statement stmt = conn.createStatement()) {
-			dropTables(stmt);
+			dropTables(stmt, config);
 			createHistoryTable(stmt, config);
 			createContractsTable(stmt);
 			createBillingTable(stmt);
@@ -46,7 +44,7 @@ public class CreateTable implements ExecutableCommand{
 				+ "charge integer," 								// 料金
 				+ "df integer not null" 							// 論理削除フラグ
 				+ ")";
-		if (isOracle && config.oracleInitran != 0) {
+		if (config.dbms == Dbms.ORACLE && config.oracleInitran != 0) {
 			create_table = create_table + "initrans " + config.oracleInitran;
 		}
 		stmt.execute(create_table);
@@ -76,9 +74,9 @@ public class CreateTable implements ExecutableCommand{
 	}
 
 
-	void dropTables(Statement stmt) throws SQLException {
+	void dropTables(Statement stmt, Config config) throws SQLException {
 		// 通話履歴テーブル
-		if (isOracle) {
+		if (config.dbms == Dbms.ORACLE) {
 			dropTableOracle(stmt, "history");
 			dropTableOracle(stmt, "contracts");
 			dropTableOracle(stmt, "billing");
@@ -142,30 +140,53 @@ public class CreateTable implements ExecutableCommand{
 	 * @throws SQLException
 	 */
 	static public void afterLoadData(Statement stmt, Config config) throws SQLException {
-		createIndexes(stmt);
+		createIndexes(stmt, config);
 		updateStatistics(config);
 	}
 
-	static void createIndexes(Statement stmt) throws SQLException {
+	/**
+	 * インデックスを生成する
+	 *
+	 * @param stmt
+	 * @param config
+	 * @throws SQLException
+	 */
+	static void createIndexes(Statement stmt, Config config) throws SQLException {
+		String option = config.dbms == Dbms.ORACLE ? config.oracleCreateIndexOption : "";
+
 		long startTime = System.currentTimeMillis();
 
-		String create_index_df = "create index idx_df on history(df)";
-		stmt.execute(create_index_df);
-		String create_index_st = "create index idx_st on history(start_time)";
-		stmt.execute(create_index_st);
-		String create_index_rp = "create index idx_rp on history(recipient_phone_number, start_time)";
-		stmt.execute(create_index_rp);
-		String addPrimaryKeyToHistory = "alter table history add constraint history_pkey primary key (caller_phone_number, start_time)";
-		stmt.execute(addPrimaryKeyToHistory);
-		String addPrimaryKeyToContracts = "alter table contracts add constraint contracts_pkey primary key (phone_number, start_date)";
-		stmt.execute(addPrimaryKeyToContracts);
+		String create_index_df = "create index idx_df on history(df) " + option;
+		execSql(stmt, create_index_df);
+		String create_index_st = "create index idx_st on history(start_time) " + option;
+		execSql(stmt, create_index_st);
+		String create_index_rp = "create index idx_rp on history(recipient_phone_number, start_time) " + option;
+		execSql(stmt, create_index_rp);
+		String addPrimaryKeyToHistory = "alter table history add constraint history_pkey "
+				+ "primary key (caller_phone_number, start_time) " + option;
+		execSql(stmt, addPrimaryKeyToHistory);
+		String addPrimaryKeyToContracts = "alter table contracts add constraint contracts_pkey "
+				+ "primary key (phone_number, start_date) "  + option;
+		execSql(stmt, addPrimaryKeyToContracts);
 		stmt.getConnection().commit();
 
 		long elapsedTime = System.currentTimeMillis() - startTime;
 		String format = "Create indexies in %,.3f sec ";
 		LOG.info(String.format(format, elapsedTime / 1000d));
-
 	}
+
+	/*
+	 * 指定のSQLを実行前後にログを入れて実行する
+	 */
+	static void execSql(Statement stmt, String sql) throws SQLException {
+		long startTime = System.currentTimeMillis();
+		LOG.info("start exec sql:" + sql);
+		stmt.execute(sql);
+		long elapsedTime = System.currentTimeMillis() - startTime;
+		String format = "end exec sql: " + sql + " in %,.3f sec ";
+		LOG.info(String.format(format, elapsedTime / 1000d));
+	}
+
 
 	/**
 	 * 指定のテーブルからPrimaryKeyを削除する
