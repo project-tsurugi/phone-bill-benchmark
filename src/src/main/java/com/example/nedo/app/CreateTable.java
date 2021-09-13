@@ -151,6 +151,7 @@ public class CreateTable implements ExecutableCommand{
 	 * @param config
 	 * @throws SQLException
 	 */
+	@SuppressFBWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
 	static void createIndexes(Statement stmt, Config config) throws SQLException {
 		String option = config.dbms == Dbms.ORACLE ? config.oracleCreateIndexOption : "";
 
@@ -197,6 +198,7 @@ public class CreateTable implements ExecutableCommand{
 	 * @param config
 	 * @throws SQLException
 	 */
+	@SuppressFBWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
 	static void dropPrimaryKey(String table, String pk, Statement stmt, Config config) throws SQLException {
 		if (config.dbms == Dbms.ORACLE) {
 			try {
@@ -219,6 +221,7 @@ public class CreateTable implements ExecutableCommand{
 	 * @param config
 	 * @throws SQLException
 	 */
+	@SuppressFBWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
 	static void dropIndex(String index, Statement stmt, Config config) throws SQLException {
 		if (config.dbms == Dbms.ORACLE) {
 			try {
@@ -237,6 +240,7 @@ public class CreateTable implements ExecutableCommand{
 	 * 統計情報を更新する
 	 * @throws SQLException
 	 */
+	@SuppressFBWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
 	public static void updateStatistics(Config config) throws SQLException {
 		// DBMSの統計情報を更新する
 		long startTime = System.currentTimeMillis();

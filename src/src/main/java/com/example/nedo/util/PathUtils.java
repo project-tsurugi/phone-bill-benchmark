@@ -2,6 +2,7 @@ package com.example.nedo.util;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -27,7 +28,7 @@ public class PathUtils {
     		Pattern pattern = Pattern.compile("^[A-Za-z]:");
     		Matcher matcher = pattern.matcher(fullPath);
     		if (matcher.find()) {
-    			String prefix = "/mnt/" + fullPath.substring(0, 1).toLowerCase();
+    			String prefix = "/mnt/" + fullPath.substring(0, 1).toLowerCase(Locale.ROOT);
     			String ret = matcher.replaceFirst(prefix);
     			ret = ret.replaceAll("\\\\", "/");
     			if (toLinuxPath) {

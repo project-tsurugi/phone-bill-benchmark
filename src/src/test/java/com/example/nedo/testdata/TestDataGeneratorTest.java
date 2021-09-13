@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
@@ -26,6 +25,7 @@ import java.util.TreeSet;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import com.example.nedo.AbstractDbTestCase;
@@ -35,27 +35,33 @@ import com.example.nedo.db.DBUtils;
 import com.example.nedo.db.Duration;
 import com.example.nedo.util.PathUtils;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 class TestDataGeneratorTest extends AbstractDbTestCase {
-	private static final Path TEMP_DIR = Paths.get("/tmp/csv");
+	private Path tempDir = null;
 
 
 	@BeforeEach
 	void createTempDir() throws IOException {
 		Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxrwxrwx");
-		Files.createDirectories(TEMP_DIR);
-		FileStore fileStore = Files.getFileStore(TEMP_DIR);
+		tempDir = Files.createTempDirectory("csv");
+		FileStore fileStore = Files.getFileStore(tempDir);
 		if (fileStore.supportsFileAttributeView(PosixFileAttributeView.class)) {
-			Files.setPosixFilePermissions(TEMP_DIR, perms);
+			Files.setPosixFilePermissions(tempDir, perms);
 		}
-        System.out.format("Permissions after:  %s%n",  PosixFilePermissions.toString(perms));
 	}
 
 	@AfterEach
+	@SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
 	void cleanupTempDir() throws IOException {
-		for(File file: TEMP_DIR.toFile().listFiles()) {
-			file.delete();
+		if (Files.isDirectory(tempDir)) {
+			for(File file: tempDir.toFile().listFiles()) {
+				if (!file.delete()) {
+					throw new IOException("Fail to delete a file: " + file.toString());
+				}
+			}
 		}
-		Files.deleteIfExists(TEMP_DIR);
+		Files.deleteIfExists(tempDir);
 	}
 
 	/**
@@ -383,24 +389,26 @@ class TestDataGeneratorTest extends AbstractDbTestCase {
 	 * @throws Exception
 	 */
 	@Test
+	@Tag("copy-command")
+	@SuppressFBWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
 	void generateContractsToCsv() throws Exception {
 		// DBに生成したテストデータとCSVファイルに生成したテストデータが一致することを確認する
 		Config config = Config.getConfig();
-		config.csvDir = TEMP_DIR.toString();
+		config.csvDir = tempDir.toString();
 		config.numberOfContractsRecords = 5154; // 間違ったデータを参照したときに件数で判別できるように、
 											    // このテストケース固有の値を指定する
 		new CreateTable().execute(config);
 		getStmt().execute("truncate table contracts");
 		new TestDataGenerator(config).generateContractsToDb();
-		Path expectedFilePath = TEMP_DIR.resolve("contracts.db").toAbsolutePath();
+		Path expectedFilePath = tempDir.resolve("contracts.db").toAbsolutePath();
 		String expectedFilePathString = PathUtils.toWls(expectedFilePath);
 
 		getStmt().execute("copy contracts to '"+expectedFilePathString+"' with csv");
 		List<String> expected = Files.readAllLines(expectedFilePath);
 		Collections.sort(expected);
 
-		new TestDataGenerator(config).generateContractsToCsv(TEMP_DIR);
-		List<String> actual = Files.readAllLines(TEMP_DIR.resolve("contracts.csv"));
+		new TestDataGenerator(config).generateContractsToCsv(tempDir);
+		List<String> actual = Files.readAllLines(tempDir.resolve("contracts.csv"));
 		Collections.sort(actual);
 
 		assertEquals(expected.size(), actual.size());
@@ -410,28 +418,30 @@ class TestDataGeneratorTest extends AbstractDbTestCase {
 	}
 
 	/**
-	 * generateHistoryToCSV
+	 * generateHistoryToCSV() のテスト
 	 * @throws IOException
 	 * @throws SQLException
 	 */
 	@Test
+	@Tag("copy-command")
+	@SuppressFBWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
 	void generateHistoryToCSV() throws IOException, SQLException {
 		// DBに生成したテストデータとCSVファイルに生成したテストデータが一致することを確認する
 		Config config = Config.getConfig();
-		config.csvDir = TEMP_DIR.toString();
+		config.csvDir = tempDir.toString();
 		config.numberOfHistoryRecords = 3964; // 間違ったデータを参照したときに件数で判別できるように、
                                       		  // このテストケース固有の値を指定する
 		getStmt().execute("truncate table history");
 		new TestDataGenerator(config).generateHistoryToDb();
-		Path expectedFilePath = TEMP_DIR.resolve("history.db").toAbsolutePath();
+		Path expectedFilePath = tempDir.resolve("history.db").toAbsolutePath();
 		String expectedFilePathString = PathUtils.toWls(expectedFilePath);
 
 		getStmt().execute("copy history to '"+expectedFilePathString+"' with csv");
 		List<String> expected = Files.readAllLines(expectedFilePath);
 		Collections.sort(expected);
 
-		new TestDataGenerator(config).generateHistoryToCsv(TEMP_DIR);
-		List<String> actual = Files.readAllLines(TEMP_DIR.resolve("history.csv"));
+		new TestDataGenerator(config).generateHistoryToCsv(tempDir);
+		List<String> actual = Files.readAllLines(tempDir.resolve("history.csv"));
 		Collections.sort(actual);
 
 		assertEquals(expected.size(), actual.size());

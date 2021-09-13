@@ -11,6 +11,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 
 import org.junit.jupiter.api.Tag;
@@ -187,7 +188,7 @@ class CreateTableTest extends AbstractDbTestCase {
 			while (rs.next()) {
 				String str = rs.getString("INDEX_NAME");
 				if(str != null) {
-					set.add(str.toLowerCase());  // Oracleの場合インデックス名が大文字になってしまうので小文字に戻す
+					set.add(str.toLowerCase(Locale.ROOT));  // Oracleの場合インデックス名が大文字になってしまうので小文字に戻す
 				}
 			}
 		}

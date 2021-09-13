@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
@@ -52,7 +53,11 @@ public class LoadTestDataCsvToOracle implements ExecutableCommand {
 	 * @throws InterruptedException
 	 */
 	private void execSqlLoader(Config config, Path path) throws IOException, InterruptedException {
-		String baseFilename = path.getFileName().toString().replaceAll("\\.[^.]*$", "");
+		Path filename = path.getFileName();
+		if (filename == null) {
+			throw new IOException("empty path: " + path.toString());
+		}
+		String baseFilename = filename.toString().replaceAll("\\.[^.]*$", "");
 		File stdout = Paths.get(config.csvDir).resolve(baseFilename + ".stdout").toFile();
 		File stderr = Paths.get(config.csvDir).resolve(baseFilename + ".stderrt").toFile();
 
@@ -85,8 +90,9 @@ public class LoadTestDataCsvToOracle implements ExecutableCommand {
 	 * @param config
 	 * @return 生成したコントロールファイルのパスのリスト
 	 * @throws FileNotFoundException
+	 * @throws UnsupportedEncodingException
 	 */
-	private List<Path> createControlFiles(Config config) throws FileNotFoundException {
+	private List<Path> createControlFiles(Config config) throws FileNotFoundException, UnsupportedEncodingException {
 		Path csvDir = Paths.get(config.csvDir);
 		Path historyCtrlFilePath = csvDir.resolve("history.ctl");
 		Path contractsCtrlFilePath = csvDir.resolve("contracts.ctl");
@@ -94,7 +100,7 @@ public class LoadTestDataCsvToOracle implements ExecutableCommand {
 		list.add(historyCtrlFilePath);
 		list.add(contractsCtrlFilePath);
 
-		try (PrintStream ps = new PrintStream(historyCtrlFilePath.toFile())) {
+		try (PrintStream ps = new PrintStream(historyCtrlFilePath.toFile(), "utf-8")) {
 			ps.println("OPTIONS (");
 			ps.println("        DIRECT = TRUE,");
 			ps.println("        MULTITHREADING = TRUE,");
@@ -119,7 +125,7 @@ public class LoadTestDataCsvToOracle implements ExecutableCommand {
 			ps.println(")");
 		}
 
-		try (PrintStream ps = new PrintStream(contractsCtrlFilePath.toFile())) {
+		try (PrintStream ps = new PrintStream(contractsCtrlFilePath.toFile(), "utf-8")) {
 			ps.println("OPTIONS (");
 			ps.println("        DIRECT = TRUE,");
 			ps.println("        MULTITHREADING = TRUE,");
