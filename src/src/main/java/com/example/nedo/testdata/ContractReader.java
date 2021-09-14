@@ -20,13 +20,4 @@ public interface ContractReader {
 	 * @return
 	 */
 	Duration getDurationByPos(int n);
-
-
-	/**
-	 * n番目の契約の電話番号を返す
-	 *
-	 * @param n
-	 * @return
-	 */
-	String getPhoneNumberByPos(int n);
 }

@@ -39,6 +39,11 @@ public class Statistics {
 	 */
 	private long endDate;
 
+	/**
+	 * 通話履歴のレコード数
+	 */
+	private long numberOfHistories = 0;
+
 	// キー項目と頻度のカウンターのマップ
 	private Map<String, Counter<String>> callerMap = new HashMap<>();
 	private Map<String, Counter<String>> recipientMap = new HashMap<>();
@@ -57,6 +62,7 @@ public class Statistics {
 	 * 1通話履歴分のデータを加える
 	 */
 	public void addHistoy(History h) {
+		numberOfHistories++;
 		increment(callerMap, h.callerPhoneNumber);
 		increment(recipientMap, h.recipientPhoneNumber);
 		increment(callTimeMap, h.timeSecs);
@@ -258,7 +264,6 @@ public class Statistics {
 		}
 	}
 
-
 	/**
 	 * summaryを出力する
 	 *
@@ -266,6 +271,7 @@ public class Statistics {
 	 * @throws IOException
 	 */
 	private void writeSummary(PrintWriter pw) throws IOException {
+		pw.println("statistics report");
 		writeStatistics(pw, getSortedCallTimeFrequencies(), "call time", "call time");
 		writeStatistics(pw, getSortedCallerPhoneNumberFrequencies(), "Caller phone number", "phone number");
 		writeStatistics(pw, getSortedRecipientPhoneNumberFrequencies(), "Recipient phone number", "phone number");
@@ -276,6 +282,10 @@ public class Statistics {
 		writeStatistics(pw, getSortedTargetPhoneNumberFrequencies(),
 				"Phone numbers to be calcurated(equals to contracts to be calcurated)",
 				"phone number");
+		pw.println("----------------- history information -----------------");
+		String format = "number of history records. = %,d";
+		pw.println(String.format(format, numberOfHistories));
+
 	}
 
 	private <K extends Comparable<? super K>> void writeStatistics(PrintWriter pw, List<Counter<K>> list,

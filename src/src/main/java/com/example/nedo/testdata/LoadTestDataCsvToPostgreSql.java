@@ -15,6 +15,8 @@ import com.example.nedo.app.ExecutableCommand;
 import com.example.nedo.db.DBUtils;
 import com.example.nedo.util.PathUtils;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 public class LoadTestDataCsvToPostgreSql implements ExecutableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(LoadTestDataCsvToPostgreSql.class);
 
@@ -44,6 +46,7 @@ public class LoadTestDataCsvToPostgreSql implements ExecutableCommand {
 	 * @param name
 	 * @throws SQLException
 	 */
+	@SuppressFBWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
 	private void doCopy(Statement stmt, Config config, String name) throws SQLException {
 		String sql;
 		sql = "truncate table " + name;

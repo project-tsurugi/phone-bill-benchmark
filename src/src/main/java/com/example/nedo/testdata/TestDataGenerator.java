@@ -11,23 +11,31 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
-import java.util.Set;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.example.nedo.app.Config;
 import com.example.nedo.db.Contract;
 import com.example.nedo.db.DBUtils;
 import com.example.nedo.db.Duration;
 import com.example.nedo.db.History;
+import com.example.nedo.testdata.GenerateHistoryTask.Params;
 
 public class TestDataGenerator {
+    private static final Logger LOG = LoggerFactory.getLogger(TestDataGenerator.class);
+
 	/**
 	 * 統計情報
 	 */
@@ -45,19 +53,9 @@ public class TestDataGenerator {
 	private Config config;
 
 	/**
-	 * 同じ発信時刻のデータを作らないための作成済みのHistoryDataの発信時刻を記録するSet
+	 * 電話番号生成器
 	 */
-	private Set<Long> startTimeSet;
-
-	/**
-	 * 11桁の電話番号をLONG値で表したときの最大値
-	 */
-	private static final long MAX_PHNE_NUMBER = 99999999999L;
-
-	/*
-	 * 電話番号のlong => Stringの変換結果のキャッシュ
-	 */
-	private Map<Long, String> phoneNumberCache = new HashMap<>();
+	PhoneNumberGenerator phoneNumberGenerator;
 
 
 	/**
@@ -87,19 +85,10 @@ public class TestDataGenerator {
 	private Random random;
 
 	/**
-	 * 通話時間生成器
+	 * オンラインアプリ用のGenerateHistoryTask
 	 */
-	private CallTimeGenerator callTimeGenerator;
+	private GenerateHistoryTask generateHistoryTaskForOnlineApp;
 
-	/**
-	 * 発信者電話番号のSelector
-	 */
-	private PhoneNumberSelector callerPhoneNumberSelector;
-
-	/**
-	 * 受信者電話番号のSelector
-	 */
-	private PhoneNumberSelector recipientPhoneNumberSelector;
 
 	/**
 	 * テストデータ生成のためのパラメータを指定してContractsGeneratorのインスタンスを生成する.
@@ -120,6 +109,9 @@ public class TestDataGenerator {
 		this(config, config.randomSeed, null);
 	}
 
+	private ContractReader contractReader;
+
+
 	/**
 	 * 乱数のシードとContractReaderを指定可能なコンストラクタ。ContractReaderにnullが
 	 * 指定された場合は、デフォルトのContractReaderを使用する。
@@ -135,43 +127,90 @@ public class TestDataGenerator {
 					+ config.maxDate);
 		}
 		this.random = new Random(seed);
-		this.startTimeSet = new HashSet<Long>(config.numberOfHistoryRecords);
-		callTimeGenerator = CallTimeGenerator.createCallTimeGenerator(random, config);
+		this.contractReader = contractReader;
+		phoneNumberGenerator = new PhoneNumberGenerator(config);
 		initDurationList();
 		if (contractReader == null) {
 			contractReader = new ContractReaderImpl();
 		}
-		callerPhoneNumberSelector = PhoneNumberSelector.createSelector(random,
-				config.callerPhoneNumberDistribution,
-				config.callerPhoneNumberScale,
-				config.callerPhoneNumberShape, contractReader, durationList.size());
-		recipientPhoneNumberSelector = PhoneNumberSelector.createSelector(random,
-				config.recipientPhoneNumberDistribution,
-				config.recipientPhoneNumberScale,
-				config.recipientPhoneNumberShape, contractReader, durationList.size());
+		this.contractReader = contractReader;
+		// オンラインアプリ用のGenerateHistoryTask
+		Params params = createTaskParams(0, 0, 0, 0, 1, null).get(0);
+		generateHistoryTaskForOnlineApp = new GenerateHistoryTask(params);
+
+		statistics = new Statistics(config.histortyMinDate, config.histortyMaxDate);
+
+	}
+
+	/**
+	 * 通話履歴を作成するタスクを作る
+	 *
+	 * @param start 通話開始時刻の最小値
+	 * @param end 通話開始時刻の最大値 + 1
+	 * @param writeSize 一度にキューに書き込む履歴数の最大値
+	 * @param numbeOfHistory 作成する履歴数
+	 * @param numberOfTasks 作成するタスク数
+	 * @param queue 書き込むキュー
+	 * @return
+	 */
+	/**
+	 * @param start
+	 * @param end
+	 * @param writeSize
+	 * @param numbeOfHistory
+	 * @param queue
+	 * @return
+	 */
+	private List<Params> createTaskParams(long start, long end, int writeSize, int numbeOfHistory,
+			int numberOfTasks, BlockingQueue<List<History>> queue) {
+		Params params = new Params();
+		params.taskId = 0;
+		params.config = config;
+		params.random = random;
+		params.contractReader = contractReader;
+		params.phoneNumberGenerator = phoneNumberGenerator;
+		params.durationList = durationList;
+		params.start = start;
+		params.end = end;
+		params.writeSize = writeSize;
+		params.numbeOfHistory = numbeOfHistory;
+		params.queue = queue;
+
+		if (numberOfTasks <= 1) {
+			return Collections.singletonList(params);
+		} else {
+			return createParams(params, numberOfTasks);
+		}
 	}
 
 
 	/**
-	 * 契約マスタのテストデータをDBに生成する
+	 * 指定のパラメータを元に指定の数にタスクを分割したパラメータを生成する
 	 *
-	 * @throws SQLException
+	 * @param params
+	 * @param numberOfTasks
+	 * @return
 	 */
-	public void generateContractsToDb() throws SQLException {
-		try (Connection conn = DBUtils.getConnection(config);
-				Statement stmt = conn.createStatement();
-				PreparedStatement ps = conn.prepareStatement(SQL_INSERT_TO_CONTRACT)) {
-			int batchSize = 0;
-			for (long n = 0; n < config.numberOfContractsRecords; n++) {
-				setContract(ps, n);
-				ps.addBatch();
-				if (++batchSize == SQL_BATCH_EXEC_SIZE) {
-					execBatch(ps);
-					batchSize = 0;
-				}
+	private List<Params> createParams(Params params, int numberOfTasks) {
+		List<Params> list = new ArrayList<>(numberOfTasks);
+
+		for(int i = 0; i < numberOfTasks; i++) {
+			Params dividedParams = params.clone();
+			dividedParams.taskId = i;
+			dividedParams.start =params.start + (params.end - params.start) * i / numberOfTasks;
+			dividedParams.end =params.start + (params.end - params.start) * (i+1) / numberOfTasks;
+			dividedParams.numbeOfHistory = params.numbeOfHistory / numberOfTasks;
+			if (i == 0) {
+				// dividedParams.numbeOfHistory = params.numbeOfHistory / numberOfTasks で計算すると端数がでるので、
+				// i == 0 のときに端数を調整した値を入れる
+
+				dividedParams.numbeOfHistory = params.numbeOfHistory
+						- (params.numbeOfHistory / numberOfTasks) * (numberOfTasks - 1);
+			} else {
 			}
-			execBatch(ps);
+			list.add(dividedParams);
 		}
+		return list;
 	}
 
 	/**
@@ -220,41 +259,27 @@ public class TestDataGenerator {
 	}
 
 	/**
-	 * 通話履歴のテストデータをDBに作成する
+	 * 契約マスタのテストデータをDBに生成する
 	 *
-	 * 生成する通話履歴の通話開始時刻は、minDate以上、maxDate未満の値にする。
-	 *
-	 * @param minDate
-	 * @param maxDate
-	 * @param n 生成するレコード数
 	 * @throws SQLException
-	 * @throws IOException
 	 */
-	public void generateHistoryToDb() throws SQLException, IOException {
-		Date minDate = config.histortyMinDate;
-		Date maxDate = config.histortyMaxDate;
-
-		if (!isValidDurationList(durationList, minDate, maxDate)) {
-			throw new RuntimeException("Invalid duration list.");
-		}
-
-		Duration targetDuration = new Duration(minDate, maxDate);
-		List<History> histories = new ArrayList<History>(SQL_BATCH_EXEC_SIZE);
-		statistics = new Statistics(minDate, maxDate);
-
-		try (Connection conn = DBUtils.getConnection(config)) {
-			for (int i = 0; i < config.numberOfHistoryRecords; i++) {
-				History h = createHistoryRecord(targetDuration);
-				statistics.addHistoy(h);
-				histories.add(h);
-				if (histories.size() >= SQL_BATCH_EXEC_SIZE) {
-					insrtHistories(conn, histories);
-					histories.clear();
+	public void generateContractsToDb() throws SQLException {
+		try (Connection conn = DBUtils.getConnection(config);
+				Statement stmt = conn.createStatement();
+				PreparedStatement ps = conn.prepareStatement(SQL_INSERT_TO_CONTRACT)) {
+			int batchSize = 0;
+			for (long n = 0; n < config.numberOfContractsRecords; n++) {
+				setContract(ps, n);
+				ps.addBatch();
+				if (++batchSize == SQL_BATCH_EXEC_SIZE) {
+					execBatch(ps);
+					batchSize = 0;
 				}
 			}
-			insrtHistories(conn, histories);
+			execBatch(ps);
 		}
 	}
+
 
 
 	/**
@@ -289,54 +314,36 @@ public class TestDataGenerator {
 
 
 	/**
+	 * 通話履歴のテストデータをDBに作成する
+	 *
+	 * @throws SQLException
+	 * @throws IOException
+	 */
+	public void generateHistoryToDb() throws SQLException, IOException {
+		DbHistoryWriter dbHistoryWriter = new DbHistoryWriter();
+		dbHistoryWriter.execute();
+	}
+
+	/**
 	 * 通話履歴のテストデータをCSVファイルに作成する
 	 *
 	 * @throws IOException
+	 * @throws SQLException
 	 */
-	public void generateHistoryToCsv(Path dir) throws IOException {
+	public void generateHistoryToCsv(Path dir) throws IOException, SQLException {
 		Path outputPath = dir.resolve("history.csv");
-
-		Date minDate = config.histortyMinDate;
-		Date maxDate = config.histortyMaxDate;
-
-		statistics = new Statistics(minDate, maxDate);
-
-		if (!isValidDurationList(durationList, minDate, maxDate)) {
-			throw new RuntimeException("Invalid duration list.");
-		}
-		Duration targetDuration = new Duration(minDate, maxDate);
-
-		StringBuilder sb = new StringBuilder();
-		try (BufferedWriter bw = Files.newBufferedWriter(outputPath, StandardCharsets.UTF_8,
-				StandardOpenOption.TRUNCATE_EXISTING,
-				StandardOpenOption.CREATE,
-				StandardOpenOption.WRITE);) {
-			for (int i = 0; i < config.numberOfHistoryRecords; i++) {
-				History h = createHistoryRecord(targetDuration);
-				statistics.addHistoy(h);
-				sb.setLength(0);
-				sb.append(h.callerPhoneNumber);
-				sb.append(',');
-				sb.append(h.recipientPhoneNumber);
-				sb.append(',');
-				sb.append(h.paymentCategorty);
-				sb.append(',');
-				sb.append(h.startTime);
-				sb.append(',');
-				sb.append(h.timeSecs);
-				sb.append(',');
-				if (h.charge != null) {
-					sb.append(h.charge);
-				}
-				sb.append(',');
-				sb.append(h.df ? 1 : 0);
-				bw.write(sb.toString());
-				bw.newLine();
-			}
-		}
+		CsvHistoryWriter csvHistoryWriter = new CsvHistoryWriter(outputPath);
+		csvHistoryWriter.execute();
 	}
 
 
+	/**
+	 * 通話履歴をインサートする
+	 *
+	 * @param conn
+	 * @param histories
+	 * @throws SQLException
+	 */
 	public void insrtHistories(Connection conn, List<History> histories) throws SQLException {
 		try (PreparedStatement ps = conn.prepareStatement("insert into history("
 				+ "caller_phone_number,"
@@ -394,48 +401,6 @@ public class TestDataGenerator {
 			}
 		}
 		return true;
-	}
-
-	/**
-	 * 通話開始時刻が指定の範囲に収まる通話履歴を生成する
-	 *
-	 * @param targetDuration
-	 * @return
-	 */
-	private History createHistoryRecord(Duration targetDuration) {
-		// 通話開始時刻
-		long startTime;
-		do {
-			startTime = TestDataUtils.getRandomLong(random, targetDuration.start.getTime(), targetDuration.end.getTime());
-		} while (startTimeSet.contains(startTime));
-		startTimeSet.add(startTime);
-		return createHistoryRecord(startTime);
-	}
-
-	/**
-	 * 指定の通話開始時刻の通話履歴を生成する
-	 *
-	 * @param startTime
-	 * @return
-	 */
-	public History createHistoryRecord(long startTime) {
-		History history = new History();
-		history.startTime = new Timestamp(startTime);
-
-		// 電話番号の生成
-		long c = callerPhoneNumberSelector.selectPhoneNumber(startTime, -1);
-		long r = recipientPhoneNumberSelector.selectPhoneNumber(startTime, c);
-		history.callerPhoneNumber = getPhoneNumber(c);
-		history.recipientPhoneNumber = getPhoneNumber(r);
-
-		// 料金区分(発信者負担、受信社負担)
-		// TODO 割合を指定可能にする
-		history.paymentCategorty = random.nextInt(2) == 0 ? "C" : "R";
-
-		// 通話時間
-		history.timeSecs = callTimeGenerator.getTimeSecs();
-
-		return history;
 	}
 
 	private void execBatch(PreparedStatement ps) throws SQLException {
@@ -498,32 +463,7 @@ public class TestDataGenerator {
 		return new Date(min.getTime() + offset);
 	}
 
-	/**
-	 * n番目の電話番号(11桁)を返す
-	 *
-	 * @param n
-	 * @return
-	 */
-	String getPhoneNumber(long n) {
-		if (n < 0 || MAX_PHNE_NUMBER <= n) {
-			throw new RuntimeException("Out of phone number range: " + n);
-		}
-		String str = phoneNumberCache.get(n);
-		if (str != null) {
-			return str;
-		}
-		long blockSize = config.duplicatePhoneNumberRatio * 2 + config.expirationDateRate + config.noExpirationDateRate;
-		long noDupSize = config.expirationDateRate + config.noExpirationDateRate;
-		long posInBlock = n % blockSize;
-		long phoneNumber = n;
-		if (posInBlock >= noDupSize && posInBlock % 2 == 0) {
-			phoneNumber = n + 1;
-		}
-		String format = "%011d";
-		str = String.format(format, phoneNumber);
-		phoneNumberCache.put(n, str);
-		return str;
-	}
+
 
 	/**
 	 * n番目のレコードのDurationを返す
@@ -544,7 +484,7 @@ public class TestDataGenerator {
 	 */
 	private Contract getContract(long n) {
 		Contract contract = new Contract();
-		contract.phoneNumber = getPhoneNumber(n);
+		contract.phoneNumber = phoneNumberGenerator.getPhoneNumber(n);
 		contract.rule = "sample";
 		Duration d = getDuration(n);
 		contract.startDate = d.start;
@@ -567,11 +507,6 @@ public class TestDataGenerator {
 		public Duration getDurationByPos(int n) {
 			return getDuration(n);
 		}
-
-		@Override
-		public String getPhoneNumberByPos(int n) {
-			return getPhoneNumber(n);
-		}
 	}
 
 	/**
@@ -588,6 +523,184 @@ public class TestDataGenerator {
 		this.statisticsOnly = statisticsOnly;
 	}
 
+
+	/**
+	 * 指定の開始時刻の通話履歴を作成する(オンラインアプリ用)
+	 *
+	 * @param startTime
+	 * @return
+	 */
+	public synchronized History createHistoryRecord(long startTime) {
+		return generateHistoryTaskForOnlineApp.createHistoryRecord(startTime);
+	}
+
+
+	/**
+	 * 通話履歴を書き出す抽象クラス.
+	 */
+	private abstract class HistoryWriter {
+		/**
+		 * クリーンナップ処理
+		 * @throws IOException
+		 * @throws SQLException
+		 */
+		abstract void cleanup() throws IOException, SQLException;
+
+		/**
+		 * 通話履歴を生成するタスクを実行し、生成された通話履歴を書き出す
+		 *
+		 * @throws IOException
+		 * @throws SQLException
+		 */
+		public void execute() throws IOException, SQLException {
+			// 各変数の初期化
+
+			Date minDate = config.histortyMinDate;
+			Date maxDate = config.histortyMaxDate;
+
+			statistics = new Statistics(minDate, maxDate);
+
+			if (!isValidDurationList(durationList, minDate, maxDate)) {
+				throw new RuntimeException("Invalid duration list.");
+			}
+
+			// 通話履歴を生成するタスクとスレッドの生成
+			ExecutorService service = Executors.newFixedThreadPool(config.threadCount);
+
+			int numberOfTasks = Math.max((int) (config.numberOfHistoryRecords / 100000), 1);
+			BlockingQueue<List<History>> queue = new LinkedBlockingQueue<>(config.threadCount * 2);
+			List<Params> paramsList = createTaskParams(minDate.getTime(), maxDate.getTime(), SQL_BATCH_EXEC_SIZE,
+					config.numberOfHistoryRecords, numberOfTasks, queue);
+			List<Future<?>> futurelist = new ArrayList<>(paramsList.size());
+			for (Params params : paramsList) {
+				GenerateHistoryTask task = new GenerateHistoryTask(params);
+				Future<?> future = service.submit(task);
+				futurelist.add(future);
+			}
+			LOG.info("" + numberOfTasks + " tasks were submitted.");
+			service.shutdown();
+
+
+			// 通話履歴の書き出し
+			int numberOfEndTasks = 0;
+
+			// 各タスクが生成した通話履歴をファイルに書き出す
+			try {
+				while (true) {
+					List<History> list = queue.poll();
+					if (list == null) {
+						try {
+							// キューに何も書き込まれていない
+							Thread.sleep(1);
+							continue;
+						} catch (InterruptedException e) {
+							throw new RuntimeException(e);
+						}
+					}
+					if (list.isEmpty()) {
+						numberOfEndTasks++;
+						LOG.info(String.format("%d/%d tasks finished.", numberOfEndTasks, numberOfTasks));
+						if (numberOfEndTasks >= numberOfTasks) {
+							break;
+						}
+					}
+					for (History h : list) {
+						statistics.addHistoy(h);
+						if (!statisticsOnly) {
+							write(h);
+						}
+					}
+				}
+			} finally {
+				cleanup();
+			}
+			// スレッドの終了状態を調べる
+			for (Future<?> future : futurelist) {
+				try {
+					future.get();
+				} catch (InterruptedException | ExecutionException e) {
+					throw new RuntimeException(e);
+				}
+			}
+		}
+
+		/**
+		 * 1レコード分出力する
+		 * @throws IOException
+		 * @throws SQLException
+		 */
+		abstract void write(History h) throws IOException, SQLException;
+	}
+
+	private class CsvHistoryWriter extends HistoryWriter {
+		private StringBuilder sb;
+		private BufferedWriter bw;
+
+		public CsvHistoryWriter(Path outputPath)
+				throws IOException {
+			this.sb = new StringBuilder();
+			this.bw = Files.newBufferedWriter(outputPath, StandardCharsets.UTF_8,
+					StandardOpenOption.TRUNCATE_EXISTING,
+					StandardOpenOption.CREATE,
+					StandardOpenOption.WRITE);
+		}
+
+		@Override
+		void write(History h) throws IOException {
+			sb.setLength(0);
+			sb.append(h.callerPhoneNumber);
+			sb.append(',');
+			sb.append(h.recipientPhoneNumber);
+			sb.append(',');
+			sb.append(h.paymentCategorty);
+			sb.append(',');
+			sb.append(h.startTime);
+			sb.append(',');
+			sb.append(h.timeSecs);
+			sb.append(',');
+			if (h.charge != null) {
+				sb.append(h.charge);
+			}
+			sb.append(',');
+			sb.append(h.df ? 1 : 0);
+			bw.write(sb.toString());
+			bw.newLine();
+		}
+
+		@Override
+		void cleanup() throws IOException {
+			if (bw != null) {
+				bw.close();
+			}
+		}
+	}
+
+	private class DbHistoryWriter extends HistoryWriter {
+		List<History> histories = new ArrayList<History>(SQL_BATCH_EXEC_SIZE);
+		Connection conn;
+
+		public DbHistoryWriter() {
+			conn = DBUtils.getConnection(config);
+		}
+
+		@Override
+		void cleanup() throws IOException, SQLException {
+			if (histories.size() != 0) {
+				insrtHistories(conn, histories);
+			}
+			if (conn != null && !conn.isClosed()) {
+				conn.close();
+			}
+		}
+
+		@Override
+		void write(History h) throws IOException, SQLException {
+			histories.add(h);
+			if (histories.size() >= SQL_BATCH_EXEC_SIZE) {
+				insrtHistories(conn, histories);
+				histories.clear();
+			}
+
+		}
+	}
 }
-
-

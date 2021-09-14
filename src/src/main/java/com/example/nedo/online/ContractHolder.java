@@ -98,9 +98,4 @@ public class ContractHolder implements ContractReader {
 		Duration d = new Duration(c.startDate, c.endDate);
 		return d;
 	}
-
-	@Override
-	public synchronized String getPhoneNumberByPos(int n) {
-		return list.get(n).phoneNumber;
-	}
 }
