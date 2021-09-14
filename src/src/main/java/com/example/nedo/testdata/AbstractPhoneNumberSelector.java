@@ -39,20 +39,19 @@ public abstract class  AbstractPhoneNumberSelector implements PhoneNumberSelecto
 	}
 
 	@Override
-	public String selectPhoneNumber(long startTime, String exceptPhoneNumber) {
+	public long selectPhoneNumber(long startTime, long exceptPhoneNumber) {
 		int pos = getContractPos();
 		for(int i =0; i < tryCount; i++) {
 			int shuffledPos = contracts.get(pos);
-			String phoneNumber = contractReader.getPhoneNumberByPos(shuffledPos);
-			if (exceptPhoneNumber == null || !exceptPhoneNumber.equals(phoneNumber)) {
+			if (exceptPhoneNumber != shuffledPos) {
 				Duration d = contractReader.getDurationByPos(shuffledPos);
 				if (d.end == null) {
 					if (d.start.getTime() <= startTime) {
-						return phoneNumber;
+						return shuffledPos;
 					}
 				} else {
 					if (d.start.getTime() <= startTime && startTime < d.end.getTime()) {
-						return phoneNumber;
+						return shuffledPos;
 					}
 				}
 			}

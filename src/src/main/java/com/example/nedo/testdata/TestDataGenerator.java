@@ -14,8 +14,10 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
@@ -51,6 +53,12 @@ public class TestDataGenerator {
 	 * 11桁の電話番号をLONG値で表したときの最大値
 	 */
 	private static final long MAX_PHNE_NUMBER = 99999999999L;
+
+	/*
+	 * 電話番号のlong => Stringの変換結果のキャッシュ
+	 */
+	private Map<Long, String> phoneNumberCache = new HashMap<>();
+
 
 	/**
 	 * 一度にインサートする行数
@@ -415,8 +423,10 @@ public class TestDataGenerator {
 		history.startTime = new Timestamp(startTime);
 
 		// 電話番号の生成
-		history.callerPhoneNumber = callerPhoneNumberSelector.selectPhoneNumber(startTime, null);
-		history.recipientPhoneNumber = recipientPhoneNumberSelector.selectPhoneNumber(startTime, history.callerPhoneNumber);
+		long c = callerPhoneNumberSelector.selectPhoneNumber(startTime, -1);
+		long r = recipientPhoneNumberSelector.selectPhoneNumber(startTime, c);
+		history.callerPhoneNumber = getPhoneNumber(c);
+		history.recipientPhoneNumber = getPhoneNumber(r);
 
 		// 料金区分(発信者負担、受信社負担)
 		// TODO 割合を指定可能にする
@@ -498,6 +508,10 @@ public class TestDataGenerator {
 		if (n < 0 || MAX_PHNE_NUMBER <= n) {
 			throw new RuntimeException("Out of phone number range: " + n);
 		}
+		String str = phoneNumberCache.get(n);
+		if (str != null) {
+			return str;
+		}
 		long blockSize = config.duplicatePhoneNumberRatio * 2 + config.expirationDateRate + config.noExpirationDateRate;
 		long noDupSize = config.expirationDateRate + config.noExpirationDateRate;
 		long posInBlock = n % blockSize;
@@ -506,7 +520,9 @@ public class TestDataGenerator {
 			phoneNumber = n + 1;
 		}
 		String format = "%011d";
-		return String.format(format, phoneNumber);
+		str = String.format(format, phoneNumber);
+		phoneNumberCache.put(n, str);
+		return str;
 	}
 
 	/**

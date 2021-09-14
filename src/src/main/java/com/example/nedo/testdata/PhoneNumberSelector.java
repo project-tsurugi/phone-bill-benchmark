@@ -20,16 +20,17 @@ public interface PhoneNumberSelector {
 	 * 指定の通話開始時刻が契約範囲に含まれる電話番号を選択する。
 	 * <br>
 	 * 発信者電話番号、受信者電話番号の順にこのメソッドを使用して電話番号を選択する。
-	 * 発信者電話番号の選択時には、exceptPhoneNumberにnullを指定する。受信者電話番号の
+	 * 発信者電話番号の選択時には、exceptPhoneNumberに-1を指定する。受信者電話番号の
 	 * 選択時には、exceptPhoneNumberに発信者電話番号を指定することにより、受信者電話番号と
-	 * 発信者電話番号が等しくなるのを避ける。
+	 * 発信者電話番号が等しくなるのを避ける。電話番号には文字列ではなく何番目の電話番号かを表す
+	 * long値を使用する。
 	 *
 	 *
 	 * @param startTime 通話開始時刻
 	 * @param exceptPhoneNumber 選択しない電話番号。
 	 * @return 選択為た電話番号
 	 */
-	String selectPhoneNumber(long startTime, String exceptPhoneNumber);
+	long selectPhoneNumber(long startTime, long exceptPhoneNumber);
 
 	/**
 	 * セレクタを生成する
