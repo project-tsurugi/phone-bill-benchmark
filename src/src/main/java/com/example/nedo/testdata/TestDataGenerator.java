@@ -14,14 +14,14 @@ import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutionException;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,7 +55,7 @@ public class TestDataGenerator {
 	/**
 	 * 電話番号生成器
 	 */
-	PhoneNumberGenerator phoneNumberGenerator;
+	private PhoneNumberGenerator phoneNumberGenerator;
 
 
 	/**
@@ -83,12 +83,6 @@ public class TestDataGenerator {
 	 * 乱数生成器
 	 */
 	private Random random;
-
-	/**
-	 * オンラインアプリ用のGenerateHistoryTask
-	 */
-	private GenerateHistoryTask generateHistoryTaskForOnlineApp;
-
 
 	/**
 	 * テストデータ生成のためのパラメータを指定してContractsGeneratorのインスタンスを生成する.
@@ -134,35 +128,33 @@ public class TestDataGenerator {
 			contractReader = new ContractReaderImpl();
 		}
 		this.contractReader = contractReader;
-		// オンラインアプリ用のGenerateHistoryTask
-		Params params = createTaskParams(0, 0, 0, 0, 1, null).get(0);
-		generateHistoryTaskForOnlineApp = new GenerateHistoryTask(params);
+		statistics = new Statistics(config.historyMinDate, config.historyMaxDate);
+	}
 
-		statistics = new Statistics(config.histortyMinDate, config.histortyMaxDate);
 
+	/**
+	 * オンラインアプリ用のGenerateHistoryTaskを生成する
+	 *
+	 * @return
+	 * @throws IOException
+	 */
+	public GenerateHistoryTask getGenerateHistoryTaskForOnlineApp() throws IOException {
+		Params params = createTaskParams(0, 0, 0,1).get(0);
+		params.historyWriter = new DbHistoryWriter();
+		GenerateHistoryTask generateHistoryTask = new GenerateHistoryTask(params);
+		generateHistoryTask.init();
+		return generateHistoryTask;
 	}
 
 	/**
-	 * 通話履歴を作成するタスクを作る
-	 *
 	 * @param start 通話開始時刻の最小値
 	 * @param end 通話開始時刻の最大値 + 1
-	 * @param writeSize 一度にキューに書き込む履歴数の最大値
 	 * @param numbeOfHistory 作成する履歴数
 	 * @param numberOfTasks 作成するタスク数
-	 * @param queue 書き込むキュー
 	 * @return
 	 */
-	/**
-	 * @param start
-	 * @param end
-	 * @param writeSize
-	 * @param numbeOfHistory
-	 * @param queue
-	 * @return
-	 */
-	private List<Params> createTaskParams(long start, long end, int writeSize, int numbeOfHistory,
-			int numberOfTasks, BlockingQueue<List<History>> queue) {
+	private List<Params> createTaskParams(long start, long end, long numbeOfHistory,
+			int numberOfTasks) {
 		Params params = new Params();
 		params.taskId = 0;
 		params.config = config;
@@ -172,9 +164,7 @@ public class TestDataGenerator {
 		params.durationList = durationList;
 		params.start = start;
 		params.end = end;
-		params.writeSize = writeSize;
-		params.numbeOfHistory = numbeOfHistory;
-		params.queue = queue;
+		params.numberOfHistory = numbeOfHistory;
 
 		if (numberOfTasks <= 1) {
 			return Collections.singletonList(params);
@@ -182,7 +172,6 @@ public class TestDataGenerator {
 			return createParams(params, numberOfTasks);
 		}
 	}
-
 
 	/**
 	 * 指定のパラメータを元に指定の数にタスクを分割したパラメータを生成する
@@ -194,20 +183,26 @@ public class TestDataGenerator {
 	private List<Params> createParams(Params params, int numberOfTasks) {
 		List<Params> list = new ArrayList<>(numberOfTasks);
 
+		long firstNumberOfHistory = 0;
 		for(int i = 0; i < numberOfTasks; i++) {
 			Params dividedParams = params.clone();
 			dividedParams.taskId = i;
-			dividedParams.start =params.start + (params.end - params.start) * i / numberOfTasks;
-			dividedParams.end =params.start + (params.end - params.start) * (i+1) / numberOfTasks;
-			dividedParams.numbeOfHistory = params.numbeOfHistory / numberOfTasks;
 			if (i == 0) {
+				dividedParams.start = config.historyMinDate.getTime();
 				// dividedParams.numbeOfHistory = params.numbeOfHistory / numberOfTasks で計算すると端数がでるので、
 				// i == 0 のときに端数を調整した値を入れる
-
-				dividedParams.numbeOfHistory = params.numbeOfHistory
-						- (params.numbeOfHistory / numberOfTasks) * (numberOfTasks - 1);
+				firstNumberOfHistory = config.numberOfHistoryRecords
+						- config.maxNumberOfLinesHistoryCsv * (numberOfTasks - 1);
+				dividedParams.numberOfHistory = firstNumberOfHistory;
 			} else {
+				dividedParams.numberOfHistory = config.maxNumberOfLinesHistoryCsv;
+				// 各タスクに異なる乱数発生器を使用する
+				params.random = new Random(random.nextLong());
+				dividedParams.start = list.get(i - 1).end;
 			}
+			dividedParams.end = params.start + (params.end - params.start)
+					* (firstNumberOfHistory + config.maxNumberOfLinesHistoryCsv * i)
+					/ config.numberOfHistoryRecords;
 			list.add(dividedParams);
 		}
 		return list;
@@ -237,20 +232,20 @@ public class TestDataGenerator {
 	 */
 	public static Duration getCommonDuration(Duration d1, Duration d2) {
 		// d1, d2に共通な期間がない場合
-		if (d1.end.getTime() < d2.start.getTime()) {
+		if (d1.end < d2.start) {
 			return null;
 		}
-		if (d2.end.getTime() < d1.start.getTime()) {
+		if (d2.end < d1.start) {
 			return null;
 		}
-		if (d1.start.getTime() < d2.start.getTime()) {
-			if (d1.end.getTime() < d2.end.getTime()) {
+		if (d1.start < d2.start) {
+			if (d1.end < d2.end) {
 				return new Duration(d2.start, d1.end);
 			} else {
 				return d2;
 			}
 		} else {
-			if (d1.end.getTime() < d2.end.getTime()) {
+			if (d1.end < d2.end) {
 				return d1;
 			} else {
 				return new Duration(d1.start, d2.end);
@@ -280,17 +275,14 @@ public class TestDataGenerator {
 		}
 	}
 
-
-
 	/**
 	 * 契約マスタのテストデータのCSVファイルを生成する
 	 *
 	 * @throws IOException
 	 */
-	public void generateContractsToCsv(Path dir) throws IOException {
-		Path outputPath = dir.resolve("contracts.csv");
+	public void generateContractsToCsv(Path path) throws IOException {
 		StringBuilder sb = new StringBuilder();
-		try (BufferedWriter bw = Files.newBufferedWriter(outputPath, StandardCharsets.UTF_8,
+		try (BufferedWriter bw = Files.newBufferedWriter(path, StandardCharsets.UTF_8,
 				StandardOpenOption.TRUNCATE_EXISTING,
 				StandardOpenOption.CREATE,
 				StandardOpenOption.WRITE);) {
@@ -312,7 +304,6 @@ public class TestDataGenerator {
 		}
 	}
 
-
 	/**
 	 * 通話履歴のテストデータをDBに作成する
 	 *
@@ -320,8 +311,11 @@ public class TestDataGenerator {
 	 * @throws IOException
 	 */
 	public void generateHistoryToDb() throws SQLException, IOException {
-		DbHistoryWriter dbHistoryWriter = new DbHistoryWriter();
-		dbHistoryWriter.execute();
+		List<Params> paramsList = createParamsList();
+		for(Params params: paramsList) {
+			params.historyWriter = new DbHistoryWriter();
+		}
+		generateHistory(paramsList);
 	}
 
 	/**
@@ -331,10 +325,94 @@ public class TestDataGenerator {
 	 * @throws SQLException
 	 */
 	public void generateHistoryToCsv(Path dir) throws IOException, SQLException {
-		Path outputPath = dir.resolve("history.csv");
-		CsvHistoryWriter csvHistoryWriter = new CsvHistoryWriter(outputPath);
-		csvHistoryWriter.execute();
+		List<Params> paramsList = createParamsList();
+		for(Params params: paramsList) {
+			Path outputPath = CsvUtils.getHistortyFilePath(dir, params.taskId);
+			params.historyWriter = new CsvHistoryWriter(outputPath);
+		}
+		generateHistory(paramsList);
 	}
+
+	List<Params> createParamsList() {
+		Date minDate = config.historyMinDate;
+		Date maxDate = config.historyMaxDate;
+
+		statistics = new Statistics(minDate, maxDate);
+
+		if (!isValidDurationList(durationList, minDate, maxDate)) {
+			throw new RuntimeException("Invalid duration list.");
+		}
+
+		long numberOfTasks = (config.numberOfHistoryRecords + config.maxNumberOfLinesHistoryCsv - 1)
+				/ config.maxNumberOfLinesHistoryCsv;
+		if (numberOfTasks > Integer.MAX_VALUE) {
+			throw new RuntimeException("Too many numberOfTasks: " + numberOfTasks);
+		}
+
+		List<Params> paramsList = createTaskParams(minDate.getTime(), maxDate.getTime(),
+				config.numberOfHistoryRecords, (int)numberOfTasks);
+		return paramsList;
+	}
+
+
+
+	// 終了済みのタスク数
+	private int numberOfEndTasks = 0;
+
+
+	/**
+	 * 通話履歴を生成するタスクを実行し、生成された通話履歴を書き出す
+	 *
+	 * @throws IOException
+	 * @throws SQLException
+	 */
+	public void generateHistory(List<Params> paramsList) throws IOException, SQLException {
+
+		// 通話履歴を生成するタスクとスレッドの生成
+		ExecutorService service = Executors.newFixedThreadPool(config.threadCount);
+
+		int numberOfTasks = paramsList.size();
+		Set<Future<?>> futureSet = new HashSet<>(paramsList.size());
+		numberOfEndTasks = 0;
+		for (Params params : paramsList) {
+			GenerateHistoryTask task = new GenerateHistoryTask(params);
+			Future<?> future = service.submit(task);
+			futureSet.add(future);
+			waitFor(numberOfTasks, futureSet);
+		}
+		LOG.info(String.format("%d tasks sumbitted.", numberOfTasks));
+
+		service.shutdown();
+
+		while(!futureSet.isEmpty()) {
+			waitFor(numberOfTasks, futureSet);
+			try {
+				Thread.sleep(10);
+			} catch (InterruptedException e) {
+				// Noting to do
+			}
+		}
+	}
+
+	/**
+	 * 終了したタスクを調べる
+	 *
+	 * @param numberOfTasks
+	 * @param futureSet
+	 */
+	private void waitFor(int numberOfTasks, Set<Future<?>> futureSet) {
+		Iterator<Future<?>> it = futureSet.iterator();
+		while (it.hasNext()) {
+			Future<?> future = it.next();
+			if (future.isDone()) {
+				it.remove();
+				LOG.info(String.format("%d/%d tasks finished.", ++numberOfEndTasks, numberOfTasks));
+			}
+		}
+	}
+
+
+
 
 
 	/**
@@ -344,7 +422,7 @@ public class TestDataGenerator {
 	 * @param histories
 	 * @throws SQLException
 	 */
-	public void insrtHistories(Connection conn, List<History> histories) throws SQLException {
+	public static void insrtHistories(Connection conn, List<History> histories) throws SQLException {
 		try (PreparedStatement ps = conn.prepareStatement("insert into history("
 				+ "caller_phone_number,"
 				+ "recipient_phone_number,"
@@ -386,8 +464,8 @@ public class TestDataGenerator {
 		for (Date date = minDate; date.getTime() <= maxDate.getTime(); date = DBUtils.nextDate(date)) {
 			int c = 0;
 			for (Duration duration : list) {
-				long start = duration.start.getTime();
-				long end = duration.end == null ? Long.MAX_VALUE : duration.end.getTime();
+				long start = duration.start;
+				long end = duration.end == null ? Long.MAX_VALUE : duration.end;
 				if (start <= date.getTime() && date.getTime() <= end) {
 					c++;
 					if (c >= 2) {
@@ -403,7 +481,7 @@ public class TestDataGenerator {
 		return true;
 	}
 
-	private void execBatch(PreparedStatement ps) throws SQLException {
+	private static void execBatch(PreparedStatement ps) throws SQLException {
 		int rets[] = ps.executeBatch();
 		for (int ret : rets) {
 			if (ret < 0 && ret != PreparedStatement.SUCCESS_NO_INFO) {
@@ -485,8 +563,8 @@ public class TestDataGenerator {
 		contract.phoneNumber = phoneNumberGenerator.getPhoneNumber(n);
 		contract.rule = "sample";
 		Duration d = getDuration(n);
-		contract.startDate = d.start;
-		contract.endDate = d.end;
+		contract.startDate = d.getStatDate();
+		contract.endDate = d.getEndDate();
 		return contract;
 	}
 
@@ -523,105 +601,15 @@ public class TestDataGenerator {
 
 
 	/**
-	 * 指定の開始時刻の通話履歴を作成する(オンラインアプリ用)
-	 *
-	 * @param startTime
-	 * @return
-	 */
-	public synchronized History createHistoryRecord(long startTime) {
-		return generateHistoryTaskForOnlineApp.createHistoryRecord(startTime);
-	}
-
-
-	/**
 	 * 通話履歴を書き出す抽象クラス.
 	 */
-	private abstract class HistoryWriter {
+	public abstract class HistoryWriter {
 		/**
-		 * クリーンナップ処理
+		 * クラスを初期化する
 		 * @throws IOException
-		 * @throws SQLException
 		 */
-		abstract void cleanup() throws IOException, SQLException;
+		abstract void init() throws IOException;
 
-		/**
-		 * 通話履歴を生成するタスクを実行し、生成された通話履歴を書き出す
-		 *
-		 * @throws IOException
-		 * @throws SQLException
-		 */
-		public void execute() throws IOException, SQLException {
-			// 各変数の初期化
-
-			Date minDate = config.histortyMinDate;
-			Date maxDate = config.histortyMaxDate;
-
-			statistics = new Statistics(minDate, maxDate);
-
-			if (!isValidDurationList(durationList, minDate, maxDate)) {
-				throw new RuntimeException("Invalid duration list.");
-			}
-
-			// 通話履歴を生成するタスクとスレッドの生成
-			ExecutorService service = Executors.newFixedThreadPool(config.threadCount);
-
-			int numberOfTasks = Math.max((int) (config.numberOfHistoryRecords / 100000), 1);
-			BlockingQueue<List<History>> queue = new LinkedBlockingQueue<>(config.threadCount * 2);
-			List<Params> paramsList = createTaskParams(minDate.getTime(), maxDate.getTime(), SQL_BATCH_EXEC_SIZE,
-					config.numberOfHistoryRecords, numberOfTasks, queue);
-			List<Future<?>> futurelist = new ArrayList<>(paramsList.size());
-			for (Params params : paramsList) {
-				GenerateHistoryTask task = new GenerateHistoryTask(params);
-				Future<?> future = service.submit(task);
-				futurelist.add(future);
-			}
-			LOG.info("" + numberOfTasks + " tasks were submitted.");
-			service.shutdown();
-
-
-			// 通話履歴の書き出し
-			int numberOfEndTasks = 0;
-
-			// 各タスクが生成した通話履歴をファイルに書き出す
-			try {
-				while (true) {
-					List<History> list = queue.poll();
-					if (list == null) {
-						try {
-							// キューに何も書き込まれていない
-							Thread.sleep(1);
-							continue;
-						} catch (InterruptedException e) {
-							throw new RuntimeException(e);
-						}
-					}
-					if (list.isEmpty()) {
-						numberOfEndTasks++;
-						LOG.info(String.format("%d/%d tasks finished.", numberOfEndTasks, numberOfTasks));
-						if (numberOfEndTasks >= numberOfTasks) {
-							break;
-						}
-					}
-					for (History h : list) {
-						if (statisticsOnly) {
-							statistics.addHistoy(h);
-						} else {
-							write(h);
-						}
-					}
-				}
-			} finally {
-				cleanup();
-			}
-			// スレッドの終了状態を調べる
-			for (Future<?> future : futurelist) {
-				try {
-					future.get();
-				} catch (InterruptedException | ExecutionException e) {
-					throw new RuntimeException(e);
-				}
-			}
-		}
 
 		/**
 		 * 1レコード分出力する
@@ -629,19 +617,35 @@ public class TestDataGenerator {
 		 * @throws SQLException
 		 */
 		abstract void write(History h) throws IOException, SQLException;
+
+		/**
+		 * クリーンナップ処理
+		 * @throws IOException
+		 * @throws SQLException
+		 */
+		abstract void cleanup() throws IOException, SQLException;
 	}
 
+	/**
+	 * CSV出力用クラス
+	 *
+	 */
 	private class CsvHistoryWriter extends HistoryWriter {
-		private StringBuilder sb;
 		private BufferedWriter bw;
+		private StringBuilder sb;
+		private Path outputPath;
 
-		public CsvHistoryWriter(Path outputPath)
-				throws IOException {
-			this.sb = new StringBuilder();
-			this.bw = Files.newBufferedWriter(outputPath, StandardCharsets.UTF_8,
+		public CsvHistoryWriter(Path outputPath) {
+				this.outputPath = outputPath;
+		}
+
+		@Override
+		void init() throws IOException {
+			bw = Files.newBufferedWriter(outputPath, StandardCharsets.UTF_8,
 					StandardOpenOption.TRUNCATE_EXISTING,
 					StandardOpenOption.CREATE,
 					StandardOpenOption.WRITE);
+			sb = new StringBuilder();
 		}
 
 		@Override
@@ -674,11 +678,17 @@ public class TestDataGenerator {
 		}
 	}
 
+	/**
+	 * DB出力用クラス
+	 *
+	 */
 	private class DbHistoryWriter extends HistoryWriter {
-		List<History> histories = new ArrayList<History>(SQL_BATCH_EXEC_SIZE);
-		Connection conn;
+		List<History> histories = null;
+		Connection conn = null;
 
-		public DbHistoryWriter() {
+		@Override
+		void init() throws IOException {
+			histories = new ArrayList<History>(SQL_BATCH_EXEC_SIZE);
 			conn = DBUtils.getConnection(config);
 		}
 
@@ -694,12 +704,49 @@ public class TestDataGenerator {
 
 		@Override
 		void write(History h) throws IOException, SQLException {
-			histories.add(h);
-			if (histories.size() >= SQL_BATCH_EXEC_SIZE) {
-				insrtHistories(conn, histories);
-				histories.clear();
+			if (statisticsOnly) {
+				statistics.addHistoy(h);
+			} else {
+				histories.add(h);
+				if (histories.size() >= SQL_BATCH_EXEC_SIZE) {
+					insrtHistories(conn, histories);
+					histories.clear();
+				}
 			}
-
 		}
+	}
+
+
+	/**
+	 * 通話履歴のCSVファイルのパスを取得する
+	 *
+	 * @param dir CSVファイルのディレクトリ
+	 * @return
+	 */
+	public static List<Path> getHistortyFilePaths(Path dir) {
+		return null;
+	}
+
+
+	/**
+	 * 契約のCSVSファイルのパスを取得する
+	 *
+	 * @param dir CSVファイルのディレクトリ
+	 * @return
+	 */
+	public static Path getContractsFilePath(Path dir) {
+		return null;
+	}
+
+
+	/**
+	 * n番目の通話履歴のCSVファイルのパスを取得する
+	 *
+	 * @param n
+	 * @param dir CSVファイルのディレクトリ
+	 * @return
+	 */
+	public static Path getHistortyFilePath(Path dir, int n) {
+		return null;
 	}
 }

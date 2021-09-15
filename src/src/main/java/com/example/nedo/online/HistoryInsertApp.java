@@ -1,5 +1,6 @@
 package com.example.nedo.online;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -16,12 +17,13 @@ import org.slf4j.LoggerFactory;
 
 import com.example.nedo.app.Config;
 import com.example.nedo.db.History;
+import com.example.nedo.testdata.GenerateHistoryTask;
 import com.example.nedo.testdata.TestDataGenerator;
 
 public class HistoryInsertApp extends AbstractOnlineApp {
     private static final Logger LOG = LoggerFactory.getLogger(HistoryInsertApp.class);
-	private TestDataGenerator testDataGenerator;
 	private int historyInsertRecordsPerTransaction;
+	private GenerateHistoryTask generateHistoryTask;
 	private long baseTime;
 	private Random random;
 	private Connection conn;
@@ -32,14 +34,17 @@ public class HistoryInsertApp extends AbstractOnlineApp {
 	 */
 	private Set<Key> startTimeSet;
 
-	public HistoryInsertApp(ContractHolder contractHolder, Config config, int seed) throws SQLException {
+	public HistoryInsertApp(ContractHolder contractHolder, Config config, int seed) throws SQLException, IOException {
 		super(config.historyInsertTransactionPerMin, config);
 		this.random = new Random(seed);
 		historyInsertRecordsPerTransaction = config.historyInsertRecordsPerTransaction;
-		testDataGenerator = new TestDataGenerator(config, seed, contractHolder);
 		baseTime = getMaxStartTime(); // 通話履歴中の最新の通話開始時刻をベースに新規に作成する通話履歴の通話開始時刻を生成する
 		conn = getConnection();
 		startTimeSet = new HashSet<Key>(); // 同一の時刻のレコードを生成しないために時刻を記録するためのセット
+
+
+		TestDataGenerator testDataGenerator = new TestDataGenerator(config, seed, contractHolder);
+		generateHistoryTask = testDataGenerator.getGenerateHistoryTaskForOnlineApp();
 	}
 
 	@Override
@@ -105,7 +110,7 @@ public class HistoryInsertApp extends AbstractOnlineApp {
 		for (int i = 0; i < historyInsertRecordsPerTransaction; i++) {
 			do {
 				long startTime = baseTime + random.nextInt(CREATE_SCHEDULE_INTERVAL_MILLS);
-				history = testDataGenerator.createHistoryRecord(startTime);
+				history = generateHistoryTask.createHistoryRecord(startTime);
 				key = new Key();
 				key.phoneNumber = history.callerPhoneNumber;
 				key.startTime = startTime;
@@ -117,7 +122,7 @@ public class HistoryInsertApp extends AbstractOnlineApp {
 
 	@Override
 	protected void updateDatabase() throws SQLException {
-		testDataGenerator.insrtHistories(conn, histories);
+		TestDataGenerator.insrtHistories(conn, histories);
 		if (LOG.isDebugEnabled()) {
 			LOG.debug("ONLINE APP: Insert {} records to history.", historyInsertRecordsPerTransaction);
 		}

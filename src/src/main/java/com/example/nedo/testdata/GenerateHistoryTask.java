@@ -1,13 +1,12 @@
 package com.example.nedo.testdata;
 
+import java.io.IOException;
+import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
-import java.util.concurrent.BlockingQueue;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import com.example.nedo.app.Config;
 import com.example.nedo.db.Duration;
 import com.example.nedo.db.History;
+import com.example.nedo.testdata.TestDataGenerator.HistoryWriter;
 
 /**
  * 履歴データを作成するタスク
@@ -23,16 +23,15 @@ import com.example.nedo.db.History;
 public class GenerateHistoryTask implements Runnable {
     private static final Logger LOG = LoggerFactory.getLogger(GenerateHistoryTask.class);
 
-
 	/*
 	 * Task ID
 	 */
 	private int taskId;
 
 	/**
-	 * 同じ発信時刻のデータを作らないための作成済みのHistoryDataの発信時刻を記録するSet
+	 * 同一のキーのデータを作らないために作成済みのHistoryDataのKeyを記録するSet
 	 */
-	private Set<Long> startTimeSet;
+	private Set<Key> keySet;
 
 	/**
 	 * 乱数生成器
@@ -61,12 +60,6 @@ public class GenerateHistoryTask implements Runnable {
 	private PhoneNumberGenerator phoneNumberGenerator;
 
 	/**
-	 * 生成した利通話履歴データを書き込むキュー
-	 */
-	private BlockingQueue<List<History>> queue;
-
-
-	/**
 	 * 通話開始時刻の最小値
 	 */
 	private long start;
@@ -76,17 +69,34 @@ public class GenerateHistoryTask implements Runnable {
 	 */
 	private long end;
 
-	/**
-	 * 1度にキューに書き込む履歴数の最大値
-	 */
-	private int writeSize;
-
 
 	/**
 	 * 生成する通話履歴数
 	 */
-	private int numbeOfHistory;
+	private long numbeOfHistory;
 
+
+	/**
+	 * 通話履歴の出力先
+	 */
+	private HistoryWriter historyWriter;
+
+
+	/**
+	 * 契約内容を取得するためのクラス
+	 */
+	private ContractReader contractReader;
+
+	/**
+	 * 契約期間
+	 */
+	private List<Duration> durationList;
+
+
+	/**
+	 * 契約期間のパターンを記録するリスト
+	 */
+	private Config config;
 
 	/**
 	 * コンストラクタ.
@@ -104,78 +114,96 @@ public class GenerateHistoryTask implements Runnable {
 	 * @param n
 	 */
 	public GenerateHistoryTask(Params params) {
-		taskId = params.taskId;
-		startTimeSet = new HashSet<Long>(params.config.numberOfHistoryRecords);
 		random = params.random;
 		phoneNumberGenerator = params.phoneNumberGenerator;
-		callTimeGenerator = CallTimeGenerator.createCallTimeGenerator(random, params.config);
-		callerPhoneNumberSelector = PhoneNumberSelector.createSelector(random,
-				params.config.callerPhoneNumberDistribution,
-				params.config.callerPhoneNumberScale,
-				params.config.callerPhoneNumberShape, params.contractReader, params.durationList.size());
-		recipientPhoneNumberSelector = PhoneNumberSelector.createSelector(random,
-				params.config.recipientPhoneNumberDistribution,
-				params.config.recipientPhoneNumberScale,
-				params.config.recipientPhoneNumberShape, params.contractReader, params.durationList.size());
 		start = params.start;
 		end = params.end;
-		writeSize = params.writeSize;
-		numbeOfHistory = params.numbeOfHistory;
-		queue = params.queue;
+		numbeOfHistory = params.numberOfHistory;
+		historyWriter=params.historyWriter;
+		config = params.config;
+		durationList = params.durationList;
+		contractReader = params.contractReader;
 	}
 
 	@Override
 	public void run() {
 		LOG.debug("start task id = " + taskId);
-		List<History> list = null;
-		for (int i = 0; i< numbeOfHistory; i++) {
-			if (list == null) {
-				list = new ArrayList<History>(writeSize);
+		try {
+			init();
+			for (long i = 0; i < numbeOfHistory; i++) {
+				History h = createHistoryRecord();
+				historyWriter.write(h);
 			}
-			list.add(createHistoryRecord());
-			if (list.size() >= writeSize) {
-				putToQueue(list);
-				list = null;
-			}
+			historyWriter.cleanup();
+		} catch (IOException | SQLException e) {
+			// RunnnableでなくCallableを実装し終了時様態を返すようにする
+			e.printStackTrace();
 		}
-		putToQueue(list);
-		// すべての履歴データの書き込み完了の印として空のリストを書き出す
-		putToQueue(Collections.emptyList());
 		LOG.debug("end task id = " + taskId);
 	}
 
-
-	/**
-	 * 履歴をキューに書き込む(割り込み発生時に無限リトライする)
-	 *
-	 * @param list
-	 */
-	private void putToQueue(List<History> list) {
-		for (;;) {
-			try {
-				queue.put(list);
-				break;
-			} catch (InterruptedException e) {
-				// Nothing to do
-			}
-		}
+	public void init() throws IOException {
+		historyWriter.init();
+		keySet = new HashSet<Key>();
+		callerPhoneNumberSelector = PhoneNumberSelector.createSelector(random,
+				config.callerPhoneNumberDistribution,
+				config.callerPhoneNumberScale,
+				config.callerPhoneNumberShape, contractReader, durationList.size());
+		recipientPhoneNumberSelector = PhoneNumberSelector.createSelector(random,
+				config.recipientPhoneNumberDistribution,
+				config.recipientPhoneNumberScale,
+				config.recipientPhoneNumberShape, contractReader, durationList.size());
+		callTimeGenerator = CallTimeGenerator.createCallTimeGenerator(random, config);
 	}
 
 
+	private Key old = null;
+
+
 	/**
-	 * 通話開始時刻が指定の範囲に収まる通話履歴を生成する
+	 * 通話履歴を生成する
 	 *
 	 * @param targetDuration
 	 * @return
 	 */
 	private History createHistoryRecord() {
-		// 通話開始時刻
-		long startTime;
-		do {
-			startTime = TestDataUtils.getRandomLong(random, start, end);
-		} while (startTimeSet.contains(startTime));
-		startTimeSet.add(startTime);
-		return createHistoryRecord(startTime);
+
+		// 重複しないキーを選ぶ
+		Key key = new Key();
+		for (;;) {
+			key.startTime = TestDataUtils.getRandomLong(random, start, end);
+			key.callerPhoneNumber = callerPhoneNumberSelector.selectPhoneNumber(key.startTime, -1);
+			if (keySet.contains(key)) {
+				LOG.info("A duplicate key was found, so another key will be created.(key = {}, KeySetSize = {} ", key, keySet.size());
+			} else {
+				keySet.add(key);
+				return createHistoryRecord(key);
+			}
+		}
+	}
+
+	/**
+	 * 指定のキーを持つ通話履歴を生成する
+	 *
+	 * @param key
+	 * @return
+	 */
+	private History createHistoryRecord(Key key) {
+		History history = new History();
+		history.startTime = new Timestamp(key.startTime);
+
+		// 電話番号の生成
+		long r = recipientPhoneNumberSelector.selectPhoneNumber(key.startTime, key.callerPhoneNumber);
+		history.callerPhoneNumber = phoneNumberGenerator.getPhoneNumber(key.callerPhoneNumber);
+		history.recipientPhoneNumber = phoneNumberGenerator.getPhoneNumber(r);
+
+		// 料金区分(発信者負担、受信社負担)
+		// TODO 割合を指定可能にする
+		history.paymentCategorty = random.nextInt(2) == 0 ? "C" : "R";
+
+		// 通話時間
+		history.timeSecs = callTimeGenerator.getTimeSecs();
+		return history;
 	}
 
 
@@ -186,30 +214,17 @@ public class GenerateHistoryTask implements Runnable {
 	 * @return
 	 */
 	public History createHistoryRecord(long startTime) {
-		History history = new History();
-		history.startTime = new Timestamp(startTime);
-
-		// 電話番号の生成
-		long c = callerPhoneNumberSelector.selectPhoneNumber(startTime, -1);
-		long r = recipientPhoneNumberSelector.selectPhoneNumber(startTime, c);
-		history.callerPhoneNumber = phoneNumberGenerator.getPhoneNumber(c);
-		history.recipientPhoneNumber = phoneNumberGenerator.getPhoneNumber(r);
-
-		// 料金区分(発信者負担、受信社負担)
-		// TODO 割合を指定可能にする
-		history.paymentCategorty = random.nextInt(2) == 0 ? "C" : "R";
-
-		// 通話時間
-		history.timeSecs = callTimeGenerator.getTimeSecs();
-
-		return history;
+		Key key = new Key();
+		key.startTime = startTime;
+		key.callerPhoneNumber = callerPhoneNumberSelector.selectPhoneNumber(startTime, -1);
+		return createHistoryRecord(key);
 	}
 
 	/**
 	 * タスクのパラメータ
 	 *
 	 */
-	static class Params implements Cloneable {
+	public static class Params implements Cloneable {
 		int taskId;
 		Config config;
 		Random random;
@@ -218,9 +233,8 @@ public class GenerateHistoryTask implements Runnable {
 		List<Duration> durationList;
 		long start;
 		long end;
-		int writeSize;
-		int numbeOfHistory;
-		BlockingQueue<List<History>> queue;
+		long numberOfHistory;
+		public HistoryWriter historyWriter;
 
 		@Override
 		public Params clone() {
@@ -229,6 +243,48 @@ public class GenerateHistoryTask implements Runnable {
 			} catch (CloneNotSupportedException e) {
 				throw new InternalError(e.toString());
 			}
+		}
+	}
+
+
+	private static class Key {
+		long startTime;
+		long callerPhoneNumber;
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + (int) (callerPhoneNumber ^ (callerPhoneNumber >>> 32));
+			result = prime * result + (int) (startTime ^ (startTime >>> 32));
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			Key other = (Key) obj;
+			if (callerPhoneNumber != other.callerPhoneNumber)
+				return false;
+			if (startTime != other.startTime)
+				return false;
+			return true;
+		}
+
+		@Override
+		public String toString() {
+			StringBuilder builder = new StringBuilder();
+			builder.append("Key [startTime=");
+			builder.append(startTime);
+			builder.append(", callerPhoneNumber=");
+			builder.append(callerPhoneNumber);
+			builder.append("]");
+			return builder.toString();
 		}
 	}
 }

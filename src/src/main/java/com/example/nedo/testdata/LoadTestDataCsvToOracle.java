@@ -1,10 +1,10 @@
 package com.example.nedo.testdata;
 
+import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
-import java.io.UnsupportedEncodingException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.example.nedo.app.Config;
+import com.example.nedo.app.Config.Dbms;
 import com.example.nedo.app.CreateTable;
 import com.example.nedo.app.ExecutableCommand;
 import com.example.nedo.db.DBUtils;
@@ -23,24 +24,26 @@ import com.example.nedo.db.DBUtils;
 public class LoadTestDataCsvToOracle implements ExecutableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(LoadTestDataCsvToOracle.class);
 
-    public static void main(String[] args) throws Exception {
+	public static void main(String[] args) throws Exception {
 		Config config = Config.getConfig(args);
 		LoadTestDataCsvToOracle loadTestDataCsvToOracle = new LoadTestDataCsvToOracle();
 		loadTestDataCsvToOracle.execute(config);
 	}
 
-
 	@Override
 	public void execute(Config config) throws Exception {
-
-		try (Connection conn = DBUtils.getConnection(config);
-				Statement stmt = conn.createStatement()) {
-			CreateTable.prepareLoadData(stmt, config);
-			List<Path> list = createControlFiles(config);
-			for(Path path: list) {
-	 			execSqlLoader(config, path);
+		if (config.dbms != Dbms.ORACLE) {
+			LOG.error("This configuration is not for the Oracle.");
+		} else {
+			try (Connection conn = DBUtils.getConnection(config);
+					Statement stmt = conn.createStatement()) {
+				CreateTable.prepareLoadData(stmt, config);
+				List<Path> list = createControlFiles(config);
+				for (Path path : list) {
+					execSqlLoader(config, path);
+				}
+				CreateTable.afterLoadData(stmt, config);
 			}
-			CreateTable.afterLoadData(stmt, config);
 		}
 	}
 
@@ -57,10 +60,6 @@ public class LoadTestDataCsvToOracle implements ExecutableCommand {
 		if (filename == null) {
 			throw new IOException("empty path: " + path.toString());
 		}
-		String baseFilename = filename.toString().replaceAll("\\.[^.]*$", "");
-		File stdout = Paths.get(config.csvDir).resolve(baseFilename + ".stdout").toFile();
-		File stderr = Paths.get(config.csvDir).resolve(baseFilename + ".stderrt").toFile();
-
 		LOG.info("SQL*Loader start with control file: " + path.toAbsolutePath().toString());
 		long startTime = System.currentTimeMillis();
 
@@ -73,9 +72,23 @@ public class LoadTestDataCsvToOracle implements ExecutableCommand {
 		cmd.add("control=" + path.toAbsolutePath().toString());
 
 		ProcessBuilder builder = new ProcessBuilder(cmd);
-		builder.redirectError(stderr);
-		builder.redirectOutput(stdout);
+		builder.redirectErrorStream(true);
+		builder.directory(new File(config.csvDir));
 		Process process = builder.start();
+		// TODO charsetNameをプロパティファイルで指定可能にする
+		String charsetName = "\\".equals(System.getProperty("file.separator")) ? "SJIS" : "utf-8";
+
+		try (BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream(), charsetName))) {
+			for(;;) {
+				String line = br.readLine();
+				if (line == null) {
+					break;
+				}
+				System.out.println(line);
+			}
+		}
+
+
 		process.waitFor();
 		long elapsedTime = System.currentTimeMillis() - startTime;
 		String format = "SQL*Loader end in %,.3f sec ";
@@ -89,13 +102,16 @@ public class LoadTestDataCsvToOracle implements ExecutableCommand {
 	 *
 	 * @param config
 	 * @return 生成したコントロールファイルのパスのリスト
-	 * @throws FileNotFoundException
-	 * @throws UnsupportedEncodingException
+	 * @throws IOException
 	 */
-	private List<Path> createControlFiles(Config config) throws FileNotFoundException, UnsupportedEncodingException {
+	private List<Path> createControlFiles(Config config) throws IOException {
 		Path csvDir = Paths.get(config.csvDir);
-		Path historyCtrlFilePath = csvDir.resolve("history.ctl");
+		Path contractsCsvPath = CsvUtils.getContractsFilePath(csvDir);
+		List<Path> historyCsvPathList = CsvUtils.getHistortyFilePaths(csvDir);
+
 		Path contractsCtrlFilePath = csvDir.resolve("contracts.ctl");
+		Path historyCtrlFilePath = csvDir.resolve("history.ctl");
+
 		List<Path> list = new ArrayList<>();
 		list.add(historyCtrlFilePath);
 		list.add(contractsCtrlFilePath);
@@ -108,8 +124,9 @@ public class LoadTestDataCsvToOracle implements ExecutableCommand {
 			ps.println(")");
 			ps.println("LOAD DATA");
 			ps.println("CHARACTERSET UTF8");
-			ps.println("INFILE '" + csvDir.resolve("history.csv").toAbsolutePath().toString() + "'");
-			ps.println("BADFILE '"+ csvDir.resolve("history.bad").toAbsolutePath().toString() + "'");
+			for (Path path: historyCsvPathList) {
+				ps.println("INFILE '" + path.toAbsolutePath().toString() + "'");
+			}
 			ps.println("APPEND");
 			ps.println("INTO TABLE HISTORY");
 			ps.println("FIELDS TERMINATED BY \",\"");
@@ -133,10 +150,10 @@ public class LoadTestDataCsvToOracle implements ExecutableCommand {
 			ps.println(")");
 			ps.println("LOAD DATA");
 			ps.println("CHARACTERSET UTF8");
-			ps.println("INFILE '" + csvDir.resolve("contracts.csv").toAbsolutePath().toString() + "'");
-			ps.println("BADFILE '"+ csvDir.resolve("contracts.bad").toAbsolutePath().toString() + "'");
+			ps.println("INFILE '" + contractsCsvPath.toAbsolutePath().toString() + "'");
 			ps.println("APPEND");
 			ps.println("INTO TABLE CONTRACTS");
+//			ps.println("TIMESTAMP FORMAT \"YY-MM-DD HH24:MI:SS.FF3\"");
 			ps.println("FIELDS TERMINATED BY \",\"");
 			ps.println("TRAILING NULLCOLS");
 			ps.println("(");

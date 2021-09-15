@@ -28,6 +28,4 @@ public class TestDataUtils {
 	public static int getRandomInt(Random random, int min, int max) {
 		return min + (int) (random.nextDouble() * (max - min));
 	}
-
-
 }

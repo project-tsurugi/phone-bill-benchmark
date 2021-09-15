@@ -46,11 +46,11 @@ public abstract class  AbstractPhoneNumberSelector implements PhoneNumberSelecto
 			if (exceptPhoneNumber != shuffledPos) {
 				Duration d = contractReader.getDurationByPos(shuffledPos);
 				if (d.end == null) {
-					if (d.start.getTime() <= startTime) {
+					if (d.start <= startTime) {
 						return shuffledPos;
 					}
 				} else {
-					if (d.start.getTime() <= startTime && startTime < d.end.getTime()) {
+					if (d.start <= startTime && startTime < d.end) {
 						return shuffledPos;
 					}
 				}

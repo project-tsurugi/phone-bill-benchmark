@@ -74,7 +74,7 @@ public class Config implements Cloneable {
 	/**
 	 * 通話履歴のレコード数
 	 */
-	public int numberOfHistoryRecords;
+	public long numberOfHistoryRecords;
 	private static final String NUMBER_OF_HISTORY_RECORDS = "number.of.history.records";
 
 	/**
@@ -147,14 +147,14 @@ public class Config implements Cloneable {
 	/**
 	 * 通話履歴の通話開始時刻の最小値
 	 */
-	public Date histortyMinDate;
-	private static final String HISTORTY_MIN_DATE = "history.min.date";
+	public Date historyMinDate;
+	private static final String HISTORY_MIN_DATE = "history.min.date";
 
 	/**
 	 * 通話履歴の通話開始時刻の最大値
 	 */
-	public Date histortyMaxDate;
-	private static final String HISTORTY_MAX_DATE = "history.max.date";
+	public Date historyMaxDate;
+	private static final String HISTORY_MAX_DATE = "history.max.date";
 
 
 	/* オンラインアプリケーションに関するパラメータ */
@@ -221,6 +221,10 @@ public class Config implements Cloneable {
 	public String csvDir;
 	private static final String CSV_DIR = "csv.dir";
 
+
+	/* 履歴のCSVファイル１ファイルの最大行数 */
+	public int maxNumberOfLinesHistoryCsv;
+	private static final String MAX_NUMBER_OF_LINES_HISTORY_CSV = "max.number.of.lines.history.csv";
 
 	/* Oracle固有のパラメータ */
 
@@ -309,7 +313,7 @@ public class Config implements Cloneable {
 		maxDate = getDate(MAX_DATE, DBUtils.toDate("2021-03-01"));
 
 		// 通話履歴生成に関するパラメータ
-		numberOfHistoryRecords = getInt(NUMBER_OF_HISTORY_RECORDS, 1000);
+		numberOfHistoryRecords = getLong(NUMBER_OF_HISTORY_RECORDS, 1000);
 		callerPhoneNumberDistribution = getDistributionFunction(CALLER_PHONE_NUMBER_DISTRIBUTION, DistributionFunction.UNIFORM);
 		callerPhoneNumberScale = getDouble(CALLER_PHONE_NUMBER_SCALE, 3);
 		callerPhoneNumberShape = getDouble(CALLER_PHONE_NUMBER_SHAPE, 18);
@@ -321,8 +325,8 @@ public class Config implements Cloneable {
 		callTimeShape = getDouble(CALL_TIME_SHAPE, 1.5d);
 		maxCallTimeSecs = getInt(MAX_CALL_TIME_SECS, 3600);
 		statisticsOutputDir  = getString(STATISTICS_OUTPUT_DIR, null);
-		histortyMinDate = getDate(HISTORTY_MIN_DATE, DBUtils.toDate("2020-11-01"));
-		histortyMaxDate = getDate(HISTORTY_MAX_DATE, DBUtils.toDate("2021-01-10"));
+		historyMinDate = getDate(HISTORY_MIN_DATE, DBUtils.toDate("2020-11-01"));
+		historyMaxDate = getDate(HISTORY_MAX_DATE, DBUtils.toDate("2021-01-10"));
 
 		// JDBCに関するパラメータ
 		url = getString(URL, "jdbc:postgresql://127.0.0.1/phonebill");
@@ -351,6 +355,7 @@ public class Config implements Cloneable {
 
 		//  CSVデータに関するパラメータ
 		csvDir = getString(CSV_DIR, "/var/lib/csv");
+		maxNumberOfLinesHistoryCsv = getInt(MAX_NUMBER_OF_LINES_HISTORY_CSV, 1000*1000);
 
 		// Oracle固有のパラメータ
 		oracleInitran = getInt(ORACLE_INITRAN, 0);
@@ -464,6 +469,21 @@ public class Config implements Cloneable {
 		return value;
 	}
 
+	/**
+	 * long型のプロパティの値を取得する
+	 *
+	 * @param key プロパティ名
+	 * @param defaultValue プロパティが存在しない時のデフォルト値
+	 * @return
+	 */
+	private long getLong(String key, long defaultValue) {
+		long value = defaultValue;
+		if (prop.containsKey(key)) {
+			String s = prop.getProperty(key);
+			value = Long.parseLong(s);
+		}
+		return value;
+	}
 
 	/**
 	 * double型のプロパティの値を取得する
@@ -607,8 +627,8 @@ public class Config implements Cloneable {
 		sb.append(String.format(format, CALL_TIME_SHAPE, callTimeShape));
 		sb.append(String.format(format, MAX_CALL_TIME_SECS, maxCallTimeSecs));
 		sb.append(String.format(format, STATISTICS_OUTPUT_DIR, statisticsOutputDir == null ? "" : statisticsOutputDir));
-		sb.append(String.format(format, HISTORTY_MIN_DATE, histortyMinDate));
-		sb.append(String.format(format, HISTORTY_MAX_DATE, histortyMaxDate));
+		sb.append(String.format(format, HISTORY_MIN_DATE, historyMinDate));
+		sb.append(String.format(format, HISTORY_MAX_DATE, historyMaxDate));
 
 		sb.append(System.lineSeparator());
 		sb.append(String.format(commentFormat, "JDBCに関するパラメータ"));
@@ -630,6 +650,8 @@ public class Config implements Cloneable {
 		sb.append(System.lineSeparator());
 		sb.append(String.format(commentFormat, "CSVに関するパラメータ"));
 		sb.append(String.format(format, CSV_DIR, csvDir));
+		sb.append(String.format(format, MAX_NUMBER_OF_LINES_HISTORY_CSV, maxNumberOfLinesHistoryCsv));
+
 		sb.append(System.lineSeparator());
 		sb.append(String.format(commentFormat, "Oracle固有のパラメータ"));
 		sb.append(String.format(format, ORACLE_INITRAN, oracleInitran));

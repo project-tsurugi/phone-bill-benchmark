@@ -28,8 +28,6 @@ public class UniformPhoneNumberSelector extends AbstractPhoneNumberSelector {
 	}
 
 	/*
-	 * logNormalDistributionを使用して契約を選択する
-	 *
 	 * @return 何番目の契約か表す整数値
 	 */
 	@Override

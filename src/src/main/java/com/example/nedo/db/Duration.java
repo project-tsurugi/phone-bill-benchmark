@@ -7,13 +7,27 @@ import java.sql.Date;
  *
  */
 public class Duration {
-	public Date start;
-	public Date end;
+	public Long start;
+	public Long end;
 
 	public Duration(Date start, Date end) {
+		this.start = start.getTime();
+		this.end = end == null ? null : end.getTime();
+	}
+
+	public Duration(Long start, Long end) {
 		this.start = start;
 		this.end = end;
 	}
+
+	public Date getStatDate() {
+		return new Date(start);
+	}
+
+	public Date getEndDate() {
+		return end == null ? null : new Date(end);
+	}
+
 
 	@Override
 	public int hashCode() {
@@ -44,6 +58,21 @@ public class Duration {
 		} else if (!start.equals(other.start))
 			return false;
 		return true;
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("Duration [start=");
+		builder.append(getStatDate());
+		builder.append("(");
+		builder.append(start);
+		builder.append("), end=");
+		builder.append(getEndDate());
+		builder.append("(");
+		builder.append(end);
+		builder.append(")]");
+		return builder.toString();
 	}
 }
 

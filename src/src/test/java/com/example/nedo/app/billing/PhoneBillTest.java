@@ -255,16 +255,16 @@ class PhoneBillTest extends AbstractDbTestCase {
 		Duration d;
 
 		d = PhoneBill.toDuration(DBUtils.toDate("2020-12-01"));
-		assertEquals(DBUtils.toDate("2020-12-01"), d.start);
-		assertEquals(DBUtils.toDate("2020-12-31"), d.end);
+		assertEquals(DBUtils.toDate("2020-12-01"), d.getStatDate());
+		assertEquals(DBUtils.toDate("2020-12-31"), d.getEndDate());
 
 		d = PhoneBill.toDuration(DBUtils.toDate("2020-12-31"));
-		assertEquals(DBUtils.toDate("2020-12-01"), d.start);
-		assertEquals(DBUtils.toDate("2020-12-31"), d.end);
+		assertEquals(DBUtils.toDate("2020-12-01"), d.getStatDate());
+		assertEquals(DBUtils.toDate("2020-12-31"), d.getEndDate());
 
 		d = PhoneBill.toDuration(DBUtils.toDate("2021-02-05"));
-		assertEquals(DBUtils.toDate("2021-02-01"), d.start);
-		assertEquals(DBUtils.toDate("2021-02-28"), d.end);
+		assertEquals(DBUtils.toDate("2021-02-01"), d.getStatDate());
+		assertEquals(DBUtils.toDate("2021-02-28"), d.getEndDate());
 
 	}
 
@@ -282,8 +282,8 @@ class PhoneBillTest extends AbstractDbTestCase {
 		config.numberOfHistoryRecords = (int) 1000;
 		config.threadCount = 1;
 		config.sharedConnection = false;
-		CreateTestData createTestData = new CreateTestData();
-		createTestData.execute(config);
+		new CreateTable().execute(config);
+		new CreateTestData().execute(config);
 		PhoneBill phoneBill = new PhoneBill();
 		phoneBill.execute(config);
 		List<Billing> expected = getBillings();
@@ -300,7 +300,10 @@ class PhoneBillTest extends AbstractDbTestCase {
 						", sharedConnection = " + sharedConnection);
 				phoneBill.execute(newConfig);
 				List<Billing> actual = getBillings();
-				assertEquals(expected, actual);
+				assertEquals(expected.size(), actual.size());
+				for (int i = 0; i < expected.size(); i++) {
+					assertEquals( expected.get(i), actual.get(i), Integer.toString(i));
+				}
 			}
 		}
 	}

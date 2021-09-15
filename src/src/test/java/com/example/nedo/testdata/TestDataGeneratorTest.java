@@ -5,8 +5,11 @@ package com.example.nedo.testdata;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -22,6 +25,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.zip.GZIPInputStream;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,6 +37,7 @@ import com.example.nedo.app.Config;
 import com.example.nedo.app.CreateTable;
 import com.example.nedo.db.DBUtils;
 import com.example.nedo.db.Duration;
+import com.example.nedo.testdata.GenerateHistoryTask.Params;
 import com.example.nedo.util.PathUtils;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -206,8 +211,8 @@ class TestDataGeneratorTest extends AbstractDbTestCase {
 		for(int i = expirationDateRate + noExpirationDateRate; i < list.size(); i+=2) {
 			Duration d1 = list.get(i);
 			Duration d2 = list.get(i+1);
-			assertEquals(start, d1.start);
-			assertTrue(d1.end.getTime() < d2.start.getTime());
+			assertEquals(start, d1.getStatDate());
+			assertTrue(d1.end < d2.start);
 			assertNull(d2.end);
 		}
 	}
@@ -364,8 +369,9 @@ class TestDataGeneratorTest extends AbstractDbTestCase {
 		List<String> expected = Files.readAllLines(expectedFilePath);
 		Collections.sort(expected);
 
-		new TestDataGenerator(config).generateContractsToCsv(tempDir);
-		List<String> actual = Files.readAllLines(tempDir.resolve("contracts.csv"));
+		Path contracts = CsvUtils.getContractsFilePath(tempDir);
+		new TestDataGenerator(config).generateContractsToCsv(contracts);
+		List<String> actual = readAllLinesFromGzipFile(contracts);
 		Collections.sort(actual);
 
 		assertEquals(expected.size(), actual.size());
@@ -382,7 +388,7 @@ class TestDataGeneratorTest extends AbstractDbTestCase {
 	@Test
 	@Tag("copy-command")
 	@SuppressFBWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
-	void generateHistoryToCSV() throws IOException, SQLException {
+	void gestGenerateHistoryToCSV() throws IOException, SQLException {
 		// DBに生成したテストデータとCSVファイルに生成したテストデータが一致することを確認する
 		Config config = Config.getConfig();
 		config.csvDir = tempDir.toString();
@@ -398,7 +404,7 @@ class TestDataGeneratorTest extends AbstractDbTestCase {
 		Collections.sort(expected);
 
 		new TestDataGenerator(config).generateHistoryToCsv(tempDir);
-		List<String> actual = Files.readAllLines(tempDir.resolve("history.csv"));
+		List<String> actual = readAllLinesFromGzipFile(CsvUtils.getHistortyFilePaths(tempDir).get(0));
 		Collections.sort(actual);
 
 		assertEquals(expected.size(), actual.size());
@@ -409,4 +415,82 @@ class TestDataGeneratorTest extends AbstractDbTestCase {
 		}
 	}
 
+
+	/**
+	 * 指定のgzipファイルを読み取り、行のリストを返す
+	 *
+	 * @param path
+	 * @return
+	 * @throws IOException
+	 */
+	private List<String> readAllLinesFromGzipFile(Path path) throws IOException {
+		List<String> list = new ArrayList<String>();
+		try (GZIPInputStream gi = new GZIPInputStream(Files.newInputStream(path));
+				BufferedReader br = new BufferedReader(new InputStreamReader(gi, StandardCharsets.UTF_8))) {
+			String line;
+			while ((line = br.readLine()) != null ){
+				list.add(line);
+			}
+		}
+		return list;
+	}
+
+	/*
+	 * createParamsList()のテスト.
+	 * <br>
+	 * paramsのstart, end, numberOfHistoryが期待した値になっていることを確認する
+	 */
+	@Test
+	void testCreateParamsList() throws IOException {
+		Config config = Config.getConfig();
+
+		// デフォルトコンフィグでテスト(numberOfHistoryRecordsがmaxNumberOfLinesHistoryCsvより小さいケース)
+		TestDataGenerator generator = new TestDataGenerator(config);
+		int numberOfParams = 0;
+		for(Params params: generator.createParamsList()) {
+			numberOfParams++;
+			assertEquals(config.historyMinDate.getTime(), params.start);
+			assertEquals(config.historyMaxDate.getTime(), params.end);
+			assertEquals(config.numberOfHistoryRecords, params.numberOfHistory);
+		}
+		assertEquals(1, numberOfParams);
+
+		// === numberOfHistoryRecordsがmaxNumberOfLinesHistoryCsvより大きいケース ===
+
+		config.numberOfHistoryRecords = 9123456;
+		List<Params> list =  generator.createParamsList();
+		assertEquals(10, list.size());;
+
+		// start～endが連続していることの確認
+		assertEquals(config.historyMinDate.getTime(), list.get(0).start);
+		for (int i = 0; i < 9; i++) {
+			assertEquals(list.get(i).end, list.get(i+1).start, "i = " + i);
+		}
+		assertEquals(config.historyMaxDate.getTime(), list.get(list.size() - 1).end);
+
+		// i == 0 のときをのぞき、sart-endの値が等しい
+		for (int i = 1; i < list.size(); i++) {
+			assertEquals(list.get(1).end - list.get(1).start, list.get(i).end - list.get(i).start, "i = " + i);
+		}
+
+		// i == 0 のときの start - endの値が i != 0 のときより小さく、その日がnumberOfHistoryの比と等しい
+		long diff0 = list.get(0).end - list.get(0).start;
+		long diff1 = list.get(1).end - list.get(1).start;
+		assertTrue(diff0 < diff1, "diff0 = " + diff0 + ", diff1 = " + diff1);
+		assertEquals(list.get(1).numberOfHistory/(double) list.get(0).numberOfHistory,  diff1/(double)diff0, 1e-6);
+
+
+		// 各paramsのnumberOfHistoryの合計が、config.numberOfHistoryRecordsと等しい
+		assertEquals(config.numberOfHistoryRecords, list.parallelStream().mapToInt( p -> (int)p.numberOfHistory).sum());
+
+		// i == 0のケースを除き、各paramsのnumberOfHistoryRecordsが、maxNumberOfLinesHistoryCsvと等しい
+		for(int i = 1; i < list.size(); i++) {
+			assertEquals(config.maxNumberOfLinesHistoryCsv, list.get(i).numberOfHistory, "i = " + i);
+		}
+
+		// taskIdのテスト
+		for(int i = 0; i < list.size(); i++) {
+			assertEquals(i, list.get(i).taskId);
+		}
+	}
 }

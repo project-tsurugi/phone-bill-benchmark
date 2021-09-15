@@ -81,7 +81,7 @@ class HistoryUpdateAppTest extends AbstractDbTestCase {
 		testExecSub(expected);
 	}
 
-	private void testExecSub(List<History> expected) throws SQLException {
+	private void testExecSub(List<History> expected) throws SQLException, IOException {
 		List<History> actual = getHistories();
 		assertEquals(expected.size(), actual.size());
 		for (int i = 0; i < expected.size(); i++) {

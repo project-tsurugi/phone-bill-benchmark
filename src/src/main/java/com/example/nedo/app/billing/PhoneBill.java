@@ -1,5 +1,6 @@
 package com.example.nedo.app.billing;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
@@ -65,7 +66,7 @@ public class PhoneBill implements ExecutableCommand {
 
 			// バッチを実行する
 			Duration d = toDuration(config.targetMonth);
-			doCalc(d.start, d.end);
+			doCalc(d.getStatDate(), d.getEndDate());
 		} finally {
 			// オンラインアプリを終了する
 			list.stream().forEach(task -> task.terminate());
@@ -82,8 +83,9 @@ public class PhoneBill implements ExecutableCommand {
 	 *
 	 * @return オンラインアプリのインスタンスのリスト
 	 * @throws SQLException
+	 * @throws IOException
 	 */
-	List<AbstractOnlineApp> createOnlineApps() throws SQLException {
+	List<AbstractOnlineApp> createOnlineApps() throws SQLException, IOException {
 		Random random = new Random(config.randomSeed);
 		List<AbstractOnlineApp> list = new ArrayList<AbstractOnlineApp>();
 		if (config.historyInsertTransactionPerMin > 0) {

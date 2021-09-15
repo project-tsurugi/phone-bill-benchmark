@@ -39,14 +39,14 @@ class UniformPhoneNumberSelectorTest {
 		// 契約期間をテスト用の値に書き換える
 		List<Duration> list = generator.getDurationList();
 		assertEquals(4, list.size()); // 要素数が想定通りか確認
-		list.get(0).start = config.minDate;
-		list.get(1).start = config.minDate;
-		list.get(2).start = config.minDate;
-		list.get(3).start = config.minDate;
-		list.get(0).end = DBUtils.toDate("2010-02-11");
-		list.get(1).end = DBUtils.toDate("2010-03-11");
+		list.get(0).start = config.minDate.getTime();
+		list.get(1).start = config.minDate.getTime();
+		list.get(2).start = config.minDate.getTime();
+		list.get(3).start = config.minDate.getTime();
+		list.get(0).end = DBUtils.toDate("2010-02-11").getTime();
+		list.get(1).end = DBUtils.toDate("2010-03-11").getTime();
 		list.get(2).end = null;
-		list.get(3).end = DBUtils.toDate("2010-04-11");
+		list.get(3).end = DBUtils.toDate("2010-04-11").getTime();
 
 
 		for(Duration d: list) {
