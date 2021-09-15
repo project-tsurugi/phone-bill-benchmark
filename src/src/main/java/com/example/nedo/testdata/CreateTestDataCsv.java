@@ -42,9 +42,6 @@ public class CreateTestDataCsv implements ExecutableCommand {
 		elapsedTime = System.currentTimeMillis() - startTime;
 		format = "%,d records generated to history.csv in %,.3f sec ";
 		LOG.info(String.format(format, config.numberOfHistoryRecords, elapsedTime / 1000d));
-
-		String report = generator.getStatistics().getReport();
-		LOG.info(report);
 	}
 
 }

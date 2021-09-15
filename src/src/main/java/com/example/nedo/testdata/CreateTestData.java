@@ -57,10 +57,5 @@ public class CreateTestData implements ExecutableCommand {
 			CreateTable.afterLoadData(stmt, config);
 			conn.commit();
 		}
-
-
-		// 統計情報レポート出力
-		String report = generator.getStatistics().getReport();
-		LOG.info(report);
 	}
 }

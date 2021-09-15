@@ -42,7 +42,7 @@ public class TestDataGenerator {
 	private Statistics statistics;
 
 	/**
-	 * trueのときにDBに書き込まず統計情報の更新のみを行うフラグ
+	 * trueのときにDBに書き込まずデータを生成せず、統計情報を出力する
 	 */
 	private boolean statisticsOnly;
 
@@ -404,16 +404,14 @@ public class TestDataGenerator {
 	}
 
 	private void execBatch(PreparedStatement ps) throws SQLException {
-		if (!statisticsOnly) {
-			int rets[] = ps.executeBatch();
-			for (int ret : rets) {
-				if (ret < 0 && ret != PreparedStatement.SUCCESS_NO_INFO) {
-					throw new SQLException("Fail to batch exexecute");
-				}
+		int rets[] = ps.executeBatch();
+		for (int ret : rets) {
+			if (ret < 0 && ret != PreparedStatement.SUCCESS_NO_INFO) {
+				throw new SQLException("Fail to batch exexecute");
 			}
-			ps.getConnection().commit();
-			ps.clearBatch();
 		}
+		ps.getConnection().commit();
+		ps.clearBatch();
 	}
 
 	/**
@@ -605,8 +603,9 @@ public class TestDataGenerator {
 						}
 					}
 					for (History h : list) {
-						statistics.addHistoy(h);
-						if (!statisticsOnly) {
+						if (statisticsOnly) {
+							statistics.addHistoy(h);
+						} else {
 							write(h);
 						}
 					}
