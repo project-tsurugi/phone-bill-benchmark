@@ -5,11 +5,8 @@ package com.example.nedo.testdata;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -25,7 +22,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.zip.GZIPInputStream;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -371,7 +367,7 @@ class TestDataGeneratorTest extends AbstractDbTestCase {
 
 		Path contracts = CsvUtils.getContractsFilePath(tempDir);
 		new TestDataGenerator(config).generateContractsToCsv(contracts);
-		List<String> actual = readAllLinesFromGzipFile(contracts);
+		List<String> actual = Files.readAllLines(contracts);
 		Collections.sort(actual);
 
 		assertEquals(expected.size(), actual.size());
@@ -404,7 +400,7 @@ class TestDataGeneratorTest extends AbstractDbTestCase {
 		Collections.sort(expected);
 
 		new TestDataGenerator(config).generateHistoryToCsv(tempDir);
-		List<String> actual = readAllLinesFromGzipFile(CsvUtils.getHistortyFilePaths(tempDir).get(0));
+		List<String> actual = Files.readAllLines(CsvUtils.getHistortyFilePaths(tempDir).get(0));
 		Collections.sort(actual);
 
 		assertEquals(expected.size(), actual.size());
@@ -413,26 +409,6 @@ class TestDataGeneratorTest extends AbstractDbTestCase {
 			String a = actual.get(i).replaceAll("\\.0,", ","); // ミリ秒が0のときの表現の違いをreplaceAllで吸収する
 			assertEquals(e, a);
 		}
-	}
-
-
-	/**
-	 * 指定のgzipファイルを読み取り、行のリストを返す
-	 *
-	 * @param path
-	 * @return
-	 * @throws IOException
-	 */
-	private List<String> readAllLinesFromGzipFile(Path path) throws IOException {
-		List<String> list = new ArrayList<String>();
-		try (GZIPInputStream gi = new GZIPInputStream(Files.newInputStream(path));
-				BufferedReader br = new BufferedReader(new InputStreamReader(gi, StandardCharsets.UTF_8))) {
-			String line;
-			while ((line = br.readLine()) != null ){
-				list.add(line);
-			}
-		}
-		return list;
 	}
 
 	/*

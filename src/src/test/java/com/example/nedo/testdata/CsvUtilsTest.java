@@ -17,10 +17,10 @@ class CsvUtilsTest {
 	@Test
 	void testHISTORY_REGEXP() {
 		assertFalse(Pattern.matches(CsvUtils.HISTORY_REGEXP, "abc"));
-		assertFalse(Pattern.matches(CsvUtils.HISTORY_REGEXP, "history-.csv.gz"));
-		assertFalse(Pattern.matches(CsvUtils.HISTORY_REGEXP, "history-1Acsv.gz"));
-		assertTrue(Pattern.matches(CsvUtils.HISTORY_REGEXP, "history-0.csv.gz"));
-		assertTrue(Pattern.matches(CsvUtils.HISTORY_REGEXP, "history-9990.csv.gz"));
+		assertFalse(Pattern.matches(CsvUtils.HISTORY_REGEXP, "history-.csv"));
+		assertFalse(Pattern.matches(CsvUtils.HISTORY_REGEXP, "history-1Acsv"));
+		assertTrue(Pattern.matches(CsvUtils.HISTORY_REGEXP, "history-0.csv"));
+		assertTrue(Pattern.matches(CsvUtils.HISTORY_REGEXP, "history-9990.csv"));
 	}
 
 }

@@ -156,10 +156,6 @@ public class GenerateHistoryTask implements Runnable {
 		callTimeGenerator = CallTimeGenerator.createCallTimeGenerator(random, config);
 	}
 
-
-	private Key old = null;
-
-
 	/**
 	 * 通話履歴を生成する
 	 *
