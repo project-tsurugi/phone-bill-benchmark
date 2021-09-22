@@ -144,7 +144,7 @@ public class GenerateHistoryTask implements Runnable {
 
 	public void init() throws IOException {
 		historyWriter.init();
-		keySet = new HashSet<Key>();
+		keySet = new HashSet<Key>((int)numbeOfHistory);
 		callerPhoneNumberSelector = PhoneNumberSelector.createSelector(random,
 				config.callerPhoneNumberDistribution,
 				config.callerPhoneNumberScale,
@@ -163,14 +163,17 @@ public class GenerateHistoryTask implements Runnable {
 	 * @return
 	 */
 	private History createHistoryRecord() {
-
 		// 重複しないキーを選ぶ
 		Key key = new Key();
+		int counter = 0;
 		for (;;) {
 			key.startTime = TestDataUtils.getRandomLong(random, start, end);
 			key.callerPhoneNumber = callerPhoneNumberSelector.selectPhoneNumber(key.startTime, -1);
 			if (keySet.contains(key)) {
-				LOG.info("A duplicate key was found, so another key will be created.(key = {}, KeySetSize = {} ", key, keySet.size());
+				if (++counter > 5) {
+					LOG.info("A duplicate key was found, so another key will be created.(key = {}, KeySetSize = {} ", key, keySet.size());
+					counter = 0;
+				}
 			} else {
 				keySet.add(key);
 				return createHistoryRecord(key);
