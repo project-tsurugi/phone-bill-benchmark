@@ -452,7 +452,7 @@ class TestDataGeneratorTest extends AbstractDbTestCase {
 		// i == 0 のときの start - endの値が i != 0 のときより小さく、その日がnumberOfHistoryの比と等しい
 		long diff0 = list.get(0).end - list.get(0).start;
 		long diff1 = list.get(1).end - list.get(1).start;
-		assertTrue(diff0 < diff1, "diff0 = " + diff0 + ", diff1 = " + diff1);
+		assertTrue(diff0 <= diff1, "diff0 = " + diff0 + ", diff1 = " + diff1);
 		assertEquals(list.get(1).numberOfHistory/(double) list.get(0).numberOfHistory,  diff1/(double)diff0, 1e-6);
 
 
@@ -468,5 +468,48 @@ class TestDataGeneratorTest extends AbstractDbTestCase {
 		for(int i = 0; i < list.size(); i++) {
 			assertEquals(i, list.get(i).taskId);
 		}
+
+
+		// === numberOfHistoryRecordsがintで表現可能な値より大きいケース
+
+		config.numberOfHistoryRecords = 10000000000L;
+		config.numberOfContractsRecords = 1000000;
+		config.maxNumberOfLinesHistoryCsv = 1000000000;
+		list =  generator.createParamsList();
+		assertEquals(config.numberOfHistoryRecords / config.maxNumberOfLinesHistoryCsv , list.size());;
+
+		// start～endが連続していることの確認
+		assertEquals(config.historyMinDate.getTime(), list.get(0).start);
+		for (int i = 0; i < list.size() - 1; i++) {
+			assertEquals(list.get(i).end, list.get(i+1).start, "i = " + i);
+		}
+		assertEquals(config.historyMaxDate.getTime(), list.get(list.size() - 1).end);
+
+		// i == 0 のときをのぞき、sart-endの値が等しい
+		for (int i = 1; i < list.size(); i++) {
+			assertEquals(list.get(1).end - list.get(1).start, list.get(i).end - list.get(i).start, "i = " + i);
+		}
+
+		// i == 0 のときの start - endの値が i != 0 のときより小さく、その日がnumberOfHistoryの比と等しい
+		diff0 = list.get(0).end - list.get(0).start;
+		diff1 = list.get(1).end - list.get(1).start;
+		assertTrue(diff0 <= diff1, "diff0 = " + diff0 + ", diff1 = " + diff1);
+		assertEquals(list.get(1).numberOfHistory/(double) list.get(0).numberOfHistory,  diff1/(double)diff0, 1e-6);
+
+
+		// 各paramsのnumberOfHistoryの合計が、config.numberOfHistoryRecordsと等しい
+		assertEquals(config.numberOfHistoryRecords, list.parallelStream().mapToLong( p -> (int)p.numberOfHistory).sum());
+
+		// i == 0のケースを除き、各paramsのnumberOfHistoryRecordsが、maxNumberOfLinesHistoryCsvと等しい
+		for(int i = 1; i < list.size(); i++) {
+			assertEquals(config.maxNumberOfLinesHistoryCsv, list.get(i).numberOfHistory, "i = " + i);
+		}
+
+		// taskIdのテスト
+		for(int i = 0; i < list.size(); i++) {
+			assertEquals(i, list.get(i).taskId);
+		}
+
+
 	}
 }

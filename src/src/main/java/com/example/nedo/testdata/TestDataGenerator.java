@@ -11,6 +11,7 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -192,7 +193,7 @@ public class TestDataGenerator {
 				// dividedParams.numbeOfHistory = params.numbeOfHistory / numberOfTasks で計算すると端数がでるので、
 				// i == 0 のときに端数を調整した値を入れる
 				firstNumberOfHistory = config.numberOfHistoryRecords
-						- config.maxNumberOfLinesHistoryCsv * (numberOfTasks - 1);
+						- ((long)config.maxNumberOfLinesHistoryCsv) * (numberOfTasks - 1);
 				dividedParams.numberOfHistory = firstNumberOfHistory;
 			} else {
 				dividedParams.numberOfHistory = config.maxNumberOfLinesHistoryCsv;
@@ -200,9 +201,9 @@ public class TestDataGenerator {
 				params.random = new Random(random.nextLong());
 				dividedParams.start = list.get(i - 1).end;
 			}
-			dividedParams.end = params.start + (params.end - params.start)
-					* (firstNumberOfHistory + config.maxNumberOfLinesHistoryCsv * i)
-					/ config.numberOfHistoryRecords;
+			double scale = ((double)firstNumberOfHistory + (double)(config.maxNumberOfLinesHistoryCsv) * i)
+			/ (double)(config.numberOfHistoryRecords);
+			dividedParams.end = params.start + Math.round((params.end - params.start) * scale);
 			list.add(dividedParams);
 		}
 		return list;
@@ -329,6 +330,7 @@ public class TestDataGenerator {
 		for(Params params: paramsList) {
 			Path outputPath = CsvUtils.getHistortyFilePath(dir, params.taskId);
 			params.historyWriter = new CsvHistoryWriter(outputPath);
+			LOG.info("task id = {}, start = {}, end = {}, numbero of history = {}", params.taskId, new Timestamp(params.start), new Timestamp(params.end), params.numberOfHistory);
 		}
 		generateHistory(paramsList);
 	}
