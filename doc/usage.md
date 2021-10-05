@@ -85,6 +85,8 @@ call.time.scale=4.5
 call.time.shape=1.5
 max.call.time.secs=3600
 statistics.output.dir=
+history.min.date=2020-11-01
+history.max.date=2021-01-10
 
 # JDBCに関するパラメータ
 url=jdbc:postgresql://127.0.0.1/phonebill
@@ -94,7 +96,7 @@ isolation.level=READ_COMMITTED
 
 # オンラインアプリケーションに関するパラメータ
 master.update.records.per.min=0
-master.insert.records.per.min=0
+master.insert.reccrds.per.min=0
 history.update.records.per.min=0
 history.insert.transaction.per.min=0
 history.insert.records.per.transaction=1
@@ -103,12 +105,20 @@ history.insert.records.per.transaction=1
 thread.count=1
 shared.connection=true
 
+# CSVに関するパラメータ
+csv.dir=/var/lib/csv
+max.number.of.lines.history.csv=1000000
+
 # Oracle固有のパラメータ
 oracle.initrans=0
+oracle.sql.loader.path=sqlldr
+oracle.sql.loader.sid=
+oracle.create.index.option=nologging parallel 32
 
 # その他のパラメータ
 random.seed=0
 transaction.scope=WHOLE
+
 ```
 
 ### 料金計算に関するパラメータ
@@ -154,6 +164,10 @@ transaction.scope=WHOLE
   - 通話時間生成時の最大値
 * statistics.output.dir
   - 統計情報を出力するディレクトリ、ここで指定したディレクトリに統計情報ファイルを出力する。このパラメータを指定しない場合は統計情報ファイルを出力しない。
+* history.min.date
+  - 生成する履歴データの通話開始日の最小値
+* history.max.date
+  - 生成する履歴データの通話開始日の最大値
 
 ### JDBCに関するパラメータ
 * url
@@ -186,8 +200,15 @@ transaction.scope=WHOLE
 ### スレッドに関するパラメータ
 * thread.count
   - 電話料金計算処理のスレッドのスレッド数
+  - CSVデータ生成処理のスレッド数
 * shared.connection
   - true/falseで指定する。trueのとき電話料金計算処理の各スレッド間でコネクションを共有する。
+
+### CSVに関するパラメータ
+* csv.dir
+  - `CreateTestDataCsv`コマンド実行時にCSVファイルを出力するディレクトリ。
+* max.number.of.lines.history.csv
+  - `CreateTestDataCsv`コマンドでCSVファイルを作成するときの、1ファイルに含まれるレコード数。この値が小さいと大量のCSVファイルが生成され取り扱いが困難になるため、生成されるCSVファイル数が1000程度を超えないようにこの値を調整することを推奨します。
 
 ### Oracle固有のパラメータ
 
@@ -196,6 +217,12 @@ transaction.scope=WHOLE
   - historyテーブル生成時のinitransの値を指定する
   - デフォルト値は0
   - 0を指定した場合、テーブル生成時にinitransを指定しない。この場合、initransの値はOracleのデフォルト値になる。
+* oracle.sql.loader.path
+  - `LoadTestDataCsvToOracle`コマンドは内部でOracleのSQL\*Loaderを呼び出します。SQL*Loaderの実行ファイルをフルパスで指定してください。
+* oracle.sql.loader.sid
+  - SQL*Loader実行時にしていするOracle SID。Oracle SIDを指定しなくてもSQL\*Loaderを実行可能な環境では指定不要です。
+* oracle.create.index.option
+  - インデックスおよびプライマリーキー生成時に追加でしていするオプションを指定します。デフォルトでは、`nologging parallel 32`が用いられます。実行環境に応じて適宜指定してください。
 
 ### その他のパラメータ
 * random.seed=0
@@ -222,6 +249,13 @@ phone-bill/bin/run CreateTable config.properties
 ```
 ./phone-bill/bin/run PhoneBill config.properties
 ```
+
+## 大量のテストデータ生成
+
+定量のテストデーを生成する場合、`CreateTestData`コマンドを使用せず、テストデータの`CreateTestDataCsv`コマンドでCSVファイルを生成し、`LoadTestDataCsvToOracle`コマンド
+または、`LoadTestDataCsvToPostgreSql`コマンドによりCSVデータをロードすることにより、
+高速にテストデータを生成することができます。
+
 
 ## 分布関数の指定
 
@@ -253,8 +287,7 @@ phone-bill/bin/run CreateTable config.properties
 テストデータを生成するコマンド`CreateTestData`の代わりにコマンドを`TestDataStatistics`
 実行すると、テストデータを生成せずに統計情報の出力します。また、コマンド`TestDataStatistics`
 実行時に、Configの`statistics.output.dir`で指定したディレクトリの下に`statistics`という
-名前のディレクトリを作成し、通話時間と電話番号それぞれについて、生成したすべての値と頻度を記録した
-CSVファイルを出力します。
+名前のディレクトリを作成し、通話時間と電話番号それぞれについて、生成したすべての値と頻度を記録したCSVファイルを出力します。
 
 ## 注意点
 
