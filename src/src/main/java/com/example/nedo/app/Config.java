@@ -160,31 +160,57 @@ public class Config implements Cloneable {
 	/* オンラインアプリケーションに関するパラメータ */
 
 	/**
-	 * 1分間に更新するマスタレコード数
+	 * 1分間に更新する1スレッドあたりのマスタのレコード数
 	 */
 	public int masterUpdateRecordsPerMin;
 	private static final String MASTER_UPDATE_RECORDS_PER_MIN = "master.update.records.per.min";
 
 	/**
-	 * 1分間に追加するレコード数
+	 * 1分間に追加する1スレッドあたりのマスタのレコード数
 	 */
 	public int masterInsertReccrdsPerMin;
 	private static final String MASTER_INSERT_RECCRDS_PER_MIN = "master.insert.reccrds.per.min";
 
 	/**
-	 * 1分間に追加する通話履歴レコード数
+	 * 1分間に更新する1スレッドあたりの通話履歴レコード数
 	 */
 	public int historyUpdateRecordsPerMin;
 	private static final String HISTORY_UPDATE_RECORDS_PER_MIN = "history.update.records.per.min";
 
 	/**
-	 * 1分間に発生する通話履歴インサートのトランザクション数
+	 * 1分間に発生する通話履歴追加の1スレッドあたりのトランザクション数
 	 */
 	public int historyInsertTransactionPerMin;
 	private static final String HISTORY_INSERT_TRANSACTION_PER_MIN = "history.insert.transaction.per.min";
 
+
 	/**
-	 * 一回の通話履歴インサートのトランザックションで、インサートするレコード数
+	 * マスタをアップデートするアプリのスレッド数
+	 */
+	public int masterUpdateThreadCount;
+	private static final String MASTER_UPDATE_THREAD_COUNT = "master.update.thread.count";
+
+	/**
+	 * マスタを追加するアプリのスレッド数
+	 */
+	public int masterInsertThreadCount;
+	private static final String 	MASTER_INSERT_THREAD_COUNT = "master.insert.thread.count";
+
+	/**
+	 * 履歴をアップデートするアプリのスレッド数
+	 */
+	public int historyUpdateThreadCount;
+	private static final String HISTORY_UPDATE_THREAD_COUNT = "history.update.thread.count";
+
+	/**
+	 * 履歴を追加するアプリのスレッド数
+	 */
+	public int historyInsertThreadCount;
+	private static final String HISTORY_INSERT_THREAD_COUNT = "history.insert.thread.count";
+
+
+	/**
+	 * 一回の通話履歴追加のトランザックションで、インサートするレコード数
 	 */
 	public int historyInsertRecordsPerTransaction;
 	private static final String HISTORY_INSERT_RECORDS_PER_TRANSACTION = "history.insert.records.per.transaction";
@@ -348,9 +374,17 @@ public class Config implements Cloneable {
 
 		// オンラインアプリケーションに関するパラメータ
 		masterUpdateRecordsPerMin = getInt(MASTER_UPDATE_RECORDS_PER_MIN, 0);
+		masterUpdateThreadCount = getInt(MASTER_UPDATE_THREAD_COUNT, 1);
+
 		masterInsertReccrdsPerMin = getInt(MASTER_INSERT_RECCRDS_PER_MIN, 0);
+		masterInsertThreadCount = getInt(MASTER_INSERT_THREAD_COUNT, 1);
+
 		historyUpdateRecordsPerMin = getInt(HISTORY_UPDATE_RECORDS_PER_MIN, 0);
+		historyUpdateThreadCount = getInt(HISTORY_UPDATE_THREAD_COUNT, 1);
+
 		historyInsertTransactionPerMin = getInt(HISTORY_INSERT_TRANSACTION_PER_MIN, 0);
+		historyInsertThreadCount = getInt(HISTORY_INSERT_THREAD_COUNT, 1);
+
 		historyInsertRecordsPerTransaction = getInt(HISTORY_INSERT_RECORDS_PER_TRANSACTION, 1);
 
 		//  CSVデータに関するパラメータ
@@ -639,10 +673,14 @@ public class Config implements Cloneable {
 		sb.append(System.lineSeparator());
 		sb.append(String.format(commentFormat, "オンラインアプリケーションに関するパラメータ"));
 		sb.append(String.format(format, MASTER_UPDATE_RECORDS_PER_MIN, masterUpdateRecordsPerMin));
+		sb.append(String.format(format, MASTER_UPDATE_THREAD_COUNT, masterUpdateThreadCount));
 		sb.append(String.format(format, MASTER_INSERT_RECCRDS_PER_MIN, masterInsertReccrdsPerMin));
+		sb.append(String.format(format, MASTER_INSERT_THREAD_COUNT, masterInsertThreadCount));
 		sb.append(String.format(format, HISTORY_UPDATE_RECORDS_PER_MIN, historyUpdateRecordsPerMin));
+		sb.append(String.format(format, HISTORY_UPDATE_THREAD_COUNT, historyUpdateThreadCount));
 		sb.append(String.format(format, HISTORY_INSERT_TRANSACTION_PER_MIN, historyInsertTransactionPerMin));
 		sb.append(String.format(format, HISTORY_INSERT_RECORDS_PER_TRANSACTION, historyInsertRecordsPerTransaction));
+		sb.append(String.format(format, HISTORY_INSERT_THREAD_COUNT, historyInsertThreadCount));
 		sb.append(System.lineSeparator());
 		sb.append(String.format(commentFormat, "スレッドに関するパラメータ"));
 		sb.append(String.format(format, THREAD_COUNT, threadCount));

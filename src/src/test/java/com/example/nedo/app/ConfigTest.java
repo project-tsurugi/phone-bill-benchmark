@@ -206,6 +206,10 @@ class ConfigTest {
 		assertEquals(0, config.historyUpdateRecordsPerMin);
 		assertEquals(0, config.historyInsertTransactionPerMin);
 		assertEquals(1, config.historyInsertRecordsPerTransaction);
+		assertEquals(1, config.masterUpdateThreadCount);
+		assertEquals(1, config.masterInsertThreadCount);
+		assertEquals(1, config.historyUpdateThreadCount);
+		assertEquals(1, config.historyInsertThreadCount);
 
 		/* その他のパラメータ */
 		assertEquals(0, config.randomSeed);
@@ -260,6 +264,18 @@ class ConfigTest {
 		/* CSVに関するパラメータ */
 		assertEquals("/tmp/csv", config.csvDir);
 		assertEquals(1000, config.maxNumberOfLinesHistoryCsv);
+
+		 /* オンラインアプリケーションに関するパラメータ */
+		assertEquals(50, config.masterUpdateRecordsPerMin);
+		assertEquals(20, config.masterInsertReccrdsPerMin);
+		assertEquals(15, config.historyUpdateRecordsPerMin);
+		assertEquals(40, config.historyInsertTransactionPerMin);
+		assertEquals(300, config.historyInsertRecordsPerTransaction);
+		assertEquals(2, config.masterUpdateThreadCount);
+		assertEquals(3, config.masterInsertThreadCount);
+		assertEquals(4, config.historyUpdateThreadCount);
+		assertEquals(5, config.historyInsertThreadCount);
+
 
 		/* その他のパラメータ */
 		assertEquals(1969, config.randomSeed);
