@@ -16,113 +16,126 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.example.nedo.app.Config;
+import com.example.nedo.db.DBUtils;
 import com.example.nedo.db.History;
 import com.example.nedo.testdata.GenerateHistoryTask;
+import com.example.nedo.testdata.GenerateHistoryTask.Key;
 import com.example.nedo.testdata.TestDataGenerator;
 
+/**
+ * 通話履歴を追加するオンラインアプリケーション.
+ * <br>
+ * 話開始時刻が、baseTime ～ baseTime + durationの通話履歴を生成する。atScheduleListCreated()が
+ * 呼び出されるたびに、baseTimeをCREATE_SCHEDULE_INTERVAL_MILLSだけシフトする。
+ *
+ */
 public class HistoryInsertApp extends AbstractOnlineApp {
     private static final Logger LOG = LoggerFactory.getLogger(HistoryInsertApp.class);
 	private int historyInsertRecordsPerTransaction;
 	private GenerateHistoryTask generateHistoryTask;
-	private long baseTime;
+	long baseTime; //
+	int duration;
 	private Random random;
-	private Connection conn;
 	List<History> histories = new ArrayList<>();
 
 	/**
-	 * // 同一の時刻のレコードを生成しないために時刻を記録するためのセット
+	 * // 同一のPKのレコードを生成しないためにPK値を記録するためのセット
 	 */
-	private Set<Key> startTimeSet;
+	private Set<Key> keySet;
 
-	public HistoryInsertApp(ContractHolder contractHolder, Config config, int seed) throws SQLException, IOException {
+	/**
+	 * コンストラクタ
+	 *
+	 * @param contractHolder
+	 * @param config
+	 * @param seed
+	 * @param baseTime
+	 * @param duration
+	 * @throws SQLException
+	 * @throws IOException
+	 */
+	private HistoryInsertApp(ContractHolder contractHolder, Config config, int seed, long baseTime, int duration) throws SQLException, IOException {
 		super(config.historyInsertTransactionPerMin, config);
 		this.random = new Random(seed);
 		historyInsertRecordsPerTransaction = config.historyInsertRecordsPerTransaction;
-		baseTime = getMaxStartTime(); // 通話履歴中の最新の通話開始時刻をベースに新規に作成する通話履歴の通話開始時刻を生成する
-		conn = getConnection();
-		startTimeSet = new HashSet<Key>(); // 同一の時刻のレコードを生成しないために時刻を記録するためのセット
-
-
-		TestDataGenerator testDataGenerator = new TestDataGenerator(config, seed, contractHolder);
+		this.baseTime = baseTime;
+		this.duration = duration;
+		keySet = new HashSet<Key>(); // 同一の時刻のレコードを生成しないために時刻を記録するためのセット
+		TestDataGenerator testDataGenerator = new TestDataGenerator(config);
 		generateHistoryTask = testDataGenerator.getGenerateHistoryTaskForOnlineApp();
 	}
+
+
+	/**
+	 * 指定した数だけ、HistoryInsertAppのインスタンスを作成し、リストで返す.
+	 * <br>
+	 * 複数のHistoryInsertAppを同時に動かしても、キーの重複が起きないように、baseTimeとdurationの値を調整する。
+	 *
+	 * @param contractHolder
+	 * @param config
+	 * @param seed
+	 * @param num
+	 * @return
+	 * @throws IOException
+	 * @throws SQLException
+	 */
+	public static List<AbstractOnlineApp> createHistoryInsertApps(ContractHolder contractHolder, Config config,
+			int seed, int num) throws SQLException, IOException {
+		List<AbstractOnlineApp> list = new ArrayList<>();
+		if (num > 0) {
+			int duration = CREATE_SCHEDULE_INTERVAL_MILLS / num;
+			long baseTime = getMaxStartTime(config);
+			Random random = new Random(seed);
+			for (int i = 0; i < num; i++) {
+				AbstractOnlineApp app = new HistoryInsertApp(contractHolder, config, random.nextInt(), baseTime,
+						duration);
+				app.setName(i);
+				baseTime += duration;
+				list.add(app);
+			}
+		}
+		return list;
+	}
+
+
+
 
 	@Override
 	protected void atScheduleListCreated(List<Long> scheduleList) {
 		baseTime += CREATE_SCHEDULE_INTERVAL_MILLS;
-		startTimeSet.clear();
+		keySet.clear();
 	}
 
-	long getMaxStartTime() throws SQLException {
-		Connection conn = getConnection();
-		try (Statement stmt = conn.createStatement();
+	static long getMaxStartTime(Config config) throws SQLException {
+		try (Connection conn = DBUtils.getConnection(config);
+				Statement stmt = conn.createStatement();
 				ResultSet rs = stmt.executeQuery("select max(start_time) from history");) {
 			if (rs.next()) {
 				Timestamp ts = rs.getTimestamp(1);
+				conn.commit();
 				return ts == null ? System.currentTimeMillis() : ts.getTime();
 			}
 		}
-		conn.commit();
 		throw new IllegalStateException();
-	}
-
-	private static class Key {
-		String phoneNumber;
-		Long startTime;
-
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + ((phoneNumber == null) ? 0 : phoneNumber.hashCode());
-			result = prime * result + ((startTime == null) ? 0 : startTime.hashCode());
-			return result;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj)
-				return true;
-			if (obj == null)
-				return false;
-			if (getClass() != obj.getClass())
-				return false;
-			Key other = (Key) obj;
-			if (phoneNumber == null) {
-				if (other.phoneNumber != null)
-					return false;
-			} else if (!phoneNumber.equals(other.phoneNumber))
-				return false;
-			if (startTime == null) {
-				if (other.startTime != null)
-					return false;
-			} else if (!startTime.equals(other.startTime))
-				return false;
-			return true;
-		}
 	}
 
 	@Override
 	protected void createData() {
 		histories.clear();
-		History  history;
-		Key key;
 		for (int i = 0; i < historyInsertRecordsPerTransaction; i++) {
+			Key key;
 			do {
-				long startTime = baseTime + random.nextInt(CREATE_SCHEDULE_INTERVAL_MILLS);
-				history = generateHistoryTask.createHistoryRecord(startTime);
-				key = new Key();
-				key.phoneNumber = history.callerPhoneNumber;
-				key.startTime = startTime;
-			} while (startTimeSet.contains(key));
-			startTimeSet.add(key);
-			histories.add(history);
+				long startTime = baseTime + random.nextInt(duration);
+				key = generateHistoryTask.createkey(startTime);
+			} while (keySet.contains(key));
+			keySet.add(key);
+			histories.add(generateHistoryTask.createHistoryRecord(key));
 		}
 	}
 
 	@Override
 	protected void updateDatabase() throws SQLException {
-		TestDataGenerator.insrtHistories(conn, histories);
+		TestDataGenerator.insrtHistories(getConnection(), histories);
 		if (LOG.isDebugEnabled()) {
 			LOG.debug("ONLINE APP: Insert {} records to history.", historyInsertRecordsPerTransaction);
 		}

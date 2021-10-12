@@ -187,7 +187,7 @@ public class GenerateHistoryTask implements Runnable {
 	 * @param key
 	 * @return
 	 */
-	private History createHistoryRecord(Key key) {
+	public History createHistoryRecord(Key key) {
 		History history = new History();
 		history.startTime = new Timestamp(key.startTime);
 
@@ -205,18 +205,17 @@ public class GenerateHistoryTask implements Runnable {
 		return history;
 	}
 
-
 	/**
-	 * 指定の通話開始時刻の通話履歴を生成する
+	 * 指定の通話開始時刻のキーを作成する
 	 *
 	 * @param startTime
 	 * @return
 	 */
-	public History createHistoryRecord(long startTime) {
+	public Key createkey(long startTime) {
 		Key key = new Key();
 		key.startTime = startTime;
 		key.callerPhoneNumber = callerPhoneNumberSelector.selectPhoneNumber(startTime, -1);
-		return createHistoryRecord(key);
+		return key;
 	}
 
 	/**
@@ -246,7 +245,7 @@ public class GenerateHistoryTask implements Runnable {
 	}
 
 
-	private static class Key {
+	public static class Key {
 		long startTime;
 		long callerPhoneNumber;
 

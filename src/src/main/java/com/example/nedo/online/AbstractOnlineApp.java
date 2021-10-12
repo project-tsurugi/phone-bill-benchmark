@@ -2,6 +2,7 @@ package com.example.nedo.online;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -26,14 +27,25 @@ public abstract class AbstractOnlineApp implements Runnable{
 
 
 	/**
+	 * 実行回数
+	 */
+	private int execCount = 0;
+
+	/**
+	 * リトライ回数
+	 */
+	private int retryCount = 0;
+
+
+	/**
 	 * 終了リクエストの有無を表すフラグ
 	 */
 	private volatile boolean terminationRequest = false;
 
 	/*
-	 * 1分間にInsert/Updateするレコード数
+	 * 1分間に実行するトランザクション数、負数の場合は連続で実行する
 	 */
-	private int recordsPerMin;
+	private int txPerMin;
 
 	/**
 	 * スケジュール作成時に使用する乱数発生器
@@ -51,12 +63,27 @@ public abstract class AbstractOnlineApp implements Runnable{
 	private List<Long> scheduleList = new LinkedList<Long>();
 
 
-	public AbstractOnlineApp(int recordsPerMin, Config config) throws SQLException {
-		this.recordsPerMin = recordsPerMin;
+	/**
+	 * タスク名(=スレッド名)
+	 */
+	private String name;
+
+
+	public AbstractOnlineApp(int txPerMin, Config config) throws SQLException {
+		this.txPerMin = txPerMin;
 		this.random = new Random(config.randomSeed);
 		conn = DBUtils.getConnection(config);
+		setName(0);
 	}
 
+	/**
+	 * 指定の番号をもつタスク名をセットする
+	 *
+	 * @param num
+	 */
+	public void setName(int num) {
+		name = this.getClass().getName().replaceAll(".*\\.", "") + "-" + String.format("%03d", num);
+	}
 
 	/**
 	 * オンラインアプリの処理.
@@ -74,12 +101,14 @@ public abstract class AbstractOnlineApp implements Runnable{
 			try {
 				updateDatabase();
 				conn.commit();
+				execCount++;
 				break;
 			} catch (SQLException e) {
 				if (DBUtils.isRetriableSQLException(e)) {
 					LOG.debug("{} caught a retriable exception, ErrorCode = {}, SQLStatus = {}.",
 							this.getClass().getName(), e.getErrorCode(), e.getSQLState(), e);
 					conn.rollback();
+					retryCount++;
 				} else {
 					throw e;
 				}
@@ -103,14 +132,13 @@ public abstract class AbstractOnlineApp implements Runnable{
 	@Override
 	@SuppressFBWarnings("DM_EXIT")
 	public void run() {
-		String name = this.getClass().getName().replaceAll(".*\\.", "");
 		try {
 			Thread.currentThread().setName(name);
-			LOG.info("{} started.", name);
-			if (recordsPerMin <= 0) {
-				// recordsPerMinが0以下の場合は何もしない
+			if (txPerMin == 0) {
+				// txPerMinが0の場合は何もしない
 				return;
 			}
+			LOG.info("{} started.", name);
 			startTime = System.currentTimeMillis();
 			scheduleList.add(startTime);
 			while (!terminationRequest) {
@@ -145,14 +173,20 @@ public abstract class AbstractOnlineApp implements Runnable{
 	 */
 	private void schedule() throws SQLException {
 		Long schedule = scheduleList.get(0);
-		// 処理の開始時刻になっていなければ、10ミリ秒スリープしてリターンする
 		if (System.currentTimeMillis() < schedule ) {
-			try {
-				Thread.sleep(10);
-			} catch (InterruptedException e) {
-				// Nothing to do;
+			if (txPerMin > 0) {
+				// 処理の開始時刻になっていなければ、10ミリ秒スリープしてリターンする
+				try {
+					Thread.sleep(10);
+				} catch (InterruptedException e) {
+					// Nothing to do;
+				}
+				return;
+			} else {
+				// 連続実行が指定されているケース
+				exec();
+				return;
 			}
-			return;
 		}
 		// スケジュール時刻になったとき
 		scheduleList.remove(0);
@@ -167,9 +201,19 @@ public abstract class AbstractOnlineApp implements Runnable{
 
 	/**
 	 * スケジュールを作成する
+	 *
+	 * @param base スケジュール生成のスケジュール(時刻)
 	 */
 	private void creatScheduleList(long base) {
-		for (int i = 0; i < recordsPerMin; i++) {
+		long now = System.currentTimeMillis();
+		if (base + CREATE_SCHEDULE_INTERVAL_MILLS < now) {
+			// スケジュール生成の呼び出しが、予定よりCREATE_SCHEDULE_INTERVAL_MILLSより遅れた場合は、
+			// 警告のログを出力し、スケジュールのベースとなる時刻を進める。
+			LOG.warn("Detected a large delay in the schedule and reset the base time(base = {}, now = {}).",
+					new Timestamp(base), new Timestamp(now));
+			base = System.currentTimeMillis();
+		}
+		for (int i = 0; i < txPerMin; i++) {
 			long schedule = base + random.nextInt(CREATE_SCHEDULE_INTERVAL_MILLS);
 			scheduleList.add(schedule);
 		}
@@ -202,5 +246,19 @@ public abstract class AbstractOnlineApp implements Runnable{
 	 */
 	protected Connection getConnection() {
 		return conn;
+	}
+
+	/**
+	 * @return execCount
+	 */
+	public int getExecCount() {
+		return execCount;
+	}
+
+	/**
+	 * @return retryCount
+	 */
+	public int getRetryCount() {
+		return retryCount;
 	}
 }

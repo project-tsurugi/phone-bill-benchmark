@@ -58,7 +58,7 @@ public class PhoneBill implements ExecutableCommand {
 	@Override
 	public void execute(Config config) throws Exception {
 		this.config = config;
-		List<AbstractOnlineApp> list = createOnlineApps();
+		List<AbstractOnlineApp> list = createOnlineApps(config, getContractHolder());
 		final ExecutorService service = list.isEmpty() ? null : Executors.newFixedThreadPool(list.size());
 		try {
 			// オンラインアプリを実行する
@@ -85,20 +85,34 @@ public class PhoneBill implements ExecutableCommand {
 	 * @throws SQLException
 	 * @throws IOException
 	 */
-	List<AbstractOnlineApp> createOnlineApps() throws SQLException, IOException {
+	public static List<AbstractOnlineApp> createOnlineApps(Config config, ContractHolder contractHolder)
+			throws SQLException, IOException {
 		Random random = new Random(config.randomSeed);
 		List<AbstractOnlineApp> list = new ArrayList<AbstractOnlineApp>();
-		if (config.historyInsertTransactionPerMin > 0) {
-			list.add(new HistoryInsertApp(getContractHolder(), config, random.nextInt()));
+		if (config.historyInsertThreadCount > 0 && config.historyInsertTransactionPerMin != 0) {
+			list.addAll(HistoryInsertApp.createHistoryInsertApps(contractHolder, config, random.nextInt(),
+					config.historyInsertThreadCount));
 		}
-		if (config.historyUpdateRecordsPerMin > 0) {
-			list.add(new HistoryUpdateApp(getContractHolder(), config, random.nextInt()));
+		if (config.historyUpdateThreadCount > 0 && config.historyUpdateRecordsPerMin != 0) {
+			for (int i = 0; i < config.historyUpdateThreadCount; i++) {
+				AbstractOnlineApp task = new HistoryUpdateApp(contractHolder, config, random.nextInt());
+				task.setName(i);
+				list.add(task);
+			}
 		}
-		if (config.masterInsertReccrdsPerMin > 0) {
-			list.add(new MasterInsertApp(getContractHolder(), config, random.nextInt()));
+		if (config.masterInsertThreadCount > 0 && config.masterInsertReccrdsPerMin != 0) {
+			for (int i = 0; i < config.masterInsertThreadCount; i++) {
+				AbstractOnlineApp task = new MasterInsertApp(contractHolder, config);
+				task.setName(i);
+				list.add(task);
+			}
 		}
-		if (config.masterUpdateRecordsPerMin > 0) {
-			list.add(new MasterUpdateApp(getContractHolder(), config, random.nextInt()));
+		if (config.masterUpdateThreadCount > 0 && config.masterUpdateRecordsPerMin != 0) {
+			for (int i = 0; i < config.masterUpdateThreadCount; i++) {
+				AbstractOnlineApp task = new MasterUpdateApp(contractHolder, config, random.nextInt());
+				task.setName(i);
+				list.add(task);
+			}
 		}
 		return list;
 	}

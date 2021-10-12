@@ -21,9 +21,9 @@ public class MasterInsertApp extends AbstractOnlineApp {
 	private TestDataGenerator testDataGenerator;
 	private ContractHolder contractHolder;
 
-	public MasterInsertApp(ContractHolder contractHolder, Config config, int seed) throws SQLException {
+	public MasterInsertApp(ContractHolder contractHolder, Config config) throws SQLException {
 		super(config.masterInsertReccrdsPerMin, config);
-		testDataGenerator = new TestDataGenerator(config, seed, contractHolder);
+		testDataGenerator = new TestDataGenerator(config);
 		this.contractHolder = contractHolder;
 	}
 
@@ -36,12 +36,16 @@ public class MasterInsertApp extends AbstractOnlineApp {
 	protected void updateDatabase() throws SQLException {
 		Connection conn = getConnection();
 		try (PreparedStatement ps = conn.prepareStatement(TestDataGenerator.SQL_INSERT_TO_CONTRACT)) {
-			int n = contractHolder.size();
-			Contract c = testDataGenerator.setContract(ps, n);
+			Contract c = null;
+			synchronized (contractHolder) {
+				int n = contractHolder.size();
+				 c = testDataGenerator.setContract(ps, n);
+				contractHolder.add(c);
+			}
 			ps.executeUpdate();
-			contractHolder.add(c);
 			if (LOG.isDebugEnabled()) {
-				LOG.debug("ONLINE APP: Insert 1 record to contracs.");
+				LOG.debug("ONLINE APP: Insert 1 record to contracs(phoneNumber = {}, startDate = {}).", c.phoneNumber,
+						c.startDate);
 			}
 		}
 	}

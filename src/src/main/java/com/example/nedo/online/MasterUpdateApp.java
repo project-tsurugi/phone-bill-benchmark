@@ -29,8 +29,6 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 	private Config config;
 	private Random random;
 	private Updater[] updaters = {new Updater1(), new Updater2()};
-	private Contract updatingContract;
-
 
 	public MasterUpdateApp(ContractHolder contractHolder, Config config, int seed) throws SQLException {
 		super(config.masterUpdateRecordsPerMin, config);
@@ -43,7 +41,10 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 
 
 	/**
-	 * 同一の電話番号の契約のリストから、任意の契約を一つ選択し契約内容を更新する
+	 * 同一の電話番号の契約のリストから、任意の契約を一つ選択し契約内容を更新する.
+	 * <br>
+	 * ランダムに選んだ契約をランダムに更新し更新後の値に矛盾がないか調べる。矛盾がある場合は別の値で更新して、
+	 * 矛盾がないかを調べる。100回更新しても、矛盾のない値にならなかった場合はnullを返す。
 	 *
 	 * @param contracts 同一の電話番号の契約のリスト
 	 * @return 更新した契約
@@ -63,7 +64,6 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 				return contract;
 			}
 		}
-		LOG.warn("Fail to create valid update contracts for phone number: {}", contracts.get(0).phoneNumber);
 		return null;
 	}
 
@@ -100,9 +100,8 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 	 * @return
 	 * @throws SQLException
 	 */
-	List<Contract> getContracts(String phoneNumber) throws SQLException {
+	List<Contract> getContracts(Connection conn, String phoneNumber) throws SQLException {
 		List<Contract> list = new ArrayList<Contract>();
-		Connection conn = getConnection();
 		String sql = "select start_date, end_date, charge_rule from contracts where phone_number = ?";
 		try (PreparedStatement ps = conn.prepareStatement(sql)) {
 			ps.setString(1, phoneNumber);
@@ -122,21 +121,37 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 
 	@Override
 	protected void createData() throws SQLException {
-		// 更新対象の電話番号を取得
-		int n = random.nextInt(contractHolder.size());
-		String phoneNumber = contractHolder.get(n).phoneNumber;
-		List<Contract> contracts = getContracts(phoneNumber);
-		// 更新する契約を取得する
-		updatingContract = getUpdatingContract(contracts);
+		// Nothing to do
 	}
 
 	@Override
 	protected void updateDatabase() throws SQLException {
-		if (updatingContract == null) {
+
+		// 更新対象の電話番号を取得
+		int n = random.nextInt(contractHolder.size());
+		String phoneNumber = contractHolder.get(n).phoneNumber;
+
+		// 当該電話番号の契約を取得
+		Connection conn = getConnection();
+		List<Contract> contracts = getContracts(conn, phoneNumber);
+		if (contracts.isEmpty()) {
+			// 電話番号にマッチする契約がなかったとき(DBに追加される前の電話番号を選んだ場合)
+			LOG.warn("No contrct found for phoneNumber = {}.", phoneNumber);
 			return;
 		}
 
-		Connection conn = getConnection();
+		// 更新する契約を取得する
+		Contract updatingContract = getUpdatingContract(contracts);
+		if (updatingContract == null) {
+			// 契約の更新に失敗したとき(DBが壊れている可能性が高い)
+			LOG.warn("Fail to create valid update contracts for phone number: {}", contracts.get(0).phoneNumber);
+			for(Contract c: contracts) {
+				LOG.warn("   " + c.toString());
+			}
+			return;
+		}
+
+		// 契約を更新
 		String sql = "update contracts set end_date = ?, charge_rule = ? where phone_number = ? and start_date = ?";
 		try (PreparedStatement ps = conn.prepareStatement(sql)) {
 			ps.setDate(1, updatingContract.endDate);
@@ -148,7 +163,8 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 				throw new RuntimeException("Fail to update contracts: " + updatingContract);
 			}
 			if (LOG.isDebugEnabled()) {
-				LOG.debug("ONLINE APP: Update 1 record from contracs.");
+				LOG.debug("ONLINE APP: Update 1 record from contracs(phoneNumber = {}, startDate = {}, endDate = {})."
+						, updatingContract.phoneNumber, updatingContract.startDate, updatingContract.endDate);
 			}
 		}
 		contractHolder.replace(updatingContract);

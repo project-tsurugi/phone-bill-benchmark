@@ -128,7 +128,7 @@ public class HistoryUpdateApp extends AbstractOnlineApp {
 	protected void updateDatabase() throws SQLException {
 		updateDatabase(history);
 		if (LOG.isDebugEnabled()) {
-			LOG.debug("ONLINE APP: Update 1 record from history.");
+			LOG.debug("ONLINE APP: Update 1 record from history(callerPhoneNumber = {}, startTime = {}).", history.callerPhoneNumber, history.startTime);
 		}
 	}
 

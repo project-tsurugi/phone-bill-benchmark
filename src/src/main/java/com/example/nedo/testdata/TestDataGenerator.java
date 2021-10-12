@@ -34,6 +34,14 @@ import com.example.nedo.db.Duration;
 import com.example.nedo.db.History;
 import com.example.nedo.testdata.GenerateHistoryTask.Params;
 
+/**
+ * @author umega
+ *
+ */
+/**
+ * @author umega
+ *
+ */
 public class TestDataGenerator {
     private static final Logger LOG = LoggerFactory.getLogger(TestDataGenerator.class);
 
@@ -122,7 +130,6 @@ public class TestDataGenerator {
 					+ config.maxDate);
 		}
 		this.random = new Random(seed);
-		this.contractReader = contractReader;
 		phoneNumberGenerator = new PhoneNumberGenerator(config);
 		initDurationList();
 		if (contractReader == null) {
@@ -141,7 +148,7 @@ public class TestDataGenerator {
 	 */
 	public GenerateHistoryTask getGenerateHistoryTaskForOnlineApp() throws IOException {
 		Params params = createTaskParams(0, 0, 0,1).get(0);
-		params.historyWriter = new DbHistoryWriter();
+		params.historyWriter = new DummyHistoryWriter();
 		GenerateHistoryTask generateHistoryTask = new GenerateHistoryTask(params);
 		generateHistoryTask.init();
 		return generateHistoryTask;
@@ -549,10 +556,19 @@ public class TestDataGenerator {
 	 * @param n
 	 * @return
 	 */
-	Duration getDuration(long n) {
+	public Duration getDuration(long n) {
 		return durationList.get((int) (n % durationList.size()));
 	}
 
+	/**
+	 * n番目の電話番号をを返す
+	 *
+	 * @param n
+	 * @return
+	 */
+	public String getPhoneNumberAsLong(long n) {
+		return phoneNumberGenerator.getPhoneNumber(n);
+	}
 
 	/**
 	 * n番目の契約レコードを返す
@@ -569,7 +585,6 @@ public class TestDataGenerator {
 		contract.endDate = d.getEndDate();
 		return contract;
 	}
-
 
 	/**
 	 * 本クラスが保持する情報を用いて情報を取得するContractReader
@@ -716,6 +731,26 @@ public class TestDataGenerator {
 				}
 			}
 		}
+	}
+
+	/**
+	 * オンラインアプリケーション用のダミーのHistoryWriter
+	 *
+	 */
+	private class DummyHistoryWriter  extends HistoryWriter {
+
+		@Override
+		void init() throws IOException {
+		}
+
+		@Override
+		void write(History h) throws IOException, SQLException {
+		}
+
+		@Override
+		void cleanup() throws IOException, SQLException {
+		}
+
 	}
 
 
