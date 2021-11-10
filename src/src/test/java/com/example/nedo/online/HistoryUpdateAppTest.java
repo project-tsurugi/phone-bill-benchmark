@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
-import java.util.TreeMap;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -68,15 +67,6 @@ class HistoryUpdateAppTest extends AbstractDbTestCase {
 		 List<History> histories = getHistories();
 		 List<Contract> contracts = getContracts();
 		Map<Key, List<History>> map = getContractHistoryMap(contracts, histories);
-
-		// 1以上の履歴を持つ契約について、当該契約が何番目の契約かと、当該契約が保持する契約数のmapを作成する
-		Map<Integer, Integer> nnMap = new TreeMap<Integer, Integer>();
-		for(int i = 0; i < contracts.size(); i++) {
-			int size = map.get(contracts.get(i).getKey()).size();
-			if (size > 0) {
-				nnMap.put(i, size);
-			}
-		}
 
 		// 削除フラグを立てるケース
 		History target;
@@ -152,13 +142,12 @@ class HistoryUpdateAppTest extends AbstractDbTestCase {
 	 */
 	@Test
 	void testGetHistories() throws Exception {
-		List<History> histories = getHistories();
 		// chargeがnullでない履歴を作る
 		History h = getHistories().get(0);
 		h.charge = 200;
 		app.updateDatabase(h);
 		app.getConnection().commit();
-		histories = getHistories();
+		List<History> histories = getHistories();
 		List<Contract> contracts = getContracts();
 
 		 Map<Key, List<History>> map = getContractHistoryMap(contracts, histories);
