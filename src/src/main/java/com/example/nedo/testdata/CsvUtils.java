@@ -19,8 +19,10 @@ public class CsvUtils {
 	 * @throws IOException
 	 */
 	public static List<Path> getHistortyFilePaths(Path dir) throws IOException {
-		return Files.list(dir).filter(p -> Pattern.matches(HISTORY_REGEXP, p.getFileName().toString())).sorted()
-				.collect(Collectors.toList());
+		return Files.list(dir).filter(p -> {
+			Path fname = p.getFileName();
+			return fname != null && Pattern.matches(HISTORY_REGEXP, fname.toString());
+		}).sorted().collect(Collectors.toList());
 	}
 
 	/**
