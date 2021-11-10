@@ -177,10 +177,11 @@ class AbstractPhoneNumberSelectorTest {
 	 *
 	 */
 	private static class PhoneNumberSelectorImpl extends AbstractPhoneNumberSelector {
-		Queue<Integer> queue;
+		Queue<Integer> queue = new LinkedList<Integer>();
 
 		public void setValues(Integer... integers) {
-			queue = new LinkedList<>(Arrays.asList(integers));
+			queue.clear();
+			queue.addAll(Arrays.asList(integers));
 		}
 
 		public PhoneNumberSelectorImpl(ContractInfoReader contractInfoReader) {

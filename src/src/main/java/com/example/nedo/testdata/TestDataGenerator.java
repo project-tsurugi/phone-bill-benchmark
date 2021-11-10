@@ -36,6 +36,8 @@ import com.example.nedo.db.History;
 import com.example.nedo.testdata.GenerateHistoryTask.Params;
 import com.example.nedo.testdata.GenerateHistoryTask.Result;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 public class TestDataGenerator {
     private static final Logger LOG = LoggerFactory.getLogger(TestDataGenerator.class);
 
@@ -388,6 +390,7 @@ public class TestDataGenerator {
 	 * @param numberOfTasks
 	 * @param futureSet
 	 */
+	@SuppressFBWarnings("DM_EXIT")
 	private void waitFor(int numberOfTasks, Set<Future<Result>> futureSet) {
 		Iterator<Future<Result>> it = futureSet.iterator();
 		while (it.hasNext()) {

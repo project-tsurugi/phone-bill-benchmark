@@ -14,10 +14,11 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  */
 @SuppressFBWarnings("SE_NO_SERIALVERSIONID")
 public class RandomStub extends Random {
-	Queue<Integer> queue;
+	Queue<Integer> queue = new LinkedList<>();
 
 	public void setValues(Integer... integers) {
-		queue = new LinkedList<>(Arrays.asList(integers));
+		queue.clear();
+		queue.addAll(Arrays.asList(integers));
 	}
 
 	@Override

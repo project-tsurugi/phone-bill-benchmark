@@ -22,7 +22,7 @@ import com.example.nedo.testdata.DefaultContractBlockInfoInitializer;
 import com.example.nedo.testdata.SingleProcessContractBlockManager;
 
 class HistoryInsertAppTest extends AbstractDbTestCase {
-	private Config config;
+	private Config config = null;
 	private ContractBlockInfoAccessor accessor;
 
 	@BeforeEach
