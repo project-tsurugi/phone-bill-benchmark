@@ -66,7 +66,7 @@ target.month=2020-12-01
 
 # 契約マスタ生成に関するパラメータ
 number.of.contracts.records=1000
-duplicate.phone.number.ratio=10
+duplicate.phone.number.rate=10
 expiration.date.rate=30
 no.expiration.date.rate=50
 min.date=2010-11-11
@@ -129,7 +129,7 @@ transaction.scope=WHOLE
 ### 契約マスタのテストデータ生成に関するパラメータ
 * number.of.contracts.records
   - 契約マスタのレコード数
-* duplicate.phone.number.ratio
+* duplicate.phone.number.rate
   - 複数の契約を持つ電話番号の割合
 * expiration.date.rate
   - 契約終了日を持つ契約の割合

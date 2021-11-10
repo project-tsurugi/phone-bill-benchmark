@@ -3,6 +3,7 @@ package com.example.nedo.testdata;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Random;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,10 +11,6 @@ import org.slf4j.LoggerFactory;
 import com.example.nedo.app.Config;
 import com.example.nedo.app.ExecutableCommand;
 
-/**
- * @author umega
- *
- */
 public class CreateTestDataCsv implements ExecutableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(CreateTestDataCsv.class);
 
@@ -34,7 +31,9 @@ public class CreateTestDataCsv implements ExecutableCommand {
 			Files.delete(path);
 		}
 
-		TestDataGenerator generator = new TestDataGenerator(config);
+		int seed = config.randomSeed;
+		ContractBlockInfoAccessor accessor = new SingleProcessContractBlockManager();
+		TestDataGenerator generator = new TestDataGenerator(config, new Random(seed), accessor);
 
 		// 契約マスタのテストデータ生成
 		long startTime = System.currentTimeMillis();

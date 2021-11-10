@@ -157,7 +157,7 @@ class ConfigTest {
 
 		/* 契約マスタ生成に関するパラメータ */
 		assertEquals((int) 1e3, config.numberOfContractsRecords);
-		assertEquals(10, config.duplicatePhoneNumberRatio);
+		assertEquals(10, config.duplicatePhoneNumberRate);
 		assertEquals(30, config.expirationDateRate);
 		assertEquals(50, config.noExpirationDateRate);
 		assertEquals(DBUtils.toDate("2010-11-11"), config.minDate);
@@ -233,7 +233,7 @@ class ConfigTest {
 
 		/* 契約マスタ生成に関するパラメータ */
 		assertEquals((int) 1e4, config.numberOfContractsRecords);
-		assertEquals(100, config.duplicatePhoneNumberRatio);
+		assertEquals(100, config.duplicatePhoneNumberRate);
 		assertEquals(300, config.expirationDateRate);
 		assertEquals(500, config.noExpirationDateRate);
 		assertEquals(DBUtils.toDate("2020-11-11"), config.minDate);

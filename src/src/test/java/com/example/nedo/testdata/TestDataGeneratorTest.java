@@ -13,15 +13,13 @@ import java.nio.file.Path;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
-import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
-import java.util.TreeSet;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -113,9 +111,11 @@ class TestDataGeneratorTest extends AbstractDbTestCase {
 		config.numberOfContractsRecords = 10000;
 		config.expirationDateRate =5;
 		config.noExpirationDateRate = 11;
-		config.duplicatePhoneNumberRatio = 2;
+		config.duplicatePhoneNumberRate = 2;
 
-		TestDataGenerator generator = new TestDataGenerator(config);
+		int seed = config.randomSeed;
+		ContractBlockInfoAccessor accessor = new SingleProcessContractBlockManager();
+		TestDataGenerator generator = new TestDataGenerator(config, new Random(seed), accessor);
 		generator.generateContractsToDb();
 
 		String sql;
@@ -146,72 +146,6 @@ class TestDataGeneratorTest extends AbstractDbTestCase {
 		throw new SQLException("Fail to exece sql:" + sql);
 	}
 
-	/**
-	 * initDurationList()のテスト
-	 * @throws IOException
-	 */
-	@Test
-	void testInitDurationList() throws IOException {
-		// 通常ケース
-		testInitDurationLisSubt(1, 3, 7, DBUtils.toDate("2010-11-11"), DBUtils.toDate("2020-01-01"));
-		testInitDurationLisSubt(13, 5, 2, DBUtils.toDate("2010-11-11"), DBUtils.toDate("2020-01-01"));
-		// 一項目が0
-		testInitDurationLisSubt(3, 7, 0, DBUtils.toDate("2010-11-11"), DBUtils.toDate("2020-01-01"));
-		testInitDurationLisSubt(3, 0, 5, DBUtils.toDate("2010-11-11"), DBUtils.toDate("2020-01-01"));
-		testInitDurationLisSubt(0, 7, 5, DBUtils.toDate("2010-11-11"), DBUtils.toDate("2020-01-01"));
-		// 二項目が0
-		testInitDurationLisSubt(0, 7, 0, DBUtils.toDate("2010-11-11"), DBUtils.toDate("2020-01-01"));
-		testInitDurationLisSubt(3, 0, 0, DBUtils.toDate("2010-11-11"), DBUtils.toDate("2020-01-01"));
-		testInitDurationLisSubt(0, 0, 5, DBUtils.toDate("2010-11-11"), DBUtils.toDate("2020-01-01"));
-		// startの翌日=endのケース
-		testInitDurationLisSubt(13, 5, 2, DBUtils.toDate("2019-12-31"), DBUtils.toDate("2020-01-01"));
-
-	}
-
-	void testInitDurationLisSubt(int duplicatePhoneNumberRatio, int expirationDateRate, int noExpirationDateRate
-		, Date start, Date end) throws IOException {
-		Config config = Config.getConfig();
-		config.duplicatePhoneNumberRatio = duplicatePhoneNumberRatio;
-		config.expirationDateRate = expirationDateRate;
-		config.noExpirationDateRate = noExpirationDateRate;
-		config.minDate = start;
-		config.maxDate = end;
-
-
-		TestDataGenerator generator = new TestDataGenerator(config);
-		List<Duration> list = generator.getDurationList();
-		// listの要素数が duplicatePhoneNumberRatio * 2 + expirationDateRate + noExpirationDateRateであること
-		assertEquals(duplicatePhoneNumberRatio * 2 + expirationDateRate + noExpirationDateRate, list.size());
-		// 始めの、expirationDateRate + noExpirationDateRate 個の要素を調べると、契約終了日が存在する要素数が
-		// expirationDateRate, 契約終了日が存在しない要数がnoExpirationDateRateであること。
-		int n1 = 0;
-		int n2 = 0;
-		for(int i = 0; i < expirationDateRate + noExpirationDateRate; i++) {
-			Duration d = list.get(i);
-			assertNotNull(d.start);
-			if (d.end == null) {
-				n1++;
-			} else {
-				n2++;
-			}
-		}
-		assertEquals(noExpirationDateRate, n1);
-		assertEquals(expirationDateRate, n2);
-		// expirationDateRate + noExpirationDateRateより後の要素は以下の2つの要素のペアが、duplicatePhoneNumberRatio個
-		// 続いていること。
-		//
-		// 1番目の要素の、startがContractsGeneratorのコンストラクタに渡したstartと等しい
-		// 2番目の要素のendがnull
-		// 2番目の要素のstartが1番目の要素のendより大きい
-
-		for(int i = expirationDateRate + noExpirationDateRate; i < list.size(); i+=2) {
-			Duration d1 = list.get(i);
-			Duration d2 = list.get(i+1);
-			assertEquals(start, d1.getStatDate());
-			assertTrue(d1.end < d2.start);
-			assertNull(d2.end);
-		}
-	}
 
 
 
@@ -269,78 +203,7 @@ class TestDataGeneratorTest extends AbstractDbTestCase {
 
 
 
-	/**
-	 * getPhoneNumber()のテスト
-	 * @throws IOException
-	 */
-	@Test
-	void testGetDuration() throws IOException {
-		Config config = Config.getConfig();
-		config.duplicatePhoneNumberRatio = 2;
-		config.expirationDateRate = 3;
-		config.noExpirationDateRate = 4;
 
-		TestDataGenerator generator = new TestDataGenerator(config);
-		List<Duration> list = generator.getDurationList();
-		for (int i = 0; i < 20; i++) {
-			Duration expected = list.get(i % (2 * 2 + 3 + 4));
-			Duration actual = generator.getDuration(i);
-			assertEquals(expected, actual);
-		}
-
-	}
-
-	/**
-	 * getDate()で得られる値が、start ～ endの範囲に収まることのテスト
-	 * @throws IOException
-	 */
-	@Test
-	void tesGetDate3() throws IOException {
-		Date start = DBUtils.toDate("2020-11-30");
-		Date end = DBUtils.toDate("2020-12-02");
-		Set<Date> expected = new TreeSet<>(Arrays.asList(
-				DBUtils.toDate("2020-11-30"),
-				DBUtils.toDate("2020-12-01"),
-				DBUtils.toDate("2020-12-02")));
-		Set<Date> actual = new TreeSet<>();
-
-		Config config = Config.getConfig();
-		config.minDate = start;
-		config.maxDate = end;
-		TestDataGenerator generator = new TestDataGenerator(config);
-		for(int i = 0; i < 100; i++) {
-			actual.add(generator.getDate(start, end));
-		}
-		assertEquals(expected, actual);
-	}
-
-	/**
-	 * getDate()で得られる値が、start ～ endの範囲に収まることのテスト
-	 * @throws IOException
-	 */
-	@Test
-	void tesGetDate7() throws IOException {
-		Date start = DBUtils.toDate("2020-11-30");
-		Date end = DBUtils.toDate("2020-12-06");
-		Set<Date> expected = new TreeSet<>(Arrays.asList(
-				DBUtils.toDate("2020-11-30"),
-				DBUtils.toDate("2020-12-01"),
-				DBUtils.toDate("2020-12-02"),
-				DBUtils.toDate("2020-12-03"),
-				DBUtils.toDate("2020-12-04"),
-				DBUtils.toDate("2020-12-05"),
-				DBUtils.toDate("2020-12-06")));
-		Set<Date> actual = new TreeSet<>();
-
-		Config config = Config.getConfig();
-		config.minDate = start;
-		config.maxDate = end;
-		TestDataGenerator generator = new TestDataGenerator(config);
-		for(int i = 0; i < 100; i++) {
-			actual.add(generator.getDate(start, end));
-		}
-		assertEquals(expected, actual);
-	}
 
 	/**
 	 * generateContractsToCsv()のテスト
@@ -350,14 +213,23 @@ class TestDataGeneratorTest extends AbstractDbTestCase {
 	@Tag("copy-command")
 	@SuppressFBWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
 	void generateContractsToCsv() throws Exception {
+
 		// DBに生成したテストデータとCSVファイルに生成したテストデータが一致することを確認する
 		Config config = Config.getConfig();
 		config.csvDir = tempDir.toString();
 		config.numberOfContractsRecords = 5154; // 間違ったデータを参照したときに件数で判別できるように、
 											    // このテストケース固有の値を指定する
+
+		// テーブルを空にする
 		new CreateTable().execute(config);
 		getStmt().execute("truncate table contracts");
-		new TestDataGenerator(config).generateContractsToDb();
+
+
+		// DBにデータを作成
+		ContractBlockInfoAccessor accessor = new SingleProcessContractBlockManager();
+		int seed = config.randomSeed;
+		TestDataGenerator generator = new TestDataGenerator(config, new Random(seed), accessor);
+		generator.generateContractsToDb();
 		Path expectedFilePath = tempDir.resolve("contracts.db").toAbsolutePath();
 		String expectedFilePathString = PathUtils.toWls(expectedFilePath);
 
@@ -365,15 +237,16 @@ class TestDataGeneratorTest extends AbstractDbTestCase {
 		List<String> expected = Files.readAllLines(expectedFilePath);
 		Collections.sort(expected);
 
+		// CSVを作成
 		Path contracts = CsvUtils.getContractsFilePath(tempDir);
-		new TestDataGenerator(config).generateContractsToCsv(contracts);
+		accessor = new SingleProcessContractBlockManager();
+		generator = new TestDataGenerator(config, new Random(seed), accessor);
+		generator.generateContractsToCsv(contracts);
 		List<String> actual = Files.readAllLines(contracts);
 		Collections.sort(actual);
 
-		assertEquals(expected.size(), actual.size());
-		for (int i = 0; i < expected.size(); i++) {
-			assertEquals(expected.get(i), actual.get(i));
-		}
+		// 比較
+		assertIterableEquals(expected, actual);
 	}
 
 	/**
@@ -391,7 +264,12 @@ class TestDataGeneratorTest extends AbstractDbTestCase {
 		config.numberOfHistoryRecords = 3964; // 間違ったデータを参照したときに件数で判別できるように、
                                       		  // このテストケース固有の値を指定する
 		getStmt().execute("truncate table history");
-		new TestDataGenerator(config).generateHistoryToDb();
+
+		ContractBlockInfoAccessor accessor = new SingleProcessContractBlockManager();
+		TestDataGenerator g1 = new TestDataGenerator(config, new Random(config.randomSeed), accessor);
+		g1.generateContractsToDb(); // accessorの初期化のため契約データを作成する
+		g1.generateHistoryToDb();
+
 		Path expectedFilePath = tempDir.resolve("history.db").toAbsolutePath();
 		String expectedFilePathString = PathUtils.toWls(expectedFilePath);
 
@@ -399,7 +277,8 @@ class TestDataGeneratorTest extends AbstractDbTestCase {
 		List<String> expected = Files.readAllLines(expectedFilePath);
 		Collections.sort(expected);
 
-		new TestDataGenerator(config).generateHistoryToCsv(tempDir);
+		TestDataGenerator g2 = new TestDataGenerator(config, new Random(config.randomSeed), accessor);
+		g2.generateHistoryToCsv(tempDir);
 		List<String> actual = Files.readAllLines(CsvUtils.getHistortyFilePaths(tempDir).get(0));
 		Collections.sort(actual);
 
@@ -421,7 +300,8 @@ class TestDataGeneratorTest extends AbstractDbTestCase {
 		Config config = Config.getConfig();
 
 		// デフォルトコンフィグでテスト(numberOfHistoryRecordsがmaxNumberOfLinesHistoryCsvより小さいケース)
-		TestDataGenerator generator = new TestDataGenerator(config);
+		ContractBlockInfoAccessor accessor = new SingleProcessContractBlockManager();
+		TestDataGenerator generator = new TestDataGenerator(config, new Random(config.randomSeed), accessor);
 		int numberOfParams = 0;
 		for(Params params: generator.createParamsList()) {
 			numberOfParams++;

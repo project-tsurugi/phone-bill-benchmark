@@ -1,26 +1,25 @@
 package com.example.nedo.testdata;
 
 import java.io.IOException;
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.example.nedo.app.Config;
-import com.example.nedo.db.Duration;
 import com.example.nedo.db.History;
+import com.example.nedo.testdata.GenerateHistoryTask.Result;
 import com.example.nedo.testdata.TestDataGenerator.HistoryWriter;
 
 /**
  * 履歴データを作成するタスク
  *
  */
-public class GenerateHistoryTask implements Runnable {
+public class GenerateHistoryTask implements Callable<Result> {
     private static final Logger LOG = LoggerFactory.getLogger(GenerateHistoryTask.class);
 
 	/*
@@ -31,7 +30,7 @@ public class GenerateHistoryTask implements Runnable {
 	/**
 	 * 同一のキーのデータを作らないために作成済みのHistoryDataのKeyを記録するSet
 	 */
-	private Set<Key> keySet;
+	private Set<HistoryKey> keySet;
 
 	/**
 	 * 乱数生成器
@@ -83,18 +82,12 @@ public class GenerateHistoryTask implements Runnable {
 
 
 	/**
-	 * 契約内容を取得するためのクラス
+	 * 契約マスタの情報
 	 */
-	private ContractReader contractReader;
+	private ContractInfoReader contractInfoReader;
 
 	/**
-	 * 契約期間
-	 */
-	private List<Duration> durationList;
-
-
-	/**
-	 * 契約期間のパターンを記録するリスト
+	 * コンフィグ
 	 */
 	private Config config;
 
@@ -105,7 +98,7 @@ public class GenerateHistoryTask implements Runnable {
 	 *
 	 * @param config
 	 * @param random
-	 * @param contractReader
+	 * @param contractInfoReader
 	 * @param phoneNumberGenerator
 	 * @param durationList
 	 * @param start
@@ -121,12 +114,14 @@ public class GenerateHistoryTask implements Runnable {
 		numbeOfHistory = params.numberOfHistory;
 		historyWriter=params.historyWriter;
 		config = params.config;
-		durationList = params.durationList;
-		contractReader = params.contractReader;
+		contractInfoReader = ContractInfoReader.create(config, params.accessor, params.random);
+		contractInfoReader.loadActiveBlockNumberList();
+		taskId = params.taskId;
 	}
 
 	@Override
-	public void run() {
+	public Result call() throws Exception {
+		Result result = new Result(taskId);
 		LOG.debug("start task id = " + taskId);
 		try {
 			init();
@@ -135,24 +130,28 @@ public class GenerateHistoryTask implements Runnable {
 				historyWriter.write(h);
 			}
 			historyWriter.cleanup();
-		} catch (IOException | SQLException e) {
-			// RunnnableでなくCallableを実装し終了時様態を返すようにする
-			e.printStackTrace();
+		} catch (Exception e) {
+			result.success = false;
+			result.e = e;
+			LOG.debug("end task id =" + taskId + " with error", e);
 		}
 		LOG.debug("end task id = " + taskId);
+		return result;
 	}
+
+
 
 	public void init() throws IOException {
 		historyWriter.init();
-		keySet = new HashSet<Key>((int)numbeOfHistory);
+		keySet = new HashSet<HistoryKey>((int)numbeOfHistory);
 		callerPhoneNumberSelector = PhoneNumberSelector.createSelector(random,
 				config.callerPhoneNumberDistribution,
 				config.callerPhoneNumberScale,
-				config.callerPhoneNumberShape, contractReader, durationList.size());
+				config.callerPhoneNumberShape, contractInfoReader);
 		recipientPhoneNumberSelector = PhoneNumberSelector.createSelector(random,
 				config.recipientPhoneNumberDistribution,
 				config.recipientPhoneNumberScale,
-				config.recipientPhoneNumberShape, contractReader, durationList.size());
+				config.recipientPhoneNumberShape, contractInfoReader);
 		callTimeGenerator = CallTimeGenerator.createCallTimeGenerator(random, config);
 	}
 
@@ -164,7 +163,7 @@ public class GenerateHistoryTask implements Runnable {
 	 */
 	private History createHistoryRecord() {
 		// 重複しないキーを選ぶ
-		Key key = new Key();
+		HistoryKey key = new HistoryKey();
 		int counter = 0;
 		for (;;) {
 			key.startTime = TestDataUtils.getRandomLong(random, start, end);
@@ -187,7 +186,7 @@ public class GenerateHistoryTask implements Runnable {
 	 * @param key
 	 * @return
 	 */
-	public History createHistoryRecord(Key key) {
+	public History createHistoryRecord(HistoryKey key) {
 		History history = new History();
 		history.startTime = new Timestamp(key.startTime);
 
@@ -211,12 +210,21 @@ public class GenerateHistoryTask implements Runnable {
 	 * @param startTime
 	 * @return
 	 */
-	public Key createkey(long startTime) {
-		Key key = new Key();
+	public HistoryKey createkey(long startTime) {
+		HistoryKey key = new HistoryKey();
 		key.startTime = startTime;
 		key.callerPhoneNumber = callerPhoneNumberSelector.selectPhoneNumber(startTime, -1);
 		return key;
 	}
+
+
+	/**
+	 * アクティブな契約マスタのブロック情報をりろーｄ
+	 */
+	public void reloadActiveBlockNumberList() {
+		contractInfoReader.loadActiveBlockNumberList();
+	}
+
 
 	/**
 	 * タスクのパラメータ
@@ -226,9 +234,8 @@ public class GenerateHistoryTask implements Runnable {
 		int taskId;
 		Config config;
 		Random random;
-		ContractReader contractReader;
+		ContractBlockInfoAccessor accessor;
 		PhoneNumberGenerator phoneNumberGenerator;
-		List<Duration> durationList;
 		long start;
 		long end;
 		long numberOfHistory;
@@ -244,45 +251,17 @@ public class GenerateHistoryTask implements Runnable {
 		}
 	}
 
+	/**
+	 * タスクの実行結果
+	 *
+	 */
+	public static class Result {
+		int taskId;
+		boolean success = true;
+		Exception e = null;
 
-	public static class Key {
-		long startTime;
-		long callerPhoneNumber;
-
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + (int) (callerPhoneNumber ^ (callerPhoneNumber >>> 32));
-			result = prime * result + (int) (startTime ^ (startTime >>> 32));
-			return result;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj)
-				return true;
-			if (obj == null)
-				return false;
-			if (getClass() != obj.getClass())
-				return false;
-			Key other = (Key) obj;
-			if (callerPhoneNumber != other.callerPhoneNumber)
-				return false;
-			if (startTime != other.startTime)
-				return false;
-			return true;
-		}
-
-		@Override
-		public String toString() {
-			StringBuilder builder = new StringBuilder();
-			builder.append("Key [startTime=");
-			builder.append(startTime);
-			builder.append(", callerPhoneNumber=");
-			builder.append(callerPhoneNumber);
-			builder.append("]");
-			return builder.toString();
+		public Result(int taskId) {
+			this.taskId = taskId;
 		}
 	}
 }

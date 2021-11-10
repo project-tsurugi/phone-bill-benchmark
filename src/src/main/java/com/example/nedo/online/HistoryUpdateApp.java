@@ -14,28 +14,28 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.example.nedo.app.Config;
-import com.example.nedo.db.Contract;
 import com.example.nedo.db.Contract.Key;
 import com.example.nedo.db.History;
 import com.example.nedo.testdata.CallTimeGenerator;
+import com.example.nedo.testdata.ContractBlockInfoAccessor;
+import com.example.nedo.testdata.ContractInfoReader;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public class HistoryUpdateApp extends AbstractOnlineApp {
     private static final Logger LOG = LoggerFactory.getLogger(HistoryUpdateApp.class);
 
-	private ContractHolder contractHolder;
-	private Random random;
+	private ContractInfoReader contractInfoReader;
 	private CallTimeGenerator callTimeGenerator;
 	private Updater[] updaters = {new Updater1(), new Updater2()};
 	private History history;
+	private Random random;
 
-
-	public HistoryUpdateApp(ContractHolder contractHolder, Config config, int seed) throws SQLException {
-		super(config.historyUpdateRecordsPerMin, config);
-		this.random = new Random(seed);
+	public HistoryUpdateApp(Config config, Random random, ContractBlockInfoAccessor accessor) throws SQLException {
+		super(config.historyUpdateRecordsPerMin, config, random);
 		this.callTimeGenerator = CallTimeGenerator.createCallTimeGenerator(random, config);
-		this.contractHolder = contractHolder;
+		this.contractInfoReader = ContractInfoReader.create(config, accessor, random);
+		this.random = random;
 	}
 
 
@@ -65,6 +65,13 @@ public class HistoryUpdateApp extends AbstractOnlineApp {
 
 	}
 
+	/**
+	 * 発信者電話番号と通話開始時刻が指定の契約に合致するレコードを取得する
+	 *
+	 * @param key
+	 * @return
+	 * @throws SQLException
+	 */
 	List<History> getHistories(Key key) throws SQLException {
 		List<History> list = new ArrayList<History>();
 		String sql = "select"
@@ -110,11 +117,10 @@ public class HistoryUpdateApp extends AbstractOnlineApp {
 		List<History> histories = Collections.emptyList();
 		while (histories.isEmpty()) {
 			// 更新対象となる契約を選択
-			int n = random.nextInt(contractHolder.size());
-			Contract contract = contractHolder.get(n);
+			Key key = contractInfoReader.getKeyUpdatingContract();
 
 			// 通話履歴テーブルから、当該契約の有効期間内に当該契約の電話番号で発信した履歴を取り出す
-			histories = getHistories(contract.getKey());
+			histories = getHistories(key);
 		}
 
 		// 取り出した履歴から1レコードを取り出し更新する
@@ -131,6 +137,16 @@ public class HistoryUpdateApp extends AbstractOnlineApp {
 			LOG.debug("ONLINE APP: Update 1 record from history(callerPhoneNumber = {}, startTime = {}).", history.callerPhoneNumber, history.startTime);
 		}
 	}
+
+
+	/**
+	 * スケジュール作成時に、契約マスタのブロック情報をアップデートする
+	 */
+	@Override
+	protected void atScheduleListCreated(List<Long> scheduleList) {
+		contractInfoReader.loadActiveBlockNumberList();
+	}
+
 
 
 	// 通話履歴を更新するInterfaceと、Interfaceを実装したクラス

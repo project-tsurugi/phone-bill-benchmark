@@ -1,7 +1,5 @@
 package com.example.nedo.testdata;
 
-import java.util.List;
-
 import org.apache.commons.math3.distribution.RealDistribution;
 
 /**
@@ -9,7 +7,7 @@ import org.apache.commons.math3.distribution.RealDistribution;
  *
  */
 public class LogNormalPhoneNumberSelector extends AbstractPhoneNumberSelector {
-	private static final int TRY_COUNT = 100;
+	private static final int SAMPLE_TRY_COUNT = 100;
 
 	/**
 	 * 分布関数
@@ -17,24 +15,23 @@ public class LogNormalPhoneNumberSelector extends AbstractPhoneNumberSelector {
 	private RealDistribution distribution;
 
 	/**
-	 * 契約数
+	 * 契約のブロックのサイズ
 	 */
-	private int numberOfContracts;
+	int blockSize;
 
 
 	/**
 	 *
 	 * @param 使用する分布関数、
-	 * @param contractReader 契約情報取得に使用するcontractReaderのインスタンス
+	 * @param contractInfoReader 契約情報取得に使用するcontractInfoReaderのインスタンス
 	 * @param contracts 契約のリスト、リストの要素は契約そのものではなく何番目の契約かを示す整数値で、
 	 *         ランダムな順序になるようにシャッフルされていることを想定している
 	 *
 	 */
-	public LogNormalPhoneNumberSelector(RealDistribution distribution, ContractReader contractReader,
-			List<Integer> contracts) {
-		super(contractReader, contracts, contractReader.getNumberOfContracts());
+	public LogNormalPhoneNumberSelector(RealDistribution distribution, ContractInfoReader contractInfoReader) {
+		super(contractInfoReader);
+		blockSize = contractInfoReader.getBlockSize();
 		this.distribution = distribution;
-		this.numberOfContracts = contractReader.getNumberOfContracts();
 	}
 
 
@@ -45,13 +42,12 @@ public class LogNormalPhoneNumberSelector extends AbstractPhoneNumberSelector {
 	 */
 	@Override
 	protected int getContractPos() {
-		for(int i =0; i < TRY_COUNT; i++) {
+		for(int i =0; i < SAMPLE_TRY_COUNT; i++) {
 			double pos = distribution.sample();
-			if (pos < numberOfContracts) {
+			if (pos < blockSize) {
 				return (int) pos;
 			}
 		}
 		throw new RuntimeException("Fail to get a random position");
 	}
-
 }

@@ -10,10 +10,10 @@
 * target.month, min.date, max.date
   * テストデータ生成時、マスタの契約開始日、契約終了日は min.dateからmax.dateの範囲の日次が選ばれます。 
   * テストデータ生成時、通話履歴データの通話開始時刻はmin.dateからmax.dateの範囲の時刻が選ばれます。
-* duplicate.phone.number.ratio, expiration.date.rate, no.expiration.date.rate
+* duplicate.phone.number.rate, expiration.date.rate, no.expiration.date.rate
   * マスタデータを生成時に使用されるパラメータです。
   * マスタデータの通話開始日、通話終了日のバリエーションを規定します
-  * duplicate.phone.number.ratio, expiration.date.rate, no.expiration.date.rate をそれぞれa, b, c, number.of.contracts.recordsをdとき次の式が成り立つように、a, b, cを選択すること推奨します。
+  * duplicate.phone.number.rate, expiration.date.rate, no.expiration.date.rate をそれぞれa, b, c, number.of.contracts.recordsをdとき次の式が成り立つように、a, b, cを選択すること推奨します。
     * d = 2a +  b + c
   * 処理対象データ量が意図せず変わってしまわないようにnumber.of.contracts.records を変更する際は、上記a, b, cの比率は変更しないようにしてください。
 * number.of.contracts.records, number.of.history.records それぞれマスタのレコード数、通話履歴のレコード数を表します。

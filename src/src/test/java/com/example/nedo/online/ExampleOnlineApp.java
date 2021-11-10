@@ -6,6 +6,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -26,7 +27,7 @@ public class ExampleOnlineApp extends AbstractOnlineApp {
 	private final DateFormat DF = new SimpleDateFormat("HH:mm:ss.SSS");
 
 	public ExampleOnlineApp() throws SQLException, IOException {
-		super(20, Config.getConfig());
+		super(20, Config.getConfig(), new Random());
 	}
 
 	@SuppressFBWarnings("RV_RETURN_VALUE_IGNORED_BAD_PRACTICE")

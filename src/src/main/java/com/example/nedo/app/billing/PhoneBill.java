@@ -33,11 +33,14 @@ import com.example.nedo.db.Contract;
 import com.example.nedo.db.DBUtils;
 import com.example.nedo.db.Duration;
 import com.example.nedo.online.AbstractOnlineApp;
-import com.example.nedo.online.ContractHolder;
 import com.example.nedo.online.HistoryInsertApp;
 import com.example.nedo.online.HistoryUpdateApp;
 import com.example.nedo.online.MasterInsertApp;
 import com.example.nedo.online.MasterUpdateApp;
+import com.example.nedo.testdata.ActiveBlockNumberHolder;
+import com.example.nedo.testdata.ContractBlockInfoAccessor;
+import com.example.nedo.testdata.DbContractBlockInfoInitializer;
+import com.example.nedo.testdata.SingleProcessContractBlockManager;
 
 /**
  * @author umega
@@ -45,7 +48,6 @@ import com.example.nedo.online.MasterUpdateApp;
  */
 public class PhoneBill implements ExecutableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(PhoneBill.class);
-	private ContractHolder contractHolder = null;
 	private long elapsedTime = 0; // バッチの処理時間
 	Config config;
 
@@ -58,7 +60,7 @@ public class PhoneBill implements ExecutableCommand {
 	@Override
 	public void execute(Config config) throws Exception {
 		this.config = config;
-		List<AbstractOnlineApp> list = createOnlineApps(config, getContractHolder());
+		List<AbstractOnlineApp> list = createOnlineApps(config);
 		final ExecutorService service = list.isEmpty() ? null : Executors.newFixedThreadPool(list.size());
 		try {
 			// オンラインアプリを実行する
@@ -85,49 +87,43 @@ public class PhoneBill implements ExecutableCommand {
 	 * @throws SQLException
 	 * @throws IOException
 	 */
-	public static List<AbstractOnlineApp> createOnlineApps(Config config, ContractHolder contractHolder)
+	public static List<AbstractOnlineApp> createOnlineApps(Config config)
 			throws SQLException, IOException {
 		Random random = new Random(config.randomSeed);
+		DbContractBlockInfoInitializer initializer = new DbContractBlockInfoInitializer(config);
+		ContractBlockInfoAccessor accessor = new SingleProcessContractBlockManager(initializer);
+		ActiveBlockNumberHolder blockHolder = accessor.getActiveBlockInfo();
+		if (blockHolder.getNumberOfActiveBlacks() < 1) {
+			throw new IllegalStateException("Insufficient test data, create test data first.");
+		}
+
 		List<AbstractOnlineApp> list = new ArrayList<AbstractOnlineApp>();
 		if (config.historyInsertThreadCount > 0 && config.historyInsertTransactionPerMin != 0) {
-			list.addAll(HistoryInsertApp.createHistoryInsertApps(contractHolder, config, random.nextInt(),
+			list.addAll(HistoryInsertApp.createHistoryInsertApps(config, new Random(random.nextInt()), accessor,
 					config.historyInsertThreadCount));
 		}
 		if (config.historyUpdateThreadCount > 0 && config.historyUpdateRecordsPerMin != 0) {
 			for (int i = 0; i < config.historyUpdateThreadCount; i++) {
-				AbstractOnlineApp task = new HistoryUpdateApp(contractHolder, config, random.nextInt());
+				AbstractOnlineApp task = new HistoryUpdateApp(config, new Random(random.nextInt()), accessor);
 				task.setName(i);
 				list.add(task);
 			}
 		}
 		if (config.masterInsertThreadCount > 0 && config.masterInsertReccrdsPerMin != 0) {
 			for (int i = 0; i < config.masterInsertThreadCount; i++) {
-				AbstractOnlineApp task = new MasterInsertApp(contractHolder, config);
+				AbstractOnlineApp task = new MasterInsertApp(config, new Random(random.nextInt()), accessor);
 				task.setName(i);
 				list.add(task);
 			}
 		}
 		if (config.masterUpdateThreadCount > 0 && config.masterUpdateRecordsPerMin != 0) {
 			for (int i = 0; i < config.masterUpdateThreadCount; i++) {
-				AbstractOnlineApp task = new MasterUpdateApp(contractHolder, config, random.nextInt());
+				AbstractOnlineApp task = new MasterUpdateApp(config, new Random(random.nextInt()), accessor);
 				task.setName(i);
 				list.add(task);
 			}
 		}
 		return list;
-	}
-
-	/**
-	 * 必要に応じてContractHolderを初期化し、ContractHolderを返す。
-	 *
-	 * @return
-	 * @throws SQLException
-	 */
-	ContractHolder getContractHolder() throws SQLException {
-		if (contractHolder == null) {
-			contractHolder = new ContractHolder(config);
-		}
-		return contractHolder;
 	}
 
 

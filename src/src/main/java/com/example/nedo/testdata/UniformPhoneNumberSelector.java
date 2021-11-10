@@ -1,8 +1,6 @@
 package com.example.nedo.testdata;
 
 import java.util.Random;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 /**
  * 一様分布の乱数発生器を使用して電話番号を選択するPhoneNumberSelector
@@ -15,23 +13,23 @@ public class UniformPhoneNumberSelector extends AbstractPhoneNumberSelector {
 	private Random random;
 
 	/**
-	 * 契約数
+	 * 契約のブロックのサイズ
 	 */
-	private int numberOfContracts;
+	int blockSize;
 
-	public UniformPhoneNumberSelector(Random random, ContractReader contractReader, int tryCount) {
-		super(contractReader,
-				IntStream.range(0, contractReader.getNumberOfContracts()).boxed().collect(Collectors.toList()),
-				tryCount);
+	public UniformPhoneNumberSelector(Random random, ContractInfoReader contractInfoReader) {
+		super(contractInfoReader);
 		this.random = random;
-		this.numberOfContracts = contractReader.getNumberOfContracts();
+		blockSize = contractInfoReader.getBlockSize();
 	}
 
-	/*
-	 * @return 何番目の契約か表す整数値
+	/**
+	 * ランダムな契約を取得する
+	 *
+	 * @return 何番目の契約かを表す整数値
 	 */
 	@Override
 	protected int getContractPos() {
-		return TestDataUtils.getRandomInt(random, 0, numberOfContracts);
+		return random.nextInt(blockSize);
 	}
 }

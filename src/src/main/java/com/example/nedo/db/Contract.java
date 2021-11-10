@@ -132,6 +132,13 @@ public class Contract implements Cloneable {
 				return false;
 			return true;
 		}
+
+		public static Key create(String phoneNumber, Date startDate) {
+			Key key = new Key();
+			key.phoneNumber = phoneNumber;
+			key.startDate = startDate;
+			return key;
+		}
 	}
 
 	/**

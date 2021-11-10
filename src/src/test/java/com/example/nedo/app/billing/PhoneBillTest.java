@@ -275,7 +275,7 @@ class PhoneBillTest extends AbstractDbTestCase {
 	void testTreads() throws Exception {
 		// まず実行し、その結果を期待値とする
 		Config config = Config.getConfig();
-		config.duplicatePhoneNumberRatio = 10;
+		config.duplicatePhoneNumberRate = 10;
 		config.expirationDateRate = 10;
 		config.noExpirationDateRate = 70;
 		config.numberOfContractsRecords = (int) 100;

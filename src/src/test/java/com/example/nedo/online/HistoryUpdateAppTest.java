@@ -4,9 +4,13 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Random;
+import java.util.TreeMap;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,23 +24,37 @@ import com.example.nedo.db.Contract.Key;
 import com.example.nedo.db.DBUtils;
 import com.example.nedo.db.History;
 import com.example.nedo.online.HistoryUpdateApp.Updater;
+import com.example.nedo.testdata.AbstractContractBlockInfoInitializer;
+import com.example.nedo.testdata.ContractBlockInfoAccessor;
 import com.example.nedo.testdata.CreateTestData;
+import com.example.nedo.testdata.DefaultContractBlockInfoInitializer;
+import com.example.nedo.testdata.SingleProcessContractBlockManager;
+import com.example.nedo.util.RandomStub;
 
 class HistoryUpdateAppTest extends AbstractDbTestCase {
 	private Config config;
 	private HistoryUpdateApp app;
-
+	private RandomStub random;
+	private ContractBlockInfoAccessor accessor;
 
 	@BeforeEach
 	void before() throws Exception {
 		// テストデータを入れる
 		config = Config.getConfig();
+		config.numberOfContractsRecords = 10;
+		config.expirationDateRate =3;
+		config.noExpirationDateRate = 3;
+		config.duplicatePhoneNumberRate = 2;
+		config.numberOfHistoryRecords = 1000;
+
 		new CreateTable().execute(config);
 		new CreateTestData().execute(config);
 
 		// アプリケーションの初期化
-		ContractHolder contractHolder = new ContractHolder(config);
-		app = new HistoryUpdateApp(contractHolder, config, 0);
+		AbstractContractBlockInfoInitializer initializer = new DefaultContractBlockInfoInitializer(config);
+		accessor = new SingleProcessContractBlockManager(initializer);
+		random = new RandomStub();
+		app = new HistoryUpdateApp(config, random, accessor);
 	}
 
 	@AfterEach
@@ -47,39 +65,76 @@ class HistoryUpdateAppTest extends AbstractDbTestCase {
 
 	@Test
 	void testExec() throws Exception {
-		List<History> expected = getHistories();
-		testExecSub(expected);
+		 List<History> histories = getHistories();
+		 List<Contract> contracts = getContracts();
+		Map<Key, List<History>> map = getContractHistoryMap(contracts, histories);
 
+		// 1以上の履歴を持つ契約について、当該契約が何番目の契約かと、当該契約が保持する契約数のmapを作成する
+		Map<Integer, Integer> nnMap = new TreeMap<Integer, Integer>();
+		for(int i = 0; i < contracts.size(); i++) {
+			int size = map.get(contracts.get(i).getKey()).size();
+			if (size > 0) {
+				nnMap.put(i, size);
+			}
+		}
+
+		// 削除フラグを立てるケース
+		History target;
+		target = histories.get(48);
+		setRandom(contracts, map, target, true, 0);
 		app.exec();
 		app.getConnection().commit();
-		expected.get(952).timeSecs = 1116;
-		testExecSub(expected);
+		target.df = true;
+		target.charge = null;
+		testExecSub(histories);
 
+		// 通話時間を更新するケース
+		target = histories.get(48);
+		setRandom(contracts, map, target, false, 3185);
 		app.exec();
 		app.getConnection().commit();
-		expected.get(495).timeSecs = 2055;
-		testExecSub(expected);
+		target.timeSecs = 3185 +1; // 通話時間は random.next() + 1 なので、
+		target.charge = null;
+		testExecSub(histories);
 
-		app.exec();
-		app.getConnection().commit();
-		expected.get(484).timeSecs = 2445;
-		testExecSub(expected);
 
-		app.exec();
-		app.getConnection().commit();
-		expected.get(869).df = true;
-		testExecSub(expected);
-
-		app.exec();
-		app.getConnection().commit();
-		expected.get(225).timeSecs = 438;
-		testExecSub(expected);
-
-		app.exec();
-		app.getConnection().commit();
-		expected.get(601).df = true;
-		testExecSub(expected);
 	}
+
+	/**
+	 * 指定したtargetを対象に履歴が更新されるように乱数生成器のスタブを設定する
+	 *
+	 * @param contracts 契約マスタ
+	 * @param map 契約マスタと当該契約に属する履歴のリストのマップ
+	 * @param target 更新対象の履歴
+	 * @param delete trueのとき論理削除、falseの時、通話時間を更新する。
+	 * @param timeSec 通話時間を更新するときの通話時間
+	 */
+	private void setRandom(List<Contract> contracts, Map<Key, List<History>> map, History target, boolean delete, int timeSec) {
+		int nContract = -1;
+		int nHistory = -1;
+		for (int i = 0; i < contracts.size(); i++) {
+			Key key = contracts.get(i).getKey();
+			List<History> list = map.get(key);
+			for (int j = 0; j < list.size(); j++) {
+				if (list.get(j) == target) {
+					nContract = i;
+					nHistory = j;
+					break;
+				}
+			}
+			if (nContract >= 0) {
+				break;
+			}
+		}
+		if (delete) {
+			random.setValues(0, nContract, nHistory, 0);
+		} else {
+//			random.setValues(0, nContract, nHistory, 1);
+			random.setValues(0, nContract, nHistory, 1, timeSec);
+		}
+	}
+
+
 
 	private void testExecSub(List<History> expected) throws SQLException, IOException {
 		List<History> actual = getHistories();
@@ -90,96 +145,97 @@ class HistoryUpdateAppTest extends AbstractDbTestCase {
 	}
 
 
+
+
 	/**
 	 * getHistories()のテスト
 	 */
 	@Test
 	void testGetHistories() throws Exception {
-		Key key;
-		Set<History> actual;
-		Set<History> expected = new HashSet<History>();
+		List<History> histories = getHistories();
+		// chargeがnullでない履歴を作る
+		History h = getHistories().get(0);
+		h.charge = 200;
+		app.updateDatabase(h);
+		app.getConnection().commit();
+		histories = getHistories();
+		List<Contract> contracts = getContracts();
 
-		// 同一電話番号のレコードが1レコード、end_dateがnullの契約
-		key = Contract.createKey("00000000015", DBUtils.toDate("2013-12-09"));
-		actual = new HashSet<History>(app.getHistories(key));
-		expected.clear();
-		expected.add(toHistory("00000000015", "00000000165", "R", "2020-12-17 18:15:40.035", 2982, null, false));
-		expected.add(toHistory("00000000015", "00000000832", "R", "2021-01-09 12:08:33.395", 3054, null, false));
-		expected.add(toHistory("00000000015", "00000000385", "R", "2020-12-29 17:34:09.622", 1277, null, false));
-		assertEquals(expected, actual);
+		 Map<Key, List<History>> map = getContractHistoryMap(contracts, histories);
 
-		// 同一電話番号のレコードが1レコード、end_dateがnullでない契約
-		key = Contract.createKey("00000000375", DBUtils.toDate("2017-03-11"));
-		actual = new HashSet<History>(app.getHistories(key));
-		expected.clear();
-		expected.add(toHistory("00000000375", "00000000865", "C", "2020-11-08 05:54:24.471", 3078, null, false));
-		expected.add(toHistory("00000000375", "00000000565", "C", "2020-11-29 18:41:55.993", 2876, null, false));
-		assertEquals(expected, actual);
 
-		// 同一電話番号のレコードが2レコードの契約
-		key = Contract.createKey("00000000391", DBUtils.toDate("2010-11-11"));
-		actual = new HashSet<History>(app.getHistories(key));
-		expected.clear();
-		assertEquals(expected, actual);
+		// すべてのキーについて、getHistory()の値が期待通りかを確認する
+		for(Entry<Key, List<History>> entry: map.entrySet()) {
+			assertEquals(entry.getValue(), app.getHistories(entry.getKey()));
+		}
 
-		key = Contract.createKey("00000000391", DBUtils.toDate("2014-10-16"));
-		actual = new HashSet<History>(app.getHistories(key));
-		expected.clear();
-		expected.add(toHistory("00000000391", "00000000265", "R", "2020-12-27 03:59:18.747", 2492, null, false));
-		expected.add(toHistory("00000000391", "00000000273", "R", "2021-01-04 06:46:59.250", 951, null, false));
-		expected.add(toHistory("00000000391", "00000000626", "R", "2020-11-24 20:33:31.285", 2978, null, false));
-		assertEquals(expected, actual);
-
-		// 二つの契約両方にマッチする履歴があるケース
-		executeSql("update history set start_time = to_timestamp('2011-11-12 06:25:57.430','YYYY-MM-DD HH24:MI:SS.MS')"
-				+ " where caller_phone_number = '00000000391'"
-				+ " and start_time = to_timestamp('2020-12-27 03:59:18.747','YYYY-MM-DD HH24:MI:SS.MS')");
-
-		key = Contract.createKey("00000000391", DBUtils.toDate("2010-11-11"));
-		actual = new HashSet<History>(app.getHistories(key));
-		expected.clear();
-		expected.add(toHistory("00000000391", "00000000265", "R", "2011-11-12 06:25:57.430", 2492, null, false));
-		assertEquals(expected, actual);
-
-		key = Contract.createKey("00000000391", DBUtils.toDate("2014-10-16"));
-		actual = new HashSet<History>(app.getHistories(key));
-		expected.clear();
-		expected.add(toHistory("00000000391", "00000000273", "R", "2021-01-04 06:46:59.250", 951, null, false));
-		expected.add(toHistory("00000000391", "00000000626", "R", "2020-11-24 20:33:31.285", 2978, null, false));
-		assertEquals(expected, actual);
 	}
 
+
+	/**
+	 * すべての契約と契約に属する履歴のマップを作成する
+	 *
+	 * @return
+	 * @throws SQLException
+	 */
+	Map<Key, List<History>> getContractHistoryMap(List<Contract> contracts, List<History> histories) throws SQLException {
+		// 通話履歴の開始時刻との比較を簡単にするため、契約のendDateを書き換える
+		contracts.stream().forEach( c -> c.endDate =  c.endDate == null ? DBUtils.toDate("2099-12-31") : DBUtils.nextDate(c.endDate));
+		Map<Key, List<History>> map = new HashMap<>();
+		for (Contract c : contracts) {
+			List<History> list = new ArrayList<History>();
+			for (History h : histories) {
+				if (h.callerPhoneNumber.equals(c.phoneNumber) &&
+						c.startDate.getTime() <= h.startTime.getTime() &&
+						h.startTime.getTime() < c.endDate.getTime()) {
+					list.add(h);
+				}
+			}
+			map.put(c.getKey(), list);
+		}
+		// すべての履歴データが一致するマスタを持つことを確認
+		assertEquals(histories.size(), map.values().stream().mapToInt(s -> s.size()).sum());
+
+		return map;
+	}
 
 	/**
 	 * updateDatabase()のテスト
 	 */
 	@Test
 	void testUpdateDatabase() throws Exception {
-		// 指定のキーで通話履歴を検索した値が想定通りであることの確認
-		Key key = Contract.createKey("00000000391", DBUtils.toDate("2014-10-16"));
-		HashSet<History> actual;
-		Set<History> expected = new HashSet<History>();
-		expected.add(toHistory("00000000391", "00000000265", "R", "2020-12-27 03:59:18.747", 2492, null, false));
-		expected.add(toHistory("00000000391", "00000000273", "R", "2021-01-04 06:46:59.250", 951, null, false));
-		expected.add(toHistory("00000000391", "00000000626", "R", "2020-11-24 20:33:31.285", 2978, null, false));
-		actual = new HashSet<History>(app.getHistories(key));
-		assertEquals(expected, actual);
+		List<History> expected = getHistories();
 
-		// 更新する履歴データ
-		History history = toHistory("00000000391", "00000000273", "R", "2021-01-04 06:46:59.250", 951, null, false);
+		// 最初のレコードを書き換える
+		{
+			History history = expected.get(0);
+			history.recipientPhoneNumber = "RECV";
+			history.charge = 999;
+			history.df = true;
+			history.paymentCategorty = "C";
+			history.timeSecs = 221;
+			app.updateDatabase(history);
+			app.getConnection().commit();
+		}
 
-		// 更新されていることの確認
-		expected.remove(history);
-		history.recipientPhoneNumber = "RECV";
-		history.charge=999;
-		history.df = true;
-		history.paymentCategorty = "C";
-		history.timeSecs = 221;
-		expected.add(history);
-		app.updateDatabase(history);
-		app.getConnection().commit();
-		actual = new HashSet<History>(app.getHistories(key));
-		assertEquals(expected, actual);
+		// 52番目のレコードを書き換える
+		{
+			History history = expected.get(52);
+			history.recipientPhoneNumber = "TEST_NUMBER";
+			history.charge = 55899988;
+			history.df = false;
+			history.paymentCategorty = "C";
+			history.timeSecs = 22551;
+			app.updateDatabase(history);
+			app.getConnection().commit();
+		}
+
+		// アプリによる更新後の値が期待した値であることの確認
+		List<History> actual = getHistories();
+		assertEquals(expected.size(), actual.size());
+		for(int i = 0; i < expected.size(); i++) {
+			assertEquals(expected.get(i), actual.get(i), " i = " + i);
+		}
 	}
 
 
@@ -192,7 +248,8 @@ class HistoryUpdateAppTest extends AbstractDbTestCase {
 	@Test
 	void testUpdater1() throws SQLException, IOException {
 		Config config = Config.getConfig();
-		Updater updater = new HistoryUpdateApp(null, config, 0).new Updater1();
+		ContractBlockInfoAccessor accessor = new SingleProcessContractBlockManager();
+		Updater updater = new HistoryUpdateApp(config, new Random(), accessor).new Updater1();
 
 		History history = toHistory("00000000391", "00000000105", "R", "2020-11-02 06:25:57.430", 1688, null, false);
 		History expected = history.clone();
@@ -216,17 +273,20 @@ class HistoryUpdateAppTest extends AbstractDbTestCase {
 	@Test
 	void testUpdater2() throws SQLException, IOException {
 		Config config = Config.getConfig();
-		Updater updater = new HistoryUpdateApp(null, config, 0).new Updater2();
+		ContractBlockInfoAccessor accessor = new SingleProcessContractBlockManager();
+		Updater updater = new HistoryUpdateApp(config, random, accessor).new Updater2();
 
 		History history = toHistory("00000000391", "00000000105", "R", "2020-11-02 06:25:57.430", 1688, null, false);
 		History expected = history.clone();
 
 		// 通話時間が変わっていることを確認
+		random.setValues(960);
 		updater.update(history);
 		expected.timeSecs = 961;
 		assertEquals(expected, history);
 
 		// 通話時間が変わっていることを確認
+		random.setValues(3148);
 		updater.update(history);
 		expected.timeSecs = 3149;
 		assertEquals(expected, history);

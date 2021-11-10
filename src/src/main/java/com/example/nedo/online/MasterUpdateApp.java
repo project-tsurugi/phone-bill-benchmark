@@ -17,6 +17,9 @@ import org.slf4j.LoggerFactory;
 
 import com.example.nedo.app.Config;
 import com.example.nedo.db.Contract;
+import com.example.nedo.db.Contract.Key;
+import com.example.nedo.testdata.ContractBlockInfoAccessor;
+import com.example.nedo.testdata.ContractInfoReader;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -25,19 +28,25 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 
 	private static final long DAY_IN_MILLS = 24 * 3600 * 1000;
 
-	private ContractHolder contractHolder;
+	private ContractInfoReader contractInfoReader;
 	private Config config;
 	private Random random;
 	private Updater[] updaters = {new Updater1(), new Updater2()};
 
-	public MasterUpdateApp(ContractHolder contractHolder, Config config, int seed) throws SQLException {
-		super(config.masterUpdateRecordsPerMin, config);
+	/**
+	 * コンストラクタ
+	 *
+	 * @param accessor
+	 * @param config
+	 * @param seed
+	 * @throws SQLException
+	 */
+	public MasterUpdateApp(Config config, Random random, ContractBlockInfoAccessor accessor) throws SQLException {
+		super(config.masterUpdateRecordsPerMin, config, random);
 		this.config = config;
-		this.random = new Random(seed);
-		this.contractHolder = contractHolder;
+		this.random = random;
+		this.contractInfoReader = ContractInfoReader.create(config, accessor, random);
 	}
-
-
 
 
 	/**
@@ -47,10 +56,11 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 	 * 矛盾がないかを調べる。100回更新しても、矛盾のない値にならなかった場合はnullを返す。
 	 *
 	 * @param contracts 同一の電話番号の契約のリスト
+	 * @param key
 	 * @return 更新した契約
 	 * @throws SQLException
 	 */
-	private Contract getUpdatingContract(List<Contract> contracts) throws SQLException {
+	private Contract getUpdatingContract(List<Contract> contracts, Key key) throws SQLException {
 		for (int i = 0; i < 100; i++) {
 			// 契約を一つ選択して更新する
 			Set<Contract> set = new HashSet<Contract>(contracts);
@@ -94,15 +104,15 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 
 
 	/**
-	 * 指定の電話番号の契約を取得する
+	 * 指定の契約を取得する
 	 *
-	 * @param phoneNumber
+	 * @param key
 	 * @return
 	 * @throws SQLException
 	 */
 	List<Contract> getContracts(Connection conn, String phoneNumber) throws SQLException {
 		List<Contract> list = new ArrayList<Contract>();
-		String sql = "select start_date, end_date, charge_rule from contracts where phone_number = ?";
+		String sql = "select start_date, end_date, charge_rule from contracts where phone_number = ? order by start_date";
 		try (PreparedStatement ps = conn.prepareStatement(sql)) {
 			ps.setString(1, phoneNumber);
 			try (ResultSet rs = ps.executeQuery()) {
@@ -128,20 +138,19 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 	protected void updateDatabase() throws SQLException {
 
 		// 更新対象の電話番号を取得
-		int n = random.nextInt(contractHolder.size());
-		String phoneNumber = contractHolder.get(n).phoneNumber;
+		Key key = contractInfoReader.getKeyUpdatingContract();
 
 		// 当該電話番号の契約を取得
 		Connection conn = getConnection();
-		List<Contract> contracts = getContracts(conn, phoneNumber);
+		List<Contract> contracts = getContracts(conn, key.phoneNumber);
 		if (contracts.isEmpty()) {
-			// 電話番号にマッチする契約がなかったとき(DBに追加される前の電話番号を選んだ場合)
-			LOG.warn("No contrct found for phoneNumber = {}.", phoneNumber);
+			// 電話番号にマッチする契約がなかったとき(DBに追加される前の電話番号を選んだ場合) => 基本的にありえない
+			LOG.warn("No contract found for phoneNumber = {}.", key.phoneNumber);
 			return;
 		}
 
-		// 更新する契約を取得する
-		Contract updatingContract = getUpdatingContract(contracts);
+		// 取得した契約から更新対象の契約を更新する
+		Contract updatingContract = getUpdatingContract(contracts, key);
 		if (updatingContract == null) {
 			// 契約の更新に失敗したとき(DBが壊れている可能性が高い)
 			LOG.warn("Fail to create valid update contracts for phone number: {}", contracts.get(0).phoneNumber);
@@ -160,6 +169,7 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 			ps.setDate(4, updatingContract.startDate);
 			int ret = ps.executeUpdate();
 			if (ret != 1) {
+				// select ～ updateの間に対象レコードが削除されたケース -> 基本的にありえない
 				throw new RuntimeException("Fail to update contracts: " + updatingContract);
 			}
 			if (LOG.isDebugEnabled()) {
@@ -167,8 +177,16 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 						, updatingContract.phoneNumber, updatingContract.startDate, updatingContract.endDate);
 			}
 		}
-		contractHolder.replace(updatingContract);
 	}
+
+	/**
+	 * スケジュール作成時に、契約マスタのブロック情報をアップデートする
+	 */
+	@Override
+	protected void atScheduleListCreated(List<Long> scheduleList) {
+		contractInfoReader.loadActiveBlockNumberList();
+	}
+
 
 	// 契約を更新するInterfaceと、Interfaceを実装したクラス
 	interface Updater {

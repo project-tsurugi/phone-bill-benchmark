@@ -1,7 +1,5 @@
 package com.example.nedo.testdata;
 
-import java.util.List;
-
 import com.example.nedo.db.Duration;
 
 /**
@@ -10,58 +8,77 @@ import com.example.nedo.db.Duration;
  */
 public abstract class  AbstractPhoneNumberSelector implements PhoneNumberSelector{
 	/**
-	 * 契約情報取得に使用するcontractReaderのインスタンス
+	 * 契約情報取得に使用するcontractInfoReaderのインスタンス
 	 */
-	private ContractReader contractReader;
-
-	/**
-	 * 契約のリスト、リストの要素は契約そのものではなく何番目の契約かを示す整数値.
-	 * 非一様分布な乱数生成器を使用する場合に、契約をシャッフルするために使用する。
-	 */
-	private List<Integer> contracts;
-
-	/**
-	 * 選択した契約が通話開始時刻に無効な契約だった場合に、違う契約を選択する回数
-	 */
-	private int tryCount;
+	private ContractInfoReader contractInfoReader;
 
 	/**
 	 * コンストラクタ
 	 *
-	 * @param contractReader
+	 * @param contractInfoReader
 	 * @param contracts
 	 * @param tryCount
 	 */
-	public AbstractPhoneNumberSelector(ContractReader contractReader, List<Integer> contracts, int tryCount) {
-		this.contractReader = contractReader;
-		this.contracts = contracts;
-		this.tryCount = tryCount;
+	public AbstractPhoneNumberSelector(ContractInfoReader contractInfoReader) {
+		this.contractInfoReader = contractInfoReader;
 	}
 
+	/**
+	 * 指定の通話開始時刻が契約範囲に含まれる電話番号を選択する。
+	 */
 	@Override
 	public long selectPhoneNumber(long startTime, long exceptPhoneNumber) {
+		int blockSize = contractInfoReader.getBlockSize();
 		int pos = getContractPos();
-		for(int i =0; i < tryCount; i++) {
-			int shuffledPos = contracts.get(pos);
-			if (exceptPhoneNumber != shuffledPos) {
-				Duration d = contractReader.getDurationByPos(shuffledPos);
+		for(int i =0; i < blockSize; i++) {
+			long n = contractInfoReader.getRandomN(pos);
+			long phoneNumber = contractInfoReader.getPhoneNumberAsLong(n);
+			if (exceptPhoneNumber != phoneNumber) {
+				Duration d = contractInfoReader.getInitialDuration(n);
 				if (d.end == null) {
 					if (d.start <= startTime) {
-						return shuffledPos;
+						return phoneNumber;
 					}
 				} else {
 					if (d.start <= startTime && startTime < d.end) {
-						return shuffledPos;
+						return phoneNumber;
 					}
 				}
 			}
-			pos++;
-			if (pos >= contracts.size()) {
+			// この位置が有効な契約でない場合は有効な契約が見つかるまで順次調べる
+			if (++pos >= blockSize) {
 				pos = 0;
 			}
 		}
 		throw new RuntimeException("Not found! start time = " + new java.util.Date(startTime));
 	}
+
+
+	/**
+	 * HistoryInsertAppが生成する履歴データに有効な電話番号を選択する。
+	 */
+	@Override
+	public long selectPhoneNumber(long exceptPhoneNumber) {
+		int blockSize = contractInfoReader.getBlockSize();
+		int pos = getContractPos();
+		// どの契約が有効か分かっているので、有効な契約のリストから選択すれば1回で有効な契約を
+		// 選択可能だが、一様分布でない乱数を使用する場合に、selectPhoneNumber(long startTime, long exceptPhoneNumber)
+		// と選択する電話番号の分布密度が一致するようにあえてこのような処理をしている。
+		for(int i =0; i < blockSize; i++) {
+			long n = contractInfoReader.getRandomN(pos);
+			long phoneNumber = contractInfoReader.getPhoneNumberAsLong(n);
+			if (exceptPhoneNumber != phoneNumber && contractInfoReader.isActive(n)) {
+				return phoneNumber;
+			}
+			// この位置が有効な契約でない場合は有効な契約が見つかるまで順次調べる
+			if (++pos >= blockSize) {
+				pos = 0;
+			}
+		}
+		// ブロック上のすべての契約が無効だった場合
+		throw new RuntimeException("Not found!");
+	}
+
 
 	/**
 	 * ランダムな契約を取得する

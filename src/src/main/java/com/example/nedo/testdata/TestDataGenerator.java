@@ -20,6 +20,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -33,15 +34,8 @@ import com.example.nedo.db.DBUtils;
 import com.example.nedo.db.Duration;
 import com.example.nedo.db.History;
 import com.example.nedo.testdata.GenerateHistoryTask.Params;
+import com.example.nedo.testdata.GenerateHistoryTask.Result;
 
-/**
- * @author umega
- *
- */
-/**
- * @author umega
- *
- */
 public class TestDataGenerator {
     private static final Logger LOG = LoggerFactory.getLogger(TestDataGenerator.class);
 
@@ -83,59 +77,39 @@ public class TestDataGenerator {
 
 
 	/**
-	 * 契約期間のパターンを記録するリスト
-	 */
-	private List<Duration> durationList = new ArrayList<>();
-
-
-	/**
 	 * 乱数生成器
 	 */
 	private Random random;
 
 	/**
-	 * テストデータ生成のためのパラメータを指定してContractsGeneratorのインスタンスを生成する.
-	 *
-	 * @param config
+	 * 契約マスタの情報
 	 */
-	public TestDataGenerator(Config config) {
-		this(config, config.randomSeed);
-	}
-
-	/**
-	 * 乱数のシードを指定可能なコンストラクタ
-	 *
-	 * @param config
-	 * @param random
-	 */
-	public TestDataGenerator(Config config, int seed) {
-		this(config, config.randomSeed, null);
-	}
-
-	private ContractReader contractReader;
+	private ContractInfoReader contractInfoReader;
 
 
 	/**
-	 * 乱数のシードとContractReaderを指定可能なコンストラクタ。ContractReaderにnullが
-	 * 指定された場合は、デフォルトのContractReaderを使用する。
+	 * 契約のブロックに関する情報にアクセスするためのアクセサ
+	 */
+	private ContractBlockInfoAccessor accessor;
+
+	/**
+	 * 乱数のシードとaccessorを指定可能なコンストラクタ。accessorにnullが
+	 * 指定された場合は、デフォルトのSingleProcessContractBlockManagerを使用する。
 	 *
 	 * @param config
 	 * @param seed
-	 * @param contractReader
+	 * @param accessor
 	 */
-	public TestDataGenerator(Config config, int seed, ContractReader contractReader) {
+	public TestDataGenerator(Config config, Random random, ContractBlockInfoAccessor accessor) {
 		this.config = config;
 		if (config.minDate.getTime() >= config.maxDate.getTime()) {
 			throw new RuntimeException("maxDate is less than or equal to minDate, minDate =" + config.minDate + ", maxDate = "
 					+ config.maxDate);
 		}
-		this.random = new Random(seed);
+		this.random = random;
 		phoneNumberGenerator = new PhoneNumberGenerator(config);
-		initDurationList();
-		if (contractReader == null) {
-			contractReader = new ContractReaderImpl();
-		}
-		this.contractReader = contractReader;
+		this.accessor = accessor;
+		this.contractInfoReader = ContractInfoReader.create(config, accessor, random);
 		statistics = new Statistics(config.historyMinDate, config.historyMaxDate);
 	}
 
@@ -166,10 +140,9 @@ public class TestDataGenerator {
 		Params params = new Params();
 		params.taskId = 0;
 		params.config = config;
-		params.random = random;
-		params.contractReader = contractReader;
+		params.random = new Random(random.nextLong());
+		params.accessor = accessor;
 		params.phoneNumberGenerator = phoneNumberGenerator;
-		params.durationList = durationList;
 		params.start = start;
 		params.end = end;
 		params.numberOfHistory = numbeOfHistory;
@@ -217,13 +190,13 @@ public class TestDataGenerator {
 	}
 
 	/**
-	 * psにn番目の契約レコードの値をセットする
+	 * 新規契約レコードの値をセットする
 	 *
 	 * @return セットした契約レコード
 	 * @throws SQLException
 	 */
-	public Contract setContract(PreparedStatement ps, long n) throws SQLException {
-		Contract c = getContract(n);
+	public Contract setContract(PreparedStatement ps) throws SQLException {
+		Contract c = contractInfoReader.getNewContract();
 		ps.setString(1, c.phoneNumber);
 		ps.setDate(2, c.startDate);
 		ps.setDate(3, c.endDate);
@@ -272,7 +245,7 @@ public class TestDataGenerator {
 				PreparedStatement ps = conn.prepareStatement(SQL_INSERT_TO_CONTRACT)) {
 			int batchSize = 0;
 			for (long n = 0; n < config.numberOfContractsRecords; n++) {
-				setContract(ps, n);
+				setContract(ps);
 				ps.addBatch();
 				if (++batchSize == SQL_BATCH_EXEC_SIZE) {
 					execBatch(ps);
@@ -295,7 +268,7 @@ public class TestDataGenerator {
 				StandardOpenOption.CREATE,
 				StandardOpenOption.WRITE);) {
 			for (long n = 0; n < config.numberOfContractsRecords; n++) {
-				Contract c = getContract(n);
+				Contract c = contractInfoReader.getNewContract();
 				sb.setLength(0);
 				sb.append(c.phoneNumber);
 				sb.append(',');
@@ -337,17 +310,23 @@ public class TestDataGenerator {
 		for(Params params: paramsList) {
 			Path outputPath = CsvUtils.getHistortyFilePath(dir, params.taskId);
 			params.historyWriter = new CsvHistoryWriter(outputPath);
-			LOG.info("task id = {}, start = {}, end = {}, numbero of history = {}", params.taskId, new Timestamp(params.start), new Timestamp(params.end), params.numberOfHistory);
+			LOG.info("task id = {}, start = {}, end = {}, number of history = {}", params.taskId, new Timestamp(params.start), new Timestamp(params.end), params.numberOfHistory);
 		}
 		generateHistory(paramsList);
 	}
 
+	/**
+	 * 通話履歴生成タスクのパラメータを作成する
+	 *
+	 * @return
+	 */
 	List<Params> createParamsList() {
 		Date minDate = config.historyMinDate;
 		Date maxDate = config.historyMaxDate;
 
 		statistics = new Statistics(minDate, maxDate);
 
+		List<Duration> durationList = ContractInfoReader.initDurationList(config);
 		if (!isValidDurationList(durationList, minDate, maxDate)) {
 			throw new RuntimeException("Invalid duration list.");
 		}
@@ -381,11 +360,11 @@ public class TestDataGenerator {
 		ExecutorService service = Executors.newFixedThreadPool(config.threadCount);
 
 		int numberOfTasks = paramsList.size();
-		Set<Future<?>> futureSet = new HashSet<>(paramsList.size());
+		Set<Future<Result>> futureSet = new HashSet<>(paramsList.size());
 		numberOfEndTasks = 0;
 		for (Params params : paramsList) {
 			GenerateHistoryTask task = new GenerateHistoryTask(params);
-			Future<?> future = service.submit(task);
+			Future<Result> future = service.submit(task);
 			futureSet.add(future);
 			waitFor(numberOfTasks, futureSet);
 		}
@@ -409,18 +388,28 @@ public class TestDataGenerator {
 	 * @param numberOfTasks
 	 * @param futureSet
 	 */
-	private void waitFor(int numberOfTasks, Set<Future<?>> futureSet) {
-		Iterator<Future<?>> it = futureSet.iterator();
+	private void waitFor(int numberOfTasks, Set<Future<Result>> futureSet) {
+		Iterator<Future<Result>> it = futureSet.iterator();
 		while (it.hasNext()) {
-			Future<?> future = it.next();
+			Future<Result> future = it.next();
 			if (future.isDone()) {
+				Result result;
+				try {
+					result = future.get();
+				} catch (InterruptedException | ExecutionException e) {
+					result = new Result(-1);
+					result.success = false;
+					result.e = e;
+				}
+				if (!result.success) {
+					LOG.error("Task(id = {}) finished with error, aborting...", result.taskId, result.e);
+					System.exit(1);
+				}
 				it.remove();
 				LOG.info(String.format("%d/%d tasks finished.", ++numberOfEndTasks, numberOfTasks));
 			}
 		}
 	}
-
-
 
 
 
@@ -499,107 +488,6 @@ public class TestDataGenerator {
 		}
 		ps.getConnection().commit();
 		ps.clearBatch();
-	}
-
-	/**
-	 * 契約日のパターンのリストを作成する
-	 */
-	private void initDurationList() {
-		// TODO: もっとバリエーションが欲しい
-		// 契約終了日がないduration
-		for (int i = 0; i < config.noExpirationDateRate; i++) {
-			Date start = getDate(config.minDate, config.maxDate);
-			durationList.add(new Duration(start, null));
-		}
-		// 契約終了日があるduration
-		for (int i = 0; i < config.expirationDateRate; i++) {
-			Date start = getDate(config.minDate, config.maxDate);
-			Date end = getDate(start, config.maxDate);
-			durationList.add(new Duration(start, end));
-		}
-		// 同一電話番号の契約が複数あるパターン用のduration
-		for (int i = 0; i < config.duplicatePhoneNumberRatio; i++) {
-			Date end = getDate(config.minDate, DBUtils.previousMonthLastDay(config.maxDate));
-			Date start = getDate(DBUtils.nextMonth(end), config.maxDate);
-			durationList.add(new Duration(config.minDate, end));
-			durationList.add(new Duration(start, null));
-		}
-	}
-
-	/**
-	 * durationListを取得する(UT用)
-	 *
-	 * @return durationList
-	 */
-	List<Duration> getDurationList() {
-		return durationList;
-	}
-
-	/**
-	 * min～maxの範囲のランダムな日付を取得する
-	 *
-	 * @param min
-	 * @param max
-	 * @return
-	 */
-	Date getDate(Date min, Date max) {
-		int days = (int) ((max.getTime() - min.getTime()) / DBUtils.A_DAY_IN_MILLISECONDS);
-		long offset = random.nextInt(days + 1) * DBUtils.A_DAY_IN_MILLISECONDS;
-		return new Date(min.getTime() + offset);
-	}
-
-
-
-	/**
-	 * n番目のレコードのDurationを返す
-	 *
-	 * @param n
-	 * @return
-	 */
-	public Duration getDuration(long n) {
-		return durationList.get((int) (n % durationList.size()));
-	}
-
-	/**
-	 * n番目の電話番号をを返す
-	 *
-	 * @param n
-	 * @return
-	 */
-	public String getPhoneNumberAsLong(long n) {
-		return phoneNumberGenerator.getPhoneNumber(n);
-	}
-
-	/**
-	 * n番目の契約レコードを返す
-	 *
-	 * @param n
-	 * @return
-	 */
-	private Contract getContract(long n) {
-		Contract contract = new Contract();
-		contract.phoneNumber = phoneNumberGenerator.getPhoneNumber(n);
-		contract.rule = "sample";
-		Duration d = getDuration(n);
-		contract.startDate = d.getStatDate();
-		contract.endDate = d.getEndDate();
-		return contract;
-	}
-
-	/**
-	 * 本クラスが保持する情報を用いて情報を取得するContractReader
-	 *
-	 */
-	class ContractReaderImpl implements ContractReader {
-		@Override
-		public int getNumberOfContracts() {
-			return config.numberOfContractsRecords;
-		}
-
-		@Override
-		public Duration getDurationByPos(int n) {
-			return getDuration(n);
-		}
 	}
 
 	/**

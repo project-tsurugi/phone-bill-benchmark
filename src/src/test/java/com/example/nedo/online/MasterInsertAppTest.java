@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,8 @@ import com.example.nedo.app.Config;
 import com.example.nedo.app.CreateTable;
 import com.example.nedo.db.Contract;
 import com.example.nedo.db.DBUtils;
+import com.example.nedo.testdata.ContractBlockInfoAccessor;
+import com.example.nedo.testdata.SingleProcessContractBlockManager;
 import com.example.nedo.testdata.TestDataGenerator;
 
 class MasterInsertAppTest extends AbstractDbTestCase {
@@ -24,21 +27,24 @@ class MasterInsertAppTest extends AbstractDbTestCase {
 		config.minDate = DBUtils.toDate("2010-01-11");
 		config.maxDate = DBUtils.toDate("2020-12-21");
 		config.numberOfContractsRecords = 10;
-		config.expirationDateRate =5;
-		config.noExpirationDateRate = 11;
-		config.duplicatePhoneNumberRatio = 2;
+		config.expirationDateRate =3;
+		config.noExpirationDateRate = 3;
+		config.duplicatePhoneNumberRate = 2;
 
 		// Generaterで10レコード作成する
 		new CreateTable().execute(config);
 		truncateTable("contracts");
-		TestDataGenerator generator = new TestDataGenerator(config);
+		int seed = config.randomSeed;
+		ContractBlockInfoAccessor accessor1 = new SingleProcessContractBlockManager();
+		TestDataGenerator generator = new TestDataGenerator(config, new Random(seed), accessor1);
 		generator.generateContractsToDb();
 		List<Contract> expectedList = getContracts();
 
 		// MasterInsertAppで5レコード生成し、Generatorで生成したレコードと一致することを確認
 		truncateTable("contracts");
-		ContractHolder contractHolder = new ContractHolder(config);
-		MasterInsertApp app = new MasterInsertApp(contractHolder, config);
+
+		ContractBlockInfoAccessor accessor2 = new SingleProcessContractBlockManager();
+		MasterInsertApp app = new MasterInsertApp(config, new Random(seed), accessor2);
 		app.exec();
 		app.exec();
 		app.exec();
@@ -50,6 +56,7 @@ class MasterInsertAppTest extends AbstractDbTestCase {
 		for (int i = 0; i < 5; i++) {
 			assertEquals(expectedList.get(i), list.get(i));
 		}
+
 		// 追加で5レコード生成して、Generatorで生成したレコードと一致することを確認
 		app.exec();
 		app.exec();

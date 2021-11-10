@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
+import java.util.Random;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +29,9 @@ public class TestDataStatistics implements ExecutableCommand {
 
 	@Override
 	public void execute(Config c) throws Exception {
-		TestDataGenerator generator = new TestDataGenerator(c);
+		int seed = c.randomSeed;
+		ContractBlockInfoAccessor accessor = new SingleProcessContractBlockManager();
+		TestDataGenerator generator = new TestDataGenerator(c, new Random(seed), accessor);
 		generator.setStatisticsOnly(true);
 
 		// 契約マスタのテストデータ生成

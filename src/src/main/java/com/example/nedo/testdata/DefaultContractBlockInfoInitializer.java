@@ -1,0 +1,39 @@
+package com.example.nedo.testdata;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import com.example.nedo.app.Config;
+
+/**
+ * 契約マスタが指定のConfigでテストデータ生成直後の状態であることを前提に契約のブロック情報の初期化を行うクラス
+ *
+ */
+public class DefaultContractBlockInfoInitializer extends AbstractContractBlockInfoInitializer {
+	private Config config;
+
+	public DefaultContractBlockInfoInitializer(Config config) {
+		this.config = config;
+	}
+
+
+	@Override
+	void init() {
+		int blockSize = config.getContractBlockSize();
+		activeBlockNumberHolder = new ActiveBlockNumberHolder();
+		if (config.numberOfContractsRecords % blockSize == 0) {
+			numberOfBlocks = config.numberOfContractsRecords/ blockSize;
+			waitingBlocks = Collections.emptySet();
+			List<Integer> activeBlockList = IntStream.range(0, numberOfBlocks).boxed().collect(Collectors.toList());
+			activeBlockNumberHolder.setActiveBlocks(activeBlockList);
+		} else {
+			numberOfBlocks = config.numberOfContractsRecords / blockSize + 1;
+			waitingBlocks = Collections.singleton(numberOfBlocks - 1);
+			List<Integer> activeBlockList = IntStream.range(0, numberOfBlocks - 1).boxed().collect(Collectors.toList());
+			activeBlockNumberHolder.setActiveBlocks(activeBlockList);
+		}
+	}
+
+}

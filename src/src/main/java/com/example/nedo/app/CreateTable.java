@@ -23,7 +23,6 @@ public class CreateTable implements ExecutableCommand{
 
 	@Override
 	public void execute(Config config) throws Exception {
-//		boolean isOracle = config.dbms == Dbms.ORACLE;
 		try (Connection conn = DBUtils.getConnection(config);
 				Statement stmt = conn.createStatement()) {
 			dropTables(stmt, config);

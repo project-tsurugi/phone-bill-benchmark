@@ -18,8 +18,9 @@ import org.slf4j.LoggerFactory;
 import com.example.nedo.app.Config;
 import com.example.nedo.db.DBUtils;
 import com.example.nedo.db.History;
+import com.example.nedo.testdata.ContractBlockInfoAccessor;
 import com.example.nedo.testdata.GenerateHistoryTask;
-import com.example.nedo.testdata.GenerateHistoryTask.Key;
+import com.example.nedo.testdata.HistoryKey;
 import com.example.nedo.testdata.TestDataGenerator;
 
 /**
@@ -33,20 +34,20 @@ public class HistoryInsertApp extends AbstractOnlineApp {
     private static final Logger LOG = LoggerFactory.getLogger(HistoryInsertApp.class);
 	private int historyInsertRecordsPerTransaction;
 	private GenerateHistoryTask generateHistoryTask;
-	long baseTime; //
-	int duration;
+	private long baseTime;
+	private int duration;
+	private List<History> histories = new ArrayList<>();
 	private Random random;
-	List<History> histories = new ArrayList<>();
 
 	/**
 	 * // 同一のPKのレコードを生成しないためにPK値を記録するためのセット
 	 */
-	private Set<Key> keySet;
+	private Set<HistoryKey> keySet = new HashSet<HistoryKey>();
 
 	/**
 	 * コンストラクタ
 	 *
-	 * @param contractHolder
+	 * @param contractInfoReader
 	 * @param config
 	 * @param seed
 	 * @param baseTime
@@ -54,24 +55,23 @@ public class HistoryInsertApp extends AbstractOnlineApp {
 	 * @throws SQLException
 	 * @throws IOException
 	 */
-	private HistoryInsertApp(ContractHolder contractHolder, Config config, int seed, long baseTime, int duration) throws SQLException, IOException {
-		super(config.historyInsertTransactionPerMin, config);
-		this.random = new Random(seed);
-		historyInsertRecordsPerTransaction = config.historyInsertRecordsPerTransaction;
+	private HistoryInsertApp(ContractBlockInfoAccessor accessor, Config config, Random random, long baseTime,
+			int duration) throws SQLException, IOException {
+		super(config.historyInsertTransactionPerMin, config, random);
+		this.historyInsertRecordsPerTransaction = config.historyInsertRecordsPerTransaction;
 		this.baseTime = baseTime;
 		this.duration = duration;
-		keySet = new HashSet<Key>(); // 同一の時刻のレコードを生成しないために時刻を記録するためのセット
-		TestDataGenerator testDataGenerator = new TestDataGenerator(config);
+		this.random = random;
+		TestDataGenerator testDataGenerator = new TestDataGenerator(config, random, accessor);
 		generateHistoryTask = testDataGenerator.getGenerateHistoryTaskForOnlineApp();
 	}
-
 
 	/**
 	 * 指定した数だけ、HistoryInsertAppのインスタンスを作成し、リストで返す.
 	 * <br>
 	 * 複数のHistoryInsertAppを同時に動かしても、キーの重複が起きないように、baseTimeとdurationの値を調整する。
 	 *
-	 * @param contractHolder
+	 * @param contractInfoReader
 	 * @param config
 	 * @param seed
 	 * @param num
@@ -79,16 +79,17 @@ public class HistoryInsertApp extends AbstractOnlineApp {
 	 * @throws IOException
 	 * @throws SQLException
 	 */
-	public static List<AbstractOnlineApp> createHistoryInsertApps(ContractHolder contractHolder, Config config,
-			int seed, int num) throws SQLException, IOException {
+	public static List<AbstractOnlineApp> createHistoryInsertApps(Config config,
+			Random random, ContractBlockInfoAccessor accessor, int num) throws SQLException, IOException {
 		List<AbstractOnlineApp> list = new ArrayList<>();
 		if (num > 0) {
 			int duration = CREATE_SCHEDULE_INTERVAL_MILLS / num;
-			long baseTime = getMaxStartTime(config);
-			Random random = new Random(seed);
+			long baseTime = getBaseTime(config);
 			for (int i = 0; i < num; i++) {
-				AbstractOnlineApp app = new HistoryInsertApp(contractHolder, config, random.nextInt(), baseTime,
-						duration);
+				if (i != 0) {
+					random = new Random(random.nextInt());
+				}
+				AbstractOnlineApp app = new HistoryInsertApp(accessor, config, random, baseTime, duration);
 				app.setName(i);
 				baseTime += duration;
 				list.add(app);
@@ -98,13 +99,28 @@ public class HistoryInsertApp extends AbstractOnlineApp {
 	}
 
 
-
-
 	@Override
 	protected void atScheduleListCreated(List<Long> scheduleList) {
-		baseTime += CREATE_SCHEDULE_INTERVAL_MILLS;
+		// スケジュールに合わせてbaseTimeをシフトする
+		baseTime = getBaseTime() + CREATE_SCHEDULE_INTERVAL_MILLS;
+		// baseTimeのシフトにより、これ以前のキーとキーが重複することはないので、keySetをクリアする
 		keySet.clear();
+		// スケジュール作成時に、契約マスタのブロック情報をアップデートする
+		generateHistoryTask.reloadActiveBlockNumberList();
 	}
+
+	/**
+	 * baseTimeをセットする。履歴データの通話開始時刻は初期データの通話開始時刻の最後の日の翌日0時にする。
+	 * ただし、既にhistoryInsertAppによるデータが存在する場合は、津和解し時刻の最大値を指定する。
+	 *
+	 * @param config
+	 * @return
+	 * @throws SQLException
+	 */
+	static long getBaseTime(Config config) throws SQLException {
+		return Math.max(getMaxStartTime(config), DBUtils.nextDate(config.historyMaxDate).getTime());
+	}
+
 
 	static long getMaxStartTime(Config config) throws SQLException {
 		try (Connection conn = DBUtils.getConnection(config);
@@ -123,9 +139,9 @@ public class HistoryInsertApp extends AbstractOnlineApp {
 	protected void createData() {
 		histories.clear();
 		for (int i = 0; i < historyInsertRecordsPerTransaction; i++) {
-			Key key;
+			HistoryKey key;
 			do {
-				long startTime = baseTime + random.nextInt(duration);
+				long startTime = getBaseTime() + random.nextInt(duration);
 				key = generateHistoryTask.createkey(startTime);
 			} while (keySet.contains(key));
 			keySet.add(key);
@@ -139,5 +155,14 @@ public class HistoryInsertApp extends AbstractOnlineApp {
 		if (LOG.isDebugEnabled()) {
 			LOG.debug("ONLINE APP: Insert {} records to history.", historyInsertRecordsPerTransaction);
 		}
+	}
+
+	/**
+	 * baseTimeを返す(UT用)
+	 *
+	 * @return
+	 */
+	long getBaseTime() {
+		return baseTime;
 	}
 }

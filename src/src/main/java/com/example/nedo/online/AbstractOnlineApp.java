@@ -69,9 +69,9 @@ public abstract class AbstractOnlineApp implements Runnable{
 	private String name;
 
 
-	public AbstractOnlineApp(int txPerMin, Config config) throws SQLException {
+	public AbstractOnlineApp(int txPerMin, Config config, Random random) throws SQLException {
 		this.txPerMin = txPerMin;
-		this.random = new Random(config.randomSeed);
+		this.random = random;
 		conn = DBUtils.getConnection(config);
 		setName(0);
 	}

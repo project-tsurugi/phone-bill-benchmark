@@ -12,9 +12,14 @@ import org.slf4j.LoggerFactory;
 
 import com.example.nedo.app.Config;
 import com.example.nedo.app.ExecutableCommand;
+import com.example.nedo.testdata.ContractBlockInfoAccessor;
 import com.example.nedo.testdata.CreateTestData;
+import com.example.nedo.testdata.DbContractBlockInfoInitializer;
+import com.example.nedo.testdata.SingleProcessContractBlockManager;
 
 /**
+ *
+ *
  * バッチを動かさないでオンラインアプリを動かす.
  * <br>
  * 以下の条件で実行し、最後に結果サマリを表示する
@@ -77,10 +82,11 @@ public class RunOnlineApp implements ExecutableCommand {
 		}
 	}
 
-	private Result executeOnlineApps(Config config)			throws Exception {
+	private Result executeOnlineApps(Config config) throws Exception {
 		// テストデータの初期化
-		new CreateTestData().execute(config);;
-		ContractHolder contractHolder = new ContractHolder(config);
+		new CreateTestData().execute(config);
+		DbContractBlockInfoInitializer initializer = new DbContractBlockInfoInitializer(config);
+		ContractBlockInfoAccessor accessor = new SingleProcessContractBlockManager(initializer);
 
 		Random random = new Random();
 		List<AbstractOnlineApp> masterInsertApps = new ArrayList<>();
@@ -90,25 +96,26 @@ public class RunOnlineApp implements ExecutableCommand {
 
 		// MasterInsertAppの初期化
 		for (int i = 0; i < config.masterInsertThreadCount; i++) {
-			AbstractOnlineApp task = new MasterInsertApp(contractHolder, config);
+			AbstractOnlineApp task = new MasterInsertApp(config, new Random(random.nextInt()), accessor);
 			task.setName(i);
 			masterInsertApps.add(task);
 		}
 
 		// MasterUpdateAppの初期化
 		for (int i = 0; i < config.masterUpdateThreadCount; i++) {
-			AbstractOnlineApp task = new MasterUpdateApp(contractHolder, config, random.nextInt());
+			AbstractOnlineApp task = new MasterUpdateApp(config, new Random(random.nextInt()), accessor);
 			task.setName(i);
 			masterUpdateApps.add(task);
 		}
 
 		// historyInsertAppの初期化
-		historyInsertApps.addAll(HistoryInsertApp.createHistoryInsertApps(contractHolder, config, random.nextInt(),
-				config.historyInsertThreadCount));
+		historyInsertApps
+				.addAll(HistoryInsertApp.createHistoryInsertApps(config, new Random(random.nextInt()), accessor,
+						config.historyInsertThreadCount));
 
 		// HistoryUpdateAppの初期化
 		for (int i = 0; i < config.historyUpdateThreadCount; i++) {
-			AbstractOnlineApp task = new HistoryUpdateApp(contractHolder, config, random.nextInt());
+			AbstractOnlineApp task = new HistoryUpdateApp(config, new Random(random.nextInt()), accessor);
 			task.setName(i);
 			historyUpdateApps.add(task);
 		}
@@ -127,10 +134,8 @@ public class RunOnlineApp implements ExecutableCommand {
 		} finally {
 			// オンラインアプリを終了する
 			list.stream().forEach(task -> task.terminate());
-			if (service != null) {
-				service.shutdown();
-				service.awaitTermination(5, TimeUnit.MINUTES);
-			}
+			service.shutdown();
+			service.awaitTermination(5, TimeUnit.MINUTES);
 		}
 		// 実行結果の集計
 		Result result = new Result();
@@ -152,9 +157,7 @@ public class RunOnlineApp implements ExecutableCommand {
 		return result;
 	}
 
-
-
-	class Result {
+	static class Result {
 		int masterUpdateThreadCount;
 		int masterInsertThreadCount;
 		int historyUpdateThreadCount;
@@ -199,6 +202,4 @@ public class RunOnlineApp implements ExecutableCommand {
 			return builder.toString();
 		}
 	}
-
-
 }

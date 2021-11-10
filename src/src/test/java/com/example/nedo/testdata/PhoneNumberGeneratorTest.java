@@ -17,7 +17,7 @@ class PhoneNumberGeneratorTest {
 	@Test
 	void testGetPhoneNumber() throws IOException {
 		Config config = Config.getConfig();
-		config.duplicatePhoneNumberRatio = 2;
+		config.duplicatePhoneNumberRate = 2;
 		config.expirationDateRate = 3;
 		config.noExpirationDateRate = 1;
 
@@ -45,6 +45,8 @@ class PhoneNumberGeneratorTest {
 		assertEquals("00000000016", generator.getPhoneNumber(16));
 		assertEquals("00000000017", generator.getPhoneNumber(17));
 		assertEquals("00000000018", generator.getPhoneNumber(18));
+		assertEquals("99999999999", generator.getPhoneNumber(99999999999L));
+
 
 		Exception e;
 		e = assertThrows(RuntimeException.class, () -> generator.getPhoneNumber(100000000000L));
@@ -53,4 +55,42 @@ class PhoneNumberGeneratorTest {
 		assertEquals("Out of phone number range: -1", e.getMessage());
 	}
 
+	/**
+	 * to11DigtString()のテスト
+	 *
+	 * @throws IOException
+	 */
+	@Test
+	void  testTo11DigtString() throws IOException{
+		Config config = Config.getConfig();
+		PhoneNumberGenerator generator = new PhoneNumberGenerator(config);
+
+		assertEquals("00000000000", generator.to11DigtString(0));
+		assertEquals("00000000001", generator.to11DigtString(1));
+		assertEquals("00000000010", generator.to11DigtString(10));
+		assertEquals("00000000100", generator.to11DigtString(100));
+		assertEquals("00000001000", generator.to11DigtString(1000));
+		assertEquals("00000010000", generator.to11DigtString(10000));
+		assertEquals("00000100000", generator.to11DigtString(100000));
+		assertEquals("00001000000", generator.to11DigtString(1000000));
+		assertEquals("00010000000", generator.to11DigtString(10000000));
+		assertEquals("00100000000", generator.to11DigtString(100000000));
+		assertEquals("01000000000", generator.to11DigtString(1000000000));
+		assertEquals("10000000000", generator.to11DigtString(10000000000L));
+
+
+		assertEquals("00000000009", generator.to11DigtString(9));
+		assertEquals("00000000099", generator.to11DigtString(99));
+		assertEquals("00000000999", generator.to11DigtString(999));
+		assertEquals("00000009999", generator.to11DigtString(9999));
+		assertEquals("00000099999", generator.to11DigtString(99999));
+		assertEquals("00000999999", generator.to11DigtString(999999));
+		assertEquals("00009999999", generator.to11DigtString(9999999));
+		assertEquals("00099999999", generator.to11DigtString(99999999));
+		assertEquals("00999999999", generator.to11DigtString(999999999L));
+		assertEquals("09999999999", generator.to11DigtString(9999999999L));
+		assertEquals("99999999999", generator.to11DigtString(99999999999L));
+	}
+
 }
+

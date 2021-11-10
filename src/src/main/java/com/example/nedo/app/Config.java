@@ -42,8 +42,8 @@ public class Config implements Cloneable {
 	/**
 	 *  契約マスタの電話番号が重複する割合
 	 */
-	public int duplicatePhoneNumberRatio;
-	private static final String DUPLICATE_PHONE_NUMBER_RATIO = "duplicate.phone.number.ratio";
+	public int duplicatePhoneNumberRate;
+	private static final String DUPLICATE_PHONE_NUMBER_RATIO = "duplicate.phone.number.rate";
 
 	/**
 	 * 契約終了日がある電話番号の割合
@@ -332,7 +332,7 @@ public class Config implements Cloneable {
 
 		// 契約マスタ生成に関するパラメータ
 		numberOfContractsRecords = getInt(NUMBER_OF_CONTRACTS_RECORDS, 1000);
-		duplicatePhoneNumberRatio = getInt(DUPLICATE_PHONE_NUMBER_RATIO, 10);
+		duplicatePhoneNumberRate = getInt(DUPLICATE_PHONE_NUMBER_RATIO, 10);
 		expirationDateRate = getInt(EXPIRATION_DATE_RATE, 30);
 		noExpirationDateRate = getInt(NO_EXPIRATION_DATE_RATE, 50);
 		minDate = getDate(MIN_DATE, DBUtils.toDate("2010-11-11"));
@@ -642,7 +642,7 @@ public class Config implements Cloneable {
 		sb.append(System.lineSeparator());
 		sb.append(String.format(commentFormat, "契約マスタ生成に関するパラメータ"));
 		sb.append(String.format(format, NUMBER_OF_CONTRACTS_RECORDS, numberOfContractsRecords));
-		sb.append(String.format(format, DUPLICATE_PHONE_NUMBER_RATIO, duplicatePhoneNumberRatio));
+		sb.append(String.format(format, DUPLICATE_PHONE_NUMBER_RATIO, duplicatePhoneNumberRate));
 		sb.append(String.format(format, EXPIRATION_DATE_RATE, expirationDateRate));
 		sb.append(String.format(format, NO_EXPIRATION_DATE_RATE, noExpirationDateRate));
 		sb.append(String.format(format, MIN_DATE, minDate));
@@ -723,14 +723,9 @@ public class Config implements Cloneable {
 	 *
 	 */
 	public static enum DistributionFunction {
-		/**
-		 * 一様分布
-		 */
-		UNIFORM,
-		/**
-		 * 対数正規分布
-		 */
-		LOGNORMAL
+		UNIFORM, // 一様分布
+		LOGNORMAL, // 対数正規分布
+		UNDEFINED // 未定義
 	}
 
 
@@ -753,4 +748,13 @@ public class Config implements Cloneable {
 		}
 	}
 
+
+	/**
+	 * 現在のConfig値のときの契約マスタのブロックサイズを取得する
+	 *
+	 * @return
+	 */
+	public int getContractBlockSize() {
+		return duplicatePhoneNumberRate * 2 + expirationDateRate + noExpirationDateRate;
+	}
 }

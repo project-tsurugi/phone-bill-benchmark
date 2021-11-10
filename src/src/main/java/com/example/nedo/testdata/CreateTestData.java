@@ -2,6 +2,7 @@ package com.example.nedo.testdata;
 
 import java.sql.Connection;
 import java.sql.Statement;
+import java.util.Random;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +30,9 @@ public class CreateTestData implements ExecutableCommand {
 		// テストデータの作成時は、configの指定にかかわらずTRANSACTION_READ_COMMITTEDを使用する。
 		Config config = c.clone();
 		config.isolationLevel = Connection.TRANSACTION_READ_COMMITTED;
-		TestDataGenerator generator = new TestDataGenerator(config);
+		int seed = config.randomSeed;
+		ContractBlockInfoAccessor accessor = new SingleProcessContractBlockManager();
+		TestDataGenerator generator = new TestDataGenerator(config, new Random(seed), accessor);
 
 		// テーブルをTruncate
 		try (Connection conn = DBUtils.getConnection(config);

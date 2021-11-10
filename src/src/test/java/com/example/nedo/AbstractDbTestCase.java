@@ -13,6 +13,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 
 import com.example.nedo.app.Config;
+import com.example.nedo.db.Contract;
 import com.example.nedo.db.DBUtils;
 import com.example.nedo.db.History;
 
@@ -106,6 +107,25 @@ public abstract class AbstractDbTestCase {
 		history.df = df;
 		return history;
 	}
+
+	protected List<Contract> getContracts() throws SQLException {
+		List<Contract> contracts = new ArrayList<Contract>();
+		String sql = "select phone_number, start_date, end_date, charge_rule"
+				+ " from contracts order by phone_number, start_date";
+		try (ResultSet rs = getStmt().executeQuery(sql)) {
+			while (rs.next()) {
+				Contract c = new Contract();
+				c.phoneNumber = rs.getString(1);
+				c.startDate = rs.getDate(2);
+				c.endDate = rs.getDate(3);
+				c.rule = rs.getString(4);
+				contracts.add(c);
+			}
+		}
+		return contracts;
+	}
+
+
 
 	protected void executeSql(String sql) throws SQLException {
 		stmt.execute(sql);
