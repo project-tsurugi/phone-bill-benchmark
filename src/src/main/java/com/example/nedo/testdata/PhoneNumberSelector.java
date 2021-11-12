@@ -58,15 +58,17 @@ public interface PhoneNumberSelector {
 	public static PhoneNumberSelector createSelector(Random random,
 			DistributionFunction distributionFunction, double scale, double shape,
 			ContractInfoReader contractInfoReader) {
+		PhoneNumberSelector phoneNumberSelector = null;
 		switch (distributionFunction) {
 		case LOGNORMAL:
 			RealDistribution distribution = new LogNormalDistribution(scale, shape);
 			distribution.reseedRandomGenerator(random.nextLong());
-			return new LogNormalPhoneNumberSelector(distribution, contractInfoReader);
+			phoneNumberSelector =  new LogNormalPhoneNumberSelector(distribution, contractInfoReader);
+			break;
 		case UNIFORM:
-			return new UniformPhoneNumberSelector(random, contractInfoReader);
-		default:
-			throw new AssertionError(distributionFunction.name());
+			phoneNumberSelector =  new UniformPhoneNumberSelector(random, contractInfoReader);
+			break;
 		}
+		return phoneNumberSelector;
 	}
 }

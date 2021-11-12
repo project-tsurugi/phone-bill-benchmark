@@ -33,13 +33,5 @@ class PhoneNumberSelectorTest {
 		selector = PhoneNumberSelector.createSelector(new Random(), DistributionFunction.LOGNORMAL, 0, 1,
 				contractInfoReader);
 		assertEquals(LogNormalPhoneNumberSelector.class, selector.getClass());
-
-		// 不正なの分布関数(UNDEFINED)を指定した場合
-
-		Error e = assertThrows(AssertionError.class, () -> PhoneNumberSelector.createSelector(new Random(),
-				DistributionFunction.UNDEFINED, 0, 1, contractInfoReader));
-		assertEquals("UNDEFINED", e.getMessage());
 	}
-
-
 }

@@ -101,8 +101,9 @@ public class TestDataGenerator {
 	 * @param config
 	 * @param seed
 	 * @param accessor
+	 * @throws IOException
 	 */
-	public TestDataGenerator(Config config, Random random, ContractBlockInfoAccessor accessor) {
+	public TestDataGenerator(Config config, Random random, ContractBlockInfoAccessor accessor) throws IOException {
 		this.config = config;
 		if (config.minDate.getTime() >= config.maxDate.getTime()) {
 			throw new RuntimeException("maxDate is less than or equal to minDate, minDate =" + config.minDate + ", maxDate = "
@@ -196,8 +197,9 @@ public class TestDataGenerator {
 	 *
 	 * @return セットした契約レコード
 	 * @throws SQLException
+	 * @throws IOException
 	 */
-	public Contract setContract(PreparedStatement ps) throws SQLException {
+	public Contract setContract(PreparedStatement ps) throws SQLException, IOException {
 		Contract c = contractInfoReader.getNewContract();
 		ps.setString(1, c.phoneNumber);
 		ps.setDate(2, c.startDate);
@@ -240,8 +242,9 @@ public class TestDataGenerator {
 	 * 契約マスタのテストデータをDBに生成する
 	 *
 	 * @throws SQLException
+	 * @throws IOException
 	 */
-	public void generateContractsToDb() throws SQLException {
+	public void generateContractsToDb() throws SQLException, IOException {
 		try (Connection conn = DBUtils.getConnection(config);
 				Statement stmt = conn.createStatement();
 				PreparedStatement ps = conn.prepareStatement(SQL_INSERT_TO_CONTRACT)) {

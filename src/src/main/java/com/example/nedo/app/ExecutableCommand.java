@@ -1,5 +1,16 @@
 package com.example.nedo.app;
 
-public interface ExecutableCommand {
-	void execute(Config config) throws Exception;
+/**
+ * Mainクラスから呼び出される各コマンドの基底クラス.
+ * <p>
+ * 引数が異なる二つのexecuteメソッドのどちらかを実装する
+ */
+public abstract class ExecutableCommand {
+	public void execute(Config config) throws Exception {
+		throw new RuntimeException("Not suportted.");
+	}
+
+	public void execute(String hostname, int port) throws Exception {
+		throw new RuntimeException("Not suportted.");
+	}
 }

@@ -12,7 +12,7 @@ import com.example.nedo.db.DBUtils;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-public class CreateTable implements ExecutableCommand{
+public class CreateTable extends ExecutableCommand{
     private static final Logger LOG = LoggerFactory.getLogger(CreateTable.class);
 
 	public static void main(String[] args) throws Exception {
@@ -257,8 +257,6 @@ public class CreateTable implements ExecutableCommand{
 			case OTHER:
 				// なにもしない
 				break;
-			default:
-				throw new AssertionError();
 			}
 			conn.commit();
 		}

@@ -1,5 +1,6 @@
 package com.example.nedo.online;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -31,7 +32,7 @@ public class HistoryUpdateApp extends AbstractOnlineApp {
 	private History history;
 	private Random random;
 
-	public HistoryUpdateApp(Config config, Random random, ContractBlockInfoAccessor accessor) throws SQLException {
+	public HistoryUpdateApp(Config config, Random random, ContractBlockInfoAccessor accessor) throws SQLException, IOException {
 		super(config.historyUpdateRecordsPerMin, config, random);
 		this.callTimeGenerator = CallTimeGenerator.createCallTimeGenerator(random, config);
 		this.contractInfoReader = ContractInfoReader.create(config, accessor, random);
@@ -141,9 +142,10 @@ public class HistoryUpdateApp extends AbstractOnlineApp {
 
 	/**
 	 * スケジュール作成時に、契約マスタのブロック情報をアップデートする
+	 * @throws IOException
 	 */
 	@Override
-	protected void atScheduleListCreated(List<Long> scheduleList) {
+	protected void atScheduleListCreated(List<Long> scheduleList) throws IOException {
 		contractInfoReader.loadActiveBlockNumberList();
 	}
 

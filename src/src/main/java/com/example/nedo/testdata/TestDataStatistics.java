@@ -18,7 +18,7 @@ import com.example.nedo.app.Config;
 import com.example.nedo.app.ExecutableCommand;
 import com.example.nedo.testdata.Statistics.Counter;
 
-public class TestDataStatistics implements ExecutableCommand {
+public class TestDataStatistics extends ExecutableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(TestDataStatistics.class);
 
     public static void main(String[] args) throws Exception {

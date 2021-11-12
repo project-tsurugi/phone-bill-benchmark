@@ -2,6 +2,8 @@ package com.example.nedo.app;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -16,7 +18,6 @@ import org.slf4j.LoggerFactory;
 import com.example.nedo.db.DBUtils;
 
 /**
- * @author umega
  *
  */
 public class Config implements Cloneable {
@@ -301,17 +302,52 @@ public class Config implements Cloneable {
 	private static final String SYSPROP_PREFIX = "phone-bill.";
 
 	/**
-	 * コンストラクタ
+	 * 複数ノード構成時のサーバのリッスンポート
+	 */
+	public int listenPort;
+	private static final String LISTEN_PORT = "listen.port";
+
+
+	/**
+	 * コンストラクタ.
+	 * <br>
 	 *
-	 * @param configFileName
+	 *
+	 * @param reader
+	 * @throws IOException
+	 */
+	private Config(Reader reader) throws IOException {
+		init(reader);
+	}
+
+
+	/**
+	 * 指定のファイル名のファイルを用いてインスタンスを初期化する
+	 *
+	 * @param finaname
 	 * @throws IOException
 	 */
 	private Config(String configFileName) throws IOException {
-		prop = new Properties();
-		if (configFileName != null) {
+		if (configFileName == null) {
+			init(null);
+		} else {
 			try (BufferedReader br = Files.newBufferedReader(Paths.get(configFileName), StandardCharsets.UTF_8)) {
-				prop.load(br);
+				init(br);
 			}
+		}
+	}
+
+
+	/**
+	 * readerからコンフィグ値を読み取りインスタを初期化する。readerにnullが指定されたときはデフォルト値で初期化する
+	 *
+	 * @param reader
+	 * @throws IOException
+	 */
+	private void init(Reader reader) throws IOException {
+		prop = new Properties();
+		if (reader != null) {
+			prop.load(reader);
 		}
 		System.getProperties().stringPropertyNames().stream()
 			.filter(k -> k.startsWith(SYSPROP_PREFIX))
@@ -322,6 +358,8 @@ public class Config implements Cloneable {
 		logger.info("Config initialized" +
 				System.lineSeparator() + "--- " + System.lineSeparator() + this.toString() + "---");
 	}
+
+
 
 	/**
 	 * config値を初期化する
@@ -406,6 +444,7 @@ public class Config implements Cloneable {
 			// トランザクションのスコープが契約単位で、コネクション共有は許されない
 			throw new RuntimeException("TransactionScope Contract and sharedConnection cannot be specified at the same time.");
 		}
+		listenPort = getInt(LISTEN_PORT, 0);
 	}
 
 	/**
@@ -622,7 +661,7 @@ public class Config implements Cloneable {
 	 */
 	public static Config getConfig(String[] args) throws IOException {
 		if (args.length == 0) {
-			return new Config(null);
+			return new Config((String)null);
 		}
 		return new Config(args[0]);
 	}
@@ -630,6 +669,21 @@ public class Config implements Cloneable {
 	public static Config getConfig() throws IOException {
 		return getConfig(new String[0]);
 	}
+
+
+	/**
+	 * 指定の文字列のconfigを作成する
+	 *
+	 * @param string
+	 * @return
+	 * @throws IOException
+	 */
+	public static Config getConfigFromSrtring(String string) throws IOException {
+		StringReader reader = new StringReader(string);
+		return new Config(reader);
+	}
+
+
 
 	@Override
 	public String toString() {
@@ -699,6 +753,7 @@ public class Config implements Cloneable {
 		sb.append(String.format(commentFormat, "その他のパラメータ"));
 		sb.append(String.format(format, RANDOM_SEED, randomSeed));
 		sb.append(String.format(format, TRANSACTION_SCOPE, transactionScope));
+		sb.append(String.format(format, LISTEN_PORT, listenPort));
 		return sb.toString();
 	}
 
@@ -725,7 +780,6 @@ public class Config implements Cloneable {
 	public static enum DistributionFunction {
 		UNIFORM, // 一様分布
 		LOGNORMAL, // 対数正規分布
-		UNDEFINED // 未定義
 	}
 
 
@@ -757,4 +811,5 @@ public class Config implements Cloneable {
 	public int getContractBlockSize() {
 		return duplicatePhoneNumberRate * 2 + expirationDateRate + noExpirationDateRate;
 	}
+
 }

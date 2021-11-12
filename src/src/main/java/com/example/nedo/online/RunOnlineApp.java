@@ -29,7 +29,7 @@ import com.example.nedo.testdata.SingleProcessContractBlockManager;
  * 3.各オンラインアプリは連続実行する<br>
  *
  */
-public class RunOnlineApp implements ExecutableCommand {
+public class RunOnlineApp extends ExecutableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(RunOnlineApp.class);
 
 	public static void main(String[] args) throws Exception {

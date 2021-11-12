@@ -21,7 +21,7 @@ import com.example.nedo.app.CreateTable;
 import com.example.nedo.app.ExecutableCommand;
 import com.example.nedo.db.DBUtils;
 
-public class LoadTestDataCsvToOracle implements ExecutableCommand {
+public class LoadTestDataCsvToOracle extends ExecutableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(LoadTestDataCsvToOracle.class);
 
 	public static void main(String[] args) throws Exception {

@@ -1,5 +1,6 @@
 package com.example.nedo.online;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -26,7 +27,7 @@ public class MasterInsertApp extends AbstractOnlineApp {
     private TestDataGenerator testDataGenerator;
 
 
-	public MasterInsertApp(Config config, Random random, ContractBlockInfoAccessor accessor) throws SQLException {
+	public MasterInsertApp(Config config, Random random, ContractBlockInfoAccessor accessor) throws SQLException, IOException {
 		super(config.masterInsertReccrdsPerMin, config, random);
 		testDataGenerator = new TestDataGenerator(config, new Random(config.randomSeed), accessor);
 	}
@@ -37,7 +38,7 @@ public class MasterInsertApp extends AbstractOnlineApp {
 	}
 
 	@Override
-	protected void updateDatabase() throws SQLException {
+	protected void updateDatabase() throws SQLException, IOException {
 		Connection conn = getConnection();
 		try (PreparedStatement ps = conn.prepareStatement(TestDataGenerator.SQL_INSERT_TO_CONTRACT)) {
 			Contract c = testDataGenerator.setContract(ps);

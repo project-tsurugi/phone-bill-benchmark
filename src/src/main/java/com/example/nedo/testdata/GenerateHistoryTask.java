@@ -105,8 +105,9 @@ public class GenerateHistoryTask implements Callable<Result> {
 	 * @param end
 	 * @param writeSize
 	 * @param n
+	 * @throws IOException
 	 */
-	public GenerateHistoryTask(Params params) {
+	public GenerateHistoryTask(Params params) throws IOException {
 		random = params.random;
 		phoneNumberGenerator = params.phoneNumberGenerator;
 		start = params.start;
@@ -219,9 +220,10 @@ public class GenerateHistoryTask implements Callable<Result> {
 
 
 	/**
-	 * アクティブな契約マスタのブロック情報をりろーｄ
+	 * アクティブな契約マスタのブロック情報をリロードする
+	 * @throws IOException
 	 */
-	public void reloadActiveBlockNumberList() {
+	public void reloadActiveBlockNumberList() throws IOException {
 		contractInfoReader.loadActiveBlockNumberList();
 	}
 

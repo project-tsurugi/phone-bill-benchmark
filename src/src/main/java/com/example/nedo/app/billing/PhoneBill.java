@@ -42,11 +42,7 @@ import com.example.nedo.testdata.ContractBlockInfoAccessor;
 import com.example.nedo.testdata.DbContractBlockInfoInitializer;
 import com.example.nedo.testdata.SingleProcessContractBlockManager;
 
-/**
- * @author umega
- *
- */
-public class PhoneBill implements ExecutableCommand {
+public class PhoneBill extends ExecutableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(PhoneBill.class);
 	private long elapsedTime = 0; // バッチの処理時間
 	Config config;
@@ -60,7 +56,9 @@ public class PhoneBill implements ExecutableCommand {
 	@Override
 	public void execute(Config config) throws Exception {
 		this.config = config;
-		List<AbstractOnlineApp> list = createOnlineApps(config);
+		DbContractBlockInfoInitializer initializer = new DbContractBlockInfoInitializer(config);
+		ContractBlockInfoAccessor accessor = new SingleProcessContractBlockManager(initializer);
+		List<AbstractOnlineApp> list = createOnlineApps(config, accessor);
 		final ExecutorService service = list.isEmpty() ? null : Executors.newFixedThreadPool(list.size());
 		try {
 			// オンラインアプリを実行する
@@ -87,11 +85,9 @@ public class PhoneBill implements ExecutableCommand {
 	 * @throws SQLException
 	 * @throws IOException
 	 */
-	public static List<AbstractOnlineApp> createOnlineApps(Config config)
+	public static List<AbstractOnlineApp> createOnlineApps(Config config, ContractBlockInfoAccessor accessor)
 			throws SQLException, IOException {
 		Random random = new Random(config.randomSeed);
-		DbContractBlockInfoInitializer initializer = new DbContractBlockInfoInitializer(config);
-		ContractBlockInfoAccessor accessor = new SingleProcessContractBlockManager(initializer);
 		ActiveBlockNumberHolder blockHolder = accessor.getActiveBlockInfo();
 		if (blockHolder.getNumberOfActiveBlacks() < 1) {
 			throw new IllegalStateException("Insufficient test data, create test data first.");

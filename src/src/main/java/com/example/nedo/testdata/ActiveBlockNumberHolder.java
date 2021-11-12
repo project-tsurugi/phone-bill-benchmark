@@ -114,9 +114,33 @@ public class ActiveBlockNumberHolder implements Cloneable {
 	}
 
 	/**
-	 * @param numberOfActiveBlacks セットする numberOfActiveBlacks
+	 * ActiveBlockNumberHolderのインスタンスを表す文字列を作成する
 	 */
-	protected void setNumberOfActiveBlacks(int numberOfActiveBlacks) {
-		this.numberOfActiveBlacks = numberOfActiveBlacks;
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append(numberOfActiveBlacks);
+		sb.append(',');
+		sb.append(maximumBlockNumberOfFirstConsecutiveActiveBlock);
+		for(int i: activeBlocks) {
+			sb.append(',');
+			sb.append(i);
+		}
+		return sb.toString();
+	}
+
+	/**
+	 * ActiveBlockNumberHolderのインスタンスを表す文字列から、ActiveBlockNumberHolderのインスタンスを作成する
+	 *
+	 * @return
+	 */
+	public static ActiveBlockNumberHolder valueOf(String str) {
+		ActiveBlockNumberHolder holder = new ActiveBlockNumberHolder();
+		String[] strs = str.split(",");
+		holder.numberOfActiveBlacks = Integer.parseInt(strs[0]);
+		holder.maximumBlockNumberOfFirstConsecutiveActiveBlock = Integer.parseInt(strs[1]);
+		for(int i = 2; i < strs.length; i++) {
+			holder.activeBlocks.add(Integer.parseInt(strs[i]));
+		}
+		return holder;
 	}
 }

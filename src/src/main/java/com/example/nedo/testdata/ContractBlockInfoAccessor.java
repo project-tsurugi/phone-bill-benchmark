@@ -1,5 +1,7 @@
 package com.example.nedo.testdata;
 
+import java.io.IOException;
+
 /**
  * 契約のブロックに関する情報にアクセスするためのアクセサ
  *
@@ -10,20 +12,21 @@ public interface ContractBlockInfoAccessor {
 	 *
 	 * @return
 	 */
-	public int getNewBlock();
+	public int getNewBlock() throws IOException;
 
 	/**
 	 * 引数で指定されたブロック番号のブロックをアクティブなブロックとして通知する、
 	 *
 	 * @param blockNumber
 	 * @return
+	 * @throws IOException
 	 */
-	public void submit(int blockNumber);
+	public void submit(int blockNumber) throws IOException;
 
 	/**
 	 * アクティブなブロックの情報を返す
 	 *
 	 * @return
 	 */
-	public ActiveBlockNumberHolder getActiveBlockInfo();
+	public ActiveBlockNumberHolder getActiveBlockInfo() throws IOException;
 }

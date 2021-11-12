@@ -1,5 +1,6 @@
 package com.example.nedo.online;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -94,8 +95,9 @@ public abstract class AbstractOnlineApp implements Runnable{
 	 *
 	 *
 	 * @throws SQLException
+	 * @throws IOException
 	 */
-	final void exec() throws SQLException {
+	final void exec() throws SQLException, IOException {
 		createData();
 		for (;;) {
 			try {
@@ -125,8 +127,9 @@ public abstract class AbstractOnlineApp implements Runnable{
 	/**
 	 * createDataで生成したデータをDBに反映する
 	 * @throws SQLException
+	 * @throws IOException
 	 */
-	protected abstract void updateDatabase() throws SQLException;
+	protected abstract void updateDatabase() throws SQLException, IOException;
 
 
 	@Override
@@ -145,7 +148,7 @@ public abstract class AbstractOnlineApp implements Runnable{
 				schedule();
 			}
 			LOG.info("{} terminated.", name);
-		} catch (Exception e) {
+		} catch (RuntimeException | SQLException | IOException e) {
 			try {
 				if (conn != null && !conn.isClosed()) {
 					conn.rollback();
@@ -166,12 +169,12 @@ public abstract class AbstractOnlineApp implements Runnable{
 		}
 	}
 
-
 	/**
 	 * スケジュールに従いexec()を呼び出す
 	 * @throws SQLException
+	 * @throws IOException
 	 */
-	private void schedule() throws SQLException {
+	private void schedule() throws SQLException, IOException {
 		Long schedule = scheduleList.get(0);
 		if (System.currentTimeMillis() < schedule ) {
 			if (txPerMin > 0) {
@@ -203,8 +206,9 @@ public abstract class AbstractOnlineApp implements Runnable{
 	 * スケジュールを作成する
 	 *
 	 * @param base スケジュール生成のスケジュール(時刻)
+	 * @throws IOException
 	 */
-	private void creatScheduleList(long base) {
+	private void creatScheduleList(long base) throws IOException {
 		long now = System.currentTimeMillis();
 		if (base + CREATE_SCHEDULE_INTERVAL_MILLS < now) {
 			// スケジュール生成の呼び出しが、予定よりCREATE_SCHEDULE_INTERVAL_MILLSより遅れた場合は、
@@ -227,8 +231,9 @@ public abstract class AbstractOnlineApp implements Runnable{
 	 * スケジュール作成後に呼び出されるコールバック関数
 	 *
 	 * @param scheduleList
+	 * @throws IOException
 	 */
-	protected void atScheduleListCreated(List<Long> scheduleList) {
+	protected void atScheduleListCreated(List<Long> scheduleList) throws IOException {
 		// デフォルト実装ではなにもしない
 	}
 

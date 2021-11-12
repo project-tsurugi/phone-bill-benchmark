@@ -17,10 +17,6 @@ import com.example.nedo.app.Config.TransactionScope;
 import com.example.nedo.db.Contract;
 import com.example.nedo.db.DBUtils;
 
-/**
- * @author umega
- *
- */
 public class CalculationTask implements Callable<Exception> {
     private static final Logger LOG = LoggerFactory.getLogger(CalculationTask.class);
     private Config config;

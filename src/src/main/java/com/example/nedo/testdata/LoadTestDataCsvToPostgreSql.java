@@ -20,7 +20,7 @@ import com.example.nedo.util.PathUtils;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-public class LoadTestDataCsvToPostgreSql implements ExecutableCommand {
+public class LoadTestDataCsvToPostgreSql extends ExecutableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(LoadTestDataCsvToPostgreSql.class);
 
     public static void main(String[] args) throws Exception {

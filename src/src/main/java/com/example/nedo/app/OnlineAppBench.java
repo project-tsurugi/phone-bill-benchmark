@@ -25,7 +25,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * 上記以外の値はConfigで指定された値を使用する
  *
  */
-public class OnlineAppBench implements ExecutableCommand {
+public class OnlineAppBench extends ExecutableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(OnlineAppBench.class);
 
 	public static void main(String[] args) throws Exception {

@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 import com.example.nedo.app.Config;
 import com.example.nedo.app.ExecutableCommand;
 
-public class CreateTestDataCsv implements ExecutableCommand {
+public class CreateTestDataCsv extends ExecutableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(CreateTestDataCsv.class);
 
     public static void main(String[] args) throws Exception {

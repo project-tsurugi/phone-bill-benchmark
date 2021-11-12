@@ -214,6 +214,7 @@ class ConfigTest {
 		/* その他のパラメータ */
 		assertEquals(0, config.randomSeed);
 		assertEquals(TransactionScope.WHOLE, config.transactionScope);
+		assertEquals(0, config.listenPort);
 
 		// toStringのチェック
 		Path path = Paths.get(DEFALUT_CONFIG_PATH);
@@ -280,6 +281,7 @@ class ConfigTest {
 		/* その他のパラメータ */
 		assertEquals(1969, config.randomSeed);
 		assertEquals(TransactionScope.CONTRACT, config.transactionScope);
+		assertEquals(1967, config.listenPort);
 
 		/* スレッドに関するパラメータ */
 		assertEquals(10, config.threadCount);

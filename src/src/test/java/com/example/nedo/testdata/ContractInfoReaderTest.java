@@ -96,7 +96,7 @@ class ContractInfoReaderTest {
 	}
 
 	@Test
-	void testLoadActiveBlockNumberList() {
+	void testLoadActiveBlockNumberList() throws IOException {
 		// 空のリスト
 		accessor.setBlockNumbers();
 		contractInfoReader.loadActiveBlockNumberList();
@@ -265,7 +265,7 @@ class ContractInfoReaderTest {
 	}
 
 	@Test
-	void testGetRandomBlockNumber() {
+	void testGetRandomBlockNumber() throws IOException {
 		// ブロック番号が連続なケース
 		random.setValues(0, 1, 2, 3);
 		accessor.setBlockNumbers(0, 1, 2, 3);

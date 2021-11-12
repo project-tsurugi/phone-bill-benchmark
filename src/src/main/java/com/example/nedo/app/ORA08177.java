@@ -13,7 +13,7 @@ import com.example.nedo.db.DBUtils;
  * ORA-08177を再現するためのクラス
  *
  */
-public class ORA08177 implements ExecutableCommand {
+public class ORA08177 extends ExecutableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(ORA08177.class);
 
 

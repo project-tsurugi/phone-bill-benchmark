@@ -24,13 +24,15 @@ public interface CallTimeGenerator {
 	 * @return
 	 */
 	public static CallTimeGenerator createCallTimeGenerator(Random random, Config config) {
+		CallTimeGenerator generator = null;
 		switch (config.callTimeDistribution) {
 		case LOGNORMAL:
-			return new LogNormalCallTimeGenerator(config);
+			generator = new LogNormalCallTimeGenerator(config);
+			break;
 		case UNIFORM:
-			return new UniformCallTimeGenerator(random, config.maxCallTimeSecs);
-		default:
-			throw new AssertionError(config.callTimeDistribution.name());
+			generator = new UniformCallTimeGenerator(random, config.maxCallTimeSecs);
+			break;
 		}
+		return generator;
 	}
 }

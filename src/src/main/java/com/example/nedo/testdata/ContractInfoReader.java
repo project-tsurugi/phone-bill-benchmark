@@ -1,5 +1,6 @@
 package com.example.nedo.testdata;
 
+import java.io.IOException;
 import java.sql.Date;
 import java.util.ArrayList;
 import java.util.List;
@@ -92,8 +93,9 @@ public class ContractInfoReader {
 	 * @param accessor 契約ブロックの情報にアクセスするためのアクセサ
 	 * @param random 使用する乱数生成器
 	 * @return
+	 * @throws IOException
 	 */
-	public static ContractInfoReader create(Config config, ContractBlockInfoAccessor accessor, Random random) {
+	public static ContractInfoReader create(Config config, ContractBlockInfoAccessor accessor, Random random) throws IOException {
 		// すべてのContractInfoReaderインスタンスが同じdurationListを持つように、
 		// configで指定された乱数のシードの乱数生成器でdurationListを作成する
 		List<Duration> durationList = initDurationList(config);
@@ -136,10 +138,11 @@ public class ContractInfoReader {
 	 * @param contractBlockInfoAccessor
 	 * @param phoneNumberGenerator
 	 * @param random
+	 * @throws IOException
 	 */
 	ContractInfoReader(List<Duration> durationList, List<Boolean> statusList,
 			ContractBlockInfoAccessor contractBlockInfoAccessor, PhoneNumberGenerator phoneNumberGenerator,
-			Random random) {
+			Random random) throws IOException {
 		this.durationList = durationList;
 		this.statusList = statusList;
 		this.contractBlockInfoAccessor = contractBlockInfoAccessor;
@@ -156,8 +159,9 @@ public class ContractInfoReader {
 
 	/**
 	 * アクティブなブロック番号のリストをロードする。
+	 * @throws IOException
 	 */
-	public void loadActiveBlockNumberList() {
+	public void loadActiveBlockNumberList() throws IOException {
 		LOG.info("Loading active block number list.");
 		blockInfos = contractBlockInfoAccessor.getActiveBlockInfo();
 	}
@@ -178,8 +182,9 @@ public class ContractInfoReader {
 	 * 呼び出し側で確実に契約を作成する必要がある。
 	 *
 	 * @return
+	 * @throws IOException
 	 */
-	public Contract getNewContract() {
+	public Contract getNewContract() throws IOException {
 		if (blockNumber < 0) {
 			newBlock();
 		}
@@ -259,8 +264,9 @@ public class ContractInfoReader {
 
 	/**
 	 * 新しいブロックを確保する
+	 * @throws IOException
 	 */
-	private void newBlock() {
+	private void newBlock() throws IOException {
 		blockNumber = contractBlockInfoAccessor.getNewBlock();
 		posInBlock = 0;
 	}

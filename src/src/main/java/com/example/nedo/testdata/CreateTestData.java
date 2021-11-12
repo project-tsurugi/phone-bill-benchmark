@@ -14,7 +14,7 @@ import com.example.nedo.db.DBUtils;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-public class CreateTestData implements ExecutableCommand {
+public class CreateTestData extends ExecutableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(CreateTestData.class);
 
     public static void main(String[] args) throws Exception {

@@ -14,7 +14,7 @@ import com.example.nedo.testdata.CreateTestData;
  * 値を使用する。
  *
  */
-public class ThreadBench implements ExecutableCommand {
+public class ThreadBench extends ExecutableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(ThreadBench.class);
 
 	public static void main(String[] args) throws Exception {

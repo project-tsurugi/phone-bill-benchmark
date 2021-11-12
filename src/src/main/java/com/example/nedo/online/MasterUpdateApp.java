@@ -1,5 +1,6 @@
 package com.example.nedo.online;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
@@ -40,8 +41,9 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 	 * @param config
 	 * @param seed
 	 * @throws SQLException
+	 * @throws IOException
 	 */
-	public MasterUpdateApp(Config config, Random random, ContractBlockInfoAccessor accessor) throws SQLException {
+	public MasterUpdateApp(Config config, Random random, ContractBlockInfoAccessor accessor) throws SQLException, IOException {
 		super(config.masterUpdateRecordsPerMin, config, random);
 		this.config = config;
 		this.random = random;
@@ -181,9 +183,10 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 
 	/**
 	 * スケジュール作成時に、契約マスタのブロック情報をアップデートする
+	 * @throws IOException
 	 */
 	@Override
-	protected void atScheduleListCreated(List<Long> scheduleList) {
+	protected void atScheduleListCreated(List<Long> scheduleList) throws IOException {
 		contractInfoReader.loadActiveBlockNumberList();
 	}
 

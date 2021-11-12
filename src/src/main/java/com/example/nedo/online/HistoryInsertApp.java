@@ -100,7 +100,7 @@ public class HistoryInsertApp extends AbstractOnlineApp {
 
 
 	@Override
-	protected void atScheduleListCreated(List<Long> scheduleList) {
+	protected void atScheduleListCreated(List<Long> scheduleList) throws IOException {
 		// スケジュールに合わせてbaseTimeをシフトする
 		baseTime = getBaseTime() + CREATE_SCHEDULE_INTERVAL_MILLS;
 		// baseTimeのシフトにより、これ以前のキーとキーが重複することはないので、keySetをクリアする
