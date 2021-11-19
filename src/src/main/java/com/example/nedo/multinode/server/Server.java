@@ -25,13 +25,12 @@ import com.example.nedo.multinode.NetworkIO;
 import com.example.nedo.multinode.NetworkIO.Message;
 import com.example.nedo.multinode.NetworkIO.Type;
 import com.example.nedo.multinode.NetworkIO.WholeMessage;
-import com.example.nedo.multinode.server.Server.ListenerTask.Result;
-import com.example.nedo.multinode.server.handler.MessageHandlerBase;
 import com.example.nedo.multinode.server.handler.GetActiveBlockInfo;
 import com.example.nedo.multinode.server.handler.GetNewBlock;
 import com.example.nedo.multinode.server.handler.InitCommandLineClient;
 import com.example.nedo.multinode.server.handler.InitOnlineApp;
 import com.example.nedo.multinode.server.handler.InitPhoneBill;
+import com.example.nedo.multinode.server.handler.MessageHandlerBase;
 import com.example.nedo.multinode.server.handler.Polling;
 import com.example.nedo.multinode.server.handler.SubmitBlock;
 import com.example.nedo.testdata.DbContractBlockInfoInitializer;
@@ -94,9 +93,9 @@ public class Server extends ExecutableCommand {
 		singleProcessContractBlockManager = new SingleProcessContractBlockManager(initializer);
 
 		ListenerTask listenerTask = new ListenerTask();
-		Future<Result> future =  service.submit(listenerTask);
+		Future<ListenerTaskResult> future =  service.submit(listenerTask);
 		// TODO 終了処理を書く
-		Result result =  future.get();
+		ListenerTaskResult result =  future.get();
 	}
 
 
@@ -104,10 +103,11 @@ public class Server extends ExecutableCommand {
 	 * クライアントからの接続要求を処理するタスク
 	 *
 	 */
-	public class ListenerTask implements Callable<Result> {
+	public class ListenerTask implements Callable<ListenerTaskResult> {
 
 		@Override
-		public Result call() throws IOException {
+		public ListenerTaskResult call() throws IOException {
+			// TODO クライアントからの要求で終了する処理が必要
 			Thread.currentThread().setName("SocketListener");
 			try (ServerSocket serverSocket = new ServerSocket(config.listenPort)) {
 				LOG.info("Listening port {}", config.listenPort);
@@ -120,14 +120,16 @@ public class Server extends ExecutableCommand {
 			}
 		}
 
-		/**
-		 * タスクの終了結果
-		 *
-		 */
-		public class Result {
-			ListenerTask task;
-		}
 	}
+
+	/**
+	 * タスクの終了結果
+	 *
+	 */
+	public class ListenerTaskResult {
+		ListenerTask task;
+	}
+
 
 	/**
 	 * アクセプトしたソケットを処理するタスク.
