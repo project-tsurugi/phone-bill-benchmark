@@ -19,6 +19,7 @@ import com.example.nedo.app.Config;
 import com.example.nedo.db.DBUtils;
 import com.example.nedo.db.History;
 import com.example.nedo.testdata.ContractBlockInfoAccessor;
+import com.example.nedo.testdata.ContractInfoReader;
 import com.example.nedo.testdata.GenerateHistoryTask;
 import com.example.nedo.testdata.HistoryKey;
 import com.example.nedo.testdata.TestDataGenerator;
@@ -126,13 +127,11 @@ public class HistoryInsertApp extends AbstractOnlineApp {
 		try (Connection conn = DBUtils.getConnection(config);
 				Statement stmt = conn.createStatement();
 				ResultSet rs = stmt.executeQuery("select max(start_time) from history");) {
-			if (rs.next()) {
-				Timestamp ts = rs.getTimestamp(1);
-				conn.commit();
-				return ts == null ? System.currentTimeMillis() : ts.getTime();
-			}
+			rs.next();
+			Timestamp ts = rs.getTimestamp(1);
+			conn.commit();
+			return ts == null ? 0 : ts.getTime();
 		}
-		throw new IllegalStateException();
 	}
 
 	@Override
@@ -152,9 +151,7 @@ public class HistoryInsertApp extends AbstractOnlineApp {
 	@Override
 	protected void updateDatabase() throws SQLException {
 		TestDataGenerator.insrtHistories(getConnection(), histories);
-		if (LOG.isDebugEnabled()) {
-			LOG.debug("ONLINE APP: Insert {} records to history.", historyInsertRecordsPerTransaction);
-		}
+		LOG.debug("ONLINE APP: Insert {} records to history.", historyInsertRecordsPerTransaction);
 	}
 
 	/**
@@ -164,5 +161,21 @@ public class HistoryInsertApp extends AbstractOnlineApp {
 	 */
 	long getBaseTime() {
 		return baseTime;
+	}
+
+	/**
+	 * keySetを返す(UT用)
+	 *
+	 * @return
+	 */
+	Set<HistoryKey> getKeySet() {
+		return keySet;
+	}
+
+	/**
+	 * ContractInfoReaderを返す(UT用)
+	 */
+	ContractInfoReader getContractInfoReader() {
+		return generateHistoryTask.getContractInfoReader();
 	}
 }

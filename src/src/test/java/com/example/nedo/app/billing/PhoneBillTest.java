@@ -7,7 +7,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -15,15 +18,26 @@ import org.slf4j.LoggerFactory;
 
 import com.example.nedo.AbstractDbTestCase;
 import com.example.nedo.app.Config;
+import com.example.nedo.app.Config.TransactionScope;
 import com.example.nedo.app.CreateTable;
 import com.example.nedo.db.Billing;
 import com.example.nedo.db.DBUtils;
 import com.example.nedo.db.Duration;
 import com.example.nedo.db.History;
+import com.example.nedo.online.AbstractOnlineApp;
+import com.example.nedo.online.HistoryInsertApp;
+import com.example.nedo.online.HistoryUpdateApp;
+import com.example.nedo.online.MasterInsertApp;
+import com.example.nedo.online.MasterUpdateApp;
+import com.example.nedo.testdata.AbstractContractBlockInfoInitializer;
+import com.example.nedo.testdata.ContractBlockInfoAccessor;
 import com.example.nedo.testdata.CreateTestData;
+import com.example.nedo.testdata.DefaultContractBlockInfoInitializer;
+import com.example.nedo.testdata.SingleProcessContractBlockManager;
 
 class PhoneBillTest extends AbstractDbTestCase {
     private static final Logger LOG = LoggerFactory.getLogger(PhoneBillTest.class);
+    // TODO オンラインアプリを動かすテストケースを追加する
 
 	@Test
 	void test() throws Exception {
@@ -269,10 +283,10 @@ class PhoneBillTest extends AbstractDbTestCase {
 	}
 
 	/*
-	 * スレッド数、コネクションプールの共有有無の違いがあっても処理結果が変わらないことを確認
+	 * Configに違いがあっても処理結果が変わらないことを確認
 	 */
 	@Test
-	void testTreads() throws Exception {
+	void testConfigVariation() throws Exception {
 		// まず実行し、その結果を期待値とする
 		Config config = Config.getConfig();
 		config.duplicatePhoneNumberRate = 10;
@@ -298,13 +312,110 @@ class PhoneBillTest extends AbstractDbTestCase {
 				newConfig.sharedConnection = sharedConnection;
 				LOG.info("Executing phoneBill.exec() with threadCount =" + threadCount +
 						", sharedConnection = " + sharedConnection);
-				phoneBill.execute(newConfig);
-				List<Billing> actual = getBillings();
-				assertEquals(expected.size(), actual.size());
-				for (int i = 0; i < expected.size(); i++) {
-					assertEquals( expected.get(i), actual.get(i), Integer.toString(i));
-				}
+				testNewConfig(phoneBill, expected, newConfig);
 			}
+		}
+
+		// トランザクションスコープの違いで結果が変わらないことの確認
+		for(TransactionScope ts: TransactionScope.values()) {
+			Config newConfig = config.clone();
+			newConfig.transactionScope= ts;
+			LOG.info("Executing phoneBill.exec() with transactionScope =" + ts);
+			testNewConfig(phoneBill, expected, newConfig);
+		}
+	}
+
+
+	
+	
+	/**
+	 * @param phoneBill
+	 * @param expected
+	 * @param newConfig
+	 * @throws Exception
+	 * @throws SQLException
+	 */
+	private void testNewConfig(PhoneBill phoneBill, List<Billing> expected, Config newConfig)
+			throws Exception, SQLException {
+		phoneBill.execute(newConfig);
+		List<Billing> actual = getBillings();
+		assertEquals(expected.size(), actual.size());
+		for (int i = 0; i < expected.size(); i++) {
+			assertEquals( expected.get(i), actual.get(i), Integer.toString(i));
+		}
+	}
+
+
+	@Test
+	public void testCreateOnlineApps() throws Exception {
+		Config config = Config.getConfig();
+		new CreateTestData().execute(config);
+		AbstractContractBlockInfoInitializer infoInitializer = new DefaultContractBlockInfoInitializer(config);
+		ContractBlockInfoAccessor accessor = new SingleProcessContractBlockManager(infoInitializer);
+
+		// オンラインアプリを動かさないケース(1分間に実行する回数が0)
+		config.historyInsertTransactionPerMin = 0;
+		config.historyUpdateRecordsPerMin = 0;
+		config.masterInsertReccrdsPerMin = 0;
+		config.masterUpdateRecordsPerMin = 0;
+		config.historyInsertThreadCount = 1;
+		config.historyUpdateThreadCount = 1;
+		config.masterInsertThreadCount = 1;
+		config.masterUpdateThreadCount = 1;
+		assertEquals(Collections.emptyList(), PhoneBill.createOnlineApps(config, accessor));
+
+		// オンラインアプリを動かさないケース(スレッド数の指定が0)
+		config.historyInsertTransactionPerMin = 1;
+		config.historyUpdateRecordsPerMin = 1;
+		config.masterInsertReccrdsPerMin = 1;
+		config.masterUpdateRecordsPerMin = 1;
+		config.historyInsertThreadCount = 0;
+		config.historyUpdateThreadCount = 0;
+		config.masterInsertThreadCount = 0;
+		config.masterUpdateThreadCount = 0;
+		assertEquals(Collections.emptyList(), PhoneBill.createOnlineApps(config, accessor));
+
+		// スレッド数で指定された数だけ、オンラインアプリが作成されていることを確認する
+		config.historyInsertTransactionPerMin = 1;
+		config.historyUpdateRecordsPerMin = 1;
+		config.masterInsertReccrdsPerMin = 1;
+		config.masterUpdateRecordsPerMin = 1;
+		config.historyInsertThreadCount = 1;
+		config.historyUpdateThreadCount = 2;
+		config.masterInsertThreadCount = 3;
+		config.masterUpdateThreadCount = 4;
+
+		// オンラインアプリがconfigで指定された数だけ作成されることの確認
+		Map<Class<?>, List<AbstractOnlineApp>> map = new HashMap<>();
+		map.put(HistoryInsertApp.class, new ArrayList<AbstractOnlineApp>());
+		map.put(HistoryUpdateApp.class, new ArrayList<AbstractOnlineApp>());
+		map.put(MasterInsertApp.class, new ArrayList<AbstractOnlineApp>());
+		map.put(MasterUpdateApp.class, new ArrayList<AbstractOnlineApp>());
+		for(AbstractOnlineApp app: PhoneBill.createOnlineApps(config, accessor)) {
+			List<AbstractOnlineApp>	list = map.get(app.getClass());
+			list.add(app);
+		}
+
+		// 生成されたオンラインアプリの数とnameの確認
+		checkAppList(1, "HistoryInsertApp", map.get(HistoryInsertApp.class));
+		checkAppList(2, "HistoryUpdateApp", map.get(HistoryUpdateApp.class));
+		checkAppList(3, "MasterInsertApp", map.get(MasterInsertApp.class));
+		checkAppList(4, "MasterUpdateApp", map.get(MasterUpdateApp.class));
+
+		// 契約のブロックが不足してExceptionが発生するケース
+		SingleProcessContractBlockManager accessor2 = new SingleProcessContractBlockManager(); // Initializerを指定しないと契約マスタが空の状態に
+															// 合致するインスタンスを生成される
+		IllegalStateException e = assertThrows(IllegalStateException.class,
+				() -> PhoneBill.createOnlineApps(config, accessor2));
+		assertEquals("Insufficient test data, create test data first.", e.getMessage());
+	}
+
+	private void checkAppList(int expectedSize, String prefix, List<AbstractOnlineApp> list) {
+		assertEquals(expectedSize, list.size());
+		for(int i = 0; i < list.size(); i++) {
+			String expected = prefix + "-00" + i;
+			String actual = list.get(i).getName();
+			assertEquals(expected, actual);
 		}
 	}
 

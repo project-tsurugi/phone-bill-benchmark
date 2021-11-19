@@ -1,7 +1,7 @@
 package com.example.nedo.multinode.client;
 
-import java.io.IOException;
 import java.net.Socket;
+import java.util.Collections;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -40,24 +40,17 @@ public class PhoneBillClient extends ExecutableCommand{
 
 			PhoneBill phoneBill = new PhoneBill();
 
-			for(;;) {
-				Message msg = io.poll(Status.READY, "Waiting for execute.");
-				if (msg == Message.REQUEST_RUN) {
-					break; // ループから抜けて実行開始
-				}
-				if (msg != Message.REQUEST_NONE) {
-					throw new IOException("Protocol error, invalid message recived: " + msg.name());
-				}
-				io.sleepForPollingInterval();
-			}
+			io.updateStatus(Status.READY, "Waiting.");
+			io.poll(Collections.singleton(Message.REQUEST_RUN));
+			io.updateStatus(Status.RUNNING, "Stareted.");
 			try {
 				phoneBill.execute(config);
-				io.poll(Status.SUCCESS, "PhoneBill finished successfully.");
-				LOG.info("Phone bill client finushed successfully.");
+				io.updateStatus(Status.SUCCESS, "Finished successfully.");
+				LOG.info("Phone bill client finished successfully.");
 			} catch (Exception e) {
 				// System.exit()での終了を補足できないので改善する
-				io.poll(Status.FAIL, "PhoneBill aborted with exception: " + e.getMessage());
-				LOG.error("Phone bill client finushed with a exception.", e);
+				io.updateStatus(Status.FAIL, "Aborted with exception: " + e.getMessage());
+				LOG.error("Phone bill client finished with an exception.", e);
 			}
 		}
 	}

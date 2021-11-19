@@ -21,8 +21,18 @@ public class CsvUtils {
 	public static List<Path> getHistortyFilePaths(Path dir) throws IOException {
 		return Files.list(dir).filter(p -> {
 			Path fname = p.getFileName();
-			return fname != null && Pattern.matches(HISTORY_REGEXP, fname.toString());
+			return isCsv(fname);
 		}).sorted().collect(Collectors.toList());
+	}
+
+	/**
+	 * 指定のパスが通話履歴のCSVファイルのときtrueを返す
+	 *
+	 * @param fname
+	 * @return
+	 */
+	static boolean isCsv(Path fname) {
+		return fname != null && Pattern.matches(HISTORY_REGEXP, fname.toString());
 	}
 
 	/**

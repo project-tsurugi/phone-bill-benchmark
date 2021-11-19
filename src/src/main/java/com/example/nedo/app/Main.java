@@ -5,6 +5,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.example.nedo.app.billing.PhoneBill;
+import com.example.nedo.multinode.NetworkIO.Message;
+import com.example.nedo.multinode.client.CommandLineClient;
+import com.example.nedo.multinode.client.OnlineAppClient;
 import com.example.nedo.multinode.client.PhoneBillClient;
 import com.example.nedo.multinode.server.Server;
 import com.example.nedo.testdata.CreateTestData;
@@ -30,7 +33,16 @@ public class Main {
 		addCommand("LoadTestDataCsvToPostgreSql", "Load csv test data to PostgreSQL.",
 				new LoadTestDataCsvToPostgreSql(), ArgType.CONFIG);
 		addCommand("Server", "Execute the server process for multinode execution.", new Server(), ArgType.CONFIG);
-		addCommand("PhoneBillClient", "Execute phone bill batch client for multienode execution.", new PhoneBillClient(), ArgType.HOST_AND_PORT);
+		addCommand("PhoneBillClient", "Execute phone bill batch client for multienode execution.",
+				new PhoneBillClient(), ArgType.HOST_AND_PORT);
+		addCommand("OnlineAppClient", "Execute phone bill batch client for multienode execution.",
+				new OnlineAppClient(), ArgType.HOST_AND_PORT);
+		addCommand("Status", "Reports the execution status of client processes.",
+				new CommandLineClient(Message.GET_CLUSTER_STATUS), ArgType.HOST_AND_PORT);
+		addCommand("Shutdown", "Terminate all client processes and a server process.",
+				new CommandLineClient(Message.SHUTDOWN_CLUSTER), ArgType.HOST_AND_PORT);
+		addCommand("Start", "Start execution a phone bill batch and online applications.",
+				new CommandLineClient(Message.START_EXECUTION), ArgType.HOST_AND_PORT);
 	}
 
 	public static void main(String[] args) throws Exception {

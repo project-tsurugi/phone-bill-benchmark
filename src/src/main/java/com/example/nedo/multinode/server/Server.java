@@ -25,15 +25,16 @@ import com.example.nedo.multinode.NetworkIO;
 import com.example.nedo.multinode.NetworkIO.Message;
 import com.example.nedo.multinode.NetworkIO.Type;
 import com.example.nedo.multinode.NetworkIO.WholeMessage;
-import com.example.nedo.multinode.server.Server.ListenerTask.Result;
-import com.example.nedo.multinode.server.handler.MessageHandlerBase;
 import com.example.nedo.multinode.server.handler.GetActiveBlockInfo;
+import com.example.nedo.multinode.server.handler.GetClusterStatus;
 import com.example.nedo.multinode.server.handler.GetNewBlock;
-import com.example.nedo.multinode.server.handler.InitCommandLineClient;
 import com.example.nedo.multinode.server.handler.InitOnlineApp;
 import com.example.nedo.multinode.server.handler.InitPhoneBill;
+import com.example.nedo.multinode.server.handler.MessageHandlerBase;
 import com.example.nedo.multinode.server.handler.Polling;
+import com.example.nedo.multinode.server.handler.StartExecution;
 import com.example.nedo.multinode.server.handler.SubmitBlock;
+import com.example.nedo.multinode.server.handler.UpdateStatus;
 import com.example.nedo.testdata.DbContractBlockInfoInitializer;
 import com.example.nedo.testdata.SingleProcessContractBlockManager;
 
@@ -46,10 +47,11 @@ public class Server extends ExecutableCommand {
     private ExecutorService service = Executors.newCachedThreadPool();
 
     /**
-     * 実行中のタスクのセット.
+     * 実行中のクライアント情報のセット
      * <p>
-     * 実行中のタスクを制御するために、タスクのセットを保持する。制御対象ではない、CommandLineTask用の
-     * ServerTaskはこのセットの管理対象外である。
+     * 実行中のタスクを制御するためにクライアント情報を保持する。コマンドライン用のクライアントは
+     * このセットの管理対象外である。
+     *
      */
     private Set<ClientInfo> clientInfos = Collections.synchronizedSet(new LinkedHashSet<>());
 
@@ -94,9 +96,9 @@ public class Server extends ExecutableCommand {
 		singleProcessContractBlockManager = new SingleProcessContractBlockManager(initializer);
 
 		ListenerTask listenerTask = new ListenerTask();
-		Future<Result> future =  service.submit(listenerTask);
+		Future<ListenerTaskResult> future =  service.submit(listenerTask);
 		// TODO 終了処理を書く
-		Result result =  future.get();
+		ListenerTaskResult result =  future.get();
 	}
 
 
@@ -104,10 +106,11 @@ public class Server extends ExecutableCommand {
 	 * クライアントからの接続要求を処理するタスク
 	 *
 	 */
-	public class ListenerTask implements Callable<Result> {
+	public class ListenerTask implements Callable<ListenerTaskResult> {
 
 		@Override
-		public Result call() throws IOException {
+		public ListenerTaskResult call() throws IOException {
+			// TODO クライアントからの要求で終了する処理が必要
 			Thread.currentThread().setName("SocketListener");
 			try (ServerSocket serverSocket = new ServerSocket(config.listenPort)) {
 				LOG.info("Listening port {}", config.listenPort);
@@ -120,14 +123,16 @@ public class Server extends ExecutableCommand {
 			}
 		}
 
-		/**
-		 * タスクの終了結果
-		 *
-		 */
-		public class Result {
-			ListenerTask task;
-		}
 	}
+
+	/**
+	 * タスクの終了結果
+	 *
+	 */
+	public static class ListenerTaskResult {
+		ListenerTask task;
+	}
+
 
 	/**
 	 * アクセプトしたソケットを処理するタスク.
@@ -166,13 +171,24 @@ public class Server extends ExecutableCommand {
 		 * メッセージハンドラを初期化しメッセージとメッセージハンドラのマップに格納する
 		 */
 		private void initMessageHandler() {
+			// クライアントの初期化
 			map.put(Message.INIT_ONLINE_APP, new InitOnlineApp(this));
 			map.put(Message.INIT_PHONE_BILL, new InitPhoneBill(this));
-			map.put(Message.INIT_COMMAND_LINE_CLIENT, new InitCommandLineClient(this));
+
+			// クライアントからのポーリング
 			map.put(Message.POLLING, new Polling(this));
+
+			// クライアントからのステータス変更通知
+			map.put(Message.UPDATE_STATUS, new UpdateStatus(this));
+
+			// 契約マスタのブロック情報の処理
 			map.put(Message.GET_NEW_BLOCK, new GetNewBlock(this));
 			map.put(Message.SUBMIT_BLOCK, new SubmitBlock(this));
 			map.put(Message.GET_ACTIVE_BLOCK_INFO, new GetActiveBlockInfo(this));
+
+			// コマンドラインクライアントのコマンド
+			map.put(Message.GET_CLUSTER_STATUS, new GetClusterStatus(this));
+			map.put(Message.START_EXECUTION, new StartExecution(this));
 		}
 
 		@Override
@@ -180,8 +196,8 @@ public class Server extends ExecutableCommand {
 			int num = threadNumber.getAndAdd(1);
 			Thread.currentThread().setName("ServerTask-" + num);
 			try(NetworkIO io = new NetworkIO(socket)) {
-				for(;;) {
-					WholeMessage received = io.recieveFromClient();
+				WholeMessage received;
+				while ((received = io.recieveFromClient()) != null) {
 					MessageHandlerBase handler = map.get(received.message);
 					if (handler == null) {
 						throw new IOException("Protocol error, bad message: " + received.message.name());
@@ -194,7 +210,7 @@ public class Server extends ExecutableCommand {
 						io.response(handler.getResponseString());
 					}
 					// ステータスが終了ステータスになった => クライアントの終了通知
-					if (clientInfo.getStatus().isEndStatus()) {
+					if (clientInfo != null && clientInfo.getStatus().isEndStatus()) {
 						LOG.info("Receive a message the client has finished, last status = {}", clientInfo.getStatus().name());
 						break;
 					}
@@ -202,7 +218,7 @@ public class Server extends ExecutableCommand {
 			} catch (IOException | RuntimeException e) {
 				LOG.warn("IO error, aborting server task....", e);
 			}
-			if (clientInfo != null && clientInfo.getType() ==ClientType.PHNEBILL) {
+			if (clientInfo != null && clientInfo.getType() ==ClientType.PHONEBILL) {
 				getPhoneBillClientAlive().set(false);
 			}
 		}
@@ -230,18 +246,32 @@ public class Server extends ExecutableCommand {
 				throw new RuntimeException("ClientInfo already setten.");
 			}
 			this.clientInfo = clientInfo;
-			clientInfos.add(clientInfo);
+			if (clientInfo.getType() != ClientType.COMMAND_LINE) {
+				clientInfo.setNode(socket.getInetAddress().getHostName());
+				clientInfos.add(clientInfo);
+			}
 		}
 
-		public ClientInfo getClientInfo() {
-			return clientInfo;
-		}
 
 		/**
 		 * @return singleProcessContractBlockManager
 		 */
 		public SingleProcessContractBlockManager getSingleProcessContractBlockManager() {
 			return singleProcessContractBlockManager;
+		}
+
+		/**
+		 * @return clientInfo
+		 */
+		public ClientInfo getClientInfo() {
+			return clientInfo;
+		}
+
+		/**
+		 * @return clientInfos
+		 */
+		public Set<ClientInfo> getClientInfos() {
+			return clientInfos;
 		}
 	}
 }

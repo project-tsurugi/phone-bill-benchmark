@@ -1,41 +1,43 @@
 package com.example.nedo.multinode.server;
 
 import java.util.HashSet;
+import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import com.example.nedo.multinode.ClientType;
 import com.example.nedo.multinode.NetworkIO.Message;
+import com.example.nedo.multinode.server.handler.StatusChangeEventHandler;
 
 public class ClientInfo {
 	private ClientType type;
 	private Status status;
-	private RequestForClient requestForClient;
+	private Queue<RequestForClient> requestForClientQueue;
 	private String messageFromClient;
+	private String node;
+	private StatusChangeEventHandler statusChangeEventHandler;
 
-	// TODO コマンドラインクライアントからのリクエストと、クライアントからの通知に対して、ステータスをどう変化させるのかと、
-	// コマンドラインクライアントに対してどうレスポンスするのかをマトリクスを作って実装する
-
-	/**
-	 * クライアントに対するリクエストが処理中であることを示すフラグ
-	 */
-	boolean requestProccessing;
+	public ClientInfo(ClientType type, StatusChangeEventHandler statusChangeEventHandler) {
+		this.type = type;
+		status = Status.INITIALIZING;
+		requestForClientQueue = new ConcurrentLinkedQueue<ClientInfo.RequestForClient>();
+		messageFromClient = "No message";
+		this.statusChangeEventHandler = statusChangeEventHandler;
+	}
 
 	public ClientInfo(ClientType type) {
-		this.type = type;
-		status = Status.READY;
-		requestForClient = RequestForClient.NONE;
+		this(type, StatusChangeEventHandler.NULL_HANDLER);
 	}
 
 	/**
-	 * リクエストに対するリクエスト状況を定義する列挙型
+	 * クライアントに対するリクエストを定義する列挙型
 	 */
 	/**
 	 *
 	 */
 	public enum RequestForClient {
 		NONE(Message.REQUEST_NONE), // リクエストがない状態
-		SHUTDOWN(Message.REQUEST_SHUTDOWN), // プロセス終了するリクエスト
-		STOP(Message.REQUEST_STOP), // バッチ/オンラインアプリの実行を停止する
+		STOP(Message.REQUEST_STOP), // プロセス終了するリクエスト
 		RUN(Message.REQUEST_RUN), // バッチ/オンラインアプリを実行する
 		;
 
@@ -65,6 +67,7 @@ public class ClientInfo {
 	 * クライアントの状態
 	 */
 	public enum Status {
+		INITIALIZING, // バッチ・オンラインアプリの初期化中
 		READY, // バッチ・オンラインアプリの実行を待っている状態
 		RUNNING, // バッチ・オンラインアプリの実行中
 		FAIL, // バッチ・オンラインアプリの実行でエラーが発生して終了した状態
@@ -105,34 +108,16 @@ public class ClientInfo {
 	 * @return requestForClient
 	 */
 	public synchronized RequestForClient getRequestForClient() {
-		return requestForClient;
-	}
-
-
-	/**
-	 * 指定のrequestの処理開始を通知する
-	 *
-	 * @return 処理開始が可能な場合true, 開始できない場合はfalseを返す
-	 */
-	public synchronized boolean setRequestProccessing(RequestForClient request) {
-		if (this.requestForClient == request && !requestProccessing && request != RequestForClient.NONE && ! status.isEndStatus()) {
-			requestProccessing = true;
-			return true;
-		}
-		return false;
-	}
-
-	/**
-	 * requestProccessingフラグを落とす
-	 */
-	public synchronized void resetRequestProccessing() {
-		requestProccessing = false;
+		return requestForClientQueue.poll();
 	}
 
 	/**
 	 * @param status セットする status
 	 */
 	public synchronized void setStatus(Status newStatus) {
+		if (status != newStatus) {
+			statusChangeEventHandler.handleStatusChangeEvent(status, newStatus);
+		}
 		status = newStatus;
 	}
 
@@ -148,5 +133,26 @@ public class ClientInfo {
 	 */
 	public synchronized void setMessageFromClient(String messageFromClient) {
 		this.messageFromClient = messageFromClient;
+	}
+
+	/**
+	 * @return node
+	 */
+	public String getNode() {
+		return node;
+	}
+
+	/**
+	 * @param node セットする node
+	 */
+	public void setNode(String node) {
+		this.node = node;
+	}
+
+	/**
+	 * @param requestForClient セットする requestForClient
+	 */
+	public void setRequestForClient(RequestForClient requestForClient) {
+		requestForClientQueue.add(requestForClient);
 	}
 }

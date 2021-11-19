@@ -231,7 +231,7 @@ class TestDataGeneratorTest extends AbstractDbTestCase {
 		TestDataGenerator generator = new TestDataGenerator(config, new Random(seed), accessor);
 		generator.generateContractsToDb();
 		Path expectedFilePath = tempDir.resolve("contracts.db").toAbsolutePath();
-		String expectedFilePathString = PathUtils.toWls(expectedFilePath);
+		String expectedFilePathString = PathUtils.toWls(expectedFilePath, File.separatorChar == '\\');
 
 		getStmt().execute("copy contracts to '"+expectedFilePathString+"' with csv");
 		List<String> expected = Files.readAllLines(expectedFilePath);
@@ -271,7 +271,7 @@ class TestDataGeneratorTest extends AbstractDbTestCase {
 		g1.generateHistoryToDb();
 
 		Path expectedFilePath = tempDir.resolve("history.db").toAbsolutePath();
-		String expectedFilePathString = PathUtils.toWls(expectedFilePath);
+		String expectedFilePathString = PathUtils.toWls(expectedFilePath, File.separatorChar == '\\');
 
 		getStmt().execute("copy history to '"+expectedFilePathString+"' with csv");
 		List<String> expected = Files.readAllLines(expectedFilePath);
