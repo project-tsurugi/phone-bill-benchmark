@@ -1,0 +1,4 @@
+#!/bin/sh -xeu
+cd `dirname $0`/../../..
+pwd
+./gradlew run --args="Server src/test/config/multinode.properties"

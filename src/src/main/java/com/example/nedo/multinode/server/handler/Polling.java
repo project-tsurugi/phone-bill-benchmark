@@ -1,15 +1,16 @@
 package com.example.nedo.multinode.server.handler;
 
-import java.io.IOException;
-import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.example.nedo.multinode.NetworkIO.Message;
 import com.example.nedo.multinode.server.ClientInfo;
 import com.example.nedo.multinode.server.ClientInfo.RequestForClient;
-import com.example.nedo.multinode.server.ClientInfo.Status;
 import com.example.nedo.multinode.server.Server.ServerTask;
 
 public class Polling extends MessageHandlerBase {
+    private static final Logger LOG = LoggerFactory.getLogger(Polling.class);
+
 	/**
 	 * @param server このハンドラを呼び出すServerTask
 	 */
@@ -18,32 +19,14 @@ public class Polling extends MessageHandlerBase {
 	}
 
 	@Override
-	public void handle(List<String> msgBody) throws IOException {
-		// クライアント情報を取得
-		ClientInfo info = getTask().getClientInfo();
-		// メッセージを改行で分割
-		if (msgBody.size() != 2) {
-			throw new IOException("Illegal message body: " + String.join("\n", msgBody) );
-		}
-
-		// msgBodyの1行目はクライアントのステータス
-		String status = msgBody.get(0);
-		try {
-			info.setStatus(Status.valueOf(status));
-		} catch (IllegalStateException e) {
-			throw new IOException("Protocol error, illegal status: " + status);
-		}
-		// msgBodyの2行目がクライアントからのメッセージ
-		info.setMessageFromClient(msgBody.get(1));
-	}
-
-	@Override
 	public Message getPollingResponse() {
 		ClientInfo info = getTask().getClientInfo();
 		RequestForClient request = info.getRequestForClient();
-		if (info.setRequestProccessing(request)) {
-			return request.getPollingResponse();
+		if (request == null) {
+			return Message.REQUEST_NONE;
 		}
-		return Message.REQUEST_RUN;
+		LOG.info("Send request {} to client type = {}, node = {}, request = {}", request.name(), info.getType(),
+				info.getNode());
+		return request.getPollingResponse();
 	}
 }

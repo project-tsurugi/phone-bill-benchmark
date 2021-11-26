@@ -24,22 +24,21 @@ import com.example.nedo.testdata.ContractInfoReader;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public class HistoryUpdateApp extends AbstractOnlineApp {
-    private static final Logger LOG = LoggerFactory.getLogger(HistoryUpdateApp.class);
+	private static final Logger LOG = LoggerFactory.getLogger(HistoryUpdateApp.class);
 
 	private ContractInfoReader contractInfoReader;
 	private CallTimeGenerator callTimeGenerator;
-	private Updater[] updaters = {new Updater1(), new Updater2()};
+	private Updater[] updaters = { new Updater1(), new Updater2() };
 	private History history;
 	private Random random;
 
-	public HistoryUpdateApp(Config config, Random random, ContractBlockInfoAccessor accessor) throws SQLException, IOException {
+	public HistoryUpdateApp(Config config, Random random, ContractBlockInfoAccessor accessor)
+			throws SQLException, IOException {
 		super(config.historyUpdateRecordsPerMin, config, random);
 		this.callTimeGenerator = CallTimeGenerator.createCallTimeGenerator(random, config);
 		this.contractInfoReader = ContractInfoReader.create(config, accessor, random);
 		this.random = random;
 	}
-
-
 
 	void updateDatabase(History history) throws SQLException {
 		Connection conn = getConnection();
@@ -55,15 +54,11 @@ public class HistoryUpdateApp extends AbstractOnlineApp {
 			} else {
 				ps.setInt(4, history.charge);
 			}
-			ps.setInt(5, history.df ? 1: 0);
+			ps.setInt(5, history.df ? 1 : 0);
 			ps.setString(6, history.callerPhoneNumber);
 			ps.setTimestamp(7, history.startTime);
-			int ret = ps.executeUpdate();
-			if (ret != 1) {
-				throw new RuntimeException("Fail to update history: " + history);
-			}
+			ps.executeUpdate();
 		}
-
 	}
 
 	/**
@@ -75,16 +70,11 @@ public class HistoryUpdateApp extends AbstractOnlineApp {
 	 */
 	List<History> getHistories(Key key) throws SQLException {
 		List<History> list = new ArrayList<History>();
-		String sql = "select"
-				+ " h.recipient_phone_number, h.payment_categorty, h.start_time, h.time_secs,"
-				+ " h.charge, h.df"
-				+ " from history h"
+		String sql = "select" + " h.recipient_phone_number, h.payment_categorty, h.start_time, h.time_secs,"
+				+ " h.charge, h.df" + " from history h"
 				+ " inner join contracts c on c.phone_number = h.caller_phone_number"
-				+ " where c.start_date < h.start_time and"
-				+ " (h.start_time < c.end_date + 1"
-				+ " or c.end_date is null)"
-				+ " and c.phone_number = ? and c.start_date = ?"
-				+ " order by h.start_time";
+				+ " where c.start_date < h.start_time and" + " (h.start_time < c.end_date + 1"
+				+ " or c.end_date is null)" + " and c.phone_number = ? and c.start_date = ?" + " order by h.start_time";
 		Connection conn = getConnection();
 		try (PreparedStatement ps = conn.prepareStatement(sql)) {
 			ps.setString(1, key.phoneNumber);
@@ -110,9 +100,6 @@ public class HistoryUpdateApp extends AbstractOnlineApp {
 		return list;
 	}
 
-
-
-
 	@Override
 	protected void createData() throws SQLException {
 		List<History> histories = Collections.emptyList();
@@ -134,25 +121,22 @@ public class HistoryUpdateApp extends AbstractOnlineApp {
 	@Override
 	protected void updateDatabase() throws SQLException {
 		updateDatabase(history);
-		if (LOG.isDebugEnabled()) {
-			LOG.debug("ONLINE APP: Update 1 record from history(callerPhoneNumber = {}, startTime = {}).", history.callerPhoneNumber, history.startTime);
-		}
+		LOG.debug("ONLINE APP: Update 1 record from history(callerPhoneNumber = {}, startTime = {}).",
+				history.callerPhoneNumber, history.startTime);
 	}
-
 
 	/**
 	 * スケジュール作成時に、契約マスタのブロック情報をアップデートする
+	 *
 	 * @throws IOException
 	 */
 	@Override
 	protected void atScheduleListCreated(List<Long> scheduleList) throws IOException {
+		// TODO UT追加
 		contractInfoReader.loadActiveBlockNumberList();
 	}
 
-
-
 	// 通話履歴を更新するInterfaceと、Interfaceを実装したクラス
-
 
 	interface Updater {
 		/**

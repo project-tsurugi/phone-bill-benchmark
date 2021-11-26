@@ -5,8 +5,8 @@ package com.example.nedo.testdata;
  *
  */
 public class HistoryKey {
-	long startTime;
-	long callerPhoneNumber;
+	public long startTime;
+	public long callerPhoneNumber;
 
 	@Override
 	public int hashCode() {

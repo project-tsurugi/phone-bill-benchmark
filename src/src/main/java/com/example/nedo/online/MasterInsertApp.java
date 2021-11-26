@@ -43,10 +43,8 @@ public class MasterInsertApp extends AbstractOnlineApp {
 		try (PreparedStatement ps = conn.prepareStatement(TestDataGenerator.SQL_INSERT_TO_CONTRACT)) {
 			Contract c = testDataGenerator.setContract(ps);
 			ps.executeUpdate();
-			if (LOG.isDebugEnabled()) {
-				LOG.debug("ONLINE APP: Insert 1 record to contracs(phoneNumber = {}, startDate = {}).", c.phoneNumber,
-						c.startDate);
-			}
+			LOG.debug("ONLINE APP: Insert 1 record to contracs(phoneNumber = {}, startDate = {}).", c.phoneNumber,
+					c.startDate);
 		}
 	}
 }

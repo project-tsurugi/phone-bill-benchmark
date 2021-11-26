@@ -266,4 +266,11 @@ public abstract class AbstractOnlineApp implements Runnable{
 	public int getRetryCount() {
 		return retryCount;
 	}
+
+	/**
+	 * @return name
+	 */
+	public String getName() {
+		return name;
+	}
 }

@@ -266,4 +266,13 @@ public class GenerateHistoryTask implements Callable<Result> {
 			this.taskId = taskId;
 		}
 	}
+
+	/**
+	 * contractInfoReaderを返す(UT用)
+	 *
+	 * @return contractInfoReader
+	 */
+	public ContractInfoReader getContractInfoReader() {
+		return contractInfoReader;
+	}
 }

@@ -5,6 +5,6 @@ package com.example.nedo.multinode;
  */
 public enum ClientType {
 	ONLINE_APP,// オンラインアプリ
-	PHNEBILL,// 料金計算バッチ
+	PHONEBILL,// 料金計算バッチ
 	COMMAND_LINE,//コマンドラインクライアント
 }

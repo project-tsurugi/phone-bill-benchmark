@@ -60,9 +60,7 @@ public class CalculationTask implements Callable<Exception> {
 				CalculationTarget target;
 				try {
 					target = queue.take();
-					if (LOG.isDebugEnabled()) {
-						LOG.debug("{} contracts remains in the queue.", queue.size());
-					}
+					LOG.debug("{} contracts remains in the queue.", queue.size());
 				} catch (InterruptedException e) {
 					LOG.debug("InterruptedException caught and continue taking calculation_target", e);
 					continue;
@@ -102,9 +100,7 @@ public class CalculationTask implements Callable<Exception> {
 	 */
 	private void doCalc(CalculationTarget target) throws SQLException {
 		Contract contract = target.getContract();
-		if (LOG.isDebugEnabled()) {
-			LOG.debug("Start calcuration for  contract: {}.", contract);
-		}
+		LOG.debug("Start calcuration for  contract: {}.", contract);
 		Date start = target.getStart();
 		Date end = target.getEnd();
 		CallChargeCalculator callChargeCalculator = target.getCallChargeCalculator();
@@ -145,9 +141,7 @@ public class CalculationTask implements Callable<Exception> {
 		if (config.transactionScope == TransactionScope.CONTRACT) {
 			conn.commit();
 		}
-		if (LOG.isDebugEnabled()) {
-			LOG.debug("End calcuration for  contract: {}.", contract);
-		}
+		LOG.debug("End calcuration for  contract: {}.", contract);
 	}
 
 	/**
@@ -161,12 +155,10 @@ public class CalculationTask implements Callable<Exception> {
 	 */
 	private void updateBilling(Connection conn, Contract contract, BillingCalculator billingCalculator,
 			Date targetMonth) throws SQLException {
-		if (LOG.isDebugEnabled()) {
-			LOG.debug("Inserting to billing table: phone_number = {}, target_month = {}"
-					+ ", basic_charge = {}, metered_charge = {}, billing_amount = {}, batch_exec_id = {} ",
-					contract.phoneNumber, targetMonth, billingCalculator.getBasicCharge(),
-					billingCalculator.getMeteredCharge(), billingCalculator.getBillingAmount(), batchExecId);
-		}
+		LOG.debug("Inserting to billing table: phone_number = {}, target_month = {}"
+				+ ", basic_charge = {}, metered_charge = {}, billing_amount = {}, batch_exec_id = {} ",
+				contract.phoneNumber, targetMonth, billingCalculator.getBasicCharge(),
+				billingCalculator.getMeteredCharge(), billingCalculator.getBillingAmount(), batchExecId);
 		String sql = "insert into billing("
 				+ "phone_number, target_month, basic_charge, metered_charge, billing_amount, batch_exec_id)"
 				+ " values(?, ?, ?, ?, ?, ?)";
@@ -180,7 +172,4 @@ public class CalculationTask implements Callable<Exception> {
 			ps.executeUpdate();
 		}
 	}
-
-
-
 }

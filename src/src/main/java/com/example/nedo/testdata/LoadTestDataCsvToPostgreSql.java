@@ -1,5 +1,6 @@
 package com.example.nedo.testdata;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
@@ -65,7 +66,7 @@ public class LoadTestDataCsvToPostgreSql extends ExecutableCommand {
 		long startTime = System.currentTimeMillis();
 
 		for (Path path : pathList) {
-			String pathStr = PathUtils.toWls(path.toAbsolutePath());
+			String pathStr = PathUtils.toWls(path.toAbsolutePath(), File.separatorChar == '\\');
 			sql = "copy " + tablename + " from '" + pathStr + "' with csv";
 			LOG.info("start sql: " + sql);
 			stmt.execute(sql);

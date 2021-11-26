@@ -64,14 +64,10 @@ public class Duration {
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("Duration [start=");
-		builder.append(getStatDate());
-		builder.append("(");
 		builder.append(start);
-		builder.append("), end=");
-		builder.append(getEndDate());
-		builder.append("(");
+		builder.append(", end=");
 		builder.append(end);
-		builder.append(")]");
+		builder.append("]");
 		return builder.toString();
 	}
 }

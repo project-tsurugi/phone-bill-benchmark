@@ -10,6 +10,7 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -102,6 +103,9 @@ public class NetworkIO implements Closeable {
 		List<String> list = new ArrayList<String>();
 		for(;;) {
 			String line = readLine();
+			if (line == null) {
+				throw new IOException("Socket was closed,");
+			}
 			if (line.equals(END_OF_MESSAGE)) {
 				return list;
 			}
@@ -115,10 +119,7 @@ public class NetworkIO implements Closeable {
 	 */
 	private String readLine() throws IOException {
 		String line = reader.readLine();
-		if (line == null) {
-			throw new IOException("Socket was closed,");
-		}
-		LOG.info("read line: {}", line);
+		LOG.debug("read line: {}", line);
 		return line;
 	}
 
@@ -150,21 +151,43 @@ public class NetworkIO implements Closeable {
 	/**
 	 * サーバに対してポーリングする
 	 *
-	 * @param status クライアントのステータス
-	 * @param clientMessage サーバに渡すクライアントの状態を表す文字列
-	 * @return サーバからのレスポンス
+	 * @param expectedMessage サーバから通知される可能性があるメッセージのセット
+	 * @return
 	 * @throws IOException
 	 */
-	public synchronized Message poll(Status status, String clientMessage) throws IOException {
-		String msgBody = status.name() + "\n" + clientMessage;
-		writeMessage(Message.POLLING, msgBody);
-		Message msg = readMessage();
-		checkPollingResponse(msg);
-		List<String> body = readMessageBody();
-		if (!body.isEmpty()) {
-			throw new IOException("Unexpected message body: " + String.join("\n", body));
+	public synchronized Message poll(Set<Message> expectedMessage) throws IOException {
+		for (;;) {
+			writeMessage(Message.POLLING, null);
+			Message msg = readMessage();
+			List<String> body = readMessageBody();
+			if (!body.isEmpty()) {
+				throw new IOException("Unexpected message body: " + String.join("\n", body));
+			}
+			if (msg == null) {
+				throw new IOException("Socket was closed,");
+			}
+			if (msg == Message.REQUEST_NONE) {
+				sleepForPollingInterval();
+				continue;
+			}
+			if (expectedMessage.contains(msg)) {
+				return msg;
+			}
+			throw new IOException("Protocol error, invalid message recived: " + msg.name());
 		}
-		return msg;
+	}
+
+
+	/**
+	 * サーバにクライアントのステータスを通知する
+	 *
+	 * @param status クライアントのステータス
+	 * @param clientMessage サーバに渡すクライアントの状態を表す文字列
+	 * @throws IOException
+	 */
+	public synchronized void updateStatus(Status status, String clientMessage) throws IOException {
+		String msgBody = status.name() + "\n" + clientMessage;
+		writeMessage(Message.UPDATE_STATUS, msgBody);
 	}
 
 	/**
@@ -175,6 +198,9 @@ public class NetworkIO implements Closeable {
 		Message msg;
 		try {
 			String line = readLine();
+			if (line == null) {
+				return null;
+			}
 			msg = Message.valueOf(line);
 		} catch (IllegalArgumentException e) {
 			throw new IOException("Protocol error", e);
@@ -221,6 +247,9 @@ public class NetworkIO implements Closeable {
 	public WholeMessage recieveFromClient() throws IOException {
 		WholeMessage ret = new WholeMessage();
 		Message msg = readMessage();
+		if (msg == null) {
+			return null;
+		}
 		if (msg.type == Type.POLLING_RESPONSE) {
 			throw new IOException("Protocol error, invalid message type: " + msg.name());
 		}
@@ -234,9 +263,12 @@ public class NetworkIO implements Closeable {
 	/**
 	 * メッセージを定義する列挙型、この文字列表現をメッセージヘッダとして用いる
 	 */
+	/**
+	 *
+	 */
 	public enum Message {
 		/**
-		 * オンラインアプリクライアント接続.
+		 * オンラインアプリクライアントの初期化.
 		 * <p>
 		 * サーバはコンフィグ情報を返す
 		 */
@@ -250,11 +282,11 @@ public class NetworkIO implements Closeable {
 		INIT_PHONE_BILL(Type.REQUEST),
 
 		/**
-		 * コマンドラインクライアントの初期化
+		 * 料金計算バッチクライアントの終了.
 		 * <p>
-		 * サーバはメッセージボディに従い処理をする
+		 * サーバはオンラインアプリを終了させる
 		 */
-		INIT_COMMAND_LINE_CLIENT(Type.REQUEST),
+		END_PHONE_BILL(Type.NOTIFICATION),
 
 		/**
 		 * クライアントからポーリング
@@ -264,15 +296,16 @@ public class NetworkIO implements Closeable {
 		 */
 		POLLING(Type.POLLING),
 
+
+		/**
+		 * クライアントのステータス変更通知
+		 */
+		UPDATE_STATUS(Type.NOTIFICATION),
+
 		// クライアントに対するリクエスト
 
 		/**
 		 * プロセス停止
-		 */
-		REQUEST_SHUTDOWN(Type.POLLING_RESPONSE),
-
-		/**
-		 * バッチまたはオンラインアプリの停止
 		 */
 		REQUEST_STOP(Type.POLLING_RESPONSE),
 
@@ -305,8 +338,22 @@ public class NetworkIO implements Closeable {
 		 */
 		GET_ACTIVE_BLOCK_INFO(Type.REQUEST),
 
-		// その他のメッセージ
+		// コマンドラインクライアントからの要求
 
+		/**
+		 * クラスタのステータスを取得
+		 */
+		GET_CLUSTER_STATUS(Type.REQUEST),
+
+		/**
+		 * クラスタのシャットダウン
+		 */
+		SHUTDOWN_CLUSTER(Type.REQUEST),
+
+		/**
+		 * オンラインアプリとバッチを実行
+		 */
+		START_EXECUTION(Type.REQUEST),
 		;
 
 
