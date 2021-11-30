@@ -1,5 +1,6 @@
 package com.example.nedo.multinode.server;
 
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.Queue;
 import java.util.Set;
@@ -16,6 +17,7 @@ public class ClientInfo {
 	private String messageFromClient;
 	private String node;
 	private StatusChangeEventHandler statusChangeEventHandler;
+	private Instant start;
 
 	public ClientInfo(ClientType type, StatusChangeEventHandler statusChangeEventHandler) {
 		this.type = type;
@@ -154,5 +156,19 @@ public class ClientInfo {
 	 */
 	public void setRequestForClient(RequestForClient requestForClient) {
 		requestForClientQueue.add(requestForClient);
+	}
+
+	/**
+	 * @return start
+	 */
+	public Instant getStart() {
+		return start;
+	}
+
+	/**
+	 * @param start セットする start
+	 */
+	public void setStart(Instant start) {
+		this.start = start;
 	}
 }

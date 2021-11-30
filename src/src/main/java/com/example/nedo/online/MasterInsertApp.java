@@ -26,6 +26,10 @@ public class MasterInsertApp extends AbstractOnlineApp {
      */
     private TestDataGenerator testDataGenerator;
 
+    /**
+     * 契約情報
+     */
+    private Contract contract;
 
 	public MasterInsertApp(Config config, Random random, ContractBlockInfoAccessor accessor) throws SQLException, IOException {
 		super(config.masterInsertReccrdsPerMin, config, random);
@@ -33,18 +37,18 @@ public class MasterInsertApp extends AbstractOnlineApp {
 	}
 
 	@Override
-	protected void createData() throws SQLException {
-		// Notihng to do.
+	protected void createData() throws SQLException, IOException {
+		contract = testDataGenerator.getNewContract();
 	}
 
 	@Override
 	protected void updateDatabase() throws SQLException, IOException {
 		Connection conn = getConnection();
 		try (PreparedStatement ps = conn.prepareStatement(TestDataGenerator.SQL_INSERT_TO_CONTRACT)) {
-			Contract c = testDataGenerator.setContract(ps);
+			testDataGenerator.setContract(ps, contract);
 			ps.executeUpdate();
-			LOG.debug("ONLINE APP: Insert 1 record to contracs(phoneNumber = {}, startDate = {}).", c.phoneNumber,
-					c.startDate);
+			LOG.debug("ONLINE APP: Insert 1 record to contracs(phoneNumber = {}, startDate = {}).",
+					contract.phoneNumber, contract.startDate);
 		}
 	}
 }

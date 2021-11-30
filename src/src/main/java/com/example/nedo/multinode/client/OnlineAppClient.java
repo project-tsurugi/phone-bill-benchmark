@@ -4,11 +4,17 @@ import java.io.IOException;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.sql.SQLException;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,11 +53,26 @@ public class OnlineAppClient extends ExecutableCommand{
 			List<AbstractOnlineApp>list = PhoneBill.createOnlineApps(config, accessor);
 			final ExecutorService service = list.isEmpty() ? null : Executors.newFixedThreadPool(list.size());
 			io.updateStatus(Status.READY, "Waiting.");
-			io.poll(Collections.singleton(Message.REQUEST_RUN));
+			Message message = io.waitReceiveMessageFromServer(new HashSet<>(Arrays.asList(Message.REQUEST_STOP, Message.REQUEST_RUN)));
+			if (message == Message.REQUEST_STOP) {
+				io.updateStatus(Status.RUNNING, "Aborted before running.");
+				return;
+			}
 			try {
+				// オンラインアプリを開始
 				list.stream().forEach(task -> service.submit(task));
 				io.updateStatus(Status.RUNNING, "Stareted.");
-				io.poll(Collections.singleton(Message.REQUEST_STOP));
+				Instant start = Instant.now();
+
+
+				// サーバに処理状況を送りながらサーバからの終了指示まつ
+				while (io.poll(Collections.singleton(Message.REQUEST_STOP)) == Message.REQUEST_NONE) {
+					String status = createStatusMessage(start, Instant.now(), list);
+					io.updateStatus(Status.RUNNING, status);
+					io.sleepForPollingInterval();
+				}
+
+				// オンラインアプリを終了する
 				list.stream().forEach(task -> task.terminate());
 				if (service != null) {
 					service.shutdown();
@@ -67,5 +88,20 @@ public class OnlineAppClient extends ExecutableCommand{
 		}
 	}
 
-
+	/**
+	 * 現在のステータスを表す文字列を作成する
+	 *
+	 * @param start
+	 * @param now
+	 * @param list
+	 * @return
+	 */
+	static String createStatusMessage(Instant start, Instant now, List<AbstractOnlineApp> list) {
+		double uptime = Duration.between(start, now).toMillis() / 1000d;
+		Map<String, Integer> counterMap = list.stream().collect(
+				Collectors.toMap(AbstractOnlineApp::getBaseName, AbstractOnlineApp::getExecCount, (c1, c2) -> c1 + c2));
+		String counts = counterMap.entrySet().stream().map(e -> e.getKey() + " = " + e.getValue()).sorted()
+				.collect(Collectors.joining(", "));
+		return "uptime = " + uptime + " sec, exec count(" + counts + ")";
+	}
 }

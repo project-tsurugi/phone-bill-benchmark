@@ -14,12 +14,10 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -45,6 +43,10 @@ import com.example.nedo.testdata.SingleProcessContractBlockManager;
 public class PhoneBill extends ExecutableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(PhoneBill.class);
 	private long elapsedTime = 0; // バッチの処理時間
+	private CalculationTargetQueue queue;
+	private String finalMessage;
+	private AtomicBoolean abortRequested = new AtomicBoolean(false);
+
 	Config config;
 
 	public static void main(String[] args) throws Exception {
@@ -146,9 +148,8 @@ public class PhoneBill extends ExecutableCommand {
 	 * @throws Exception
 	 */
 	void doCalc(Date start, Date end) throws SQLException {
+		abortRequested.set(false);
 		LOG.info("Phone bill batch started.");
-
-		AtomicBoolean abortRequested = new AtomicBoolean(false);
 		String batchExecId = UUID.randomUUID().toString();
 		int threadCount = config.threadCount;
 		boolean sharedConnection = config.sharedConnection;
@@ -156,7 +157,7 @@ public class PhoneBill extends ExecutableCommand {
 		ExecutorService service = null;
 		Set<Future<Exception>> futures = new HashSet<>(threadCount);
 		List<Connection> connections = new ArrayList<Connection>(threadCount);
-		BlockingQueue<CalculationTarget> queue = new LinkedBlockingDeque<CalculationTarget>();
+		initQueue(threadCount);
 
 		long startTime = System.currentTimeMillis();
 		try {
@@ -193,25 +194,38 @@ public class PhoneBill extends ExecutableCommand {
 						BillingCalculator billingCalculator = new SimpleBillingCalculator();
 						CalculationTarget target = new CalculationTarget(contract, billingCalculator,
 								callChargeCalculator, start, end, false);
-						putToQueue(queue, target);
+						queue.put(target);
 						;
 					}
 				}
 			}
 		} finally {
 			// EndOfTaskをキューに入れる
-			for (int i =0; i < threadCount; i++) {
-				putToQueue(queue, CalculationTarget.getEndOfTask());
-			}
+			queue.setInputClosed();
 			if (service != null && !service.isTerminated()) {
 				service.shutdown();
 			}
 			cleanup(futures, connections, abortRequested);
+			queue.clear();
 		}
 		elapsedTime = System.currentTimeMillis() - startTime;
 		String format = "Billings calculated in %,.3f sec ";
-		LOG.info(String.format(format, elapsedTime / 1000d));
+		finalMessage = String.format(format, elapsedTime / 1000d);
+		LOG.info(finalMessage);
 	}
+
+	/**
+	 * @param threadCount
+	 */
+	private synchronized void initQueue(int threadCount) {
+		queue = new CalculationTargetQueue(threadCount);
+	}
+
+	public synchronized String getStatus() {
+		return queue == null ? "Initializing": queue.getStatus();
+	}
+
+
 
 	/**
 	 * @param conn
@@ -283,22 +297,6 @@ public class PhoneBill extends ExecutableCommand {
 		}
 	}
 
-	/**
-	 * queueにtargetを追加する。InterruptedException発生時は成功するまでリトライする。
-	 *
-	 * @param queue
-	 * @param target
-	 */
-	private void putToQueue(BlockingQueue<CalculationTarget> queue, CalculationTarget target) {
-		for(;;) {
-			try {
-				queue.put(target);
-				break;
-			} catch (InterruptedException e) {
-				LOG.debug("InterruptedException caught and continue puting calculation_target", e);
-			}
-		}
-	}
 
 
 	private Contract getContract(ResultSet rs) throws SQLException {
@@ -319,4 +317,19 @@ public class PhoneBill extends ExecutableCommand {
 		return elapsedTime;
 	}
 
+	/**
+	 * 終了時のメッセージを返す
+	 *
+	 * @return
+	 */
+	public String getFinalMessage() {
+		return finalMessage;
+	}
+
+	/**
+	 * バッチを中断する
+	 */
+	public void abort() {
+		abortRequested.set(true);
+	}
 }

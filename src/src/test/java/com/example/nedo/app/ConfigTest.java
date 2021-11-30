@@ -210,6 +210,7 @@ class ConfigTest {
 		assertEquals(1, config.masterInsertThreadCount);
 		assertEquals(1, config.historyUpdateThreadCount);
 		assertEquals(1, config.historyInsertThreadCount);
+		assertEquals(false, config.skipDatabaseAccess);
 
 		/* その他のパラメータ */
 		assertEquals(0, config.randomSeed);
@@ -276,6 +277,7 @@ class ConfigTest {
 		assertEquals(3, config.masterInsertThreadCount);
 		assertEquals(4, config.historyUpdateThreadCount);
 		assertEquals(5, config.historyInsertThreadCount);
+		assertEquals(true, config.skipDatabaseAccess);
 
 
 		/* その他のパラメータ */

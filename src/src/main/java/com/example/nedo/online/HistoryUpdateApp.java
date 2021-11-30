@@ -108,6 +108,9 @@ public class HistoryUpdateApp extends AbstractOnlineApp {
 			Key key = contractInfoReader.getKeyUpdatingContract();
 
 			// 通話履歴テーブルから、当該契約の有効期間内に当該契約の電話番号で発信した履歴を取り出す
+			if (skipDatabaseAccess) {
+				return;
+			}
 			histories = getHistories(key);
 		}
 

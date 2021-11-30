@@ -3,15 +3,20 @@ package com.example.nedo.multinode.server;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
+import java.sql.SQLException;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -25,6 +30,7 @@ import com.example.nedo.multinode.NetworkIO;
 import com.example.nedo.multinode.NetworkIO.Message;
 import com.example.nedo.multinode.NetworkIO.Type;
 import com.example.nedo.multinode.NetworkIO.WholeMessage;
+import com.example.nedo.multinode.server.ClientInfo.Status;
 import com.example.nedo.multinode.server.handler.GetActiveBlockInfo;
 import com.example.nedo.multinode.server.handler.GetClusterStatus;
 import com.example.nedo.multinode.server.handler.GetNewBlock;
@@ -32,6 +38,7 @@ import com.example.nedo.multinode.server.handler.InitOnlineApp;
 import com.example.nedo.multinode.server.handler.InitPhoneBill;
 import com.example.nedo.multinode.server.handler.MessageHandlerBase;
 import com.example.nedo.multinode.server.handler.Polling;
+import com.example.nedo.multinode.server.handler.ShutdownCluster;
 import com.example.nedo.multinode.server.handler.StartExecution;
 import com.example.nedo.multinode.server.handler.SubmitBlock;
 import com.example.nedo.multinode.server.handler.UpdateStatus;
@@ -40,6 +47,11 @@ import com.example.nedo.testdata.SingleProcessContractBlockManager;
 
 public class Server extends ExecutableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(Server.class);
+
+    /**
+     * シャットダウン要求の有無を表すフラグ
+     */
+    private AtomicBoolean shutdownRequested = new AtomicBoolean(false);
 
     /**
      * サーバプロセス内のスレッドを管理するExecutorService
@@ -86,9 +98,11 @@ public class Server extends ExecutableCommand {
 
 	/**
 	 * コマンドを実行する
+	 * @throws SQLException
+	 * @throws InterruptedException
 	 */
 	@Override
-	public void execute(Config config) throws Exception {
+	public void execute(Config config) throws SQLException, InterruptedException  {
 		this.config = config;
 		LOG.info("Starting server...");
 
@@ -96,43 +110,54 @@ public class Server extends ExecutableCommand {
 		singleProcessContractBlockManager = new SingleProcessContractBlockManager(initializer);
 
 		ListenerTask listenerTask = new ListenerTask();
-		Future<ListenerTaskResult> future =  service.submit(listenerTask);
-		// TODO 終了処理を書く
-		ListenerTaskResult result =  future.get();
+		Future<?> future = service.submit(listenerTask);
+		while (!future.isDone()) {
+			try {
+				future.get(1, TimeUnit.SECONDS);
+			} catch (InterruptedException e) {
+				continue;
+			} catch (ExecutionException e) {
+				break;
+			} catch (TimeoutException e) {
+				if (shutdownRequested.get()) {
+					future.cancel(true);
+				}
+			}
+		}
+		if (service != null) {
+			service.shutdown();
+			service.awaitTermination(5, TimeUnit.MINUTES);
+		}
 	}
-
 
 	/**
 	 * クライアントからの接続要求を処理するタスク
 	 *
 	 */
-	public class ListenerTask implements Callable<ListenerTaskResult> {
-
+	public class ListenerTask implements Runnable {
 		@Override
-		public ListenerTaskResult call() throws IOException {
-			// TODO クライアントからの要求で終了する処理が必要
+		public void run() {
 			Thread.currentThread().setName("SocketListener");
-			try (ServerSocket serverSocket = new ServerSocket(config.listenPort)) {
+			try (ServerSocket serverSocket = new ServerSocket(config.listenPort, 100)) {
 				LOG.info("Listening port {}", config.listenPort);
+				serverSocket.setSoTimeout(1000);
 				for (;;) {
-					Socket socket = serverSocket.accept();
-					ServerTask task = new ServerTask(socket);
-					// TODO 例外処理を入れる
-					Future<?> future =service.submit(task);
+					try {
+						Socket socket = serverSocket.accept();
+						ServerTask task = new ServerTask(socket);
+						service.submit(task);
+					} catch (SocketTimeoutException e) {
+						if (shutdownRequested.get()) {
+							break;
+						}
+					}
 				}
+			} catch (IOException e) {
+				LOG.warn("An exception was caught in the listener task. The process will be terminated.", e);
 			}
 		}
 
 	}
-
-	/**
-	 * タスクの終了結果
-	 *
-	 */
-	public static class ListenerTaskResult {
-		ListenerTask task;
-	}
-
 
 	/**
 	 * アクセプトしたソケットを処理するタスク.
@@ -189,6 +214,7 @@ public class Server extends ExecutableCommand {
 			// コマンドラインクライアントのコマンド
 			map.put(Message.GET_CLUSTER_STATUS, new GetClusterStatus(this));
 			map.put(Message.START_EXECUTION, new StartExecution(this));
+			map.put(Message.SHUTDOWN_CLUSTER, new ShutdownCluster(this, shutdownRequested));
 		}
 
 		@Override
@@ -211,9 +237,15 @@ public class Server extends ExecutableCommand {
 					}
 					// ステータスが終了ステータスになった => クライアントの終了通知
 					if (clientInfo != null && clientInfo.getStatus().isEndStatus()) {
-						LOG.info("Receive a message the client has finished, last status = {}", clientInfo.getStatus().name());
+						LOG.info("Receive a message the client has finished from node: {}.", clientInfo.getNode());
 						break;
 					}
+				}
+				if (clientInfo != null && !clientInfo.getStatus().isEndStatus()) {
+					// 終了ステータスになっていないのに接続が切れた場合
+					clientInfo.setStatus(Status.DOWN);
+					clientInfo.setMessageFromClient("Connection closed by the client.");
+					LOG.info("Connection closed by the clien at node: {}.", clientInfo.getNode());
 				}
 			} catch (IOException | RuntimeException e) {
 				LOG.warn("IO error, aborting server task....", e);
@@ -248,6 +280,7 @@ public class Server extends ExecutableCommand {
 			this.clientInfo = clientInfo;
 			if (clientInfo.getType() != ClientType.COMMAND_LINE) {
 				clientInfo.setNode(socket.getInetAddress().getHostName());
+				clientInfo.setStart(Instant.now());
 				clientInfos.add(clientInfo);
 			}
 		}

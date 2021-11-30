@@ -89,11 +89,11 @@ public class NetworkIO implements Closeable {
 	 * @param msg
 	 * @throws IOException
 	 */
-	public synchronized void notifyMessage(Message msg) throws IOException {
+	public synchronized void notifyMessage(Message msg, String msgBody) throws IOException {
 		if (msg.type != Type.NOTIFICATION) {
 			throw new IllegalArgumentException();
 		}
-		writeMessage(msg, null);
+		writeMessage(msg, msgBody);
 	}
 
 	/**
@@ -149,32 +149,44 @@ public class NetworkIO implements Closeable {
 	}
 
 	/**
-	 * サーバに対してポーリングする
+	 * サーバからメッセージを待つ
 	 *
 	 * @param expectedMessage サーバから通知される可能性があるメッセージのセット
-	 * @return
+	 * @return サーバからのメッセージ
 	 * @throws IOException
 	 */
-	public synchronized Message poll(Set<Message> expectedMessage) throws IOException {
+	public Message waitReceiveMessageFromServer(Set<Message> expectedMessage) throws IOException {
 		for (;;) {
-			writeMessage(Message.POLLING, null);
-			Message msg = readMessage();
-			List<String> body = readMessageBody();
-			if (!body.isEmpty()) {
-				throw new IOException("Unexpected message body: " + String.join("\n", body));
-			}
-			if (msg == null) {
-				throw new IOException("Socket was closed,");
-			}
+			Message msg = poll(expectedMessage);
 			if (msg == Message.REQUEST_NONE) {
 				sleepForPollingInterval();
 				continue;
 			}
-			if (expectedMessage.contains(msg)) {
-				return msg;
-			}
-			throw new IOException("Protocol error, invalid message recived: " + msg.name());
+			return msg;
 		}
+	}
+
+	/**
+	 * サーバからのメッセージをポーリングする
+	 *
+	 * @param expectedMessage サーバから通知される可能性があるメッセージのセット
+	 * @return サーバからのメッセージ
+	 * @throws IOException
+	 */
+	public synchronized Message poll(Set<Message> expectedMessage) throws IOException {
+		writeMessage(Message.POLLING, null);
+		Message msg = readMessage();
+		List<String> body = readMessageBody();
+		if (!body.isEmpty()) {
+			throw new IOException("Unexpected message body: " + String.join("\n", body));
+		}
+		if (msg == null) {
+			throw new IOException("Socket was closed,");
+		}
+		if (expectedMessage.contains(msg) || msg == Message.REQUEST_NONE) {
+			return msg;
+		}
+		throw new IOException("Protocol error, invalid message recived: " + msg.name());
 	}
 
 

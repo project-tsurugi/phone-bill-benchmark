@@ -19,7 +19,7 @@ final class ContractBlockInfoAccessorClient implements ContractBlockInfoAccessor
 
 	@Override
 	public void submit(int blockNumber) throws IOException {
-		io.notifyMessage(Message.SUBMIT_BLOCK);
+		io.notifyMessage(Message.SUBMIT_BLOCK, Integer.toString(blockNumber));
 	}
 
 	@Override

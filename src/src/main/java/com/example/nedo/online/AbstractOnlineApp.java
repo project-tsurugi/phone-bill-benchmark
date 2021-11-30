@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,18 +31,17 @@ public abstract class AbstractOnlineApp implements Runnable{
 	/**
 	 * 実行回数
 	 */
-	private int execCount = 0;
+	private AtomicInteger execCount = new AtomicInteger(0);
 
 	/**
 	 * リトライ回数
 	 */
-	private int retryCount = 0;
-
+	private AtomicInteger retryCount = new AtomicInteger(0);
 
 	/**
 	 * 終了リクエストの有無を表すフラグ
 	 */
-	private volatile boolean terminationRequest = false;
+	private volatile boolean terminationRequested = false;
 
 	/*
 	 * 1分間に実行するトランザクション数、負数の場合は連続で実行する
@@ -65,15 +65,27 @@ public abstract class AbstractOnlineApp implements Runnable{
 
 
 	/**
+	 * データベースアクセスをスキップすることを示すフラグ
+	 */
+	protected final boolean skipDatabaseAccess;
+
+
+	/**
 	 * タスク名(=スレッド名)
 	 */
 	private String name;
+
+	/**
+	 * タスク名のベース
+	 */
+	private String baseName;
 
 
 	public AbstractOnlineApp(int txPerMin, Config config, Random random) throws SQLException {
 		this.txPerMin = txPerMin;
 		this.random = random;
 		conn = DBUtils.getConnection(config);
+		skipDatabaseAccess = config.skipDatabaseAccess;
 		setName(0);
 	}
 
@@ -83,7 +95,8 @@ public abstract class AbstractOnlineApp implements Runnable{
 	 * @param num
 	 */
 	public void setName(int num) {
-		name = this.getClass().getName().replaceAll(".*\\.", "") + "-" + String.format("%03d", num);
+		baseName = this.getClass().getName().replaceAll(".*\\.", "");
+		name = baseName + "-" + String.format("%03d", num);
 	}
 
 	/**
@@ -101,16 +114,18 @@ public abstract class AbstractOnlineApp implements Runnable{
 		createData();
 		for (;;) {
 			try {
-				updateDatabase();
-				conn.commit();
-				execCount++;
+				if (!skipDatabaseAccess) {
+					updateDatabase();
+					conn.commit();
+				}
+				execCount.incrementAndGet();
 				break;
 			} catch (SQLException e) {
 				if (DBUtils.isRetriableSQLException(e)) {
 					LOG.debug("{} caught a retriable exception, ErrorCode = {}, SQLStatus = {}.",
 							this.getClass().getName(), e.getErrorCode(), e.getSQLState(), e);
 					conn.rollback();
-					retryCount++;
+					retryCount.incrementAndGet();
 				} else {
 					throw e;
 				}
@@ -121,8 +136,9 @@ public abstract class AbstractOnlineApp implements Runnable{
 	/**
 	 * DBに入れるデータを生成する
 	 * @throws SQLException
+	 * @throws IOException
 	 */
-	protected abstract void createData() throws SQLException;
+	protected abstract void createData() throws SQLException, IOException;
 
 	/**
 	 * createDataで生成したデータをDBに反映する
@@ -144,7 +160,7 @@ public abstract class AbstractOnlineApp implements Runnable{
 			LOG.info("{} started.", name);
 			startTime = System.currentTimeMillis();
 			scheduleList.add(startTime);
-			while (!terminationRequest) {
+			while (!terminationRequested) {
 				schedule();
 			}
 			LOG.info("{} terminated.", name);
@@ -242,7 +258,7 @@ public abstract class AbstractOnlineApp implements Runnable{
 	 * このオンラインアプリケーションをアボートする
 	 */
 	public void terminate() {
-		terminationRequest = true;
+		terminationRequested = true;
 	}
 
 
@@ -257,14 +273,14 @@ public abstract class AbstractOnlineApp implements Runnable{
 	 * @return execCount
 	 */
 	public int getExecCount() {
-		return execCount;
+		return execCount.intValue();
 	}
 
 	/**
 	 * @return retryCount
 	 */
 	public int getRetryCount() {
-		return retryCount;
+		return retryCount.intValue();
 	}
 
 	/**
@@ -272,5 +288,12 @@ public abstract class AbstractOnlineApp implements Runnable{
 	 */
 	public String getName() {
 		return name;
+	}
+
+	/**
+	 * @return baseName
+	 */
+	public String getBaseName() {
+		return baseName;
 	}
 }

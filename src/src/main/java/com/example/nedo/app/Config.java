@@ -216,6 +216,14 @@ public class Config implements Cloneable {
 	public int historyInsertRecordsPerTransaction;
 	private static final String HISTORY_INSERT_RECORDS_PER_TRANSACTION = "history.insert.records.per.transaction";
 
+
+	/**
+	 * オンラインアプリケーションのDBアクセスをスキップする(オンラインアプリのエンジンの性能テスト用)
+	 */
+	public boolean skipDatabaseAccess;
+	private static final String SKIP_DATABASE_ACCESS = "skip.database.access";
+
+
 	/* jdbcのパラメータ */
 	public String url;
 	public String user;
@@ -422,8 +430,9 @@ public class Config implements Cloneable {
 
 		historyInsertTransactionPerMin = getInt(HISTORY_INSERT_TRANSACTION_PER_MIN, 0);
 		historyInsertThreadCount = getInt(HISTORY_INSERT_THREAD_COUNT, 1);
-
 		historyInsertRecordsPerTransaction = getInt(HISTORY_INSERT_RECORDS_PER_TRANSACTION, 1);
+
+		skipDatabaseAccess = getBoolean(SKIP_DATABASE_ACCESS, false);
 
 		//  CSVデータに関するパラメータ
 		csvDir = getString(CSV_DIR, "/var/lib/csv");
@@ -735,6 +744,7 @@ public class Config implements Cloneable {
 		sb.append(String.format(format, HISTORY_INSERT_TRANSACTION_PER_MIN, historyInsertTransactionPerMin));
 		sb.append(String.format(format, HISTORY_INSERT_RECORDS_PER_TRANSACTION, historyInsertRecordsPerTransaction));
 		sb.append(String.format(format, HISTORY_INSERT_THREAD_COUNT, historyInsertThreadCount));
+		sb.append(String.format(format, SKIP_DATABASE_ACCESS, skipDatabaseAccess));
 		sb.append(System.lineSeparator());
 		sb.append(String.format(commentFormat, "スレッドに関するパラメータ"));
 		sb.append(String.format(format, THREAD_COUNT, threadCount));

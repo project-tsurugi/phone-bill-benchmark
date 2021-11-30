@@ -1,5 +1,8 @@
 package com.example.nedo.multinode.server.handler;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -23,12 +26,14 @@ public class GetClusterStatus extends MessageHandlerBase {
 	 */
 	static String createStatusReport(Set<ClientInfo> clientInfos) {
 		Set<String> lines = new TreeSet<String>();
-		String format = "%-10s %-15s %-13s %s";
+		String format = "%-13s %-10s %-15s %-9s %s";
 
-		String header = String.format(format, "Type", "Node", "Status", "Message from client");
+		String header = String.format(format, "Start", "Type", "Node", "Status", "Message from client");
 		int maxLen = header.length();
-		for(ClientInfo info: clientInfos) {
-			String line = String.format(format, info.getType(), info.getNode(), info.getStatus(),
+		for (ClientInfo info : clientInfos) {
+			String startTime = DateTimeFormatter.ofPattern("HH:mm:ss")
+					.format(LocalDateTime.ofInstant(info.getStart(), ZoneId.systemDefault()));
+			String line = String.format(format, startTime, info.getType(), info.getNode(), info.getStatus(),
 					info.getMessageFromClient());
 			if (maxLen < line.length()) {
 				maxLen = line.length();

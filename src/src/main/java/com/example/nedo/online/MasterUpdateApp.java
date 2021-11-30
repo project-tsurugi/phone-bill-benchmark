@@ -142,6 +142,10 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 		// 更新対象の電話番号を取得
 		Key key = contractInfoReader.getKeyUpdatingContract();
 
+		if (skipDatabaseAccess) {
+			return;
+		}
+
 		// 当該電話番号の契約を取得
 		Connection conn = getConnection();
 		List<Contract> contracts = getContracts(conn, key.phoneNumber);

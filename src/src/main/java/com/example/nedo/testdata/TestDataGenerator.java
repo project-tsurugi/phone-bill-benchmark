@@ -199,13 +199,11 @@ public class TestDataGenerator {
 	 * @throws SQLException
 	 * @throws IOException
 	 */
-	public Contract setContract(PreparedStatement ps) throws SQLException, IOException {
-		Contract c = contractInfoReader.getNewContract();
+	public void setContract(PreparedStatement ps, Contract c) throws SQLException, IOException {
 		ps.setString(1, c.phoneNumber);
 		ps.setDate(2, c.startDate);
 		ps.setDate(3, c.endDate);
 		ps.setString(4, c.rule);
-		return c;
 	}
 
 	/**
@@ -250,7 +248,8 @@ public class TestDataGenerator {
 				PreparedStatement ps = conn.prepareStatement(SQL_INSERT_TO_CONTRACT)) {
 			int batchSize = 0;
 			for (long n = 0; n < config.numberOfContractsRecords; n++) {
-				setContract(ps);
+				Contract c = getNewContract();
+				setContract(ps, c);
 				ps.addBatch();
 				if (++batchSize == SQL_BATCH_EXEC_SIZE) {
 					execBatch(ps);
@@ -259,6 +258,16 @@ public class TestDataGenerator {
 			}
 			execBatch(ps);
 		}
+	}
+
+
+	/**
+	 * @return
+	 * @throws IOException
+	 */
+	public Contract getNewContract() throws IOException {
+		Contract c = contractInfoReader.getNewContract();
+		return c;
 	}
 
 	/**
@@ -273,7 +282,7 @@ public class TestDataGenerator {
 				StandardOpenOption.CREATE,
 				StandardOpenOption.WRITE);) {
 			for (long n = 0; n < config.numberOfContractsRecords; n++) {
-				Contract c = contractInfoReader.getNewContract();
+				Contract c = getNewContract();
 				sb.setLength(0);
 				sb.append(c.phoneNumber);
 				sb.append(',');

@@ -5,7 +5,6 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -27,7 +26,7 @@ public class CalculationTask implements Callable<Exception> {
 	/**
 	 * 計算対象が格納されているQueue
 	 */
-	private BlockingQueue<CalculationTarget> queue;
+	private CalculationTargetQueue queue;
 
 
 	/**
@@ -42,7 +41,7 @@ public class CalculationTask implements Callable<Exception> {
 	 * @param queue
 	 * @param conn
 	 */
-	public CalculationTask(BlockingQueue<CalculationTarget> queue, Connection conn, Config config,
+	public CalculationTask(CalculationTargetQueue queue, Connection conn, Config config,
 			String batchExecId, AtomicBoolean abortRequested) {
 		this.queue = queue;
 		this.conn = conn;
@@ -60,7 +59,7 @@ public class CalculationTask implements Callable<Exception> {
 				CalculationTarget target;
 				try {
 					target = queue.take();
-					LOG.debug("{} contracts remains in the queue.", queue.size());
+					LOG.debug(queue.getStatus());
 				} catch (InterruptedException e) {
 					LOG.debug("InterruptedException caught and continue taking calculation_target", e);
 					continue;

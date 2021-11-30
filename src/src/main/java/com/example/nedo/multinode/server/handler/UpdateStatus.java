@@ -3,11 +3,16 @@ package com.example.nedo.multinode.server.handler;
 import java.io.IOException;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.example.nedo.multinode.server.ClientInfo;
 import com.example.nedo.multinode.server.ClientInfo.Status;
 import com.example.nedo.multinode.server.Server.ServerTask;
 
 public class UpdateStatus extends MessageHandlerBase {
+    private static final Logger LOG = LoggerFactory.getLogger(UpdateStatus.class);
+
 	/**
 	 * @param server このハンドラを呼び出すServerTask
 	 */
@@ -33,5 +38,6 @@ public class UpdateStatus extends MessageHandlerBase {
 		}
 		// msgBodyの2行目がクライアントからのメッセージ
 		info.setMessageFromClient(msgBody.get(1));
+		LOG.info("Client status updated: {}, {}, {}", info.getType(), info.getNode(), info.getMessageFromClient());
 	}
 }

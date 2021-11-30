@@ -1,0 +1,4 @@
+#!/bin/sh -xeu
+cd `dirname $0`/../../..
+pwd
+./gradlew run --args="Shutdown localhost:1967"
