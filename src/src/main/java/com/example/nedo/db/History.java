@@ -124,4 +124,50 @@ public class History implements Cloneable{
 		}
 	}
 
+
+	public Key getKey() {
+		Key key = new Key();
+		key.callerPhoneNumber = callerPhoneNumber;
+		key.startTime = startTime;
+		return key;
+	}
+
+
+	/**
+	 * HistoryのPK
+	 */
+	public static class Key {
+		public String callerPhoneNumber;
+		public Timestamp startTime;
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + ((callerPhoneNumber == null) ? 0 : callerPhoneNumber.hashCode());
+			result = prime * result + ((startTime == null) ? 0 : startTime.hashCode());
+			return result;
+		}
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			Key other = (Key) obj;
+			if (callerPhoneNumber == null) {
+				if (other.callerPhoneNumber != null)
+					return false;
+			} else if (!callerPhoneNumber.equals(other.callerPhoneNumber))
+				return false;
+			if (startTime == null) {
+				if (other.startTime != null)
+					return false;
+			} else if (!startTime.equals(other.startTime))
+				return false;
+			return true;
+		}
+	}
+
 }

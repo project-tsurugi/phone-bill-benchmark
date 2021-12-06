@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -21,9 +22,11 @@ import com.example.nedo.app.Config;
 import com.example.nedo.app.Config.TransactionScope;
 import com.example.nedo.app.CreateTable;
 import com.example.nedo.db.Billing;
+import com.example.nedo.db.Contract;
 import com.example.nedo.db.DBUtils;
 import com.example.nedo.db.Duration;
 import com.example.nedo.db.History;
+import com.example.nedo.db.History.Key;
 import com.example.nedo.online.AbstractOnlineApp;
 import com.example.nedo.online.HistoryInsertApp;
 import com.example.nedo.online.HistoryUpdateApp;
@@ -37,7 +40,6 @@ import com.example.nedo.testdata.SingleProcessContractBlockManager;
 
 class PhoneBillTest extends AbstractDbTestCase {
     private static final Logger LOG = LoggerFactory.getLogger(PhoneBillTest.class);
-    // TODO オンラインアプリを動かすテストケースを追加する
 
 	@Test
 	void test() throws Exception {
@@ -326,8 +328,8 @@ class PhoneBillTest extends AbstractDbTestCase {
 	}
 
 
-	
-	
+
+
 	/**
 	 * @param phoneBill
 	 * @param expected
@@ -419,7 +421,93 @@ class PhoneBillTest extends AbstractDbTestCase {
 		}
 	}
 
+
+	/**
+	 * オンラインアプリとバッチを同時に動かすケース
+	 * @throws Exception
+	 */
+	@Test
+	public void runWithOnlineApp() throws Exception {
+		Config config = Config.getConfig();
+		new CreateTable().execute(config);
+		new CreateTestData().execute(config);
+
+		config.historyInsertTransactionPerMin = -1;
+
+		List<History> historiesBefore = getHistories();
+		List<Contract> contractsBefore = getContracts();
+
+		String[] args = {"src/test/config/phone_bill_test.properties"};
+		PhoneBill.main(args);
+
+		List<History> historiesAfter = getHistories();
+		List<Contract> contractsAfter = getContracts();
+
+		// オンラインアプリによりレコード数が増えていることを確認
+		assertTrue(historiesAfter.size() > historiesBefore.size());
+		assertTrue(contractsAfter.size() > historiesBefore.size());
+		System.out.println("historiesBeforeSize = " + historiesBefore.size());
+		System.out.println("historiesAfterSize = " + historiesAfter.size());
+		System.out.println("contractsBeforeSize = " + contractsBefore.size());
+		System.out.println("contractsAfterSize = " + contractsAfter.size());
+
+
+		// オンラインアプリにより契約終了日が削除されているレコードが存在することを確認
+		boolean exist = false;
+		for (int i = 0; i < contractsBefore.size(); i++) {
+			Contract before = contractsBefore.get(i);
+			Contract after = contractsAfter.get(i);
+			if (before.endDate == null && after.endDate != null) {
+				exist = true;
+				System.out.println("before = " + before);
+				System.out.println("after  = " + after);
+				break;
+			}
+		}
+		assertTrue(exist);
+
+		// オンラインアプリにより契約終了日が更新されているレコードが存在することを確認
+		exist = false;
+		for (int i = 0; i < contractsBefore.size(); i++) {
+			Contract before = contractsBefore.get(i);
+			Contract after = contractsAfter.get(i);
+			if (before.endDate != null && after.endDate != null && !before.endDate.equals(after.endDate)) {
+				exist = true;
+				System.out.println("before = " + before);
+				System.out.println("after  = " + after);
+				break;
+			}
+		}
+
+		// オンラインアプリにより削除フラグが立っているレコードと、通話時間が変更されているレコードが存在することを確認する
+		Map<Key, History> map = 	historiesAfter.stream().collect(Collectors.toMap(History::getKey, h -> h));
+
+
+		exist = false;
+		for (int i = 0; i < historiesBefore.size(); i++) {
+			History before = historiesBefore.get(i);
+			History after = map.get(before.getKey());
+			if (before.df == false && after.df == true) {
+				exist = true;
+				System.out.println("before = " + before);
+				System.out.println("after  = " + after);
+				break;
+			}
+		}
+		assertTrue(exist);
+
+		exist = false;
+		for (int i = 0; i < historiesBefore.size(); i++) {
+			History before = historiesBefore.get(i);
+			History after = map.get(before.getKey());
+			if (before.timeSecs != after.timeSecs) {
+				exist = true;
+				System.out.println("before = " + before);
+				System.out.println("after  = " + after);
+				break;
+			}
+		}
+		assertTrue(exist);
+	}
 }
-
-
 
