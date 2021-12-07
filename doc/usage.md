@@ -42,18 +42,30 @@ tar xf phone-bill.tar
 $ ./phone-bill/bin/run
 ERROR: No argument is specified.
 
-USAGE: run COMMAND [FILE]
+usage: run command [file]
+  or:  run command hostname:port
 
-COMMAND: Following commands available
+Following commands can specify a filename of configuration file,
+If not specified filename, the default value is used.
 
-  CreateTable : Create tables
-  CreateTestData : Create test data
-  PhoneBill : Execute phone bill batch.
-  ThreadBench : Execute PhonBill with multiple thread counts
-  OnlineAppBench : Execute PhonBill with and without online applications.
+  CreateTable: Create tables
+  CreateTestData: Create test data to database.
+  PhoneBill: Execute phone bill batch.
+  ThreadBench: Execute PhonBill with multiple thread counts
+  OnlineAppBench: Execute PhonBill with and without online applications.
   TestDataStatistics: Create test data statistics without test data.
+  CreateTestDataCsv: Create test data to csv files.
+  LoadTestDataCsvToOracle: Load csv test data to oracle.
+  LoadTestDataCsvToPostgreSql: Load csv test data to PostgreSQL.
+  Server: Execute the server process for multinode execution.
 
-FILE: The filename of the configuration file, if not specified, the default value is used.
+Following commands must specify the hostname and port number of server.
+
+  PhoneBillClient: Execute phone bill batch client for multienode execution.
+  OnlineAppClient: Execute phone bill batch client for multienode execution.
+  Status: Reports the execution status of client processes.
+  Start: Start execution a phone bill batch and online applications.
+  Shutdown: Terminate all client processes and a server process.
 ```
 
 ## 設定ファイル
@@ -96,10 +108,15 @@ isolation.level=READ_COMMITTED
 
 # オンラインアプリケーションに関するパラメータ
 master.update.records.per.min=0
+master.update.thread.count=1
 master.insert.reccrds.per.min=0
+master.insert.thread.count=1
 history.update.records.per.min=0
+history.update.thread.count=1
 history.insert.transaction.per.min=0
 history.insert.records.per.transaction=1
+history.insert.thread.count=1
+skip.database.access=false
 
 # スレッドに関するパラメータ
 thread.count=1
@@ -118,6 +135,8 @@ oracle.create.index.option=nologging parallel 32
 # その他のパラメータ
 random.seed=0
 transaction.scope=WHOLE
+listen.port=0
+
 
 ```
 
@@ -138,7 +157,7 @@ transaction.scope=WHOLE
 * min.date, max.date
   - 契約開始日と契約終了日がmin.date～max.dateの範囲に収まるようにテストデータを生成する。yyyy-mm-ddの形式で指定する。
 
-### 通話履歴のテストデータ生成に関するパラメータ
+### 通話履歴生成に関するパラメータ
 
 * number.of.history.records
   - 通話履歴のレコード数
@@ -182,15 +201,25 @@ transaction.scope=WHOLE
 ### オンラインアプリケーションに関するパラメータ
 
 * master.update.records.per.min
-  - 契約マスタの更新頻度、1分間にこで指定されたレコード数だけ契約マスタを更新する。
+  * 契約マスタの更新頻度、`master.update.thread.count`で指定した各スレッドが1分間にこで指定されたレコード数だけ契約マスタを更新する。-1を指定すると連続で契約マスタを更新する。
+* master.update.thread.count=1
+  * 契約マスタを更新するスレッドのスレッド数。 
 * master.insert.reccrds.per.min
-  - 契約マスタの追加頻度、1分間にこで指定されたレコード数だけ契約マスタを追加する。
+  * 契約マスタの追加頻度、`master.insert.thread.count`で指定した各スレッドが1分間にこで指定されたレコード数だけ契約マスタを追加する。-1を指定すると連続で契約マスタを追加する。
+* master.insert.thread.count=1
+  * 契約マスタを追加するスレッドのスレッド数。 
 * history.update.records.per.min
-  - 通話履歴の更新頻度、1分間にこで指定されたレコード数だけ契約マスタを更新する。
+  * 通話履歴の更新頻度、`history.update.thread.count`で指定した各スレッドが1分間にこで指定されたレコード数だけ契約マスタを更新する。-1を指定すると連続で通話履歴を更新する。
+* history.update.thread.count=1
+  * 通話履歴マスタを更新するスレッドのスレッド数。 
 * history.insert.transaction.per.min
-  - 通話履歴の追加頻度、1分間にこで指定されたレコード回数だけ契約マスタを更新する。
+  * 通話履歴の追加頻度、`history.insert.thread.count`で指定した各スレッドが1分間にこで指定されたレコード回数だけ契約マスタを更新する。-1を指定すると連続で通話履歴を追加する。
+* history.insert.thread.count=1
+  * 通話履歴マスタを追加するスレッドのスレッド数。 
 * history.insert.records.per.transaction
-  - 通話履歴の追加時に1回で追加するレコードする。
+  * 通話履歴の追加時に1回で追加するレコードする。
+* skip.database.access=false
+  * ツール自体のテスト用のパラメータです。常にfalseを指定して使用してください。
 
 オンラインアプリケーションは、料金計算とは別スレッドで、別のトランザクションとして実行される。
 契約マスタの追加、更新、通話履歴の更新は、1レコードのINSERT/UPDATEを1トランザクションとして
@@ -199,8 +228,7 @@ transaction.scope=WHOLE
 
 ### スレッドに関するパラメータ
 * thread.count
-  - 電話料金計算処理のスレッドのスレッド数
-  - CSVデータ生成処理のスレッド数
+  - 電話料金計算処理、およびテストデータ生成時のスレッドのスレッド数
 * shared.connection
   - true/falseで指定する。trueのとき電話料金計算処理の各スレッド間でコネクションを共有する。
 
@@ -229,8 +257,10 @@ transaction.scope=WHOLE
   - 乱数のseed、テストデータ生成に関するパラメータと、乱数のseedが同じであれば、同一内容のテストデータが生成される。
 * transaction.scope=WHOLE
   - WHOLE/CONTRACTのどちらかを指定する。
-  - WHILEが指定されると、料金計算処理全体を1トランザクションとして実行する。ただし、thread.countが2以上でshared.connectionがfalseの場合、各スレッドは独立したトランザクションとなり、バッチ終了時に、各スレッドのトランザクションをcommit/rollbackする動作になる。
+  - WHILEが指定されると、料金計算処理全体を1トランザクションとして実行する。ただし、thread.countが2以上でshared.connectionがfalseの場合、各スレッドは独立したトランザクションとなり、バッチ終了時に各スレッドのトランザクションをcommit/rollbackする動作になる。
   - CONTRACTが指定されると、1契約分の料金計算毎にコミットする。
+* listen.port
+  - マルチノード構成での実行時のサーバのリッスンポート番号
 
 ## サンプルバッチの実行
 
@@ -254,7 +284,7 @@ phone-bill/bin/run CreateTable config.properties
 
 定量のテストデーを生成する場合、`CreateTestData`コマンドを使用せず、テストデータの`CreateTestDataCsv`コマンドでCSVファイルを生成し、`LoadTestDataCsvToOracle`コマンド
 または、`LoadTestDataCsvToPostgreSql`コマンドによりCSVデータをロードすることにより、
-高速にテストデータを生成することができます。
+高速にテストデータを生成できます。
 
 
 ## 分布関数の指定
@@ -287,12 +317,147 @@ phone-bill/bin/run CreateTable config.properties
 テストデータを生成するコマンド`CreateTestData`の代わりにコマンドを`TestDataStatistics`
 実行すると、テストデータを生成せずに統計情報の出力します。また、コマンド`TestDataStatistics`
 実行時に、Configの`statistics.output.dir`で指定したディレクトリの下に`statistics`という
-名前のディレクトリを作成し、通話時間と電話番号それぞれについて、生成したすべての値と頻度を記録したCSVファイルを出力します。
+名前のディレクトリを作成し、通話時間と電話番号それぞれの生成したすべての値と頻度を記録したCSVファイルを出力します。
+
+
+## マルチノード構成でのサンプルバッチの実行
+
+オンラインアプリケーションがデータベースに十分な負荷を与えられない場合のために、マルチノード構成でサンプルバッチを実行可能です。
+
+### 概要
+
+マルチノード構成でのサンプルバッチの実行手順は以下のとおりです。
+
+1. マルチノード実行用のサーバを起動する
+1. サーバの起動が完了したら、料金計算バッチ用のプロセスと、オンラインアプリ用のプロセスを実行する。以降、料金計算バッチ用のプロセスと、オンラインアプリ用のプロセスの総称としてクライアントプロセスと記述します。
+   * シングル構成の場合と異なり、マルチノード構成での実行では料金計算処理のプロセスでは、オンラインアプリ用のスレッドは実行されません。オンラインアプリを実行する場合、オンラインアプリ用のプロセスを実行してください。
+   * 料金計算バッチ用のプロセス、オンラインアプリ用のプロセスともにサーバの設定ファイルに従い動作します。
+   * 料金珪砂バッチ用のプロセスは1つだけ実行可能です。2つい上のプロセスを起動してもサーバに接続を拒否され起動に失敗します。
+   * オンラインアプリ用のプロセスは任意の数だけ起動可能です。
+1. サーバのステータスを参照し、起動した料金計算バッチ用のプロセスと、オンラインアプリ用のプロセスが実行可能な状態なことを確認後、実行開始します。
+1. サーバのステータスを参照し処理の進捗状況を確認可能です。 
+2. 処理が終了したら、シャットダウンコマンドを実行して、サーバとクライアントプロセスを終了します。
+
+
+### サンプルバッチの実行例
+
+#### インストール
+
+サーバおよびクライアントプロセスを実行する各ノードの任意のディレクトリで、生成された`phone-bill.tar` を
+展開してインストールする。
+
+```
+tar xf phone-bill.tar
+```
+
+### サーバの起動
+
+設定ファイルを指定してサーバを起動する
+
+```
+./phone-bill/bin/run Server multinode.properties
+```
+
+### 料金計算バッチの起動
+
+```
+./phone-bill/bin/run PhoneBillClient sv011:1967
+```
+
+### オンラインアプリの起動
+
+
+```
+./phone-bill/bin/run OnlineAppClient sv011:1967
+```
+
+
+### サーバのステータス確認
+
+#### ステータスの表示例1
+
+4つのクライアントプロセスがサーバに接続していて初期化中のケース
+
+```
+$ ~/phone-bill/bin/run Status sv011:1967
+Start         Type       Node            Status    Message from client
+-----------------------------------------------------------------------------------
+16:42:38      ONLINE_APP sv012           INITIALIZING No message
+16:42:38      ONLINE_APP sv013           INITIALIZING No message
+16:42:38      ONLINE_APP sv014           INITIALIZING No message
+16:42:38      ONLINE_APP sv015           INITIALIZING No message
+```
+
+
+#### ステータスの表示例2
+
+5つのクライアントプロセスがサーバに接続していて、実行待ちの状態。この状態を確認後実行します。
+
+```
+$ ~/phone-bill/bin/run Status sv011:1967
+Start         Type       Node            Status    Message from client
+----------------------------------------------------------------------
+16:51:47      ONLINE_APP sv012           READY     Waiting.
+16:51:47      ONLINE_APP sv013           READY     Waiting.
+16:51:47      ONLINE_APP sv014           READY     Waiting.
+16:51:47      ONLINE_APP sv015           READY     Waiting.
+16:51:47      PHONEBILL  sv016           READY     Waiting.
+```
+
+### オンラインアプリとバッチの実行
+
+#### 実行
+
+次のコマンドでオンラインアプリとバッチを実行します
+
+```
+./phone-bill/bin/run Start sv011:1967
+```
+
+####  ステータスの確認例1
+
+電話料金バッチのクライアントについては、Queueに入ったマスタレコードの数と未処理のマスタレコードの数が確認できます。
+オンラインアプリについては、各クライアントプロセスごとに、処理済み件数が表示されます。
+
+```
+$ ~/phone-bill/bin/run Status sv011:1967
+Start         Type       Node            Status    Message from client
+------------------------------------------------------------------------------------------------------------------------------------
+16:51:47      ONLINE_APP sv012           RUNNING   uptime = 0.088 sec, exec count(HistoryInsertApp = 1733, MasterInsertApp = 640909)
+16:51:47      ONLINE_APP sv013           RUNNING   uptime = 0.041 sec, exec count(HistoryInsertApp = 93, MasterInsertApp = 261668)
+16:51:47      ONLINE_APP sv014           RUNNING   uptime = 0.061 sec, exec count(HistoryInsertApp = 1619, MasterInsertApp = 841022)
+16:51:47      ONLINE_APP sv015           RUNNING   uptime = 0.059 sec, exec count(HistoryInsertApp = 212, MasterInsertApp = 473893)
+16:51:47      PHONEBILL  sv016           RUNNING   Contracts queue status: total queued taasks = 43612, tasks in queue = 1865
+```
+
+####  ステータスの確認例2
+
+料金計算バッチの実行が終了し、オンラインアプリの実行も終了した状態
+
+```
+$ ~/phone-bill/bin/run Status sv011:1967
+Start         Type       Node            Status    Message from client
+------------------------------------------------------------------------------------
+16:51:47      ONLINE_APP sv012           SUCCESS   Finished successfully.
+16:51:47      ONLINE_APP sv013           SUCCESS   Finished successfully.
+16:51:47      ONLINE_APP sv014           SUCCESS   Finished successfully.
+16:51:47      ONLINE_APP sv015           SUCCESS   Finished successfully.
+16:51:47      PHONEBILL  sv016           SUCCESS   Billings calculated in 59.182 sec
+------------------------------------------------------------------------------------
+```
+
+### 終了
+
+以下のコマンドで実行中のクライアントプロセスととサーバを終了します
+
+```
+ ./phone-bill/bin/run Shutdown sv011:1967
+```
 
 ## 注意点
 
 * サンプルバッチを複数回実行する場合、実行の前に都度テストデータの生成を行って
-下さい。テストデータの生成を行わずに、複数回バッチを実行すると、バッチの実行によりデータが書き換わるため、1回目の実行と2回目の条件が変わってしまいます。特に、オンラインアプリケーションにより大量にデータを追加した場合、処理時間が大幅に増えることがあります。
+ください。テストデータの生成を行わずに、複数回バッチを実行すると、バッチの実行によりデータが書き換わるため、1回目の実行と2回目の条件が変わってしまいます。とくに、オンラインアプリケーションにより大量にデータを追加した場合、処理時間が大幅に増えることがあります。
 * テストデータの生成を行うと、通話履歴テーブルと契約マスタの既存データは削除されます。月額利用料金テーブルのデータは削除されずそのまま残ります。
 * 分布関数に`UNIFORM`を指定しても、電話番号の頻度に大きなばらつきがあるように見えます。これは当該電話番号の契約期間の長短により電話番号の選択可能性が変わり、電話番号の頻度は電話番号の選択可能性に依存するためです。
 
