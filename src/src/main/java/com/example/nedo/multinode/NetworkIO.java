@@ -12,9 +12,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.example.nedo.multinode.server.ClientInfo.Status;
 
 /**
@@ -27,8 +24,6 @@ import com.example.nedo.multinode.server.ClientInfo.Status;
  *
  */
 public class NetworkIO implements Closeable {
-    private static final Logger LOG = LoggerFactory.getLogger(NetworkIO.class);
-
 	private static final long POLLING_INTERVAL_MILLIS = 5000;
 	private static final String END_OF_MESSAGE = "=== end of message ===";
 
@@ -119,7 +114,6 @@ public class NetworkIO implements Closeable {
 	 */
 	private String readLine() throws IOException {
 		String line = reader.readLine();
-		LOG.debug("read line: {}", line);
 		return line;
 	}
 
