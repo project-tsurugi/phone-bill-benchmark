@@ -212,9 +212,6 @@ caller.phone.number.distribution=LOGNORMAL
 ```
 
 
-
-
-
 ## 料金計算バッチ実行に関するパラメータ
 
 * target.month
