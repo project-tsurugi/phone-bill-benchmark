@@ -19,30 +19,30 @@ import com.example.nedo.testdata.TestDataStatistics;
 public class Main {
 	private static final Map<String, Command> COMMAND_MAP = new LinkedHashMap<>();
 	static {
-		addCommand("CreateTable", "Create tables", new CreateTable(), ArgType.CONFIG);
-		addCommand("CreateTestData", "Create test data to database.", new CreateTestData(), ArgType.CONFIG);
-		addCommand("PhoneBill", "Execute phone bill batch.", new PhoneBill(), ArgType.CONFIG);
-		addCommand("ThreadBench", "Execute PhonBill with multiple thread counts", new ThreadBench(), ArgType.CONFIG);
-		addCommand("OnlineAppBench", "Execute PhonBill with and without online applications.", new OnlineAppBench(),
+		addCommand("CreateTable", "Create tables",  CreateTable.class, ArgType.CONFIG);
+		addCommand("CreateTestData", "Create test data to database.", CreateTestData.class, ArgType.CONFIG);
+		addCommand("PhoneBill", "Execute phone bill batch.", PhoneBill.class, ArgType.CONFIG);
+		addCommand("ThreadBench", "Execute PhonBill with multiple thread counts", ThreadBench.class, ArgType.CONFIG);
+		addCommand("OnlineAppBench", "Execute PhonBill with and without online applications.", OnlineAppBench.class,
 				ArgType.CONFIG);
-		addCommand("TestDataStatistics", "Create test data statistics without test data.", new TestDataStatistics(),
+		addCommand("TestDataStatistics", "Create test data statistics without test data.", TestDataStatistics.class,
 				ArgType.CONFIG);
-		addCommand("CreateTestDataCsv", "Create test data to csv files.", new CreateTestDataCsv(), ArgType.CONFIG);
-		addCommand("LoadTestDataCsvToOracle", "Load csv test data to oracle.", new LoadTestDataCsvToOracle(),
+		addCommand("CreateTestDataCsv", "Create test data to csv files.", CreateTestDataCsv.class, ArgType.CONFIG);
+		addCommand("LoadTestDataCsvToOracle", "Load csv test data to oracle.", LoadTestDataCsvToOracle.class,
 				ArgType.CONFIG);
 		addCommand("LoadTestDataCsvToPostgreSql", "Load csv test data to PostgreSQL.",
-				new LoadTestDataCsvToPostgreSql(), ArgType.CONFIG);
-		addCommand("Server", "Execute the server process for multinode execution.", new Server(), ArgType.CONFIG);
+				LoadTestDataCsvToPostgreSql.class, ArgType.CONFIG);
+		addCommand("Server", "Execute the server process for multinode execution.", Server.class, ArgType.CONFIG);
 		addCommand("PhoneBillClient", "Execute phone bill batch client for multienode execution.",
-				new PhoneBillClient(), ArgType.HOST_AND_PORT);
+				PhoneBillClient.class, ArgType.HOST_AND_PORT);
 		addCommand("OnlineAppClient", "Execute phone bill batch client for multienode execution.",
-				new OnlineAppClient(), ArgType.HOST_AND_PORT);
+				OnlineAppClient.class, ArgType.HOST_AND_PORT);
 		addCommand("Status", "Reports the execution status of client processes.",
-				new CommandLineClient(Message.GET_CLUSTER_STATUS), ArgType.HOST_AND_PORT);
+				CommandLineClient.class, Message.GET_CLUSTER_STATUS, ArgType.HOST_AND_PORT);
 		addCommand("Start", "Start execution a phone bill batch and online applications.",
-				new CommandLineClient(Message.START_EXECUTION), ArgType.HOST_AND_PORT);
+				CommandLineClient.class, Message.START_EXECUTION, ArgType.HOST_AND_PORT);
 		addCommand("Shutdown", "Terminate all client processes and a server process.",
-				new CommandLineClient(Message.SHUTDOWN_CLUSTER), ArgType.HOST_AND_PORT);
+				CommandLineClient.class, Message.SHUTDOWN_CLUSTER, ArgType.HOST_AND_PORT);
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -58,10 +58,19 @@ public class Main {
 			usage();
 			System.exit(1);
 		}
+
+		ExecutableCommand executableCommand;
+		if (command.constructorArg == null) {
+			executableCommand = command.clazz.getConstructor().newInstance();
+		} else {
+			executableCommand = command.clazz.getConstructor(Message.class).newInstance(command.constructorArg);
+		}
+
+
 		switch(command.argType) {
 		case CONFIG:
 			Config config = Config.getConfig(Arrays.copyOfRange(args, 1, args.length));
-			command.executableCommand.execute(config);
+			executableCommand.execute(config);
 			break;
 		case HOST_AND_PORT:
 			if (args.length == 1 || !args[1].contains(":")) {
@@ -71,9 +80,10 @@ public class Main {
 			}
 			String hostname = args[1].replaceAll(":.*", "");
 			String port = args[1].replaceAll(".*:", "");
-			command.executableCommand.execute(hostname, Integer.parseInt(port));
+			executableCommand.execute(hostname, Integer.parseInt(port));
 		}
 	}
+
 
 	private static void usage() {
 		System.err.println();
@@ -101,7 +111,8 @@ public class Main {
 	private static  class Command {
 		String name;
 		String description;
-		ExecutableCommand executableCommand;
+		Class<? extends ExecutableCommand> clazz;
+		Message constructorArg;
 		ArgType argType;
 	}
 
@@ -110,11 +121,16 @@ public class Main {
 		HOST_AND_PORT
 	}
 
-	private static void addCommand(String name, String description, ExecutableCommand instance, ArgType argType) {
+	private static void addCommand(String name, String description, Class<? extends ExecutableCommand> clazz, ArgType argType) {
+		addCommand(name, description, clazz, null, argType);
+	}
+
+	private static void addCommand(String name, String description, Class<? extends ExecutableCommand> clazz, Message constructorArg, ArgType argType) {
 		Command command = new Command();
 		command.name = name;
 		command.description = description;
-		command.executableCommand = instance;
+		command.clazz = clazz;
+		command.constructorArg = constructorArg;
 		command.argType = argType;
 		COMMAND_MAP.put(name, command);
 	}

@@ -128,6 +128,7 @@ public class Server extends ExecutableCommand {
 			service.shutdown();
 			service.awaitTermination(5, TimeUnit.MINUTES);
 		}
+		LOG.info("Server terminating normally.");
 	}
 
 	/**

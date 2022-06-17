@@ -6,11 +6,16 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.example.nedo.multinode.ClientType;
 import com.example.nedo.multinode.NetworkIO.Message;
 import com.example.nedo.multinode.server.handler.StatusChangeEventHandler;
 
 public class ClientInfo {
+    private static final Logger LOG = LoggerFactory.getLogger(ClientInfo.class);
+
 	private ClientType type;
 	private Status status;
 	private Queue<RequestForClient> requestForClientQueue;
@@ -110,7 +115,9 @@ public class ClientInfo {
 	 * @return requestForClient
 	 */
 	public synchronized RequestForClient getRequestForClient() {
-		return requestForClientQueue.poll();
+		RequestForClient requestForClient = requestForClientQueue.poll();
+		LOG.debug("take a request {} from queue." , requestForClient);
+		return requestForClient;
 	}
 
 	/**
@@ -154,7 +161,8 @@ public class ClientInfo {
 	/**
 	 * @param requestForClient セットする requestForClient
 	 */
-	public void setRequestForClient(RequestForClient requestForClient) {
+	public  void setRequestForClient(RequestForClient requestForClient) {
+		LOG.debug("add a request {} to queue." , requestForClient);
 		requestForClientQueue.add(requestForClient);
 	}
 
