@@ -1,13 +1,13 @@
 // https://github.com/domaframework/simple-boilerplate/blob/master/build.gradle
 plugins {
-    id 'java'
+    id 'java-library'
     id 'eclipse'
     id 'application'
     id 'com.github.spotbugs' version '4.7.1'
 }
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
     mainClassName = 'com.example.nedo.app.Main'
 }
 distTar {
@@ -41,8 +41,10 @@ test {
 }
 repositories {
   mavenCentral()
+  mavenLocal()
 }
 dependencies {
+  api 'com.nautilus_technologies.iceaxe:iceaxe-core:0.0.1'
   // https://mvnrepository.com/artifact/org.postgresql/postgresql
   implementation group: 'org.postgresql', name: 'postgresql', version: '42.2.16'
   // https://mvnrepository.com/artifact/com.oracle.ojdbc/ojdbc8
