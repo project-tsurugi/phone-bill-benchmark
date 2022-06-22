@@ -14,8 +14,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.example.nedo.app.Config;
-import com.example.nedo.db.DBUtils;
-import com.example.nedo.db.Duration;
+import com.example.nedo.db.old.DBUtils;
+import com.example.nedo.db.old.Duration;
 
 class AbstractPhoneNumberSelectorTest {
 	private static final Date DATE01 = DBUtils.toDate("2020-01-01");

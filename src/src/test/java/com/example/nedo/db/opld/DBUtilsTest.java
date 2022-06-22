@@ -1,4 +1,4 @@
-package com.example.nedo.db;
+package com.example.nedo.db.opld;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.postgresql.util.PSQLException;
 
 import com.example.nedo.app.Config;
+import com.example.nedo.db.old.DBUtils;
 
 class DBUtilsTest {
 	/**

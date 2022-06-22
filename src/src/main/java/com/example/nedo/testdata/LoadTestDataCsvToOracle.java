@@ -17,9 +17,9 @@ import org.slf4j.LoggerFactory;
 
 import com.example.nedo.app.Config;
 import com.example.nedo.app.Config.Dbms;
+import com.example.nedo.db.old.DBUtils;
 import com.example.nedo.app.CreateTable;
 import com.example.nedo.app.ExecutableCommand;
-import com.example.nedo.db.DBUtils;
 
 public class LoadTestDataCsvToOracle extends ExecutableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(LoadTestDataCsvToOracle.class);

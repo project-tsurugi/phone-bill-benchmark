@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test;
 import com.example.nedo.app.Config.Dbms;
 import com.example.nedo.app.Config.DistributionFunction;
 import com.example.nedo.app.Config.TransactionScope;
-import com.example.nedo.db.DBUtils;
+import com.example.nedo.db.old.DBUtils;
 
 class ConfigTest {
 	private static String NOT_DEFALUT_CONFIG_PATH = "src/test/config/not-default.properties";

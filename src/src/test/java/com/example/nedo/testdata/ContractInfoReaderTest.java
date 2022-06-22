@@ -19,10 +19,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.example.nedo.app.Config;
-import com.example.nedo.db.Contract;
-import com.example.nedo.db.Contract.Key;
-import com.example.nedo.db.DBUtils;
-import com.example.nedo.db.Duration;
+import com.example.nedo.db.old.Contract;
+import com.example.nedo.db.old.DBUtils;
+import com.example.nedo.db.old.Duration;
+import com.example.nedo.db.old.Contract.Key;
 import com.example.nedo.util.RandomStub;
 
 class ContractInfoReaderTest {

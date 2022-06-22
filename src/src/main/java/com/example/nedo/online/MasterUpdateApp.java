@@ -17,8 +17,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.example.nedo.app.Config;
-import com.example.nedo.db.Contract;
-import com.example.nedo.db.Contract.Key;
+import com.example.nedo.db.old.Contract;
+import com.example.nedo.db.old.Contract.Key;
 import com.example.nedo.testdata.ContractBlockInfoAccessor;
 import com.example.nedo.testdata.ContractInfoReader;
 

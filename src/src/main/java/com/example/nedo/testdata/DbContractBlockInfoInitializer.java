@@ -7,7 +7,7 @@ import java.sql.SQLException;
 import java.util.HashSet;
 
 import com.example.nedo.app.Config;
-import com.example.nedo.db.DBUtils;
+import com.example.nedo.db.old.DBUtils;
 
 /**
  * データベースを読み取り、契約マスタのブロック情報を初期化する

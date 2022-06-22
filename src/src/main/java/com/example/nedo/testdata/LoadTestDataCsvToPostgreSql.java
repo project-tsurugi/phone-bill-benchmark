@@ -14,9 +14,9 @@ import org.slf4j.LoggerFactory;
 
 import com.example.nedo.app.Config;
 import com.example.nedo.app.Config.Dbms;
+import com.example.nedo.db.old.DBUtils;
 import com.example.nedo.app.CreateTable;
 import com.example.nedo.app.ExecutableCommand;
-import com.example.nedo.db.DBUtils;
 import com.example.nedo.util.PathUtils;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;

@@ -16,8 +16,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.example.nedo.app.Config;
-import com.example.nedo.db.DBUtils;
-import com.example.nedo.db.History;
+import com.example.nedo.db.old.DBUtils;
+import com.example.nedo.db.old.History;
 import com.example.nedo.testdata.ContractBlockInfoAccessor;
 import com.example.nedo.testdata.ContractInfoReader;
 import com.example.nedo.testdata.GenerateHistoryTask;

@@ -6,8 +6,8 @@ import java.sql.Date;
 
 import org.junit.jupiter.api.Test;
 
-import com.example.nedo.db.Contract;
-import com.example.nedo.db.DBUtils;
+import com.example.nedo.db.old.Contract;
+import com.example.nedo.db.old.DBUtils;
 
 class CalculationTargetTest {
 

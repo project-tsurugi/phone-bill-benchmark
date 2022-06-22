@@ -2,7 +2,7 @@ package com.example.nedo.app.billing;
 
 import java.sql.Date;
 
-import com.example.nedo.db.Contract;
+import com.example.nedo.db.old.Contract;
 
 /**
  * 料金計算対象の契約と、計算ロジックを格納するクラス

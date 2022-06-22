@@ -29,8 +29,8 @@ import org.junit.jupiter.api.Test;
 import com.example.nedo.AbstractDbTestCase;
 import com.example.nedo.app.Config;
 import com.example.nedo.app.CreateTable;
-import com.example.nedo.db.DBUtils;
-import com.example.nedo.db.Duration;
+import com.example.nedo.db.old.DBUtils;
+import com.example.nedo.db.old.Duration;
 import com.example.nedo.testdata.GenerateHistoryTask.Params;
 import com.example.nedo.util.PathUtils;
 
