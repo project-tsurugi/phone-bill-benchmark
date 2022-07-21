@@ -13,9 +13,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 
 import com.example.nedo.app.Config;
-import com.example.nedo.db.old.Contract;
-import com.example.nedo.db.old.DBUtils;
-import com.example.nedo.db.old.History;
+import com.example.nedo.db.jdbc.Contract;
+import com.example.nedo.db.jdbc.DBUtils;
+import com.example.nedo.db.jdbc.History;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 

@@ -7,7 +7,7 @@ import java.sql.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.example.nedo.db.old.DBUtils;
+import com.example.nedo.db.jdbc.DBUtils;
 
 /**
  * ORA-08177を再現するためのクラス

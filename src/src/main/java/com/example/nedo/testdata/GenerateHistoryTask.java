@@ -11,7 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.example.nedo.app.Config;
-import com.example.nedo.db.old.History;
+import com.example.nedo.db.jdbc.History;
 import com.example.nedo.testdata.GenerateHistoryTask.Result;
 import com.example.nedo.testdata.TestDataGenerator.HistoryWriter;
 

@@ -1,6 +1,6 @@
 package com.example.nedo.testdata;
 
-import com.example.nedo.db.old.Duration;
+import com.example.nedo.db.jdbc.Duration;
 
 /**
  * 通話履歴のレコード生成時に電話番号を選択するための抽象クラス、

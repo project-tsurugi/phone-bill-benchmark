@@ -14,8 +14,8 @@ import java.util.TreeSet;
 import org.junit.jupiter.api.Test;
 
 import com.example.nedo.app.Config;
-import com.example.nedo.db.old.DBUtils;
-import com.example.nedo.db.old.Duration;
+import com.example.nedo.db.jdbc.DBUtils;
+import com.example.nedo.db.jdbc.Duration;
 
 
 class UniformPhoneNumberSelectorTest {

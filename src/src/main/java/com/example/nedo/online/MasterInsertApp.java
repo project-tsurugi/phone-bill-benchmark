@@ -10,7 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.example.nedo.app.Config;
-import com.example.nedo.db.old.Contract;
+import com.example.nedo.db.jdbc.Contract;
 import com.example.nedo.testdata.ContractBlockInfoAccessor;
 import com.example.nedo.testdata.TestDataGenerator;
 

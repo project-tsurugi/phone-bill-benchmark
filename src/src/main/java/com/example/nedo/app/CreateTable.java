@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.example.nedo.app.Config.Dbms;
-import com.example.nedo.db.old.DBUtils;
+import com.example.nedo.db.jdbc.DBUtils;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 

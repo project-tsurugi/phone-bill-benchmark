@@ -13,8 +13,8 @@ import org.slf4j.LoggerFactory;
 
 import com.example.nedo.app.Config;
 import com.example.nedo.app.Config.TransactionScope;
-import com.example.nedo.db.old.Contract;
-import com.example.nedo.db.old.DBUtils;
+import com.example.nedo.db.jdbc.Contract;
+import com.example.nedo.db.jdbc.DBUtils;
 
 public class CalculationTask implements Callable<Exception> {
     private static final Logger LOG = LoggerFactory.getLogger(CalculationTask.class);

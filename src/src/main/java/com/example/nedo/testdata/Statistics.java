@@ -11,8 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import com.example.nedo.db.old.DBUtils;
-import com.example.nedo.db.old.History;
+import com.example.nedo.db.jdbc.DBUtils;
+import com.example.nedo.db.jdbc.History;
 
 /**
  * 電話番号、および通話時間に関する統計情報を生成する.

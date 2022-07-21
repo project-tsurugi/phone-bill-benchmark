@@ -9,8 +9,8 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import com.example.nedo.db.old.DBUtils;
-import com.example.nedo.db.old.History;
+import com.example.nedo.db.jdbc.DBUtils;
+import com.example.nedo.db.jdbc.History;
 import com.example.nedo.testdata.Statistics.Counter;
 
 class StatisticsTest {

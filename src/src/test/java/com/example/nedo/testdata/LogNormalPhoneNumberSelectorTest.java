@@ -15,8 +15,8 @@ import org.apache.commons.math3.distribution.LogNormalDistribution;
 import org.junit.jupiter.api.Test;
 
 import com.example.nedo.app.Config;
-import com.example.nedo.db.old.DBUtils;
-import com.example.nedo.db.old.Duration;
+import com.example.nedo.db.jdbc.DBUtils;
+import com.example.nedo.db.jdbc.Duration;
 
 class LogNormalPhoneNumberSelectorTest {
 	private static final Date DATE01 = DBUtils.toDate("2020-01-01");

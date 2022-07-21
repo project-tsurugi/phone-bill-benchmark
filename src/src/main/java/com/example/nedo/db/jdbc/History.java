@@ -1,4 +1,4 @@
-package com.example.nedo.db.old;
+package com.example.nedo.db.jdbc;
 
 import java.sql.Timestamp;
 
