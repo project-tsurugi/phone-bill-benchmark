@@ -7,8 +7,6 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.Connection;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,9 +15,9 @@ import org.slf4j.LoggerFactory;
 
 import com.example.nedo.app.Config;
 import com.example.nedo.app.Config.DbmsType;
-import com.example.nedo.db.jdbc.DBUtils;
-import com.example.nedo.app.CreateTable;
 import com.example.nedo.app.ExecutableCommand;
+import com.example.nedo.db.interfaces.DdlLExecutor;
+import com.example.nedo.db.jdbc.Session;
 
 public class LoadTestDataCsvToOracle extends ExecutableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(LoadTestDataCsvToOracle.class);
@@ -35,14 +33,14 @@ public class LoadTestDataCsvToOracle extends ExecutableCommand {
 		if (config.dbmsType != DbmsType.ORACLE_JDBC) {
 			LOG.error("This configuration is not for the Oracle.");
 		} else {
-			try (Connection conn = DBUtils.getConnection(config);
-					Statement stmt = conn.createStatement()) {
-				CreateTable.prepareLoadData(stmt, config);
+			try (Session session = Session.getSession(config)) {
+				DdlLExecutor ddlExector = DdlLExecutor.getInstance(config);
+				ddlExector.prepareLoadData(session);
 				List<Path> list = createControlFiles(config);
 				for (Path path : list) {
 					execSqlLoader(config, path);
 				}
-				CreateTable.afterLoadData(stmt, config);
+				ddlExector.afterLoadData(session);
 			}
 		}
 	}

@@ -9,7 +9,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
@@ -19,28 +18,32 @@ import org.junit.jupiter.api.Test;
 
 import com.example.nedo.AbstractDbTestCase;
 import com.example.nedo.app.Config.DbmsType;
+import com.example.nedo.db.SessionException;
+import com.example.nedo.db.interfaces.DdlLExecutor;
 import com.example.nedo.db.jdbc.DBUtils;
+import com.example.nedo.db.jdbc.Session;
 
 class CreateTableTest extends AbstractDbTestCase {
 	private static String ORACLE_CONFIG_PATH = "src/test/config/oracle.properties";
 
 	@Test
-	void test() throws SQLException, IOException {
-		CreateTable createTable = new CreateTable();
-		Statement stmt = getStmt();
-		stmt.getConnection().setAutoCommit(false);
-		createTable.dropTables(stmt, Config.getConfig());
+	void test() throws SQLException, IOException, SessionException {
+		Config config = Config.getConfig();
+		DdlLExecutor ddlExector = DdlLExecutor.getInstance(config);
+		Session session = Session.getSession(config);
+
+		ddlExector.dropTables(session);
 		// テーブルが存在しないことを確認
 		assertFalse(existsTable("billing"));
 		assertFalse(existsTable("contracts"));
 		assertFalse(existsTable("history"));
 
 		// テーブルが作成されることを確認
-		createTable.createBillingTable(stmt);
+		ddlExector.createBillingTable(session);
 		assertTrue(existsTable("billing"));
-		createTable.createContractsTable(stmt);
+		ddlExector.createContractsTable(session);
 		assertTrue(existsTable("contracts"));
-		createTable.createHistoryTable(stmt, Config.getConfig());
+		ddlExector.createHistoryTable(session);
 		assertTrue(existsTable("history"));
 	}
 
@@ -105,74 +108,78 @@ class CreateTableTest extends AbstractDbTestCase {
 			assertEquals(historyIndexSet, getIndexNameSet(conn,  history));
 			assertEquals(contractsIndexSet, getIndexNameSet(conn,  contracts));
 
-			// インデックス削除されたことを確認
-			CreateTable.prepareLoadData(stmt, config);
-			assertEquals(Collections.EMPTY_SET, getIndexNameSet(conn,  history));
-			assertEquals(Collections.EMPTY_SET, getIndexNameSet(conn,  contracts));
-
-			// インデックスが復活したことを確認
-			CreateTable.afterLoadData(stmt, config);
-			assertEquals(historyIndexSet, getIndexNameSet(conn,  history));
-			assertEquals(contractsIndexSet, getIndexNameSet(conn,  contracts));
+// TOD: ExecuteDDLクラスのテストケースにする
+//			// インデックス削除されたことを確認
+//			CreateTable.prepareLoadData(stmt, config);
+//			assertEquals(Collections.EMPTY_SET, getIndexNameSet(conn,  history));
+//			assertEquals(Collections.EMPTY_SET, getIndexNameSet(conn,  contracts));
+//
+//			// インデックスが復活したことを確認
+//			CreateTable.afterLoadData(stmt, config);
+//			assertEquals(historyIndexSet, getIndexNameSet(conn,  history));
+//			assertEquals(contractsIndexSet, getIndexNameSet(conn,  contracts));
 		}
 	}
 
-	/**
-	 * dropIndex()とdropPrimaryKey()のテスト
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	void testDropIndexAndDropPrimaryKey() throws Exception {
-		testDropIndexAndDropPrimaryKeySub(Config.getConfig());
-	}
+// TOD: ExecuteDDLクラスのテストケースにする
+//	/**
+//	 * dropIndex()とdropPrimaryKey()のテスト
+//	 *
+//	 * @throws Exception
+//	 */
+//	@Test
+//	void testDropIndexAndDropPrimaryKey() throws Exception {
+//		testDropIndexAndDropPrimaryKeySub(Config.getConfig());
+//	}
 
-	/**
-	 * dropIndex()とdropPrimaryKey()のテスト(oracle)
-	 *
-	 * @throws Exception
-	 */
-	@Test
-	@Tag("oracle")
-	void testDropIndexAndDropPrimaryKeyOracle() throws Exception {
-		testDropIndexAndDropPrimaryKeySub(Config.getConfig(new String[]{ORACLE_CONFIG_PATH}));
-	}
+// TOD: ExecuteDDLクラスのテストケースにする
 
-	void testDropIndexAndDropPrimaryKeySub(Config config) throws Exception {
-		try (Connection conn = DBUtils.getConnection(config);
-				Statement stmt = conn.createStatement()) {
-			conn.setAutoCommit(true);
+//	/**
+//	 * dropIndex()とdropPrimaryKey()のテスト(oracle)
+//	 *
+//	 * @throws Exception
+//	 */
+//	@Test
+//	@Tag("oracle")
+//	void testDropIndexAndDropPrimaryKeyOracle() throws Exception {
+//		testDropIndexAndDropPrimaryKeySub(Config.getConfig(new String[]{ORACLE_CONFIG_PATH}));
+//	}
 
-			// テーブルを作成
-			CreateTable createTable = new CreateTable();
-			createTable.execute(config);
-
-			String tableName = config.dbmsType == DbmsType.ORACLE_JDBC ? "HISTORY" : "history";
-
-			// インデックスの存在を確認
-			assertTrue(getIndexNameSet(conn,  tableName).contains("idx_df"));
-
-			// インデックス削除
-			CreateTable.dropIndex("idx_df", stmt, config);
-			assertFalse(getIndexNameSet(conn,  tableName).contains("idx_df"));
-
-			// 2回呼んでもエラーにならない
-			CreateTable.dropIndex("idx_df", stmt, config);
-			assertFalse(getIndexNameSet(conn,  tableName).contains("idx_df"));
-
-
-			// PKの存在を確認
-			assertTrue(getIndexNameSet(conn,  tableName).contains("history_pkey"));
-
-			// PK削除
-			CreateTable.dropPrimaryKey(tableName, "history_pkey", stmt, config);
-			assertFalse(getIndexNameSet(conn,  tableName).contains("history_pkey"));
-
-			// 2回呼んでもエラーにならない
-			CreateTable.dropPrimaryKey(tableName, "history_pkey", stmt, config);
-			assertFalse(getIndexNameSet(conn,  tableName).contains("history_pkey"));
-		}
-	}
+//	void testDropIndexAndDropPrimaryKeySub(Config config) throws Exception {
+//		try (Connection conn = DBUtils.getConnection(config);
+//				Statement stmt = conn.createStatement()) {
+//			conn.setAutoCommit(true);
+//
+//			// テーブルを作成
+//			CreateTable createTable = new CreateTable();
+//			createTable.execute(config);
+//
+//			String tableName = config.dbmsType == DbmsType.ORACLE_JDBC ? "HISTORY" : "history";
+//
+//			// インデックスの存在を確認
+//			assertTrue(getIndexNameSet(conn,  tableName).contains("idx_df"));
+//
+//			// インデックス削除
+//			CreateTable.dropIndex("idx_df", stmt, config);
+//			assertFalse(getIndexNameSet(conn,  tableName).contains("idx_df"));
+//
+//			// 2回呼んでもエラーにならない
+//			CreateTable.dropIndex("idx_df", stmt, config);
+//			assertFalse(getIndexNameSet(conn,  tableName).contains("idx_df"));
+//
+//
+//			// PKの存在を確認
+//			assertTrue(getIndexNameSet(conn,  tableName).contains("history_pkey"));
+//
+//			// PK削除
+//			CreateTable.dropPrimaryKey(tableName, "history_pkey", stmt, config);
+//			assertFalse(getIndexNameSet(conn,  tableName).contains("history_pkey"));
+//
+//			// 2回呼んでもエラーにならない
+//			CreateTable.dropPrimaryKey(tableName, "history_pkey", stmt, config);
+//			assertFalse(getIndexNameSet(conn,  tableName).contains("history_pkey"));
+//		}
+//	}
 
 	/**
 	 * 指定のテーブルに存在するインデックスのセットを返す

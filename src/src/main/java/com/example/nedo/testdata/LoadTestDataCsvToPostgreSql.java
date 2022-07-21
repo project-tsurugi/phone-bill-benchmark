@@ -3,7 +3,6 @@ package com.example.nedo.testdata;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Collections;
@@ -14,9 +13,9 @@ import org.slf4j.LoggerFactory;
 
 import com.example.nedo.app.Config;
 import com.example.nedo.app.Config.DbmsType;
-import com.example.nedo.db.jdbc.DBUtils;
-import com.example.nedo.app.CreateTable;
 import com.example.nedo.app.ExecutableCommand;
+import com.example.nedo.db.interfaces.DdlLExecutor;
+import com.example.nedo.db.jdbc.Session;
 import com.example.nedo.util.PathUtils;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -35,17 +34,16 @@ public class LoadTestDataCsvToPostgreSql extends ExecutableCommand {
 		if (config.dbmsType != DbmsType.POSTGRE_SQL_JDBC) {
 			LOG.error("This configuration is not for the PostgreSQL.");
 		} else {
-			try (Connection conn = DBUtils.getConnection(config);
-					Statement stmt = conn.createStatement()) {
-				conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
-				conn.setAutoCommit(false);
-				CreateTable.prepareLoadData(stmt, config);
+			try (Session session = Session.getSession(config)) {
+				DdlLExecutor ddlExector = DdlLExecutor.getInstance(config);
+				ddlExector.prepareLoadData(session);
 				Path dir = Paths.get(config.csvDir);
 				List<Path> contractsList = Collections.singletonList(CsvUtils.getContractsFilePath(dir));
 				List<Path> historyList = CsvUtils.getHistortyFilePaths(dir);
+				Statement stmt = session.getConnection().createStatement();
 				doCopy(stmt, config, "contracts", contractsList);
 				doCopy(stmt, config, "history", historyList);
-				CreateTable.afterLoadData(stmt, config);
+				ddlExector.afterLoadData(session);
 			}
 		}
 	}

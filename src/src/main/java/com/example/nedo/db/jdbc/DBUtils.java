@@ -28,6 +28,7 @@ public class DBUtils {
 	private static  DateFormat DF_DATE = new SimpleDateFormat("yyyy-MM-dd");
 	private static  DateFormat DF_TIMESTAMP = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 
+	@Deprecated
 	public static Connection getConnection(Config config) {
         Connection conn;
 		try {

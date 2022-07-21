@@ -26,7 +26,6 @@ class ConfigTest {
 	private static String NOT_DEFALUT_CONFIG_PATH = "src/test/config/not-default.properties";
 	private static String DEFALUT_CONFIG_PATH = "src/test/config/default.properties";
 	private static String INCONSISTENT_CONFIG_PATH = "src/test/config/inconsistent.properties";
-	private static String ORACLE_CONFIG_PATH = "src/test/config/oracle.properties";
 
 	private Map<String, String> sysPropBackup = new HashMap<String, String>();
 
@@ -113,8 +112,8 @@ class ConfigTest {
 		assertEquals(DbmsType.OTHER, config.dbmsType);
 
 		// 不正なDBMSタイプが指定されたケース
-		config = Config.getConfigFromSrtring("dbms.type=WRONG_TYPE");
-		assertEquals(DbmsType.POSTGRE_SQL_JDBC, config.dbmsType);
+		RuntimeException e = assertThrows(RuntimeException.class, () -> Config.getConfigFromSrtring("dbms.type=WRONG_TYPE"));
+		assertEquals("unkown dbms.type: WRONG_TYPE", e.getMessage());
 
 	}
 
