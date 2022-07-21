@@ -43,7 +43,7 @@ repositories {
   mavenLocal()
 }
 dependencies {
-  api 'com.tsurugidb.iceaxe:iceaxe-core:0.0.1'
+  api 'com.tsurugidb.iceaxe:iceaxe-core:0.0.1-SNAPSHOT'
   // https://mvnrepository.com/artifact/org.postgresql/postgresql
   implementation group: 'org.postgresql', name: 'postgresql', version: '42.2.16'
   // https://mvnrepository.com/artifact/com.oracle.ojdbc/ojdbc8
