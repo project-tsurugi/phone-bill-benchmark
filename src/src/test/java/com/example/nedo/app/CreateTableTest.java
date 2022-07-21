@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import com.example.nedo.AbstractDbTestCase;
-import com.example.nedo.app.Config.Dbms;
+import com.example.nedo.app.Config.DbmsType;
 import com.example.nedo.db.jdbc.DBUtils;
 
 class CreateTableTest extends AbstractDbTestCase {
@@ -88,8 +88,8 @@ class CreateTableTest extends AbstractDbTestCase {
 			CreateTable createTable = new CreateTable();
 			createTable.execute(config);
 
-			String history = config.dbms == Dbms.ORACLE ? "HISTORY" : "history";
-			String contracts = config.dbms == Dbms.ORACLE ? "CONTRACTS" : "contracts";
+			String history = config.dbmsType == DbmsType.ORACLE_JDBC ? "HISTORY" : "history";
+			String contracts = config.dbmsType == DbmsType.ORACLE_JDBC ? "CONTRACTS" : "contracts";
 
 			Set<String> historyIndexSet = new HashSet<String>();
 			historyIndexSet.add("history_pkey");
@@ -147,7 +147,7 @@ class CreateTableTest extends AbstractDbTestCase {
 			CreateTable createTable = new CreateTable();
 			createTable.execute(config);
 
-			String tableName = config.dbms == Dbms.ORACLE ? "HISTORY" : "history";
+			String tableName = config.dbmsType == DbmsType.ORACLE_JDBC ? "HISTORY" : "history";
 
 			// インデックスの存在を確認
 			assertTrue(getIndexNameSet(conn,  tableName).contains("idx_df"));

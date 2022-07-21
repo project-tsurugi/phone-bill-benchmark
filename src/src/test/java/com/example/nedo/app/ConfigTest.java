@@ -9,7 +9,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.Connection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -18,7 +17,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.example.nedo.app.Config.Dbms;
+import com.example.nedo.app.Config.DbmsType;
 import com.example.nedo.app.Config.DistributionFunction;
 import com.example.nedo.app.Config.TransactionScope;
 import com.example.nedo.db.jdbc.DBUtils;
@@ -75,24 +74,48 @@ class ConfigTest {
 
 
 	/**
-	 * フィールドdbmsに期待した値がセットされることのテスト
+	 * フィールドdbmsTypeに期待した値がセットされることのテスト
 	 * @throws IOException
 	 */
 	@Test
-	void dbmsFieldTest() throws IOException {
+	void dbmsTypeFieldTest() throws IOException {
 		Config config;
 
-		config = Config.getConfig();
-		System.out.println(config.url + ":" + config.dbms);
-		assertEquals(Dbms.POSTGRE_SQL, config.dbms);
+		// DBMSタイプを明示的に指定するケース
+		config = Config.getConfigFromSrtring("dbms.type=POSTGRE_SQL_JDBC");
+		assertEquals(DbmsType.POSTGRE_SQL_JDBC, config.dbmsType);
 
-		config = Config.getConfig(new String[]{ORACLE_CONFIG_PATH});
-		System.out.println(config.url + ":" + config.dbms);
-		assertEquals(Dbms.ORACLE, config.dbms);
+		config = Config.getConfigFromSrtring("dbms.type=ORACLE_JDBC");
+		assertEquals(DbmsType.ORACLE_JDBC, config.dbmsType);
 
-		config = Config.getConfig(new String[]{NOT_DEFALUT_CONFIG_PATH});
-		System.out.println(config.url + ":" + config.dbms);
-		assertEquals(Dbms.OTHER, config.dbms);
+		config = Config.getConfigFromSrtring("dbms.type=OTHER");
+		assertEquals(DbmsType.OTHER, config.dbmsType);
+
+		// DBMSタイプが無指定でJDBCのURLからDBMSタイプが決まるケース
+		config = Config.getConfigFromSrtring("url=jdbc:postgresql://127.0.0.1/phonebill");
+		assertEquals(DbmsType.POSTGRE_SQL_JDBC, config.dbmsType);
+
+		config = Config.getConfigFromSrtring("url=jdbc:oracle:thin:@localhost:1521:ORCL");
+		assertEquals(DbmsType.ORACLE_JDBC, config.dbmsType);
+
+		config = Config.getConfigFromSrtring("url=jdbc:other://127.0.0.1/mydatabase");
+		assertEquals(DbmsType.OTHER, config.dbmsType);
+
+		// DBMSタイプが指定されていてDBMSタイプに一致しないURLが指定されているケース => DBMSタイプの指定が優先される
+
+		config = Config.getConfigFromSrtring("dbms.type=POSTGRE_SQL_JDBC\r\nurl=jdbc:other://127.0.0.1/mydatabase");
+		assertEquals(DbmsType.POSTGRE_SQL_JDBC, config.dbmsType);
+
+		config = Config.getConfigFromSrtring("dbms.type=ORACLE_JDBC\r\nurl=jdbc:other://127.0.0.1/mydatabase");
+		assertEquals(DbmsType.ORACLE_JDBC, config.dbmsType);
+
+		config = Config.getConfigFromSrtring("dbms.type=OTHER\r\nurl=jdbc:oracle:thin:@localhost:1521:ORCL");
+		assertEquals(DbmsType.OTHER, config.dbmsType);
+
+		// 不正なDBMSタイプが指定されたケース
+		config = Config.getConfigFromSrtring("dbms.type=WRONG_TYPE");
+		assertEquals(DbmsType.POSTGRE_SQL_JDBC, config.dbmsType);
+
 	}
 
 
@@ -183,7 +206,7 @@ class ConfigTest {
 		assertEquals("jdbc:postgresql://127.0.0.1/phonebill", config.url);
 		assertEquals("phonebill", config.user);
 		assertEquals("phonebill", config.password);
-		assertEquals(Connection.TRANSACTION_READ_COMMITTED, config.isolationLevel);
+		assertEquals(Config.IsolationLevel.READ_COMMITTED, config.isolationLevel);
 
 		/* スレッドに関するパラメータ */
 		assertEquals(1, config.threadCount);
@@ -293,8 +316,10 @@ class ConfigTest {
 		assertEquals("jdbc:other://127.0.0.1/mydatabase", config.url);
 		assertEquals("myuser", config.user);
 		assertEquals("mypassword", config.password);
-		assertEquals(Connection.TRANSACTION_SERIALIZABLE, config.isolationLevel);
-		assertEquals(Dbms.OTHER, config.dbms);
+		assertEquals(Config.IsolationLevel.SERIALIZABLE, config.isolationLevel);
+
+		/* DBMSタイプ */
+		assertEquals(DbmsType.OTHER, config.dbmsType);
 
 		// toStringのチェック
 		Path path = Paths.get(NOT_DEFALUT_CONFIG_PATH);

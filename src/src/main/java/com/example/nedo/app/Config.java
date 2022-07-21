@@ -7,7 +7,6 @@ import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.sql.Connection;
 import java.sql.Date;
 import java.util.Locale;
 import java.util.Properties;
@@ -17,9 +16,6 @@ import org.slf4j.LoggerFactory;
 
 import com.example.nedo.db.jdbc.DBUtils;
 
-/**
- *
- */
 public class Config implements Cloneable {
 
 	private Properties prop;
@@ -228,14 +224,19 @@ public class Config implements Cloneable {
 	public String url;
 	public String user;
 	public String password;
-	public int isolationLevel;
-	public  Dbms dbms;
+	public IsolationLevel isolationLevel;
 	private static final String URL = "url";
 	private static final String USER = "user";
 	private static final String PASSWORD = "password";
 	private static final String ISOLATION_LEVEL = "isolation.level";
-	private static final String STR_SERIALIZABLE = "SERIALIZABLE";
-	private static final String STR_READ_COMMITTED = "READ_COMMITTED";
+
+
+	/**
+	 * DBMSタイプ
+	 */
+	public DbmsType dbmsType;
+	private static final String DBMS_TYPE= "dbms.type";
+
 
 	/* スレッドに関するパラメータ */
 
@@ -402,17 +403,13 @@ public class Config implements Cloneable {
 
 		// JDBCに関するパラメータ
 		url = getString(URL, "jdbc:postgresql://127.0.0.1/phonebill");
-		if (url.toLowerCase(Locale.JAPAN).contains("oracle")) {
-			dbms = Dbms.ORACLE;
-		} else if (url.toLowerCase(Locale.JAPAN).contains("postgresql")) {
-			dbms = Dbms.POSTGRE_SQL;
-		} else {
-			dbms = Dbms.OTHER;
-		}
-
 		user = getString(USER, "phonebill");
 		password = getString(PASSWORD, "phonebill");
-		isolationLevel = getIsolationLevel(ISOLATION_LEVEL, Connection.TRANSACTION_READ_COMMITTED);
+		isolationLevel = getIsolationLevel(ISOLATION_LEVEL, IsolationLevel.READ_COMMITTED);
+
+		// DBMSタイプ(明示的に指定されていない場合はURLから決定する)
+		dbmsType = getDbmsType(DBMS_TYPE, url);
+
 
 		// スレッドに関するパラメータ
 		threadCount = getInt(THREAD_COUNT, 1);
@@ -508,32 +505,42 @@ public class Config implements Cloneable {
 	 * @param transactionSerializable
 	 * @return
 	 */
-	private int getIsolationLevel(String key, int defaultValue) {
+	private IsolationLevel getIsolationLevel(String key, IsolationLevel defaultValue) {
 		if (!prop.containsKey(key)) {
 			return defaultValue;
 		}
-		switch (prop.getProperty(key)) {
-		case STR_READ_COMMITTED:
-			return Connection.TRANSACTION_READ_COMMITTED;
-		case STR_SERIALIZABLE:
-			return Connection.TRANSACTION_SERIALIZABLE;
-		default:
-			throw new RuntimeException("Unsupported transaction isolation level: "
-					+ prop.getProperty(key) + ", only '" + STR_READ_COMMITTED + "' or '" + STR_SERIALIZABLE
-					+ "' are supported.");
+		return IsolationLevel.valueOf(prop.getProperty(key));
+	}
+
+
+	/**
+	 * DBMSタイプを取得する
+	 *
+	 * @param key
+	 * @param url
+	 * @return
+	 */
+	private DbmsType getDbmsType(String key, String url) {
+		if (!prop.containsKey(key)) {
+			// 明示的に指定されていない場合はURLから決定する
+			if (url.toLowerCase(Locale.JAPAN).contains("oracle")) {
+				return DbmsType.ORACLE_JDBC;
+			} else if (url.toLowerCase(Locale.JAPAN).contains("postgresql")) {
+				return DbmsType.POSTGRE_SQL_JDBC;
+			} else {
+				return DbmsType.OTHER;
+			}
+		}
+
+		String s = prop.getProperty(key);
+		try {
+			 return DbmsType.valueOf(s);
+		} catch (IllegalArgumentException e) {
+			throw new RuntimeException("unkown " + DBMS_TYPE + ": " + s);
 		}
 	}
 
-	private static String toIsolationLevelString(int isolationLevel) {
-		switch (isolationLevel) {
-		case Connection.TRANSACTION_SERIALIZABLE:
-			return STR_SERIALIZABLE;
-		case Connection.TRANSACTION_READ_COMMITTED:
-			return STR_READ_COMMITTED;
-		default:
-			return "Unspoorted Isolation Level";
-		}
-	}
+
 
 	/**
 	 * int型のプロパティの値を取得する
@@ -726,13 +733,15 @@ public class Config implements Cloneable {
 		sb.append(String.format(format, STATISTICS_OUTPUT_DIR, statisticsOutputDir == null ? "" : statisticsOutputDir));
 		sb.append(String.format(format, HISTORY_MIN_DATE, historyMinDate));
 		sb.append(String.format(format, HISTORY_MAX_DATE, historyMaxDate));
-
 		sb.append(System.lineSeparator());
 		sb.append(String.format(commentFormat, "JDBCに関するパラメータ"));
 		sb.append(String.format(format, URL, url));
 		sb.append(String.format(format, USER, user));
 		sb.append(String.format(format, PASSWORD, password));
-		sb.append(String.format(format, ISOLATION_LEVEL, toIsolationLevelString(isolationLevel)));
+		sb.append(String.format(format, ISOLATION_LEVEL, isolationLevel));
+		sb.append(System.lineSeparator());
+		sb.append(String.format(commentFormat, "DBMSタイプ"));
+		sb.append(String.format(format, DBMS_TYPE, dbmsType));
 		sb.append(System.lineSeparator());
 		sb.append(String.format(commentFormat, "オンラインアプリケーションに関するパラメータ"));
 		sb.append(String.format(format, MASTER_UPDATE_RECORDS_PER_MIN, masterUpdateRecordsPerMin));
@@ -794,13 +803,13 @@ public class Config implements Cloneable {
 
 
 	/**
-	 * 使用するDBMS
+	 * 使用するDBMSのタイプ
 	 *
 	 */
-	public static enum Dbms {
-		ORACLE,
-		POSTGRE_SQL,
-		OTHER
+	public static enum DbmsType {
+		ORACLE_JDBC,
+		POSTGRE_SQL_JDBC,
+		OTHER,
 	}
 
 	@Override
@@ -812,6 +821,13 @@ public class Config implements Cloneable {
 		}
 	}
 
+	/**
+	 * トランザクション分離レベル
+	 */
+	public static enum IsolationLevel {
+		SERIALIZABLE,
+		READ_COMMITTED;
+	}
 
 	/**
 	 * 現在のConfig値のときの契約マスタのブロックサイズを取得する

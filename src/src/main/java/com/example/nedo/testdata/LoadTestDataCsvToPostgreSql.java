@@ -13,7 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.example.nedo.app.Config;
-import com.example.nedo.app.Config.Dbms;
+import com.example.nedo.app.Config.DbmsType;
 import com.example.nedo.db.jdbc.DBUtils;
 import com.example.nedo.app.CreateTable;
 import com.example.nedo.app.ExecutableCommand;
@@ -32,7 +32,7 @@ public class LoadTestDataCsvToPostgreSql extends ExecutableCommand {
 
 	@Override
 	public void execute(Config config) throws Exception {
-		if (config.dbms != Dbms.POSTGRE_SQL) {
+		if (config.dbmsType != DbmsType.POSTGRE_SQL_JDBC) {
 			LOG.error("This configuration is not for the PostgreSQL.");
 		} else {
 			try (Connection conn = DBUtils.getConnection(config);

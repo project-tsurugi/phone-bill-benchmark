@@ -14,7 +14,7 @@ import java.time.LocalDate;
 import org.postgresql.util.PSQLException;
 
 import com.example.nedo.app.Config;
-import com.example.nedo.app.Config.Dbms;
+import com.example.nedo.app.Config.DbmsType;
 
 import oracle.ucp.jdbc.PoolDataSource;
 import oracle.ucp.jdbc.PoolDataSourceFactory;
@@ -31,7 +31,7 @@ public class DBUtils {
 	public static Connection getConnection(Config config) {
         Connection conn;
 		try {
-			if (config.dbms == Dbms.ORACLE) {
+			if (config.dbmsType == DbmsType.ORACLE_JDBC) {
 				PoolDataSource pds = PoolDataSourceFactory.getPoolDataSource();
 				pds.setConnectionFactoryClassName("oracle.jdbc.pool.OracleDataSource");
 				pds.setURL(config.url);
@@ -43,7 +43,16 @@ public class DBUtils {
 				conn = DriverManager.getConnection(config.url, config.user, config.password);
 			}
 			conn.setAutoCommit(false);
-			conn.setTransactionIsolation(config.isolationLevel);
+			switch(config.isolationLevel) {
+			case READ_COMMITTED:
+				conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+				break;
+			case SERIALIZABLE:
+				conn.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+				break;
+			default:
+				assert false;
+			}
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}

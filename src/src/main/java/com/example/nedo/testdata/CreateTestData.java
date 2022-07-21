@@ -29,7 +29,7 @@ public class CreateTestData extends ExecutableCommand {
 	public void execute(Config c) throws Exception {
 		// テストデータの作成時は、configの指定にかかわらずTRANSACTION_READ_COMMITTEDを使用する。
 		Config config = c.clone();
-		config.isolationLevel = Connection.TRANSACTION_READ_COMMITTED;
+		config.isolationLevel = Config.IsolationLevel.READ_COMMITTED;
 		int seed = config.randomSeed;
 		ContractBlockInfoAccessor accessor = new SingleProcessContractBlockManager();
 		TestDataGenerator generator = new TestDataGenerator(config, new Random(seed), accessor);

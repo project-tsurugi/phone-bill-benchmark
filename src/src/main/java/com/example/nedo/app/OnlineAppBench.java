@@ -8,7 +8,7 @@ import java.sql.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.example.nedo.app.Config.Dbms;
+import com.example.nedo.app.Config.DbmsType;
 import com.example.nedo.app.billing.PhoneBill;
 import com.example.nedo.db.jdbc.DBUtils;
 import com.example.nedo.testdata.CreateTestData;
@@ -109,7 +109,7 @@ public class OnlineAppBench extends ExecutableCommand {
 
 
 	private void afterExec(Config config) throws SQLException {
-		boolean isOracle = config.dbms == Dbms.ORACLE;
+		boolean isOracle = config.dbmsType == DbmsType.ORACLE_JDBC;
 		try (Connection conn = DBUtils.getConnection(config);
 				Statement stmt = conn.createStatement()) {
 			conn.setAutoCommit(true);

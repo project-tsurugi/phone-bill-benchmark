@@ -7,7 +7,7 @@ import java.sql.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.example.nedo.app.Config.Dbms;
+import com.example.nedo.app.Config.DbmsType;
 import com.example.nedo.db.jdbc.DBUtils;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -43,7 +43,7 @@ public class CreateTable extends ExecutableCommand{
 				+ "charge integer," 								// 料金
 				+ "df integer not null" 							// 論理削除フラグ
 				+ ")";
-		if (config.dbms == Dbms.ORACLE && config.oracleInitran != 0) {
+		if (config.dbmsType == DbmsType.ORACLE_JDBC && config.oracleInitran != 0) {
 			create_table = create_table + "initrans " + config.oracleInitran;
 		}
 		stmt.execute(create_table);
@@ -75,7 +75,7 @@ public class CreateTable extends ExecutableCommand{
 
 	void dropTables(Statement stmt, Config config) throws SQLException {
 		// 通話履歴テーブル
-		if (config.dbms == Dbms.ORACLE) {
+		if (config.dbmsType == DbmsType.ORACLE_JDBC) {
 			dropTableOracle(stmt, "history");
 			dropTableOracle(stmt, "contracts");
 			dropTableOracle(stmt, "billing");
@@ -152,7 +152,7 @@ public class CreateTable extends ExecutableCommand{
 	 */
 	@SuppressFBWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
 	static void createIndexes(Statement stmt, Config config) throws SQLException {
-		String option = config.dbms == Dbms.ORACLE ? config.oracleCreateIndexOption : "";
+		String option = config.dbmsType == DbmsType.ORACLE_JDBC ? config.oracleCreateIndexOption : "";
 
 		long startTime = System.currentTimeMillis();
 
@@ -199,7 +199,7 @@ public class CreateTable extends ExecutableCommand{
 	 */
 	@SuppressFBWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
 	static void dropPrimaryKey(String table, String pk, Statement stmt, Config config) throws SQLException {
-		if (config.dbms == Dbms.ORACLE) {
+		if (config.dbmsType == DbmsType.ORACLE_JDBC) {
 			try {
 				stmt.execute("alter table " + table + " drop primary key");
 			} catch (SQLException e) {
@@ -222,7 +222,7 @@ public class CreateTable extends ExecutableCommand{
 	 */
 	@SuppressFBWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
 	static void dropIndex(String index, Statement stmt, Config config) throws SQLException {
-		if (config.dbms == Dbms.ORACLE) {
+		if (config.dbmsType == DbmsType.ORACLE_JDBC) {
 			try {
 				stmt.execute("drop index " + index);
 			} catch (SQLException e) {
@@ -245,12 +245,12 @@ public class CreateTable extends ExecutableCommand{
 		long startTime = System.currentTimeMillis();
 		try (Connection conn = DBUtils.getConnection(config);
 				Statement stmt = conn.createStatement()) {
-			switch (config.dbms) {
-			case ORACLE:
+			switch (config.dbmsType) {
+			case ORACLE_JDBC:
 				stmt.executeUpdate("{call DBMS_STATS.GATHER_SCHEMA_STATS(ownname => '" + config.user
 						+ "', cascade => TRUE, no_invalidate => TRUE)}");
 				break;
-			case POSTGRE_SQL:
+			case POSTGRE_SQL_JDBC:
 				stmt.executeUpdate("analyze history");
 				stmt.executeUpdate("analyze contracts");
 				break;
