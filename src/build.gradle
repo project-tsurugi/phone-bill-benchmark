@@ -2,6 +2,8 @@
 plugins {
     id 'java-library'
     id 'application'
+    id 'com.diffplug.eclipse.apt' version '3.24.0'
+    id 'org.seasar.doma.compile' version '1.1.0'
     id 'com.github.spotbugs' version '4.7.1'
 }
 java {
@@ -44,6 +46,11 @@ repositories {
 }
 dependencies {
   api 'com.tsurugidb.iceaxe:iceaxe-core:0.0.1-SNAPSHOT'
+  // https://mvnrepository.com/artifact/org.seasar.doma/doma
+  implementation "org.seasar.doma:doma-core:2.41.0"
+  annotationProcessor "org.seasar.doma:doma-processor:2.41.0"
+
+
   // https://mvnrepository.com/artifact/org.postgresql/postgresql
   implementation group: 'org.postgresql', name: 'postgresql', version: '42.2.16'
   // https://mvnrepository.com/artifact/com.oracle.ojdbc/ojdbc8
