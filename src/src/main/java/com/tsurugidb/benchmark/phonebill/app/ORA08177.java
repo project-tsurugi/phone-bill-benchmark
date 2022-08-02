@@ -20,7 +20,8 @@ public class ORA08177 extends ExecutableCommand {
 	private Statement stmt;
 
 	public static void main(String[] args) throws Exception {
-		Config config = Config.getConfig(args);
+		Config.setConfigForAppConfig(false);
+		Config config = Config.getConfigForAppConfig();
 		new CreateTable().execute(config);
 		new ORA08177().execute(config);
 	}

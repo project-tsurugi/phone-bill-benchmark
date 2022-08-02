@@ -15,8 +15,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
-import com.tsurugidb.benchmark.phonebill.db.jdbc.History;
-import com.tsurugidb.benchmark.phonebill.db.jdbc.Contract.Key;
+import com.tsurugidb.benchmark.phonebill.db.doma2.entity.History;
+import com.tsurugidb.benchmark.phonebill.db.doma2.entity.Contract.Key;
 import com.tsurugidb.benchmark.phonebill.testdata.CallTimeGenerator;
 import com.tsurugidb.benchmark.phonebill.testdata.ContractBlockInfoAccessor;
 import com.tsurugidb.benchmark.phonebill.testdata.ContractInfoReader;

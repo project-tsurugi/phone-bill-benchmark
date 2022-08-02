@@ -23,7 +23,8 @@ public class LoadTestDataCsvToOracle extends ExecutableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(LoadTestDataCsvToOracle.class);
 
 	public static void main(String[] args) throws Exception {
-		Config config = Config.getConfig(args);
+		Config.setConfigForAppConfig(false);
+		Config config = Config.getConfigForAppConfig();
 		LoadTestDataCsvToOracle loadTestDataCsvToOracle = new LoadTestDataCsvToOracle();
 		loadTestDataCsvToOracle.execute(config);
 	}

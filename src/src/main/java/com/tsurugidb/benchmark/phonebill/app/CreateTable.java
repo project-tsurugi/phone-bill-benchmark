@@ -5,7 +5,8 @@ import com.tsurugidb.benchmark.phonebill.db.jdbc.Session;
 
 public class CreateTable extends ExecutableCommand{
 	public static void main(String[] args) throws Exception {
-		Config config = Config.getConfig(args);
+		Config.setConfigForAppConfig(false);
+		Config config = Config.getConfigForAppConfig();
 		CreateTable createTable = new CreateTable();
 		createTable.execute(config);
 	}

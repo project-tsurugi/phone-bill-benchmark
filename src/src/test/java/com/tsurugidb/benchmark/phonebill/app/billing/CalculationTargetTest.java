@@ -6,7 +6,7 @@ import java.sql.Date;
 
 import org.junit.jupiter.api.Test;
 
-import com.tsurugidb.benchmark.phonebill.db.jdbc.Contract;
+import com.tsurugidb.benchmark.phonebill.db.doma2.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
 
 class CalculationTargetTest {

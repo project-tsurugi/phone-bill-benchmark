@@ -19,10 +19,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
-import com.tsurugidb.benchmark.phonebill.db.jdbc.Contract;
+import com.tsurugidb.benchmark.phonebill.db.doma2.entity.Contract;
+import com.tsurugidb.benchmark.phonebill.db.doma2.entity.Contract.Key;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.Duration;
-import com.tsurugidb.benchmark.phonebill.db.jdbc.Contract.Key;
 import com.tsurugidb.benchmark.phonebill.util.RandomStub;
 
 class ContractInfoReaderTest {

@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.ExecutableCommand;
-import com.tsurugidb.benchmark.phonebill.db.jdbc.Contract;
+import com.tsurugidb.benchmark.phonebill.db.doma2.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.Duration;
 import com.tsurugidb.benchmark.phonebill.online.AbstractOnlineApp;
@@ -50,7 +50,8 @@ public class PhoneBill extends ExecutableCommand {
 	Config config;
 
 	public static void main(String[] args) throws Exception {
-		Config config = Config.getConfig(args);
+		Config.setConfigForAppConfig(false);
+		Config config = Config.getConfigForAppConfig();
 		PhoneBill phoneBill = new PhoneBill();
 		phoneBill.execute(config);
 	}

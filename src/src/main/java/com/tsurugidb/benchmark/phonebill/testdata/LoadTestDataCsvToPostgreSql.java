@@ -24,7 +24,8 @@ public class LoadTestDataCsvToPostgreSql extends ExecutableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(LoadTestDataCsvToPostgreSql.class);
 
     public static void main(String[] args) throws Exception {
-		Config config = Config.getConfig(args);
+		Config.setConfigForAppConfig(false);
+		Config config = Config.getConfigForAppConfig();
 		LoadTestDataCsvToPostgreSql loadTestDataCsvToPostgreSql = new LoadTestDataCsvToPostgreSql();
 		loadTestDataCsvToPostgreSql.execute(config);
 	}

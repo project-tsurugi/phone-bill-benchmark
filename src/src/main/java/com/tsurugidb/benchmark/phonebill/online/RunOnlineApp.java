@@ -33,7 +33,8 @@ public class RunOnlineApp extends ExecutableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(RunOnlineApp.class);
 
 	public static void main(String[] args) throws Exception {
-		Config config = Config.getConfig(args);
+		Config.setConfigForAppConfig(false);
+		Config config = Config.getConfigForAppConfig();
 		RunOnlineApp runOnlineApp = new RunOnlineApp();
 		runOnlineApp.execute(config);
 	}

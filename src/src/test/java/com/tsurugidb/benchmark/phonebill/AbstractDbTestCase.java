@@ -13,9 +13,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
-import com.tsurugidb.benchmark.phonebill.db.jdbc.Contract;
+import com.tsurugidb.benchmark.phonebill.db.doma2.entity.Contract;
+import com.tsurugidb.benchmark.phonebill.db.doma2.entity.History;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
-import com.tsurugidb.benchmark.phonebill.db.jdbc.History;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 

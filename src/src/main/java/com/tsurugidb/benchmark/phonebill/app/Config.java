@@ -14,10 +14,21 @@ import java.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.tsurugidb.benchmark.phonebill.db.doma2.config.AppConfig;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
 
 public class Config implements Cloneable {
 
+	/**
+	 * AppConfigが使用するConfig.
+	 * <br>
+	 * {@link AppConfig}を使用する前にセットしておく必要がある。
+	 */
+	private static Config configForAppConfig;
+
+	/**
+	 * プロパティ
+	 */
 	private Properties prop;
 
 	/* 料金計算に関するパラメータ */
@@ -675,15 +686,20 @@ public class Config implements Cloneable {
 	 * @return
 	 * @throws IOException
 	 */
-	public static Config getConfig(String[] args) throws IOException {
-		if (args.length == 0) {
-			return new Config((String)null);
-		}
-		return new Config(args[0]);
+	public static Config getConfig(String arg) throws IOException {
+		return new Config(arg);
 	}
 
+	/**
+	 * configオブジェクトの生成.
+	 * <br>
+	 * デフォルト値でconfigオブジェクトを生成する。
+
+	 * @return
+	 * @throws IOException
+	 */
 	public static Config getConfig() throws IOException {
-		return getConfig(new String[0]);
+		return new Config((Reader)null);
 	}
 
 
@@ -838,4 +854,28 @@ public class Config implements Cloneable {
 		return duplicatePhoneNumberRate * 2 + expirationDateRate + noExpirationDateRate;
 	}
 
+
+	/**
+	 * @return configForAppConfig
+	 */
+	public static Config getConfigForAppConfig() {
+		return configForAppConfig;
+	}
+
+
+	/**
+	 * @param システムプロパティpropertyで指定したファイルを使用してコンフィグを作成し、Config.configForAppCOnfigにセットする。
+	 *
+	 * @param requiredFile ファイル指定が必須の場合true
+	 * @throws IOException
+	 */
+	public static void setConfigForAppConfig(boolean requiredFile) throws IOException {
+        String s = System.getProperty("property");
+        if (s == null) {
+        	if (requiredFile) {
+        		throw new RuntimeException("not found -Dproperty=property-file-path");
+        	}
+        }
+        configForAppConfig = Config.getConfig(s);
+	}
 }

@@ -11,8 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.tsurugidb.benchmark.phonebill.db.doma2.entity.History;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
-import com.tsurugidb.benchmark.phonebill.db.jdbc.History;
 
 /**
  * 電話番号、および通話時間に関する統計情報を生成する.

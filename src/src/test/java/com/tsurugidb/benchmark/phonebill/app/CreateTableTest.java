@@ -77,7 +77,7 @@ class CreateTableTest extends AbstractDbTestCase {
 	@Test
 	@Tag("oracle")
 	void testPrepareAndAfterLoadDataOracle() throws Exception {
-		testPrepareAndAfterLoadDataSub(Config.getConfig(new String[]{ORACLE_CONFIG_PATH}));
+		testPrepareAndAfterLoadDataSub(Config.getConfig(ORACLE_CONFIG_PATH));
 	}
 
 

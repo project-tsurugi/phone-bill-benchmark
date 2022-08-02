@@ -21,7 +21,7 @@ class DBUtilsTest {
 	 */
 	@Test
 	void testGetConnection() throws SQLException, IOException {
-		Config config = Config.getConfig(new String[0]);
+		Config config = Config.getConfig();
 		Connection conn = DBUtils.getConnection(config);
 		assertTrue(conn.isValid(1));
 

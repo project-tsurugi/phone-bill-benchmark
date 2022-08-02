@@ -20,13 +20,13 @@ import org.slf4j.LoggerFactory;
 import com.tsurugidb.benchmark.phonebill.AbstractDbTestCase;
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.Config.TransactionScope;
-import com.tsurugidb.benchmark.phonebill.db.jdbc.Billing;
-import com.tsurugidb.benchmark.phonebill.db.jdbc.Contract;
+import com.tsurugidb.benchmark.phonebill.app.CreateTable;
+import com.tsurugidb.benchmark.phonebill.db.doma2.entity.Billing;
+import com.tsurugidb.benchmark.phonebill.db.doma2.entity.Contract;
+import com.tsurugidb.benchmark.phonebill.db.doma2.entity.History;
+import com.tsurugidb.benchmark.phonebill.db.doma2.entity.History.Key;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.Duration;
-import com.tsurugidb.benchmark.phonebill.db.jdbc.History;
-import com.tsurugidb.benchmark.phonebill.db.jdbc.History.Key;
-import com.tsurugidb.benchmark.phonebill.app.CreateTable;
 import com.tsurugidb.benchmark.phonebill.online.AbstractOnlineApp;
 import com.tsurugidb.benchmark.phonebill.online.HistoryInsertApp;
 import com.tsurugidb.benchmark.phonebill.online.HistoryUpdateApp;
@@ -44,9 +44,10 @@ class PhoneBillTest extends AbstractDbTestCase {
 	@Test
 	void test() throws Exception {
 		// 初期化
-		CreateTable.main(new String[0]);
+		Config config = Config.getConfig();
+		new CreateTable().execute(config);
 		PhoneBill phoneBill = new PhoneBill();
-		phoneBill.config = Config.getConfig();
+		phoneBill.config = config;
 
 		// データが存在しない状態での料金計算
 		phoneBill.doCalc(DBUtils.toDate("2020-11-01"), DBUtils.toDate("2020-11-30"));
@@ -437,8 +438,9 @@ class PhoneBillTest extends AbstractDbTestCase {
 		List<History> historiesBefore = getHistories();
 		List<Contract> contractsBefore = getContracts();
 
-		String[] args = {"src/test/config/phone_bill_test.properties"};
-		PhoneBill.main(args);
+		Config phoneBillConfig = Config.getConfig("src/test/config/phone_bill_test.properties");
+		PhoneBill phoneBill = new PhoneBill();
+		phoneBill.execute(phoneBillConfig);
 
 		List<History> historiesAfter = getHistories();
 		List<Contract> contractsAfter = getContracts();

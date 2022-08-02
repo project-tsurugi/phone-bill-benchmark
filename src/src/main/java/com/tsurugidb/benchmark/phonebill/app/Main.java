@@ -1,6 +1,5 @@
 package com.tsurugidb.benchmark.phonebill.app;
 
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -16,6 +15,7 @@ import com.tsurugidb.benchmark.phonebill.testdata.LoadTestDataCsvToOracle;
 import com.tsurugidb.benchmark.phonebill.testdata.LoadTestDataCsvToPostgreSql;
 import com.tsurugidb.benchmark.phonebill.testdata.TestDataStatistics;
 
+// TODO Configを引数で指定するのではなくシステムプロパティで指定するように変更したので、usage等を変更する。
 public class Main {
 	private static final Map<String, Command> COMMAND_MAP = new LinkedHashMap<>();
 	static {
@@ -69,8 +69,15 @@ public class Main {
 
 		switch(command.argType) {
 		case CONFIG:
-			Config config = Config.getConfig(Arrays.copyOfRange(args, 1, args.length));
-			executableCommand.execute(config);
+			try {
+				Config.setConfigForAppConfig(true);
+				Config config = Config.getConfigForAppConfig();
+				executableCommand.execute(config);
+			} catch (RuntimeException e) {
+				e.printStackTrace();
+				usage();
+				System.exit(1);
+			}
 			break;
 		case HOST_AND_PORT:
 			if (args.length == 1 || !args[1].contains(":")) {
@@ -87,11 +94,11 @@ public class Main {
 
 	private static void usage() {
 		System.err.println();
-		System.err.println("usage: run command [file]");
+		System.err.println("usage: run command");
 		System.err.println("  or:  run command hostname:port");
 		System.err.println();
-		System.err.println("Following commands can specify a filename of configuration file,");
-		System.err.println("If not specified filename, the default value is used.");
+		System.err.println("The following command requires a property file to be specified in the JAVA_OPTS");
+		System.err.println("environment variable in the form -Dproperty=property-file-path.");
 		System.err.println();
 		for(Command command: COMMAND_MAP.values()) {
 			if (command.argType == ArgType.CONFIG) {
@@ -99,7 +106,7 @@ public class Main {
 			}
 		}
 		System.err.println();
-		System.err.println("Following commands must specify a hostname and port number of server.");
+		System.err.println("The following commands must specify a hostname and port number of server.");
 		System.err.println();
 		for(Command command: COMMAND_MAP.values()) {
 			if (command.argType == ArgType.HOST_AND_PORT) {

@@ -1,42 +1,54 @@
-package com.tsurugidb.benchmark.phonebill.db.jdbc;
+package com.tsurugidb.benchmark.phonebill.db.doma2.entity;
 
 import java.sql.Timestamp;
 
+import org.seasar.doma.Column;
+import org.seasar.doma.Entity;
+import org.seasar.doma.Table;
+
+@Entity
+@Table(name = "history")
 public class History implements Cloneable{
 	/**
 	 * 発信者電話番号
 	 */
+	@Column(name = "caller_phone_number")
 	public String callerPhoneNumber;
 
 	/**
 	 * 受信者電話番号
 	 */
+	@Column(name = "recipient_phone_number")
 	public String recipientPhoneNumber;
 
 	/**
 	 * 料金区分(発信者負担(C)、受信社負担(R))
 	 */
+	@Column(name = "payment_categorty")
 	public String paymentCategorty; // TODO enumにする
 
 	/**
 	 * 通話開始時刻
 	 */
-
+	@Column(name = "start_time")
 	public Timestamp startTime;
-	 /**
+
+	/**
 	 * 通話時間(秒)
 	 */
-
+	@Column(name = "time_secs")
 	public int timeSecs;
 
 	/**
 	 * 料金
 	 */
+	@Column(name = "")
 	public Integer charge;
 
 	/**
 	 * 削除フラグ
 	 */
+	@Column(name = "df")
 	public boolean df = false;
 
 	@Override

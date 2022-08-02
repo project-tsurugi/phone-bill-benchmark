@@ -91,7 +91,8 @@ public class Server extends ExecutableCommand {
 
 	public static void main(String[] args) throws Exception {
 		Server server = new Server();
-		Config config = Config.getConfig(args);
+		Config.setConfigForAppConfig(false);
+		Config config = Config.getConfigForAppConfig();
 		server.execute(config);
 	}
 

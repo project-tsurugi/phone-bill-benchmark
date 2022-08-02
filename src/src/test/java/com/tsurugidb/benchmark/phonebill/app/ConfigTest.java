@@ -60,12 +60,8 @@ class ConfigTest {
 		checkDefault(defaultConfig);
 
 		// デフォルト値以外が設定されている設定ファイルを指定したケース
-		String[] args = { NOT_DEFALUT_CONFIG_PATH };
-		Config config = Config.getConfig(args);
+		Config config = Config.getConfig(NOT_DEFALUT_CONFIG_PATH);
 		checkConfig(config);
-
-		// 引数なしのgetConfig()と空配列を引数に持つgetConfig(String[])は同じ結果を返す
-		assertEqualsIgnoreLineSeparator(defaultConfig.toString(), Config.getConfig(new String[0]).toString());
 
 		// テストケースの作成漏れ確認のため、configにデフォルト値以外が指定されていることを確認する
 		checkDifferent(defaultConfig, config);
@@ -124,8 +120,7 @@ class ConfigTest {
 	 */
 	@Test
 	void inconsistentTest() throws IOException {
-		String[] args = { INCONSISTENT_CONFIG_PATH };
-		Exception e = assertThrows(RuntimeException.class, () -> Config.getConfig(args));
+		Exception e = assertThrows(RuntimeException.class, () -> Config.getConfig(INCONSISTENT_CONFIG_PATH));
 		assertEquals("TransactionScope Contract and sharedConnection cannot be specified at the same time.",
 				e.getMessage());
 	}
@@ -158,6 +153,10 @@ class ConfigTest {
 		for (Field field : config.getClass().getDeclaredFields()) {
 			field.setAccessible(true);
 			String key = field.getName();
+			if (key.equals("configForAppConfig")) {
+				continue;
+			}
+
 			Object value = field.get(config);
 			if (Character.isLowerCase(key.charAt(0))) {
 				map.put(key, value);
@@ -372,14 +371,14 @@ class ConfigTest {
 			System.setProperty("phone-bill.number.of.contracts.records", String.valueOf(changedRecords));
 			System.setProperty("phone-bill.url", changedUrl);
 
-			Config config = Config.getConfig(new String[] {DEFALUT_CONFIG_PATH} );
+			Config config = Config.getConfig(DEFALUT_CONFIG_PATH);
 			assertEquals(changedRecords, config.numberOfContractsRecords);
 			assertEquals(changedUrl, config.url);
 
 			System.clearProperty("phone-bill.number.of.contracts.records");
 			System.clearProperty("phone-bill.url");
 
-			Config defaultConfig = Config.getConfig(new String[] {DEFALUT_CONFIG_PATH} );
+			Config defaultConfig = Config.getConfig(DEFALUT_CONFIG_PATH);
 			config.numberOfContractsRecords = defaultConfig.numberOfContractsRecords;
 			config.url = defaultConfig.url;
 
