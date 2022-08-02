@@ -1,5 +1,6 @@
 package com.tsurugidb.benchmark.phonebill.app;
 
+import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -15,7 +16,6 @@ import com.tsurugidb.benchmark.phonebill.testdata.LoadTestDataCsvToOracle;
 import com.tsurugidb.benchmark.phonebill.testdata.LoadTestDataCsvToPostgreSql;
 import com.tsurugidb.benchmark.phonebill.testdata.TestDataStatistics;
 
-// TODO Configを引数で指定するのではなくシステムプロパティで指定するように変更したので、usage等を変更する。
 public class Main {
 	private static final Map<String, Command> COMMAND_MAP = new LinkedHashMap<>();
 	static {
@@ -49,14 +49,12 @@ public class Main {
 		if (args.length == 0) {
 			System.err.println("ERROR: No argument is specified.");
 			usage();
-			System.exit(1);
 		}
 		String cmd = args[0];
 		Command command = COMMAND_MAP.get(cmd);
 		if (command == null) {
 			System.err.println("ERROR: Command '" + cmd + "' is not available.");
 			usage();
-			System.exit(1);
 		}
 
 		ExecutableCommand executableCommand;
@@ -73,10 +71,9 @@ public class Main {
 				Config.setConfigForAppConfig(true);
 				Config config = Config.getConfigForAppConfig();
 				executableCommand.execute(config);
-			} catch (RuntimeException e) {
+			} catch (RuntimeException | IOException e) {
 				e.printStackTrace();
 				usage();
-				System.exit(1);
 			}
 			break;
 		case HOST_AND_PORT:
@@ -113,6 +110,7 @@ public class Main {
 				System.err.println("  " + command.name+": " + command.description);
 			}
 		}
+		System.exit(1);
 	}
 
 	private static  class Command {
