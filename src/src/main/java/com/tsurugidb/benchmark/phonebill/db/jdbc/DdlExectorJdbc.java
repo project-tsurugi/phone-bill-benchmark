@@ -6,29 +6,33 @@ import java.sql.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.tsurugidb.benchmark.phonebill.db.SessionException;
 import com.tsurugidb.benchmark.phonebill.db.interfaces.DdlLExecutor;
 
 public abstract class DdlExectorJdbc implements DdlLExecutor {
     protected static final Logger LOG = LoggerFactory.getLogger(DdlExectorJdbc.class);
+    private PhoneBillDbManagerJdbc manager;
 
+	public DdlExectorJdbc(PhoneBillDbManagerJdbc manager) {
+		this.manager = manager;
+	}
 
-	public void createContractsTable(Session session) throws SessionException {
+	public void createContractsTable() {
 		String create_table = "create table contracts ("
 				+ "phone_number varchar(15) not null," 		// 電話番号
 				+ "start_date date not null," 				// 契約開始日
 				+ "end_date date,"							// 契約終了日
 				+ "charge_rule varchar(255) not null"		// 料金計算ルール
 				+ ")";
-		try (Statement stmt = session.getConnection().createStatement()){
+		try (Statement stmt = manager.getConnection().createStatement()){
 			stmt.execute(create_table);
-			session.commit();
+			manager.commit();
 		} catch (SQLException e) {
-			throw new SessionException(e);
+			manager.rollback();
+			throw new RuntimeException(e);
 		}
 	}
 
-	public void createBillingTable(Session session) throws SessionException {
+	public void createBillingTable() {
 		String create_table = "create table billing ("
 				+ "phone_number varchar(15) not null," 					// 電話番号
 				+ "target_month date not null," 						// 対象年月
@@ -38,17 +42,18 @@ public abstract class DdlExectorJdbc implements DdlLExecutor {
 				+ "batch_exec_id varchar(36) not null,"					// バッチ実行ID
 				+ "constraint  billing_pkey primary key(target_month, phone_number, batch_exec_id)"
 				+ ")";
-		try (Statement stmt = session.getConnection().createStatement()){
+		try (Statement stmt = manager.getConnection().createStatement()){
 			stmt.execute(create_table);
-			session.commit();
+			manager.commit();
 		} catch (SQLException e) {
-			throw new SessionException(e);
+			manager.rollback();
+			throw new RuntimeException(e);
 		}
 	}
 
-	public void afterLoadData(Session session) throws SessionException {
-		createIndexes(session);
-		updateStatistics(session);
+	public void afterLoadData() {
+		createIndexes();
+		updateStatistics();
 	}
 
 

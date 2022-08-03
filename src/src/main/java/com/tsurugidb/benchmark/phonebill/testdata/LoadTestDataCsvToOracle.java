@@ -16,8 +16,8 @@ import org.slf4j.LoggerFactory;
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.Config.DbmsType;
 import com.tsurugidb.benchmark.phonebill.app.ExecutableCommand;
+import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.interfaces.DdlLExecutor;
-import com.tsurugidb.benchmark.phonebill.db.jdbc.Session;
 
 public class LoadTestDataCsvToOracle extends ExecutableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(LoadTestDataCsvToOracle.class);
@@ -34,15 +34,14 @@ public class LoadTestDataCsvToOracle extends ExecutableCommand {
 		if (config.dbmsType != DbmsType.ORACLE_JDBC) {
 			LOG.error("This configuration is not for the Oracle.");
 		} else {
-			try (Session session = Session.getSession(config)) {
-				DdlLExecutor ddlExector = DdlLExecutor.getInstance(config);
-				ddlExector.prepareLoadData(session);
-				List<Path> list = createControlFiles(config);
-				for (Path path : list) {
-					execSqlLoader(config, path);
-				}
-				ddlExector.afterLoadData(session);
+			PhoneBillDbManager manager = PhoneBillDbManager.createInstance(config);
+			DdlLExecutor ddlExector = manager.getDdlLExecutor();
+			ddlExector.prepareLoadData();
+			List<Path> list = createControlFiles(config);
+			for (Path path : list) {
+				execSqlLoader(config, path);
 			}
+			ddlExector.afterLoadData();
 		}
 	}
 

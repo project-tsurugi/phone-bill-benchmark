@@ -29,10 +29,10 @@ public class TestDataStatistics extends ExecutableCommand {
 	}
 
 	@Override
-	public void execute(Config c) throws Exception {
-		int seed = c.randomSeed;
+	public void execute(Config config) throws Exception {
+		int seed = config.randomSeed;
 		ContractBlockInfoAccessor accessor = new SingleProcessContractBlockManager();
-		TestDataGenerator generator = new TestDataGenerator(c, new Random(seed), accessor);
+		TestDataGenerator generator = new TestDataGenerator(config, new Random(seed), accessor);
 		generator.setStatisticsOnly(true);
 
 		// 契約マスタのテストデータ生成
@@ -43,7 +43,7 @@ public class TestDataStatistics extends ExecutableCommand {
 
 		// 統計情報を出力
 		Statistics statistics = generator.getStatistics();
-		String dirString =c.statisticsOutputDir;
+		String dirString =config.statisticsOutputDir;
 		if (dirString != null) {
 			Path dir = Paths.get(dirString);
 			Files.createDirectories(dir);

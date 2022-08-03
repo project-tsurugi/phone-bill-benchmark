@@ -18,10 +18,10 @@ import org.junit.jupiter.api.Test;
 
 import com.tsurugidb.benchmark.phonebill.AbstractDbTestCase;
 import com.tsurugidb.benchmark.phonebill.app.Config.DbmsType;
+import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.SessionException;
 import com.tsurugidb.benchmark.phonebill.db.interfaces.DdlLExecutor;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
-import com.tsurugidb.benchmark.phonebill.db.jdbc.Session;
 
 class CreateTableTest extends AbstractDbTestCase {
 	private static String ORACLE_CONFIG_PATH = "src/test/config/oracle.properties";
@@ -29,21 +29,21 @@ class CreateTableTest extends AbstractDbTestCase {
 	@Test
 	void test() throws SQLException, IOException, SessionException {
 		Config config = Config.getConfig();
-		DdlLExecutor ddlExector = DdlLExecutor.getInstance(config);
-		Session session = Session.getSession(config);
+		PhoneBillDbManager manager = PhoneBillDbManager.createInstance(config);
+		DdlLExecutor ddlExector = manager.getDdlLExecutor();
 
-		ddlExector.dropTables(session);
+		ddlExector.dropTables();
 		// テーブルが存在しないことを確認
 		assertFalse(existsTable("billing"));
 		assertFalse(existsTable("contracts"));
 		assertFalse(existsTable("history"));
 
 		// テーブルが作成されることを確認
-		ddlExector.createBillingTable(session);
+		ddlExector.createBillingTable();
 		assertTrue(existsTable("billing"));
-		ddlExector.createContractsTable(session);
+		ddlExector.createContractsTable();
 		assertTrue(existsTable("contracts"));
-		ddlExector.createHistoryTable(session);
+		ddlExector.createHistoryTable();
 		assertTrue(existsTable("history"));
 	}
 

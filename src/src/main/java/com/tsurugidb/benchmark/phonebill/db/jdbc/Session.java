@@ -14,11 +14,11 @@ import oracle.ucp.jdbc.PoolDataSource;
 import oracle.ucp.jdbc.PoolDataSourceFactory;
 
 /**
- * JDBCのセッションを保持するクラス.
- * <br>
+ * JDBCのセッションを保持するクラス. <br>
  * 内部に{@link java.sql.Connection}のフィルードを保持し、これにアクセスするためのメソッドを提供する。
  *
- *  */
+ */
+@Deprecated
 public class Session implements Closeable {
 	private Connection conn;
 

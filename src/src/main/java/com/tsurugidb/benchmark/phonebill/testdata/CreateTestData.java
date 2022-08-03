@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.ExecutableCommand;
+import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.interfaces.DdlLExecutor;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.Session;
 
@@ -26,20 +27,21 @@ public class CreateTestData extends ExecutableCommand {
 	@Override
 	@SuppressFBWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
 	public void execute(Config c) throws Exception {
-
-
 		// テストデータの作成時は、configの指定にかかわらずTRANSACTION_READ_COMMITTEDを使用する。
 		Config config = c.clone();
 		config.isolationLevel = Config.IsolationLevel.READ_COMMITTED;
+		PhoneBillDbManager manager = PhoneBillDbManager.createInstance(config);
+		DdlLExecutor ddlExector = manager.getDdlLExecutor();
+
+
 		int seed = config.randomSeed;
 		ContractBlockInfoAccessor accessor = new SingleProcessContractBlockManager();
 		TestDataGenerator generator = new TestDataGenerator(config, new Random(seed), accessor);
 
 		// テーブルをTruncate
-		DdlLExecutor ddlExector = DdlLExecutor.getInstance(config);
 		try (Session session = Session.getSession(config)) {
 			// インデックスの削除
-			ddlExector.prepareLoadData(session);
+			ddlExector.prepareLoadData();
 
 			// 契約マスタのテストデータ生成
 			long startTime = System.currentTimeMillis();
@@ -57,7 +59,7 @@ public class CreateTestData extends ExecutableCommand {
 			LOG.info(String.format(format, config.numberOfHistoryRecords, elapsedTime / 1000d));
 
 			// Indexの再生成とDBの統計情報を更新
-			ddlExector.afterLoadData(session);
+			ddlExector.afterLoadData();
 		}
 	}
 }

@@ -4,20 +4,22 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
-import com.tsurugidb.benchmark.phonebill.db.SessionException;
-import com.tsurugidb.benchmark.phonebill.db.jdbc.Session;
+import com.tsurugidb.benchmark.phonebill.db.jdbc.DdlExectorJdbc;
+import com.tsurugidb.benchmark.phonebill.db.jdbc.PhoneBillDbManagerJdbc;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-public class DdlLExecutorOracle extends com.tsurugidb.benchmark.phonebill.db.jdbc.DdlExectorJdbc {
+public class DdlLExecutorOracle extends DdlExectorJdbc {
 	private Config config;
+	private PhoneBillDbManagerJdbc manager;
 
-	public DdlLExecutorOracle(Config config) {
-		super();
+	public DdlLExecutorOracle(PhoneBillDbManagerJdbc manager, Config config) {
+		super(manager);
 		this.config = config;
+		this.manager = manager;
 	}
 
-	public void createHistoryTable(Session session) throws SessionException {
+	public void createHistoryTable() {
 		String create_table = "create table history ("
 				+ "caller_phone_number varchar(15) not null," 		// 発信者電話番号
 				+ "recipient_phone_number varchar(15) not null," 	// 受信者電話番号
@@ -30,53 +32,56 @@ public class DdlLExecutorOracle extends com.tsurugidb.benchmark.phonebill.db.jdb
 		if (config.oracleInitran != 0) {
 			create_table = create_table + "initrans " + config.oracleInitran;
 		}
-		try (Statement stmt = session.getConnection().createStatement()){
+		try (Statement stmt = manager.getConnection().createStatement()){
 			stmt.execute(create_table);
-			session.commit();
+			manager.commit();
 		} catch (SQLException e) {
-			throw new SessionException(e);
+			manager.rollback();
+			throw new java.lang.RuntimeException(e);
 		}
 	}
 
-	public void dropTables(Session session) throws SessionException {
-		try (Statement stmt = session.getConnection().createStatement()) {
+	public void dropTables() {
+		try (Statement stmt = manager.getConnection().createStatement()) {
 			dropTableOracle(stmt, "history");
 			dropTableOracle(stmt, "contracts");
 			dropTableOracle(stmt, "billing");
 		} catch (SQLException e) {
-			throw new SessionException(e);
+			manager.rollback();
+			throw new java.lang.RuntimeException(e);
 		}
-		session.commit();
+		manager.commit();
 	}
 
-	public void prepareLoadData(Session session) throws SessionException {
-		try (Statement stmt = session.getConnection().createStatement()) {
+	public void prepareLoadData() {
+		try (Statement stmt = manager.getConnection().createStatement()) {
 			long startTime = System.currentTimeMillis();
 			stmt.executeUpdate("truncate table history");
 			stmt.executeUpdate("truncate table contracts");
-			session.commit();
+			manager.commit();
 
 			dropPrimaryKey("history", "history_pkey", stmt);
 			dropPrimaryKey("contracts", "contracts_pkey", stmt);
 			dropIndex("idx_df", stmt);
 			dropIndex("idx_st", stmt);
 			dropIndex("idx_rp", stmt);
-			session.commit();
+			manager.commit();
 			long elapsedTime = System.currentTimeMillis() - startTime;
 			String format = "Truncate teable and drop indexies in %,.3f sec ";
 			LOG.info(String.format(format, elapsedTime / 1000d));
 		} catch (SQLException e) {
-			throw new SessionException(e);
+			manager.rollback();
+			throw new java.lang.RuntimeException(e);
 		}
 	}
 
 
 	@SuppressFBWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
-	public void createIndexes(Session session) throws SessionException {
+	public void createIndexes() {
 		String option = config.oracleCreateIndexOption;
 
 		long startTime = System.currentTimeMillis();
-		try (Statement stmt = session.getConnection().createStatement()) {
+		try (Statement stmt = manager.getConnection().createStatement()) {
 
 			String create_index_df = "create index idx_df on history(df) " + option;
 			execSql(stmt, create_index_df);
@@ -91,9 +96,9 @@ public class DdlLExecutorOracle extends com.tsurugidb.benchmark.phonebill.db.jdb
 					+ "primary key (phone_number, start_date) " + option;
 			execSql(stmt, addPrimaryKeyToContracts);
 		} catch (SQLException e) {
-			throw new SessionException(e);
+			throw new RuntimeException(e);
 		}
-		session.commit();
+		manager.commit();
 
 		long elapsedTime = System.currentTimeMillis() - startTime;
 		String format = "Create indexies in %,.3f sec ";
@@ -151,15 +156,16 @@ public class DdlLExecutorOracle extends com.tsurugidb.benchmark.phonebill.db.jdb
 		}
 	}
 
-	public void updateStatistics(Session session) throws SessionException {
+	public void updateStatistics() {
 		long startTime = System.currentTimeMillis();
-		try (Statement stmt = session.getConnection().createStatement()) {
+		try (Statement stmt = manager.getConnection().createStatement()) {
 			stmt.executeUpdate("{call DBMS_STATS.GATHER_SCHEMA_STATS(ownname => '" + config.user
 					+ "', cascade => TRUE, no_invalidate => TRUE)}");
 		} catch (SQLException e) {
-			throw new SessionException(e);
+			manager.rollback();
+			throw new RuntimeException(e);
 		}
-		session.commit();
+		manager.commit();
 		long elapsedTime = System.currentTimeMillis() - startTime;
 		String format = "Update statistic in %,.3f sec ";
 		LOG.info(String.format(format, elapsedTime / 1000d));
