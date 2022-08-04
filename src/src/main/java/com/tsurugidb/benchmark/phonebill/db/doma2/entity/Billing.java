@@ -2,41 +2,30 @@ package com.tsurugidb.benchmark.phonebill.db.doma2.entity;
 
 import java.sql.Date;
 
-import org.seasar.doma.Column;
-import org.seasar.doma.Entity;
-import org.seasar.doma.Table;
-
-@Entity
-@Table(name = "billing")
 public class Billing {
 	/**
 	* 電話番号
 	*/
-	@Column(name ="phone_number")
 	public String phoneNumber;
 
 	/**
 	 * 対象年月
 	 */
-	@Column(name ="target_month")
 	public Date targetMonth;
 
 	/**
 	 * 基本料金
 	 */
-	@Column(name ="basic_charge")
 	public int basicCharge;
 
 	/**
 	 * 従量料金
 	 */
-	@Column(name ="metered_charge")
 	public int meteredCharge;
 
 	/**
 	* 請求金額
 	*/
-	@Column(name ="billing_amount")
 	public int billingAmount;
 
 	@Override

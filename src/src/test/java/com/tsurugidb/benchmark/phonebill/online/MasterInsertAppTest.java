@@ -50,7 +50,6 @@ class MasterInsertAppTest extends AbstractDbTestCase {
 		app.exec();
 		app.exec();
 		app.exec();
-		app.getConnection().commit();
 		List<Contract> list = getContracts();
 		assertEquals(5, list.size());
 		for (int i = 0; i < 5; i++) {
@@ -63,7 +62,6 @@ class MasterInsertAppTest extends AbstractDbTestCase {
 		app.exec();
 		app.exec();
 		app.exec();
-		app.getConnection().commit();
 		list = getContracts();
 		assertEquals(10, list.size());
 		assertEquals(expectedList, list);

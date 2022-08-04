@@ -7,10 +7,10 @@ import java.sql.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
+import com.tsurugidb.benchmark.phonebill.db.jdbc.PhoneBillDbManagerJdbc;
 
 /**
- * ORA-08177を再現するためのクラス
+ * ORA-08177を再現するためのTP
  *
  */
 public class ORA08177 extends ExecutableCommand {
@@ -20,15 +20,17 @@ public class ORA08177 extends ExecutableCommand {
 	private Statement stmt;
 
 	public static void main(String[] args) throws Exception {
-		Config.setConfigForAppConfig(false);
-		Config config = Config.getConfigForAppConfig();
+		Config config = Config.setConfigForAppConfig(false);
 		new CreateTable().execute(config);
 		new ORA08177().execute(config);
 	}
 
 	@Override
 	public void execute(Config config) throws Exception {
-		Connection conn = DBUtils.getConnection(config);
+		// TODO: DAOを使用するように変更する
+		PhoneBillDbManagerJdbc manager = (PhoneBillDbManagerJdbc) config.getDbManager();
+
+		Connection conn = manager.getConnection();;
 		conn.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
 		stmt = conn.createStatement();
 

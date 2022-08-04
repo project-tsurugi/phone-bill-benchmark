@@ -4,9 +4,6 @@ import java.sql.SQLException;
 
 import javax.sql.DataSource;
 
-import org.seasar.doma.jdbc.dialect.Dialect;
-import org.seasar.doma.jdbc.dialect.OracleDialect;
-
 import com.tsurugidb.benchmark.phonebill.app.Config;
 
 import oracle.ucp.jdbc.PoolDataSource;
@@ -29,9 +26,4 @@ public class OracleConfigFactory implements JdbcConfigFactory {
         }
     }
 
-    @Override
-    public Dialect createDialect(Config config) {
-        return new OracleDialect();
     }
-
-}

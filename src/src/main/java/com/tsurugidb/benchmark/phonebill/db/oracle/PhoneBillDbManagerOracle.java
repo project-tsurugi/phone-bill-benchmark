@@ -15,7 +15,6 @@ public class PhoneBillDbManagerOracle extends PhoneBillDbManagerJdbc {
 	private Config config;
 
 	public PhoneBillDbManagerOracle(Config config) {
-		super(config);
 		this.config = config;
 		ddlLExecutor = new DdlLExecutorOracle(this, config);
 	}
@@ -50,4 +49,12 @@ public class PhoneBillDbManagerOracle extends PhoneBillDbManagerJdbc {
 		return ddlLExecutor;
 	}
 
+	@Override
+	protected boolean isRetriable(SQLException e) {
+		// 「ORA-08177: このトランザクションのアクセスをシリアル化できません」発生時true
+		if (e.getErrorCode() == 8177) {
+			return true;
+		}
+		return false;
+	}
 }

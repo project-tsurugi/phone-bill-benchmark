@@ -9,6 +9,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
@@ -29,7 +30,7 @@ class CreateTableTest extends AbstractDbTestCase {
 	@Test
 	void test() throws SQLException, IOException, SessionException {
 		Config config = Config.getConfig();
-		PhoneBillDbManager manager = PhoneBillDbManager.createInstance(config);
+		PhoneBillDbManager manager = config.getDbManager();
 		DdlLExecutor ddlExector = manager.getDdlLExecutor();
 
 		ddlExector.dropTables();
@@ -108,78 +109,67 @@ class CreateTableTest extends AbstractDbTestCase {
 			assertEquals(historyIndexSet, getIndexNameSet(conn,  history));
 			assertEquals(contractsIndexSet, getIndexNameSet(conn,  contracts));
 
-// TOD: ExecuteDDLクラスのテストケースにする
-//			// インデックス削除されたことを確認
-//			CreateTable.prepareLoadData(stmt, config);
-//			assertEquals(Collections.EMPTY_SET, getIndexNameSet(conn,  history));
-//			assertEquals(Collections.EMPTY_SET, getIndexNameSet(conn,  contracts));
-//
-//			// インデックスが復活したことを確認
-//			CreateTable.afterLoadData(stmt, config);
-//			assertEquals(historyIndexSet, getIndexNameSet(conn,  history));
-//			assertEquals(contractsIndexSet, getIndexNameSet(conn,  contracts));
+			// インデックス削除されたことを確認
+			DdlLExecutor executor = createTable.getDdlExector();
+			executor.prepareLoadData();
+			assertEquals(Collections.EMPTY_SET, getIndexNameSet(conn,  history));
+			assertEquals(Collections.EMPTY_SET, getIndexNameSet(conn,  contracts));
+
+			// インデックスが復活したことを確認
+			executor.afterLoadData();
+			assertEquals(historyIndexSet, getIndexNameSet(conn,  history));
+			assertEquals(contractsIndexSet, getIndexNameSet(conn,  contracts));
 		}
 	}
 
-// TOD: ExecuteDDLクラスのテストケースにする
-//	/**
-//	 * dropIndex()とdropPrimaryKey()のテスト
-//	 *
-//	 * @throws Exception
-//	 */
-//	@Test
-//	void testDropIndexAndDropPrimaryKey() throws Exception {
-//		testDropIndexAndDropPrimaryKeySub(Config.getConfig());
-//	}
+	/**
+	 * dropIndex()とdropPrimaryKey()のテスト
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	void testDropIndexAndDropPrimaryKey() throws Exception {
+		testDropIndexAndDropPrimaryKeySub(Config.getConfig());
+	}
 
-// TOD: ExecuteDDLクラスのテストケースにする
+	/**
+	 * dropIndex()とdropPrimaryKey()のテスト(oracle)
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	@Tag("oracle")
+	void testDropIndexAndDropPrimaryKeyOracle() throws Exception {
+		testDropIndexAndDropPrimaryKeySub(Config.getConfig(ORACLE_CONFIG_PATH));
+	}
 
-//	/**
-//	 * dropIndex()とdropPrimaryKey()のテスト(oracle)
-//	 *
-//	 * @throws Exception
-//	 */
-//	@Test
-//	@Tag("oracle")
-//	void testDropIndexAndDropPrimaryKeyOracle() throws Exception {
-//		testDropIndexAndDropPrimaryKeySub(Config.getConfig(new String[]{ORACLE_CONFIG_PATH}));
-//	}
+	void testDropIndexAndDropPrimaryKeySub(Config config) throws Exception {
+		try (Connection conn = DBUtils.getConnection(config);
+				Statement stmt = conn.createStatement()) {
+			conn.setAutoCommit(true);
 
-//	void testDropIndexAndDropPrimaryKeySub(Config config) throws Exception {
-//		try (Connection conn = DBUtils.getConnection(config);
-//				Statement stmt = conn.createStatement()) {
-//			conn.setAutoCommit(true);
-//
-//			// テーブルを作成
-//			CreateTable createTable = new CreateTable();
-//			createTable.execute(config);
-//
-//			String tableName = config.dbmsType == DbmsType.ORACLE_JDBC ? "HISTORY" : "history";
-//
-//			// インデックスの存在を確認
-//			assertTrue(getIndexNameSet(conn,  tableName).contains("idx_df"));
-//
-//			// インデックス削除
-//			CreateTable.dropIndex("idx_df", stmt, config);
-//			assertFalse(getIndexNameSet(conn,  tableName).contains("idx_df"));
-//
-//			// 2回呼んでもエラーにならない
-//			CreateTable.dropIndex("idx_df", stmt, config);
-//			assertFalse(getIndexNameSet(conn,  tableName).contains("idx_df"));
-//
-//
-//			// PKの存在を確認
-//			assertTrue(getIndexNameSet(conn,  tableName).contains("history_pkey"));
-//
-//			// PK削除
-//			CreateTable.dropPrimaryKey(tableName, "history_pkey", stmt, config);
-//			assertFalse(getIndexNameSet(conn,  tableName).contains("history_pkey"));
-//
-//			// 2回呼んでもエラーにならない
-//			CreateTable.dropPrimaryKey(tableName, "history_pkey", stmt, config);
-//			assertFalse(getIndexNameSet(conn,  tableName).contains("history_pkey"));
-//		}
-//	}
+			// テーブルを作成
+			CreateTable createTable = new CreateTable();
+			createTable.execute(config);
+			DdlLExecutor executor = createTable.getDdlExector();
+
+			String tableName = config.dbmsType == DbmsType.ORACLE_JDBC ? "HISTORY" : "history";
+
+			// インデックスの存在を確認
+			assertTrue(getIndexNameSet(conn,  tableName).contains("idx_df"));
+			assertTrue(getIndexNameSet(conn,  tableName).contains("history_pkey"));
+
+			// インデックス、PK削除
+			executor.prepareLoadData();
+			assertFalse(getIndexNameSet(conn,  tableName).contains("idx_df"));
+			assertFalse(getIndexNameSet(conn,  tableName).contains("history_pkey"));
+
+			// 2回呼んでもエラーにならない
+			executor.prepareLoadData();
+			assertFalse(getIndexNameSet(conn,  tableName).contains("idx_df"));
+			assertFalse(getIndexNameSet(conn,  tableName).contains("history_pkey"));
+		}
+	}
 
 	/**
 	 * 指定のテーブルに存在するインデックスのセットを返す

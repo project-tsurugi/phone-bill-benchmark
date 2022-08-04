@@ -87,7 +87,7 @@ public abstract class AbstractDbTestCase {
 				if (rs.wasNull()) {
 					history.charge = null;
 				}
-				history.df = rs.getBoolean(7);
+				history.df = rs.getInt(7);
 				list.add(history);
 			}
 		}
@@ -96,7 +96,7 @@ public abstract class AbstractDbTestCase {
 
 	protected History toHistory(String caller_phone_number, String recipient_phone_number, String payment_categorty,
 			String start_time, int time_secs, Integer charge,
-			boolean df) {
+			int df) {
 		History history = new History();
 		history.callerPhoneNumber = caller_phone_number;
 		history.recipientPhoneNumber = recipient_phone_number;

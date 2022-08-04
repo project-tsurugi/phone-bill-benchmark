@@ -14,17 +14,13 @@ import java.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.tsurugidb.benchmark.phonebill.db.doma2.config.AppConfig;
+import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
+import com.tsurugidb.benchmark.phonebill.db.oracle.PhoneBillDbManagerOracle;
+import com.tsurugidb.benchmark.phonebill.db.postgresql.PhoneBillDbManagerPostgresql;
 
 public class Config implements Cloneable {
-
-	/**
-	 * AppConfigが使用するConfig.
-	 * <br>
-	 * {@link AppConfig}を使用する前にセットしておく必要がある。
-	 */
-	private static Config configForAppConfig;
+    private static final Logger LOG = LoggerFactory.getLogger(Config.class);
 
 	/**
 	 * プロパティ
@@ -328,6 +324,14 @@ public class Config implements Cloneable {
 	private static final String LISTEN_PORT = "listen.port";
 
 
+
+	/**
+	 * このconfigで使用するPhoneBillDbManagerのインスタンス
+	 * TODO: UTつくる
+	 */
+	private PhoneBillDbManager dbManager;
+
+
 	/**
 	 * コンストラクタ.
 	 * <br>
@@ -359,7 +363,7 @@ public class Config implements Cloneable {
 
 
 	/**
-	 * readerからコンフィグ値を読み取りインスタを初期化する。readerにnullが指定されたときはデフォルト値で初期化する
+	 * readerからコンフィグ値を読み取りインスタンスを初期化する。readerにnullが指定されたときはデフォルト値で初期化する
 	 *
 	 * @param reader
 	 * @throws IOException
@@ -854,28 +858,45 @@ public class Config implements Cloneable {
 		return duplicatePhoneNumberRate * 2 + expirationDateRate + noExpirationDateRate;
 	}
 
-
 	/**
-	 * @return configForAppConfig
-	 */
-	public static Config getConfigForAppConfig() {
-		return configForAppConfig;
-	}
-
-
-	/**
+	 *
 	 * @param システムプロパティpropertyで指定したファイルを使用してコンフィグを作成し、Config.configForAppCOnfigにセットする。
 	 *
 	 * @param requiredFile ファイル指定が必須の場合true
 	 * @throws IOException
+	 *
+	 * TODO コンパイルエラーが取れたらメソッド名をgetCOnfigに変更する
 	 */
-	public static void setConfigForAppConfig(boolean requiredFile) throws IOException {
+	public static Config setConfigForAppConfig(boolean requiredFile) throws IOException {
         String s = System.getProperty("property");
         if (s == null) {
         	if (requiredFile) {
         		throw new RuntimeException("not found -Dproperty=property-file-path");
         	}
         }
-        configForAppConfig = Config.getConfig(s);
+        return Config.getConfig(s);
 	}
+
+
+
+	/**
+	 * @return dbManager
+	 */
+	public synchronized PhoneBillDbManager getDbManager() {
+		if (dbManager == null) {
+			switch (dbmsType) {
+			default:
+				throw new UnsupportedOperationException("unsupported dbms type: " + dbmsType);
+			case ORACLE_JDBC:
+				dbManager = new PhoneBillDbManagerOracle(this);
+				break;
+			case POSTGRE_SQL_JDBC:
+				dbManager = new PhoneBillDbManagerPostgresql(this);
+				break;
+			}
+			LOG.info("using " + dbManager.getClass().getSimpleName());
+		}
+		return dbManager;
+	}
+
 }

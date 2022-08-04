@@ -46,10 +46,6 @@ repositories {
 }
 dependencies {
   api 'com.tsurugidb.iceaxe:iceaxe-core:0.0.1-SNAPSHOT'
-  // https://mvnrepository.com/artifact/org.seasar.doma/doma
-  implementation "org.seasar.doma:doma-core:2.41.0"
-  annotationProcessor "org.seasar.doma:doma-processor:2.41.0"
-
 
   // https://mvnrepository.com/artifact/org.postgresql/postgresql
   implementation group: 'org.postgresql', name: 'postgresql', version: '42.2.16'

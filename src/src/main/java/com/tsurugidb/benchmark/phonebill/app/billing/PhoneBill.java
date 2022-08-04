@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.ExecutableCommand;
+import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.doma2.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.Duration;
@@ -42,7 +43,9 @@ import com.tsurugidb.benchmark.phonebill.testdata.SingleProcessContractBlockMana
 
 public class PhoneBill extends ExecutableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(PhoneBill.class);
-	private long elapsedTime = 0; // バッチの処理時間
+
+    private PhoneBillDbManager manager;
+    private long elapsedTime = 0; // バッチの処理時間
 	private CalculationTargetQueue queue;
 	private String finalMessage;
 	private AtomicBoolean abortRequested = new AtomicBoolean(false);
@@ -50,8 +53,7 @@ public class PhoneBill extends ExecutableCommand {
 	Config config;
 
 	public static void main(String[] args) throws Exception {
-		Config.setConfigForAppConfig(false);
-		Config config = Config.getConfigForAppConfig();
+		Config config = Config.setConfigForAppConfig(false);
 		PhoneBill phoneBill = new PhoneBill();
 		phoneBill.execute(config);
 	}
@@ -59,6 +61,7 @@ public class PhoneBill extends ExecutableCommand {
 	@Override
 	public void execute(Config config) throws Exception {
 		this.config = config;
+		this.manager = config.getDbManager();
 		DbContractBlockInfoInitializer initializer = new DbContractBlockInfoInitializer(config);
 		ContractBlockInfoAccessor accessor = new SingleProcessContractBlockManager(initializer);
 		List<AbstractOnlineApp> list = createOnlineApps(config, accessor);
@@ -90,6 +93,7 @@ public class PhoneBill extends ExecutableCommand {
 	 */
 	public static List<AbstractOnlineApp> createOnlineApps(Config config, ContractBlockInfoAccessor accessor)
 			throws SQLException, IOException {
+		PhoneBillDbManager manager = config.getDbManager();
 		Random random = new Random(config.randomSeed);
 		ActiveBlockNumberHolder blockHolder = accessor.getActiveBlockInfo();
 		if (blockHolder.getNumberOfActiveBlacks() < 1) {
@@ -98,7 +102,7 @@ public class PhoneBill extends ExecutableCommand {
 
 		List<AbstractOnlineApp> list = new ArrayList<AbstractOnlineApp>();
 		if (config.historyInsertThreadCount > 0 && config.historyInsertTransactionPerMin != 0) {
-			list.addAll(HistoryInsertApp.createHistoryInsertApps(config, new Random(random.nextInt()), accessor,
+			list.addAll(HistoryInsertApp.createHistoryInsertApps(manager, config, new Random(random.nextInt()), accessor,
 					config.historyInsertThreadCount));
 		}
 		if (config.historyUpdateThreadCount > 0 && config.historyUpdateRecordsPerMin != 0) {

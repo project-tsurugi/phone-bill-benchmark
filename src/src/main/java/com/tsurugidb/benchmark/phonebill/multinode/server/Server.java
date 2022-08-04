@@ -91,8 +91,7 @@ public class Server extends ExecutableCommand {
 
 	public static void main(String[] args) throws Exception {
 		Server server = new Server();
-		Config.setConfigForAppConfig(false);
-		Config config = Config.getConfigForAppConfig();
+		Config config = Config.setConfigForAppConfig(false);
 		server.execute(config);
 	}
 
@@ -125,10 +124,8 @@ public class Server extends ExecutableCommand {
 				}
 			}
 		}
-		if (service != null) {
-			service.shutdown();
-			service.awaitTermination(5, TimeUnit.MINUTES);
-		}
+		service.shutdown();
+		service.awaitTermination(5, TimeUnit.MINUTES);
 		LOG.info("Server terminating normally.");
 	}
 

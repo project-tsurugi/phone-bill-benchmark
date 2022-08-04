@@ -1,11 +1,7 @@
 package com.tsurugidb.benchmark.phonebill.online;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -16,6 +12,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
+import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
+import com.tsurugidb.benchmark.phonebill.db.TgTmSettingDummy;
+import com.tsurugidb.benchmark.phonebill.db.doma2.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.doma2.entity.History;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
 import com.tsurugidb.benchmark.phonebill.testdata.ContractBlockInfoAccessor;
@@ -33,6 +32,9 @@ import com.tsurugidb.benchmark.phonebill.testdata.TestDataGenerator;
  */
 public class HistoryInsertApp extends AbstractOnlineApp {
     private static final Logger LOG = LoggerFactory.getLogger(HistoryInsertApp.class);
+	private final PhoneBillDbManager manager;
+
+
 	private int historyInsertRecordsPerTransaction;
 	private GenerateHistoryTask generateHistoryTask;
 	private long baseTime;
@@ -56,9 +58,10 @@ public class HistoryInsertApp extends AbstractOnlineApp {
 	 * @throws SQLException
 	 * @throws IOException
 	 */
-	private HistoryInsertApp(ContractBlockInfoAccessor accessor, Config config, Random random, long baseTime,
+	private HistoryInsertApp(PhoneBillDbManager manager,  ContractBlockInfoAccessor accessor, Config config, Random random, long baseTime,
 			int duration) throws SQLException, IOException {
 		super(config.historyInsertTransactionPerMin, config, random);
+		this.manager = manager;
 		this.historyInsertRecordsPerTransaction = config.historyInsertRecordsPerTransaction;
 		this.baseTime = baseTime;
 		this.duration = duration;
@@ -80,17 +83,17 @@ public class HistoryInsertApp extends AbstractOnlineApp {
 	 * @throws IOException
 	 * @throws SQLException
 	 */
-	public static List<AbstractOnlineApp> createHistoryInsertApps(Config config,
+	public static List<AbstractOnlineApp> createHistoryInsertApps(PhoneBillDbManager manager, Config config,
 			Random random, ContractBlockInfoAccessor accessor, int num) throws SQLException, IOException {
 		List<AbstractOnlineApp> list = new ArrayList<>();
 		if (num > 0) {
 			int duration = CREATE_SCHEDULE_INTERVAL_MILLS / num;
-			long baseTime = getBaseTime(config);
+			long baseTime = getBaseTime(manager, config);
 			for (int i = 0; i < num; i++) {
 				if (i != 0) {
 					random = new Random(random.nextInt());
 				}
-				AbstractOnlineApp app = new HistoryInsertApp(accessor, config, random, baseTime, duration);
+				AbstractOnlineApp app = new HistoryInsertApp(manager, accessor, config, random, baseTime, duration);
 				app.setName(i);
 				baseTime += duration;
 				list.add(app);
@@ -118,21 +121,12 @@ public class HistoryInsertApp extends AbstractOnlineApp {
 	 * @return
 	 * @throws SQLException
 	 */
-	static long getBaseTime(Config config) throws SQLException {
-		return Math.max(getMaxStartTime(config), DBUtils.nextDate(config.historyMaxDate).getTime());
+	static long getBaseTime(PhoneBillDbManager manager, Config config) throws SQLException {
+		HistoryDao dao = manager.getHistoryDao();
+		long maxStartTime = manager.execute(TgTmSettingDummy.getInstance(), () -> dao.getMaxStartTime());
+		return Math.max(maxStartTime, DBUtils.nextDate(config.historyMaxDate).getTime());
 	}
 
-
-	static long getMaxStartTime(Config config) throws SQLException {
-		try (Connection conn = DBUtils.getConnection(config);
-				Statement stmt = conn.createStatement();
-				ResultSet rs = stmt.executeQuery("select max(start_time) from history");) {
-			rs.next();
-			Timestamp ts = rs.getTimestamp(1);
-			conn.commit();
-			return ts == null ? 0 : ts.getTime();
-		}
-	}
 
 	@Override
 	protected void createData() {
@@ -149,8 +143,9 @@ public class HistoryInsertApp extends AbstractOnlineApp {
 	}
 
 	@Override
-	protected void updateDatabase() throws SQLException {
-		TestDataGenerator.insrtHistories(getConnection(), histories);
+	protected void updateDatabase() {
+		HistoryDao dao = manager.getHistoryDao();
+		manager.execute(TgTmSettingDummy.getInstance(), () -> dao.batchInsert(histories));
 		LOG.debug("ONLINE APP: Insert {} records to history.", historyInsertRecordsPerTransaction);
 	}
 

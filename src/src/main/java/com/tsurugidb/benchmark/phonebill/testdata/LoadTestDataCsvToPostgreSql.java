@@ -14,8 +14,8 @@ import org.slf4j.LoggerFactory;
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.Config.DbmsType;
 import com.tsurugidb.benchmark.phonebill.app.ExecutableCommand;
-import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.interfaces.DdlLExecutor;
+import com.tsurugidb.benchmark.phonebill.db.jdbc.PhoneBillDbManagerJdbc;
 import com.tsurugidb.benchmark.phonebill.util.PathUtils;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -24,8 +24,7 @@ public class LoadTestDataCsvToPostgreSql extends ExecutableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(LoadTestDataCsvToPostgreSql.class);
 
     public static void main(String[] args) throws Exception {
-		Config.setConfigForAppConfig(false);
-		Config config = Config.getConfigForAppConfig();
+		Config config = Config.setConfigForAppConfig(false);
 		LoadTestDataCsvToPostgreSql loadTestDataCsvToPostgreSql = new LoadTestDataCsvToPostgreSql();
 		loadTestDataCsvToPostgreSql.execute(config);
 	}
@@ -35,7 +34,8 @@ public class LoadTestDataCsvToPostgreSql extends ExecutableCommand {
 		if (config.dbmsType != DbmsType.POSTGRE_SQL_JDBC) {
 			LOG.error("This configuration is not for the PostgreSQL.");
 		} else {
-			PhoneBillDbManager manager = PhoneBillDbManager.createInstance(config);
+			// TODO: DAOを使用する
+			PhoneBillDbManagerJdbc manager = (PhoneBillDbManagerJdbc) config.getDbManager();
 			DdlLExecutor ddlExector = manager.getDdlLExecutor();
 			ddlExector.prepareLoadData();
 			Path dir = Paths.get(config.csvDir);

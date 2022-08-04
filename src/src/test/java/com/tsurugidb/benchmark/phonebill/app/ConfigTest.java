@@ -142,6 +142,7 @@ class ConfigTest {
 	 * 指定したconfigのフィールド名とフィールド値のmapを返す.
 	 * <br>
 	 * 大文字で始まるフィールドは定数フィールドとみなしmapに入れない。
+	 * またフィールドdbManagerは直接のconfig項目ではないため検査対象外としmapに入れない。
 	 *
 	 * @param config
 	 * @return
@@ -153,7 +154,7 @@ class ConfigTest {
 		for (Field field : config.getClass().getDeclaredFields()) {
 			field.setAccessible(true);
 			String key = field.getName();
-			if (key.equals("configForAppConfig")) {
+			if (key.equals("dbManager")) {
 				continue;
 			}
 

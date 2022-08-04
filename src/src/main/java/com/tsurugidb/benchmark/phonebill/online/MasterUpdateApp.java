@@ -1,12 +1,8 @@
 package com.tsurugidb.benchmark.phonebill.online;
 
 import java.io.IOException;
-import java.sql.Connection;
 import java.sql.Date;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -17,6 +13,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
+import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
+import com.tsurugidb.benchmark.phonebill.db.TgTmSettingDummy;
+import com.tsurugidb.benchmark.phonebill.db.doma2.dao.ContractDao;
 import com.tsurugidb.benchmark.phonebill.db.doma2.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.db.doma2.entity.Contract.Key;
 import com.tsurugidb.benchmark.phonebill.testdata.ContractBlockInfoAccessor;
@@ -31,6 +30,8 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 
 	private ContractInfoReader contractInfoReader;
 	private Config config;
+	private PhoneBillDbManager manager;
+	private ContractDao dao;
 	private Random random;
 	private Updater[] updaters = {new Updater1(), new Updater2()};
 
@@ -48,6 +49,8 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 		this.config = config;
 		this.random = random;
 		this.contractInfoReader = ContractInfoReader.create(config, accessor, random);
+		manager = config.getDbManager();
+		dao = manager.getContractDao();
 	}
 
 
@@ -60,9 +63,8 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 	 * @param contracts 同一の電話番号の契約のリスト
 	 * @param key
 	 * @return 更新した契約
-	 * @throws SQLException
 	 */
-	private Contract getUpdatingContract(List<Contract> contracts, Key key) throws SQLException {
+	private Contract getUpdatingContract(List<Contract> contracts, Key key) {
 		for (int i = 0; i < 100; i++) {
 			// 契約を一つ選択して更新する
 			Set<Contract> set = new HashSet<Contract>(contracts);
@@ -112,32 +114,17 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 	 * @return
 	 * @throws SQLException
 	 */
-	List<Contract> getContracts(Connection conn, String phoneNumber) throws SQLException {
-		List<Contract> list = new ArrayList<Contract>();
-		String sql = "select start_date, end_date, charge_rule from contracts where phone_number = ? order by start_date";
-		try (PreparedStatement ps = conn.prepareStatement(sql)) {
-			ps.setString(1, phoneNumber);
-			try (ResultSet rs = ps.executeQuery()) {
-				while (rs.next()) {
-					Contract c = new Contract();
-					c.phoneNumber = phoneNumber;
-					c.startDate = rs.getDate(1);
-					c.endDate = rs.getDate(2);
-					c.rule = rs.getString(3);
-					list.add(c);
-				}
-			}
-		}
-		return list;
+	List<Contract> getContracts(String phoneNumber) {
+		return manager.execute(TgTmSettingDummy.getInstance(), ()->dao.getContracts(phoneNumber));
 	}
 
 	@Override
-	protected void createData() throws SQLException {
+	protected void createData() {
 		// Nothing to do
 	}
 
 	@Override
-	protected void updateDatabase() throws SQLException {
+	protected void updateDatabase() {
 
 		// 更新対象の電話番号を取得
 		Key key = contractInfoReader.getKeyUpdatingContract();
@@ -147,8 +134,7 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 		}
 
 		// 当該電話番号の契約を取得
-		Connection conn = getConnection();
-		List<Contract> contracts = getContracts(conn, key.phoneNumber);
+		List<Contract> contracts = getContracts(key.phoneNumber);
 		if (contracts.isEmpty()) {
 			// 電話番号にマッチする契約がなかったとき(DBに追加される前の電話番号を選んだ場合) => 基本的にありえない
 			LOG.warn("No contract found for phoneNumber = {}.", key.phoneNumber);
@@ -167,21 +153,15 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 		}
 
 		// 契約を更新
-		String sql = "update contracts set end_date = ?, charge_rule = ? where phone_number = ? and start_date = ?";
-		try (PreparedStatement ps = conn.prepareStatement(sql)) {
-			ps.setDate(1, updatingContract.endDate);
-			ps.setString(2, updatingContract.rule);
-			ps.setString(3, updatingContract.phoneNumber);
-			ps.setDate(4, updatingContract.startDate);
-			int ret = ps.executeUpdate();
-			if (ret != 1) {
-				// select ～ updateの間に対象レコードが削除されたケース -> 基本的にありえない
-				throw new RuntimeException("Fail to update contracts: " + updatingContract);
-			}
-			if (LOG.isDebugEnabled()) {
-				LOG.debug("ONLINE APP: Update 1 record from contracs(phoneNumber = {}, startDate = {}, endDate = {})."
-						, updatingContract.phoneNumber, updatingContract.startDate, updatingContract.endDate);
-			}
+
+		int ret = manager.execute(TgTmSettingDummy.getInstance(), () -> dao.update(updatingContract));
+		if (ret != 1) {
+			// select ～ updateの間に対象レコードが削除されたケース -> 基本的にありえない
+			throw new RuntimeException("Fail to update contracts: " + updatingContract);
+		}
+		if (LOG.isDebugEnabled()) {
+			LOG.debug("ONLINE APP: Update 1 record from contracs(phoneNumber = {}, startDate = {}, endDate = {}).",
+					updatingContract.phoneNumber, updatingContract.startDate, updatingContract.endDate);
 		}
 	}
 

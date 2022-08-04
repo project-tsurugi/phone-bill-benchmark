@@ -44,11 +44,11 @@ class OnlineAppClientTest {
 			}
 
 			@Override
-			protected void createData() throws SQLException {
+			protected void createData() {
 			}
 
 			@Override
-			protected void updateDatabase() throws SQLException, IOException {
+			protected void updateDatabase() {
 			}
 
 			@Override

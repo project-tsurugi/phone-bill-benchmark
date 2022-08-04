@@ -2,35 +2,25 @@ package com.tsurugidb.benchmark.phonebill.db.doma2.entity;
 
 import java.sql.Date;
 
-import org.seasar.doma.Column;
-import org.seasar.doma.Entity;
-import org.seasar.doma.Table;
-
-@Entity
-@Table(name = "contract")
 public class Contract implements Cloneable {
 	/**
 	 * 電話番号
 	 */
-	@Column(name = "phone_number")
 	public String phoneNumber;
 
 	/**
 	 * 契約開始日
 	 */
-	@Column(name = "start_date")
 	public Date startDate;
 
 	/**
 	 * 契約終了日
 	 */
-	@Column(name = "end_date")
 	public Date endDate;
 
 	/**
 	 * 料金計算ルール
 	 */
-	@Column(name = "rule")
 	public String rule;
 
 	@Override

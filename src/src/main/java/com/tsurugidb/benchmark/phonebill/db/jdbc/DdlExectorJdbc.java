@@ -10,11 +10,12 @@ import com.tsurugidb.benchmark.phonebill.db.interfaces.DdlLExecutor;
 
 public abstract class DdlExectorJdbc implements DdlLExecutor {
     protected static final Logger LOG = LoggerFactory.getLogger(DdlExectorJdbc.class);
-    private PhoneBillDbManagerJdbc manager;
+    private PhoneBillDbManagerJdbc managerJdbc;
 
-	public DdlExectorJdbc(PhoneBillDbManagerJdbc manager) {
-		this.manager = manager;
+	public DdlExectorJdbc(PhoneBillDbManagerJdbc managerJdbc) {
+		this.managerJdbc = managerJdbc;
 	}
+
 
 	public void createContractsTable() {
 		String create_table = "create table contracts ("
@@ -23,13 +24,7 @@ public abstract class DdlExectorJdbc implements DdlLExecutor {
 				+ "end_date date,"							// 契約終了日
 				+ "charge_rule varchar(255) not null"		// 料金計算ルール
 				+ ")";
-		try (Statement stmt = manager.getConnection().createStatement()){
-			stmt.execute(create_table);
-			manager.commit();
-		} catch (SQLException e) {
-			manager.rollback();
-			throw new RuntimeException(e);
-		}
+		execute(create_table);
 	}
 
 	public void createBillingTable() {
@@ -42,13 +37,7 @@ public abstract class DdlExectorJdbc implements DdlLExecutor {
 				+ "batch_exec_id varchar(36) not null,"					// バッチ実行ID
 				+ "constraint  billing_pkey primary key(target_month, phone_number, batch_exec_id)"
 				+ ")";
-		try (Statement stmt = manager.getConnection().createStatement()){
-			stmt.execute(create_table);
-			manager.commit();
-		} catch (SQLException e) {
-			manager.rollback();
-			throw new RuntimeException(e);
-		}
+		execute(create_table);
 	}
 
 	public void afterLoadData() {
@@ -56,16 +45,56 @@ public abstract class DdlExectorJdbc implements DdlLExecutor {
 		updateStatistics();
 	}
 
-
-	/*
-	 * 指定のSQLを実行前後にログを入れて実行する
+	/**
+	 * 指定の文字列のSQLを実行する.
+	 * <br>
+	 * ignoreErrorCodeで指定したエラーコードのSQLExceptionが発生した場合、SQLExceptionを無視する。
+	 *
+	 * @param sql
+	 * @param ignoreErrorCode
 	 */
-	protected void execSql(Statement stmt, String sql) throws SQLException {
+	protected void execute(String sql, int... errorCode) {
+		try (Statement stmt = managerJdbc.getConnection().createStatement()){
+			stmt.execute(sql);
+			managerJdbc.commit();
+		} catch (SQLException e) {
+			managerJdbc.rollback();
+			boolean ignore = false;
+			for (int ec : errorCode) {
+				if (e.getErrorCode() == ec) {
+					ignore = true;
+					break;
+				}
+			}
+			if (!ignore) {
+				throw new RuntimeException(e);
+			}
+		}
+	}
+
+	/**
+	 * 実行前後にログを出力して指定の文字列のSQLを実行する.
+	 * <br>
+	 * ignoreErrorCodeで指定したエラーコードのSQLExceptionが発生した場合、SQLExceptionを無視する。
+	 *
+	 * @param sql
+	 * @param erroceCode
+	 */
+	protected void executeWithLogging(String sql, int... erroceCode) {
 		long startTime = System.currentTimeMillis();
 		LOG.info("start exec sql:" + sql);
-		stmt.execute(sql);
+		execute(sql, erroceCode);
 		long elapsedTime = System.currentTimeMillis() - startTime;
 		String format = "end exec sql: " + sql + " in %,.3f sec ";
 		LOG.info(String.format(format, elapsedTime / 1000d));
 	}
+
+	protected void commit() {
+		try {
+			managerJdbc.getConnection().commit();
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 }

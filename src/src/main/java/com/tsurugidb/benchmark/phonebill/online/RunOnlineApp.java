@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.ExecutableCommand;
+import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.testdata.ContractBlockInfoAccessor;
 import com.tsurugidb.benchmark.phonebill.testdata.CreateTestData;
 import com.tsurugidb.benchmark.phonebill.testdata.DbContractBlockInfoInitializer;
@@ -33,8 +34,7 @@ public class RunOnlineApp extends ExecutableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(RunOnlineApp.class);
 
 	public static void main(String[] args) throws Exception {
-		Config.setConfigForAppConfig(false);
-		Config config = Config.getConfigForAppConfig();
+		Config config = Config.setConfigForAppConfig(false);
 		RunOnlineApp runOnlineApp = new RunOnlineApp();
 		runOnlineApp.execute(config);
 	}
@@ -84,6 +84,8 @@ public class RunOnlineApp extends ExecutableCommand {
 	}
 
 	private Result executeOnlineApps(Config config) throws Exception {
+		PhoneBillDbManager manager = config.getDbManager();
+
 		// テストデータの初期化
 		new CreateTestData().execute(config);
 		DbContractBlockInfoInitializer initializer = new DbContractBlockInfoInitializer(config);
@@ -111,7 +113,7 @@ public class RunOnlineApp extends ExecutableCommand {
 
 		// historyInsertAppの初期化
 		historyInsertApps
-				.addAll(HistoryInsertApp.createHistoryInsertApps(config, new Random(random.nextInt()), accessor,
+				.addAll(HistoryInsertApp.createHistoryInsertApps(manager, config, new Random(random.nextInt()), accessor,
 						config.historyInsertThreadCount));
 
 		// HistoryUpdateAppの初期化

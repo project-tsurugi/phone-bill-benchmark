@@ -118,6 +118,7 @@ public class DBUtils {
 	 * @param e
 	 * @return リトライすべき場合true
 	 */
+	@Deprecated
 	public static boolean isRetriableSQLException(SQLException e) {
 		Throwable t = e instanceof BatchUpdateException ? e.getCause() : e;
 		// for PostgreSQL

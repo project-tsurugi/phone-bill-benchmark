@@ -23,8 +23,7 @@ public class LoadTestDataCsvToOracle extends ExecutableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(LoadTestDataCsvToOracle.class);
 
 	public static void main(String[] args) throws Exception {
-		Config.setConfigForAppConfig(false);
-		Config config = Config.getConfigForAppConfig();
+		Config config = Config.setConfigForAppConfig(false);
 		LoadTestDataCsvToOracle loadTestDataCsvToOracle = new LoadTestDataCsvToOracle();
 		loadTestDataCsvToOracle.execute(config);
 	}
@@ -34,7 +33,7 @@ public class LoadTestDataCsvToOracle extends ExecutableCommand {
 		if (config.dbmsType != DbmsType.ORACLE_JDBC) {
 			LOG.error("This configuration is not for the Oracle.");
 		} else {
-			PhoneBillDbManager manager = PhoneBillDbManager.createInstance(config);
+			PhoneBillDbManager manager = config.getDbManager();
 			DdlLExecutor ddlExector = manager.getDdlLExecutor();
 			ddlExector.prepareLoadData();
 			List<Path> list = createControlFiles(config);

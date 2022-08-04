@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import com.tsurugidb.benchmark.phonebill.AbstractDbTestCase;
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.CreateTable;
+import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.doma2.entity.History;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
 import com.tsurugidb.benchmark.phonebill.testdata.AbstractContractBlockInfoInitializer;
@@ -26,6 +27,7 @@ import com.tsurugidb.benchmark.phonebill.testdata.SingleProcessContractBlockMana
 
 class HistoryInsertAppTest extends AbstractDbTestCase {
 	private Config config = null;
+	private PhoneBillDbManager manager;
 	private ContractBlockInfoAccessor accessor = null;
 
 	@BeforeEach
@@ -37,7 +39,7 @@ class HistoryInsertAppTest extends AbstractDbTestCase {
 		config.noExpirationDateRate = 3;
 		config.duplicatePhoneNumberRate = 2;
 		config.numberOfHistoryRecords = 1000;
-
+		manager = config.getDbManager();
 		new CreateTable().execute(config);
 		new CreateTestData().execute(config);
 
@@ -52,15 +54,14 @@ class HistoryInsertAppTest extends AbstractDbTestCase {
 		truncateTable("history");
 		config.historyInsertRecordsPerTransaction = 33;
 		HistoryInsertApp app = (HistoryInsertApp) HistoryInsertApp
-				.createHistoryInsertApps(config, new Random(), accessor, 1).get(0);
-		long expectedBaseTime = HistoryInsertApp.getBaseTime(config);
+				.createHistoryInsertApps(manager, config, new Random(), accessor, 1).get(0);
+		long expectedBaseTime = HistoryInsertApp.getBaseTime(manager, config);
 
 		// exec()呼び出し毎にhistoryのレコードが増えることを確認
 
 		int expectedHistorySize = 0;
 		for (int i = 0; i < 10; i++) {
 			app.exec();
-			app.getConnection().commit();
 			expectedHistorySize += config.historyInsertRecordsPerTransaction;
 			assertEquals(expectedHistorySize, countRecords("history"));
 		}
@@ -95,19 +96,19 @@ class HistoryInsertAppTest extends AbstractDbTestCase {
 		truncateTable("history");
 		config.historyInsertRecordsPerTransaction = 1;
 		HistoryInsertApp app;
-		app = (HistoryInsertApp) HistoryInsertApp.createHistoryInsertApps(config, new Random(0), accessor, 1).get(0);
+		app = (HistoryInsertApp) HistoryInsertApp.createHistoryInsertApps(manager, config, new Random(0), accessor, 1).get(0);
 		app.exec();
 		List<History> expected = getHistories();
 
 		// 同じシードの乱数生成器を使うと、同じhistoryデータが生成されることを確認
 		truncateTable("history");
-		app = (HistoryInsertApp) HistoryInsertApp.createHistoryInsertApps(config, new Random(0), accessor, 1).get(0);
+		app = (HistoryInsertApp) HistoryInsertApp.createHistoryInsertApps(manager, config, new Random(0), accessor, 1).get(0);
 		app.exec();
 		assertEquals(expected, getHistories());
 
 		// app.exec()の実行前にkeySet()にキーを登録しておくと違うhistoryデータが生成されることを確認
 		truncateTable("history");
-		app = (HistoryInsertApp) HistoryInsertApp.createHistoryInsertApps(config, new Random(0), accessor, 1).get(0);
+		app = (HistoryInsertApp) HistoryInsertApp.createHistoryInsertApps(manager, config, new Random(0), accessor, 1).get(0);
 		HistoryKey key = new HistoryKey();
 		key.startTime = expected.get(0).startTime.getTime();
 		key.callerPhoneNumber = Integer.parseInt(expected.get(0).callerPhoneNumber);
@@ -128,9 +129,8 @@ class HistoryInsertAppTest extends AbstractDbTestCase {
 		testCreateHistoryInsertAppsSub(config, DBUtils.nextDate(config.historyMaxDate).getTime());
 
 		// historyInsertAppによるテストデータを投入
-		AbstractOnlineApp app = HistoryInsertApp.createHistoryInsertApps(config, new Random(), accessor, 1).get(0);
+		AbstractOnlineApp app = HistoryInsertApp.createHistoryInsertApps(manager, config, new Random(), accessor, 1).get(0);
 		app.exec();
-		app.getConnection().commit();
 
 		// テストデータ投入後は、baseTimeが通話開始時刻の最大値になる
 		long max = getHistories().stream().mapToLong(h -> h.startTime.getTime()).max().getAsLong();
@@ -138,7 +138,7 @@ class HistoryInsertAppTest extends AbstractDbTestCase {
 
 		// numに0を指定したときのテスト
 		assertEquals(Collections.emptyList(),
-				HistoryInsertApp.createHistoryInsertApps(config, new Random(), accessor, 0));
+				HistoryInsertApp.createHistoryInsertApps(manager, config, new Random(), accessor, 0));
 	}
 
 
@@ -149,7 +149,7 @@ class HistoryInsertAppTest extends AbstractDbTestCase {
 	 * @throws IOException
 	 */
 	private void testCreateHistoryInsertAppsSub(Config config, long baseTime) throws SQLException, IOException {
-		List<AbstractOnlineApp> list = HistoryInsertApp.createHistoryInsertApps(config, new Random(), accessor, 10);
+		List<AbstractOnlineApp> list = HistoryInsertApp.createHistoryInsertApps(manager, config, new Random(), accessor, 10);
 		assertEquals(10, list.size());
 
 		List<HistoryInsertApp> historyInsertApps = new ArrayList<>();

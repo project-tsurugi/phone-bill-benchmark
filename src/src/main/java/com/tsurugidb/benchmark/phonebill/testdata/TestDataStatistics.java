@@ -22,8 +22,7 @@ public class TestDataStatistics extends ExecutableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(TestDataStatistics.class);
 
     public static void main(String[] args) throws Exception {
-		Config.setConfigForAppConfig(false);
-		Config config = Config.getConfigForAppConfig();
+		Config config = Config.setConfigForAppConfig(false);
 		TestDataStatistics testDataStatistics = new TestDataStatistics();
 		testDataStatistics.execute(config);
 	}

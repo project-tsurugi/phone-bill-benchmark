@@ -29,6 +29,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
+import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
+import com.tsurugidb.benchmark.phonebill.db.TgTmSettingDummy;
+import com.tsurugidb.benchmark.phonebill.db.doma2.dao.ContractDao;
+import com.tsurugidb.benchmark.phonebill.db.doma2.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.doma2.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.db.doma2.entity.History;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
@@ -70,6 +74,7 @@ public class TestDataGenerator {
 	/**
 	 * 契約マスタにレコードをインサートするためのSQL
 	 */
+	@Deprecated
 	public static final String SQL_INSERT_TO_CONTRACT = "insert into contracts("
 			+ "phone_number,"
 			+ "start_date,"
@@ -238,10 +243,35 @@ public class TestDataGenerator {
 
 	/**
 	 * 契約マスタのテストデータをDBに生成する
+	 * @param manager
 	 *
 	 * @throws SQLException
 	 * @throws IOException
 	 */
+	public void generateContractsToDb(PhoneBillDbManager manager) throws SQLException, IOException {
+		manager.execute(TgTmSettingDummy.getInstance(), () -> {
+			int batchSize = 0;
+			List<Contract> contracts = new ArrayList<>(SQL_BATCH_EXEC_SIZE);
+			for (long n = 0; n < config.numberOfContractsRecords; n++) {
+				Contract c = getNewContract().clone();
+				contracts.add(c);
+				if (++batchSize == SQL_BATCH_EXEC_SIZE) {
+					insertContracts(manager, contracts);
+				}
+			}
+			insertContracts(manager, contracts);
+		});
+	}
+
+
+
+	/**
+	 * 契約マスタのテストデータをDBに生成する
+	 *
+	 * @throws SQLException
+	 * @throws IOException
+	 */
+	@Deprecated
 	public void generateContractsToDb() throws SQLException, IOException {
 		try (Connection conn = DBUtils.getConnection(config);
 				Statement stmt = conn.createStatement();
@@ -260,14 +290,34 @@ public class TestDataGenerator {
 		}
 	}
 
+	/**
+	 * DAOを使用してContractテーブルにデータを入れる
+	 *
+	 * @param tm
+	 * @param manager
+	 * @param contracts
+	 */
+	private void insertContracts(PhoneBillDbManager manager, List<Contract> contracts) {
+		ContractDao dao = manager.getContractDao();
+		int rets[] = manager.execute(TgTmSettingDummy.getInstance(), () -> dao.batchInsert(contracts));
+		for (int ret : rets) {
+			if (ret < 0 && ret != PreparedStatement.SUCCESS_NO_INFO) {
+				throw new RuntimeException("Fail to batch insert to table contracts.");
+			}
+		}
+		contracts.clear();
+	}
 
 	/**
 	 * @return
 	 * @throws IOException
 	 */
-	public Contract getNewContract() throws IOException {
-		Contract c = contractInfoReader.getNewContract();
-		return c;
+	public Contract getNewContract()  {
+		try {
+			return  contractInfoReader.getNewContract();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	/**
@@ -305,6 +355,22 @@ public class TestDataGenerator {
 	 * @throws SQLException
 	 * @throws IOException
 	 */
+	public void generateHistoryToDb(PhoneBillDbManager manager) throws SQLException, IOException {
+		List<Params> paramsList = createParamsList();
+		for(Params params: paramsList) {
+			params.historyWriter = new DaoHistoryWriter(manager);
+		}
+		generateHistory(paramsList);
+	}
+
+
+	/**
+	 * 通話履歴のテストデータをDBに作成する
+	 *
+	 * @throws SQLException
+	 * @throws IOException
+	 */
+	@Deprecated
 	public void generateHistoryToDb() throws SQLException, IOException {
 		List<Params> paramsList = createParamsList();
 		for(Params params: paramsList) {
@@ -435,6 +501,7 @@ public class TestDataGenerator {
 	 * @param histories
 	 * @throws SQLException
 	 */
+	@Deprecated
 	public static void insrtHistories(Connection conn, List<History> histories) throws SQLException {
 		try (PreparedStatement ps = conn.prepareStatement("insert into history("
 				+ "caller_phone_number,"
@@ -456,7 +523,7 @@ public class TestDataGenerator {
 				} else {
 					ps.setInt(6, h.charge);
 				}
-				ps.setInt(7, h.df ? 1 : 0);
+				ps.setInt(7, h.df);
 				ps.addBatch();
 			}
 			execBatch(ps);
@@ -494,6 +561,7 @@ public class TestDataGenerator {
 		return true;
 	}
 
+	@Deprecated
 	private static void execBatch(PreparedStatement ps) throws SQLException {
 		int rets[] = ps.executeBatch();
 		for (int ret : rets) {
@@ -585,7 +653,7 @@ public class TestDataGenerator {
 				sb.append(h.charge);
 			}
 			sb.append(',');
-			sb.append(h.df ? 1 : 0);
+			sb.append(h.df);
 			bw.write(sb.toString());
 			bw.newLine();
 		}
@@ -602,6 +670,7 @@ public class TestDataGenerator {
 	 * DB出力用クラス
 	 *
 	 */
+	@Deprecated
 	private class DbHistoryWriter extends HistoryWriter {
 		List<History> histories = null;
 		Connection conn = null;
@@ -635,6 +704,53 @@ public class TestDataGenerator {
 			}
 		}
 	}
+
+	/**
+	 * DB出力用クラス
+	 *
+	 */
+	private class DaoHistoryWriter extends HistoryWriter {
+		PhoneBillDbManager manager;
+		HistoryDao historyDao;
+		List<History> histories = null;
+
+		public DaoHistoryWriter(PhoneBillDbManager manager) {
+			this.manager = manager;
+			historyDao = manager.getHistoryDao();
+		}
+
+		@Override
+		void init() throws IOException {
+			histories = new ArrayList<History>(SQL_BATCH_EXEC_SIZE);
+		}
+
+		@Override
+		void cleanup() throws IOException, SQLException {
+			if (histories.size() != 0) {
+				insertHistories();
+			}
+		}
+
+		@Override
+		void write(History h) throws IOException, SQLException {
+			if (statisticsOnly) {
+				statistics.addHistoy(h);
+			} else {
+				histories.add(h);
+				if (histories.size() >= SQL_BATCH_EXEC_SIZE) {
+					insertHistories();
+				}
+			}
+		}
+
+		private void insertHistories() {
+			manager.execute(TgTmSettingDummy.getInstance(), () -> {
+				historyDao.batchInsert(histories);
+			});
+			histories.clear();
+		}
+	}
+
 
 	/**
 	 * オンラインアプリケーション用のダミーのHistoryWriter

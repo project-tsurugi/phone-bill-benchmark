@@ -94,6 +94,7 @@ public class GenerateHistoryTask implements Callable<Result> {
 	/**
 	 * コンストラクタ.
 	 * <br>
+	 * TODO コメントが古い、最新のソースに合うコメントに修正する
 	 * run()が呼ばれると、queueに通話開始時刻がstart以上、end未満の通話履歴データをn個キューに書き込む。
 	 *
 	 * @param config

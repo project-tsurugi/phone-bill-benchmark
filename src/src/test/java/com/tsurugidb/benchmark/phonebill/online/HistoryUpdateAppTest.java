@@ -18,9 +18,10 @@ import org.junit.jupiter.api.Test;
 import com.tsurugidb.benchmark.phonebill.AbstractDbTestCase;
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.CreateTable;
+import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.doma2.entity.Contract;
-import com.tsurugidb.benchmark.phonebill.db.doma2.entity.History;
 import com.tsurugidb.benchmark.phonebill.db.doma2.entity.Contract.Key;
+import com.tsurugidb.benchmark.phonebill.db.doma2.entity.History;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
 import com.tsurugidb.benchmark.phonebill.online.HistoryUpdateApp.Updater;
 import com.tsurugidb.benchmark.phonebill.testdata.AbstractContractBlockInfoInitializer;
@@ -35,6 +36,7 @@ class HistoryUpdateAppTest extends AbstractDbTestCase {
 	private HistoryUpdateApp app;
 	private RandomStub random;
 	private ContractBlockInfoAccessor accessor;
+	private PhoneBillDbManager manager;
 
 	@BeforeEach
 	void before() throws Exception {
@@ -54,11 +56,12 @@ class HistoryUpdateAppTest extends AbstractDbTestCase {
 		accessor = new SingleProcessContractBlockManager(initializer);
 		random = new RandomStub();
 		app = new HistoryUpdateApp(config, random, accessor);
+		manager = config.getDbManager();
 	}
 
 	@AfterEach
 	void after() throws SQLException {
-		app.getConnection().rollback();
+		manager.rollback();
 	}
 
 
@@ -73,8 +76,7 @@ class HistoryUpdateAppTest extends AbstractDbTestCase {
 		target = histories.get(48);
 		setRandom(contracts, map, target, true, 0);
 		app.exec();
-		app.getConnection().commit();
-		target.df = true;
+		target.df = 1;
 		target.charge = null;
 		testExecSub(histories);
 
@@ -82,7 +84,6 @@ class HistoryUpdateAppTest extends AbstractDbTestCase {
 		target = histories.get(48);
 		setRandom(contracts, map, target, false, 3185);
 		app.exec();
-		app.getConnection().commit();
 		target.timeSecs = 3185 +1; // 通話時間は random.next() + 1 なので、
 		target.charge = null;
 		testExecSub(histories);
@@ -146,20 +147,17 @@ class HistoryUpdateAppTest extends AbstractDbTestCase {
 		History h = getHistories().get(0);
 		h.charge = 200;
 		app.updateDatabase(h);
-		app.getConnection().commit();
 		List<History> histories = getHistories();
 		List<Contract> contracts = getContracts();
 
-		 Map<Key, List<History>> map = getContractHistoryMap(contracts, histories);
-
+		Map<Key, List<History>> map = getContractHistoryMap(contracts, histories);
 
 		// すべてのキーについて、getHistory()の値が期待通りかを確認する
-		for(Entry<Key, List<History>> entry: map.entrySet()) {
+		for (Entry<Key, List<History>> entry : map.entrySet()) {
 			assertEquals(entry.getValue(), app.getHistories(entry.getKey()));
 		}
 
 	}
-
 
 	/**
 	 * すべての契約と契約に属する履歴のマップを作成する
@@ -200,11 +198,10 @@ class HistoryUpdateAppTest extends AbstractDbTestCase {
 			History history = expected.get(0);
 			history.recipientPhoneNumber = "RECV";
 			history.charge = 999;
-			history.df = true;
+			history.df = 1;
 			history.paymentCategorty = "C";
 			history.timeSecs = 221;
 			app.updateDatabase(history);
-			app.getConnection().commit();
 		}
 
 		// 52番目のレコードを書き換える
@@ -212,11 +209,10 @@ class HistoryUpdateAppTest extends AbstractDbTestCase {
 			History history = expected.get(52);
 			history.recipientPhoneNumber = "TEST_NUMBER";
 			history.charge = 55899988;
-			history.df = false;
+			history.df = 0;
 			history.paymentCategorty = "C";
 			history.timeSecs = 22551;
 			app.updateDatabase(history);
-			app.getConnection().commit();
 		}
 
 		// アプリによる更新後の値が期待した値であることの確認
@@ -240,12 +236,12 @@ class HistoryUpdateAppTest extends AbstractDbTestCase {
 		ContractBlockInfoAccessor accessor = new SingleProcessContractBlockManager();
 		Updater updater = new HistoryUpdateApp(config, new Random(), accessor).new Updater1();
 
-		History history = toHistory("00000000391", "00000000105", "R", "2020-11-02 06:25:57.430", 1688, null, false);
+		History history = toHistory("00000000391", "00000000105", "R", "2020-11-02 06:25:57.430", 1688, null, 0);
 		History expected = history.clone();
 		updater.update(history);
 
 		// 削除フラグが立っていることを確認
-		expected.df = true;
+		expected.df = 1;
 		assertEquals(expected, history);
 		// 2回呼び出しても変化ないことを確認
 		updater.update(history);
@@ -265,7 +261,7 @@ class HistoryUpdateAppTest extends AbstractDbTestCase {
 		ContractBlockInfoAccessor accessor = new SingleProcessContractBlockManager();
 		Updater updater = new HistoryUpdateApp(config, random, accessor).new Updater2();
 
-		History history = toHistory("00000000391", "00000000105", "R", "2020-11-02 06:25:57.430", 1688, null, false);
+		History history = toHistory("00000000391", "00000000105", "R", "2020-11-02 06:25:57.430", 1688, null, 0);
 		History expected = history.clone();
 
 		// 通話時間が変わっていることを確認

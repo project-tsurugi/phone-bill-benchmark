@@ -1,7 +1,6 @@
 package com.tsurugidb.benchmark.phonebill.online;
 
 import java.io.IOException;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Collections;
@@ -14,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
-import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -25,8 +23,6 @@ public abstract class AbstractOnlineApp implements Runnable{
 	protected static final int CREATE_SCHEDULE_INTERVAL_MILLS  = 60 * 1000;
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractOnlineApp.class);
-	private Connection conn;
-
 
 	/**
 	 * 実行回数
@@ -44,9 +40,9 @@ public abstract class AbstractOnlineApp implements Runnable{
 	private volatile boolean terminationRequested = false;
 
 	/*
-	 * 1分間に実行するトランザクション数、負数の場合は連続で実行する
+	 * 1分間に実行する回数、負数の場合は連続で実行する
 	 */
-	private int txPerMin;
+	private int execPerMin;
 
 	/**
 	 * スケジュール作成時に使用する乱数発生器
@@ -81,10 +77,9 @@ public abstract class AbstractOnlineApp implements Runnable{
 	private String baseName;
 
 
-	public AbstractOnlineApp(int txPerMin, Config config, Random random) throws SQLException {
-		this.txPerMin = txPerMin;
+	public AbstractOnlineApp(int execPerMin, Config config, Random random) throws SQLException {
+		this.execPerMin = execPerMin;
 		this.random = random;
-		conn = DBUtils.getConnection(config);
 		skipDatabaseAccess = config.skipDatabaseAccess;
 		setName(0);
 	}
@@ -103,33 +98,12 @@ public abstract class AbstractOnlineApp implements Runnable{
 	 * オンラインアプリの処理.
 	 *
 	 * createData()でデータを生成し、updateDatabase()で生成したデータを
-	 * DBに反映する。updateDatabase()でリトライ可能なSQLExceptionが発生した場合、
-	 * updateDatabase()をリトライする。
-	 *
-	 *
-	 * @throws SQLException
-	 * @throws IOException
+	 * DBに反映する。
 	 */
 	final void exec() throws SQLException, IOException {
 		createData();
-		for (;;) {
-			try {
-				if (!skipDatabaseAccess) {
-					updateDatabase();
-					conn.commit();
-				}
-				execCount.incrementAndGet();
-				break;
-			} catch (SQLException e) {
-				if (DBUtils.isRetriableSQLException(e)) {
-					LOG.debug("{} caught a retriable exception, ErrorCode = {}, SQLStatus = {}.",
-							this.getClass().getName(), e.getErrorCode(), e.getSQLState(), e);
-					conn.rollback();
-					retryCount.incrementAndGet();
-				} else {
-					throw e;
-				}
-			}
+		if (!skipDatabaseAccess) {
+			updateDatabase();
 		}
 	}
 
@@ -138,14 +112,14 @@ public abstract class AbstractOnlineApp implements Runnable{
 	 * @throws SQLException
 	 * @throws IOException
 	 */
-	protected abstract void createData() throws SQLException, IOException;
+	protected abstract void createData();
 
 	/**
 	 * createDataで生成したデータをDBに反映する
 	 * @throws SQLException
 	 * @throws IOException
 	 */
-	protected abstract void updateDatabase() throws SQLException, IOException;
+	protected abstract void updateDatabase();
 
 
 	@Override
@@ -153,7 +127,7 @@ public abstract class AbstractOnlineApp implements Runnable{
 	public void run() {
 		try {
 			Thread.currentThread().setName(name);
-			if (txPerMin == 0) {
+			if (execPerMin == 0) {
 				// txPerMinが0の場合は何もしない
 				return;
 			}
@@ -164,24 +138,9 @@ public abstract class AbstractOnlineApp implements Runnable{
 				schedule();
 			}
 			LOG.info("{} terminated.", name);
-		} catch (RuntimeException | SQLException | IOException e) {
-			try {
-				if (conn != null && !conn.isClosed()) {
-					conn.rollback();
-				}
-			} catch (SQLException e1) {
-				throw new RuntimeException(e1);
-			}
+		} catch (Exception  e) {
 			LOG.error("Aborting by exception", e);
 			System.exit(1);
-		} finally {
-			try {
-				if (conn != null && !conn.isClosed()) {
-					conn.close();
-				}
-			} catch (Exception e) {
-				LOG.error("{} cleanup failure due to exception.", name, e);
-			}
 		}
 	}
 
@@ -193,7 +152,7 @@ public abstract class AbstractOnlineApp implements Runnable{
 	private void schedule() throws SQLException, IOException {
 		Long schedule = scheduleList.get(0);
 		if (System.currentTimeMillis() < schedule ) {
-			if (txPerMin > 0) {
+			if (execPerMin > 0) {
 				// 処理の開始時刻になっていなければ、10ミリ秒スリープしてリターンする
 				try {
 					Thread.sleep(10);
@@ -233,7 +192,7 @@ public abstract class AbstractOnlineApp implements Runnable{
 					new Timestamp(base), new Timestamp(now));
 			base = System.currentTimeMillis();
 		}
-		for (int i = 0; i < txPerMin; i++) {
+		for (int i = 0; i < execPerMin; i++) {
 			long schedule = base + random.nextInt(CREATE_SCHEDULE_INTERVAL_MILLS);
 			scheduleList.add(schedule);
 		}
@@ -259,14 +218,6 @@ public abstract class AbstractOnlineApp implements Runnable{
 	 */
 	public void terminate() {
 		terminationRequested = true;
-	}
-
-
-	/**
-	 * @return DBコネクション
-	 */
-	protected Connection getConnection() {
-		return conn;
 	}
 
 	/**

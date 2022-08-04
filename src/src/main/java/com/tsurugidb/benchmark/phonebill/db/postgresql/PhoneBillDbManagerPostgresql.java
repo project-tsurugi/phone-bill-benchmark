@@ -13,9 +13,8 @@ public class PhoneBillDbManagerPostgresql extends PhoneBillDbManagerJdbc {
 	private Config config;
 
 	public PhoneBillDbManagerPostgresql(Config config) {
-		super(config);
 		this.config = config;
-		ddlLExecutor = new DdlExectorPostgresql(this, config);
+		ddlLExecutor = new DdlExectorPostgresql(this);
 	}
 
 	@Override
@@ -42,6 +41,15 @@ public class PhoneBillDbManagerPostgresql extends PhoneBillDbManagerJdbc {
 	@Override
 	public DdlLExecutor getDdlLExecutor() {
 		return ddlLExecutor;
+	}
+
+	@Override
+	protected boolean isRetriable(SQLException e) {
+		if (e.equals("40001")) {
+			// シリアライゼーション失敗
+			return true;
+		}
+		return false;
 	}
 
 }

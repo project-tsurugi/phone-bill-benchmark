@@ -47,28 +47,24 @@ class MasterUpdateAppTest extends AbstractDbTestCase {
 		// 0番目の契約の契約終了日を契約完了日の3日後にする
 		setRandomValues(random, 0, 0, 3);
 		app.exec();
-		app.getConnection().commit();
 		setEndDate(expected.get(0), 3);
 		testContracts(expected);
 
 		// 0番目の契約の契約終了日をnullにする
 		setRandomValues(random, 0, 0, 0);
 		app.exec();
-		app.getConnection().commit();
 		expected.get(0).endDate = null;
 		testContracts(expected);
 
 		// 13番目の契約の契約終了日をnullにする
 		setRandomValues(random, 13, 0, 0);
 		app.exec();
-		app.getConnection().commit();
 		expected.get(13).endDate = null;
 		testContracts(expected);
 
 		// 15番目の契約の契約終了日を契約完了日の3日後にする
 		setRandomValues(random, 15, 0, 3);
 		app.exec();
-		app.getConnection().commit();
 		setEndDate(expected.get(15), 3);
 		testContracts(expected);
 
@@ -88,25 +84,21 @@ class MasterUpdateAppTest extends AbstractDbTestCase {
 
 		setRandomValues(random, 80, 0, 3);
 		app.exec();
-		app.getConnection().commit();
 		setEndDate(expected.get(80), 3);
 		testContracts(expected);
 
 		setRandomValues(random, 80, 1, 4);
 		app.exec();
-		app.getConnection().commit();
 		setEndDate(expected.get(81), 4);
 		testContracts(expected);
 
 		setRandomValues(random, 81, 0, 5);
 		app.exec();
-		app.getConnection().commit();
 		setEndDate(expected.get(80), 5);
 		testContracts(expected);
 
 		setRandomValues(random, 81, 1, 6);
 		app.exec();
-		app.getConnection().commit();
 		setEndDate(expected.get(81), 6);
 		testContracts(expected);
 
@@ -119,7 +111,6 @@ class MasterUpdateAppTest extends AbstractDbTestCase {
 		}
 		random.setValues(list.toArray(new Integer[0]));
 		app.exec(); // LOGに警告がでるがエラーにはならない
-		app.getConnection().commit();
 		testContracts(expected);  // 値が変化していないことを核にする
 
 		// DBに存在しない
