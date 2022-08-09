@@ -9,4 +9,5 @@ public interface ContractDao {
 	int batchInsert(Contract contract);
 	int update(Contract contract);
 	List<Contract> getContracts(String phoneNumber);
+	List<String> getAllPhoneNumbers();
 }

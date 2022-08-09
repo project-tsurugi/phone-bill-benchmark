@@ -1,13 +1,12 @@
 package com.tsurugidb.benchmark.phonebill.testdata;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.HashSet;
+import java.util.List;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
-import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
+import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
+import com.tsurugidb.benchmark.phonebill.db.TgTmSettingDummy;
+import com.tsurugidb.benchmark.phonebill.db.doma2.dao.ContractDao;
 
 /**
  * データベースを読み取り、契約マスタのブロック情報を初期化する
@@ -22,7 +21,7 @@ public class DbContractBlockInfoInitializer extends AbstractContractBlockInfoIni
 	}
 
 	@Override
-	void init() throws SQLException {
+	void init() {
 		// AbstractContractBlockInfoInitializerのフィールドを初期化
 		waitingBlocks = new HashSet<Integer>();
 		activeBlockNumberHolder = new ActiveBlockNumberHolder();
@@ -32,27 +31,25 @@ public class DbContractBlockInfoInitializer extends AbstractContractBlockInfoIni
 		int blockSize = config.getContractBlockSize();
 
 		// Contractsテーブルをフルスキャンしてブロック情報を作成する
-		String sql = "select phone_number from contracts order by phone_number;";
-		try (Connection conn = DBUtils.getConnection(config);
-				PreparedStatement ps = conn.prepareStatement(sql);
-				ResultSet rs = ps.executeQuery()) {
-			int blockNumber = 0;
-			int recordsInBlock = 0;
-			long topPhoneNumberOfNextBlock = blockSize;
-			while (rs.next()) {
-				long phoneNumber = Long.parseLong(rs.getString(1));
-				while (phoneNumber >= topPhoneNumberOfNextBlock) {
-					checkBlockFilled(blockSize, blockNumber, recordsInBlock);
-					blockNumber++;
-					recordsInBlock = 0;
-					topPhoneNumberOfNextBlock = phoneNumberGenerator
-							.getPhoneNumberAsLong((blockNumber + 1) * blockSize);
-				}
-				recordsInBlock++;
+		PhoneBillDbManager manager = config.getDbManager();
+		ContractDao dao = manager.getContractDao();
+		List<String> phoneNumbers = manager.execute(TgTmSettingDummy.getInstance(), ()->dao.getAllPhoneNumbers());
+
+		int blockNumber = 0;
+		int recordsInBlock = 0;
+		long topPhoneNumberOfNextBlock = blockSize;
+		for (String s : phoneNumbers) {
+			long phoneNumber = Long.parseLong(s);
+			while (phoneNumber >= topPhoneNumberOfNextBlock) {
+				checkBlockFilled(blockSize, blockNumber, recordsInBlock);
+				blockNumber++;
+				recordsInBlock = 0;
+				topPhoneNumberOfNextBlock = phoneNumberGenerator.getPhoneNumberAsLong((blockNumber + 1) * blockSize);
 			}
-			checkBlockFilled(blockSize, blockNumber, recordsInBlock);
-			numberOfBlocks = blockNumber + 1;
+			recordsInBlock++;
 		}
+		checkBlockFilled(blockSize, blockNumber, recordsInBlock);
+		numberOfBlocks = blockNumber + 1;
 	}
 
 	/**

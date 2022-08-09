@@ -35,7 +35,7 @@ public class LoadTestDataCsvToPostgreSql extends ExecutableCommand {
 			LOG.error("This configuration is not for the PostgreSQL.");
 		} else {
 			// TODO: DAOを使用する
-			PhoneBillDbManagerJdbc manager = (PhoneBillDbManagerJdbc) config.getDbManager();
+			PhoneBillDbManagerJdbc manager = config.getDbManagerJdbc();
 			DdlLExecutor ddlExector = manager.getDdlLExecutor();
 			ddlExector.prepareLoadData();
 			Path dir = Paths.get(config.csvDir);

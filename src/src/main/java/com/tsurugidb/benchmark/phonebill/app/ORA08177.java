@@ -28,7 +28,7 @@ public class ORA08177 extends ExecutableCommand {
 	@Override
 	public void execute(Config config) throws Exception {
 		// TODO: DAOを使用するように変更する
-		PhoneBillDbManagerJdbc manager = (PhoneBillDbManagerJdbc) config.getDbManager();
+		PhoneBillDbManagerJdbc manager = config.getDbManagerJdbc();
 
 		Connection conn = manager.getConnection();;
 		conn.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);

@@ -1,6 +1,5 @@
 package com.tsurugidb.benchmark.phonebill.app;
 
-import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -8,9 +7,9 @@ import java.sql.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.tsurugidb.benchmark.phonebill.app.Config.DbmsType;
 import com.tsurugidb.benchmark.phonebill.app.billing.PhoneBill;
-import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
+import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
+import com.tsurugidb.benchmark.phonebill.db.interfaces.DdlLExecutor;
 import com.tsurugidb.benchmark.phonebill.testdata.CreateTestData;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -27,6 +26,8 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  */
 public class OnlineAppBench extends ExecutableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(OnlineAppBench.class);
+    private PhoneBillDbManager manager;
+
 
 	public static void main(String[] args) throws Exception {
 		OnlineAppBench threadBench = new OnlineAppBench();
@@ -37,6 +38,7 @@ public class OnlineAppBench extends ExecutableCommand {
 
 	@Override
 	public void execute(Config config) throws Exception {
+		manager = config.getDbManager();
 		int historyInsertTransactionPerMin = config.historyInsertTransactionPerMin;
 		int historyUpdateRecordsPerMin = config.historyUpdateRecordsPerMin;
 		int masterInsertReccrdsPerMin = config.masterInsertReccrdsPerMin;
@@ -109,28 +111,17 @@ public class OnlineAppBench extends ExecutableCommand {
 
 
 	private void afterExec(Config config) throws SQLException {
-		boolean isOracle = config.dbmsType == DbmsType.ORACLE_JDBC;
-		try (Connection conn = DBUtils.getConnection(config);
-				Statement stmt = conn.createStatement()) {
-			conn.setAutoCommit(true);
-			int historyUpdated = count(stmt,
-					"select caller_phone_number, recipient_phone_number, payment_categorty, start_time, time_secs, df from history_back",
-					"select caller_phone_number, recipient_phone_number, payment_categorty, start_time, time_secs, df from history",
-					isOracle);
-			int historyInserted = count(stmt, "history") - count(stmt, "history_back");
-			int masterUpdated = count(stmt,
-					"select * from contracts_back",
-					"select * from contracts",
-					isOracle);
-			int masterInserted = count(stmt, "contracts") - count(stmt, "contracts_back");
-			LOG.info("history updated = " + historyUpdated);
-			LOG.info("history inserted = " + historyInserted);
-			LOG.info("master updated = " + masterUpdated);
-			LOG.info("master inserted = " + masterInserted);
-		}
+		DdlLExecutor executor = manager.getDdlLExecutor();
+		int historyUpdated = executor.countHistoryUpdated();
+		int historyInserted = executor.count("history") - executor.count("history_back");
+		int masterUpdated = executor.countContractsUpdated();
+		int masterInserted = executor.count("contracts") - executor.count("contracts_back");
+		LOG.info("history updated = " + historyUpdated);
+		LOG.info("history inserted = " + historyInserted);
+		LOG.info("master updated = " + masterUpdated);
+		LOG.info("master inserted = " + masterInserted);
 
 	}
-
 
 	@SuppressFBWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
 	int count(Statement stmt , String sql1, String sql2, boolean isOracle) throws SQLException {
@@ -148,36 +139,12 @@ public class OnlineAppBench extends ExecutableCommand {
 		throw new RuntimeException("No recoreds selected.");
 	}
 
-	@SuppressFBWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
-	int count(Statement stmt, String table) throws SQLException {
-		String sql = "select count(*) from " + table;
-		try (ResultSet rs = stmt.executeQuery(sql)) {
-			if (rs.next()) {
-				return rs.getInt(1);
-			}
-		}
-		throw new RuntimeException("No recoreds selected.");
-	}
 
 	private void beforeExec(Config config) throws SQLException {
-		try (Connection conn = DBUtils.getConnection(config);
-				Statement stmt = conn.createStatement()) {
-			conn.setAutoCommit(true);
-			dropTable(stmt, "history_back");
-			dropTable(stmt, "contracts_back");
-			stmt.execute("create table history_back as select * from history");
-			stmt.execute("create table contracts_back as select * from contracts");
-		}
+		DdlLExecutor executor = manager.getDdlLExecutor();
+		executor.dropTable("history_back");
+		executor.dropTable("contracts_back");
+		executor.createBackTable("history");
+		executor.createBackTable("contracts");
 	}
-
-	@SuppressFBWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
-	void dropTable(Statement stmt, String table) throws SQLException {
-		try {
-			stmt.execute("drop table "+ table);
-		} catch (SQLException e) {
-			// drop tableでエラーが起きても無視する
-		}
-	}
-
-
 }

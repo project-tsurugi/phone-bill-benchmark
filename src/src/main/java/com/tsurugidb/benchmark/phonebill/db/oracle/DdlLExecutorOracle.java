@@ -32,13 +32,6 @@ public class DdlLExecutorOracle extends DdlExectorJdbc {
 		execute(create_table);
 	}
 
-	public void dropTables() {
-		// 「ORA-00942 表またはビューが存在しません」は無視する
-		execute("drop table history", 942);
-		execute("drop table contracts", 942);
-		execute("drop table billing", 942);
-	}
-
 	public void prepareLoadData() {
 		long startTime = System.currentTimeMillis();
 		execute("truncate table history");
@@ -107,4 +100,15 @@ public class DdlLExecutorOracle extends DdlExectorJdbc {
 		String format = "Update statistic in %,.3f sec ";
 		LOG.info(String.format(format, elapsedTime / 1000d));
 	}
+
+	@Override
+	public void dropTable(String tableName) {
+		execute("drop table " + tableName, 942);
+	}
+
+	@Override
+	protected int countDiff(String sql1, String sql2) {
+		return count("(" + sql1 + " minus " + sql2 + ")");
+	}
+
 }

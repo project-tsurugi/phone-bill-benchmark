@@ -24,12 +24,6 @@ public class DdlExectorPostgresql extends DdlExectorJdbc {
 		execute(create_table);
 	}
 
-	public void dropTables() {
-		execute("drop table history");
-		execute("drop table contracts");
-		execute("drop table billing");
-	}
-
 	public void prepareLoadData() {
 			long startTime = System.currentTimeMillis();
 			execute("truncate table history");
@@ -92,4 +86,15 @@ public class DdlExectorPostgresql extends DdlExectorJdbc {
 		String format = "Update statistic in %,.3f sec ";
 		LOG.info(String.format(format, elapsedTime / 1000d));
 	}
+
+	@Override
+	public void dropTable(String tableName) {
+		execute("drop table if exists " + tableName);
+	}
+
+	@Override
+	protected int countDiff(String sql1, String sql2) {
+		return count("(" + sql1 + " except " + sql2 + ") as subq");
+	}
+
 }

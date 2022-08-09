@@ -23,8 +23,11 @@ public class ContractDaoJdbc implements ContractDao {
 	private static final String SQL_UPDATE =
 			"update contracts set end_date = ?, charge_rule = ? where phone_number = ? and start_date = ?";
 
-	private static final String SQL_SELECT =
+	private static final String SQL_SELECT_BY_PHONE_NUMBER =
 			"select start_date, end_date, charge_rule from contracts where phone_number = ? order by start_date";
+
+	private static final String SQL_SELECT_PHONE_NUMBER =
+			"select phone_number from contracts order by phone_number";
 
 	public ContractDaoJdbc(PhoneBillDbManagerJdbc manager) {
 		this.manager = manager;
@@ -85,7 +88,7 @@ public class ContractDaoJdbc implements ContractDao {
 	public List<Contract> getContracts(String phoneNumber) {
 		Connection conn = manager.getConnection();
 		List<Contract> list = new ArrayList<>();
-		try (PreparedStatement ps = conn.prepareStatement(SQL_SELECT)) {
+		try (PreparedStatement ps = conn.prepareStatement(SQL_SELECT_BY_PHONE_NUMBER)) {
 			ps.setString(1, phoneNumber);
 			try (ResultSet rs = ps.executeQuery()) {
 				while (rs.next()) {
@@ -102,5 +105,22 @@ public class ContractDaoJdbc implements ContractDao {
 		}
 		return list;
 
+	}
+
+	@Override
+	public List<String> getAllPhoneNumbers() {
+		Connection conn = manager.getConnection();
+		List<String> list = new ArrayList<>();
+		try (PreparedStatement ps = conn.prepareStatement(SQL_SELECT_PHONE_NUMBER)) {
+			try (ResultSet rs = ps.executeQuery()) {
+				while (rs.next()) {
+					String phoneNumber = rs.getString(1);
+					list.add(phoneNumber);
+				}
+			}
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+		return list;
 	}
 }

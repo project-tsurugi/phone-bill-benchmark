@@ -30,7 +30,7 @@ public abstract class AbstractJdbcTestCase {
 
 	@BeforeAll
 	static void setUpBeforeClass() throws Exception {
-		PhoneBillDbManagerJdbc managerJdbr = (PhoneBillDbManagerJdbc) Config.getConfig().getDbManager();
+		PhoneBillDbManagerJdbc managerJdbr =  Config.getConfig().getDbManagerJdbc();
 		conn = managerJdbr.getIsoratedConnection();
 		conn.setAutoCommit(true);
 		stmt = conn.createStatement();

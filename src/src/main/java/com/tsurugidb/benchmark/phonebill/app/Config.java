@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
+import com.tsurugidb.benchmark.phonebill.db.jdbc.PhoneBillDbManagerJdbc;
 import com.tsurugidb.benchmark.phonebill.db.oracle.PhoneBillDbManagerOracle;
 import com.tsurugidb.benchmark.phonebill.db.postgresql.PhoneBillDbManagerPostgresql;
 
@@ -899,4 +900,7 @@ public class Config implements Cloneable {
 		return dbManager;
 	}
 
+	public PhoneBillDbManagerJdbc getDbManagerJdbc() {
+		return (PhoneBillDbManagerJdbc) getDbManager();
+	}
 }
