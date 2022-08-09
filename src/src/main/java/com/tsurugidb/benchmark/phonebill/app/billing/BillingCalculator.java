@@ -6,22 +6,22 @@ public interface BillingCalculator {
 	 *
 	 * @param callChage
 	 */
-	void addCallCharge(int callCharge);
+	public void addCallCharge(int callCharge);
 
 	/**
 	 * 基本料金を返す
 	 */
-	int getBasicCharge();
+	public int getBasicCharge();
 
 
 	/**
 	 * 従量料金を返す
 	 */
-	int getMeteredCharge();
+	public int getMeteredCharge();
 
 
 	/**
 	 * 請求金額を返す
 	 */
-	int getBillingAmount();
+	public int getBillingAmount();
 }

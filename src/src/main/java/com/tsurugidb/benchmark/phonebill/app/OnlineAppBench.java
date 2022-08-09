@@ -31,7 +31,7 @@ public class OnlineAppBench extends ExecutableCommand {
 
 	public static void main(String[] args) throws Exception {
 		OnlineAppBench threadBench = new OnlineAppBench();
-		Config config = Config.setConfigForAppConfig(false);
+		Config config = Config.getConfig(false);
 		threadBench.execute(config);
 	}
 

@@ -28,6 +28,11 @@ public class Billing {
 	*/
 	public int billingAmount;
 
+	/**
+	 * バッチ実行ID
+	 */
+	public String batchExecId;
+
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
@@ -41,6 +46,8 @@ public class Billing {
 		builder.append(meteredCharge);
 		builder.append(", billingAmount=");
 		builder.append(billingAmount);
+		builder.append(", batchExecId=");
+		builder.append(batchExecId);
 		builder.append("]");
 		return builder.toString();
 	}
@@ -50,6 +57,7 @@ public class Billing {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + basicCharge;
+		result = prime * result + ((batchExecId == null) ? 0 : batchExecId.hashCode());
 		result = prime * result + billingAmount;
 		result = prime * result + meteredCharge;
 		result = prime * result + ((phoneNumber == null) ? 0 : phoneNumber.hashCode());
@@ -67,6 +75,11 @@ public class Billing {
 			return false;
 		Billing other = (Billing) obj;
 		if (basicCharge != other.basicCharge)
+			return false;
+		if (batchExecId == null) {
+			if (other.batchExecId != null)
+				return false;
+		} else if (!batchExecId.equals(other.batchExecId))
 			return false;
 		if (billingAmount != other.billingAmount)
 			return false;

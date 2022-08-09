@@ -1,9 +1,6 @@
 package com.tsurugidb.benchmark.phonebill.app.billing;
 
-import java.sql.Connection;
 import java.sql.Date;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -13,8 +10,11 @@ import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.Config.TransactionScope;
+import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
+import com.tsurugidb.benchmark.phonebill.db.doma2.dao.BillingDao;
+import com.tsurugidb.benchmark.phonebill.db.doma2.dao.HistoryDao;
+import com.tsurugidb.benchmark.phonebill.db.doma2.entity.Billing;
 import com.tsurugidb.benchmark.phonebill.db.doma2.entity.Contract;
-import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
 
 public class CalculationTask implements Callable<Exception> {
     private static final Logger LOG = LoggerFactory.getLogger(CalculationTask.class);
@@ -28,12 +28,10 @@ public class CalculationTask implements Callable<Exception> {
 	 */
 	private CalculationTargetQueue queue;
 
-
-	/**
-	 * DBConnection;
-	 */
-	private Connection conn;
-
+	// DBManagerとDAO
+	private PhoneBillDbManager manager;
+	private BillingDao billingDao;
+	private HistoryDao historyDao;
 
 	/**
 	 * コンストラクタ
@@ -41,21 +39,25 @@ public class CalculationTask implements Callable<Exception> {
 	 * @param queue
 	 * @param conn
 	 */
-	public CalculationTask(CalculationTargetQueue queue, Connection conn, Config config,
-			String batchExecId, AtomicBoolean abortRequested) {
+	public CalculationTask(CalculationTargetQueue queue, Config config, String batchExecId,
+			AtomicBoolean abortRequested) {
 		this.queue = queue;
-		this.conn = conn;
 		this.config = config;
 		this.batchExecId = batchExecId;
 		this.abortRequested = abortRequested;
+		manager = config.getDbManager();
+		if (config.sharedConnection) {
+			manager = getManager().creaetSessionSharedInstance();
+		}
+		billingDao = getManager().getBillingDao();
+		historyDao = getManager().getHistoryDao();
 	}
-
 
 	@Override
 	public Exception call() throws Exception {
 		try {
 			LOG.debug("Calculation task started.");
-			for(;;) {
+			for (;;) {
 				CalculationTarget target;
 				try {
 					target = queue.take();
@@ -68,17 +70,14 @@ public class CalculationTask implements Callable<Exception> {
 					LOG.debug("Calculation task finished normally.");
 					return null;
 				}
-				// リトライ回数を指定可能にする
-				for(;;) {
+				// TODO: リトライ回数を指定可能にする
+				for (;;) {
 					try {
 						doCalc(target);
 						break;
-					} catch (SQLException e) {
-						if (DBUtils.isRetriableSQLException(e)
-								&& config.transactionScope == TransactionScope.CONTRACT) {
-							LOG.debug("Calculation task caught a retriable exception, ErrorCode = {}, SQLStatus = {}.",
-									e.getErrorCode(), e.getSQLState(), e);
-							conn.rollback();
+					} catch (RuntimeException e) {
+						if (getManager().isRetriable(e) && config.transactionScope == TransactionScope.CONTRACT) {
+							getManager().rollback();
 						} else {
 							throw e;
 						}
@@ -90,55 +89,19 @@ public class CalculationTask implements Callable<Exception> {
 		}
 	}
 
-
 	/**
 	 * 料金計算のメインロジック
 	 *
 	 * @param target
 	 * @throws SQLException
 	 */
-	private void doCalc(CalculationTarget target) throws SQLException {
+	private void doCalc(CalculationTarget target) {
 		Contract contract = target.getContract();
 		LOG.debug("Start calcuration for  contract: {}.", contract);
-		Date start = target.getStart();
-		Date end = target.getEnd();
-		CallChargeCalculator callChargeCalculator = target.getCallChargeCalculator();
-		BillingCalculator billingCalculator = target.getBillingCalculator();
-
-		String sqlSelect = "select caller_phone_number, start_time, time_secs, charge"
-				+ " from history "
-				+ "where start_time >= ? and start_time < ?"
-				+ " and ((caller_phone_number = ? and payment_categorty = 'C') "
-				+ "  or (recipient_phone_number = ? and payment_categorty = 'R'))"
-				+ " and df = 0";
-
-		String sqlUpdate = "update history set charge = ? where caller_phone_number = ? and start_time = ?";
-
-		try (PreparedStatement psSelect = conn.prepareStatement(sqlSelect);
-				PreparedStatement psUpdate = conn.prepareStatement(sqlUpdate)) {
-			psSelect.setDate(1, start);
-			psSelect.setDate(2, DBUtils.nextDate(end));
-			psSelect.setString(3, contract.phoneNumber);
-			psSelect.setString(4, contract.phoneNumber);
-			try (ResultSet rs = psSelect.executeQuery()) {
-				while (rs.next()) {
-					int time = rs.getInt("time_secs"); // 通話時間を取得
-					if (time < 0) {
-						throw new RuntimeException("Negative time: " + time);
-					}
-					int callCharge = callChargeCalculator.calc(time);
-					psUpdate.setInt(1, callCharge);
-					psUpdate.setString(2, rs.getString("caller_phone_number"));
-					psUpdate.setTimestamp(3, rs.getTimestamp("start_time"));
-					psUpdate.addBatch();
-					billingCalculator.addCallCharge(callCharge);
-				}
-			}
-			psUpdate.executeBatch();
-		}
-		updateBilling(conn, contract, billingCalculator, start);
+		BillingCalculator billingCalculator = historyDao.updateChargeWithCalculateBilling(target, batchExecId);
+		updateBilling(contract, billingCalculator, target.getStart());
 		if (config.transactionScope == TransactionScope.CONTRACT) {
-			conn.commit();
+			getManager().commit();
 		}
 		LOG.debug("End calcuration for  contract: {}.", contract);
 	}
@@ -146,29 +109,32 @@ public class CalculationTask implements Callable<Exception> {
 	/**
 	 * Billingテーブルを更新する
 	 *
-	 * @param conn
 	 * @param contract
 	 * @param billingCalculator
 	 * @param targetMonth
-	 * @throws SQLException
 	 */
-	private void updateBilling(Connection conn, Contract contract, BillingCalculator billingCalculator,
-			Date targetMonth) throws SQLException {
-		LOG.debug("Inserting to billing table: phone_number = {}, target_month = {}"
-				+ ", basic_charge = {}, metered_charge = {}, billing_amount = {}, batch_exec_id = {} ",
+	private void updateBilling(Contract contract, BillingCalculator billingCalculator, Date targetMonth) {
+		LOG.debug(
+				"Inserting to billing table: phone_number = {}, target_month = {}"
+						+ ", basic_charge = {}, metered_charge = {}, billing_amount = {}, batch_exec_id = {} ",
 				contract.phoneNumber, targetMonth, billingCalculator.getBasicCharge(),
 				billingCalculator.getMeteredCharge(), billingCalculator.getBillingAmount(), batchExecId);
-		String sql = "insert into billing("
-				+ "phone_number, target_month, basic_charge, metered_charge, billing_amount, batch_exec_id)"
-				+ " values(?, ?, ?, ?, ?, ?)";
-		try (PreparedStatement ps = conn.prepareStatement(sql)) {
-			ps.setString(1, contract.phoneNumber);
-			ps.setDate(2, targetMonth);
-			ps.setInt(3, billingCalculator.getBasicCharge());
-			ps.setInt(4, billingCalculator.getMeteredCharge());
-			ps.setInt(5, billingCalculator.getBillingAmount());
-			ps.setString(6, batchExecId);
-			ps.executeUpdate();
-		}
+		Billing billing = new Billing();
+		billing.phoneNumber = contract.phoneNumber;
+		billing.targetMonth = targetMonth;
+		billing.basicCharge = billingCalculator.getBasicCharge();
+		billing.meteredCharge = billingCalculator.getMeteredCharge();
+		billing.billingAmount = billingCalculator.getBillingAmount();
+		billing.batchExecId = batchExecId;
+		billingDao.insert(billing);
+	}
+
+	 /**
+	  * このインスタンスが使用している{@link PhoneBillDbManager}のインスタンスを返す
+	  *
+	 * @return
+	 */
+	PhoneBillDbManager getManager() {
+		return manager;
 	}
 }

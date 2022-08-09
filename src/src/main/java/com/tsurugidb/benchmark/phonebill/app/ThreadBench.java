@@ -18,7 +18,7 @@ public class ThreadBench extends ExecutableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(ThreadBench.class);
 
 	public static void main(String[] args) throws Exception {
-		Config config = Config.setConfigForAppConfig(false);
+		Config config = Config.getConfig(false);
 		ThreadBench threadBench = new ThreadBench();
 		threadBench.execute(config);
 	}

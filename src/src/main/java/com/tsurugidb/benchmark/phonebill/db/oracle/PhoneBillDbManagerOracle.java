@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
+import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.interfaces.DdlLExecutor;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.PhoneBillDbManagerJdbc;
 
@@ -16,7 +17,11 @@ public class PhoneBillDbManagerOracle extends PhoneBillDbManagerJdbc {
 
 	public PhoneBillDbManagerOracle(Config config) {
 		this.config = config;
-		ddlLExecutor = new DdlLExecutorOracle(this, config);
+	}
+
+	private  PhoneBillDbManagerOracle(PhoneBillDbManagerOracle manager) {
+		super(manager);
+		this.config = manager.config;
 	}
 
 	@Override
@@ -45,16 +50,24 @@ public class PhoneBillDbManagerOracle extends PhoneBillDbManagerJdbc {
 
 
 	@Override
-	public DdlLExecutor getDdlLExecutor() {
+	public synchronized DdlLExecutor getDdlLExecutor() {
+		if (ddlLExecutor == null) {
+			ddlLExecutor = new DdlLExecutorOracle(this, config);
+		}
 		return ddlLExecutor;
 	}
 
 	@Override
-	protected boolean isRetriable(SQLException e) {
+	public boolean isRetriable(SQLException e) {
 		// 「ORA-08177: このトランザクションのアクセスをシリアル化できません」発生時true
 		if (e.getErrorCode() == 8177) {
 			return true;
 		}
 		return false;
+	}
+
+	@Override
+	public PhoneBillDbManager creaetSessionSharedInstance() {
+		return new PhoneBillDbManagerOracle(this);
 	}
 }

@@ -8,7 +8,6 @@ import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Locale;
@@ -83,10 +82,7 @@ class CreateTableTest extends AbstractJdbcTestCase {
 
 
 	private void testPrepareAndAfterLoadDataSub(Config config) throws Exception {
-		try (Connection conn = AbstractJdbcTestCase.getConn();
-				Statement stmt = conn.createStatement()) {
-			conn.setAutoCommit(false);
-
+		try (Connection conn = config.getDbManagerJdbc().getIsoratedConnection()) {
 			// テーブルを作成
 			CreateTable createTable = new CreateTable();
 			createTable.execute(config);
@@ -143,10 +139,7 @@ class CreateTableTest extends AbstractJdbcTestCase {
 	}
 
 	void testDropIndexAndDropPrimaryKeySub(Config config) throws Exception {
-		try (Connection conn = AbstractJdbcTestCase.getConn();
-				Statement stmt = conn.createStatement()) {
-			conn.setAutoCommit(true);
-
+		try (Connection conn = config.getDbManagerJdbc().getIsoratedConnection()) {
 			// テーブルを作成
 			CreateTable createTable = new CreateTable();
 			createTable.execute(config);

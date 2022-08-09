@@ -7,7 +7,7 @@ public class CreateTable extends ExecutableCommand{
 	private DdlLExecutor ddlExector;
 
 	public static void main(String[] args) throws Exception {
-		Config config = Config.setConfigForAppConfig(false);
+		Config config = Config.getConfig(false);
 		CreateTable createTable = new CreateTable();
 		createTable.execute(config);
 	}

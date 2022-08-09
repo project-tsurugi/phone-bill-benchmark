@@ -1,6 +1,7 @@
 package com.tsurugidb.benchmark.phonebill.db.jdbc;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -19,15 +20,6 @@ public class ContractDaoJdbc implements ContractDao {
 			+ "end_date,"
 			+ "charge_rule"
 			+ ") values(?, ?, ?, ?)";
-
-	private static final String SQL_UPDATE =
-			"update contracts set end_date = ?, charge_rule = ? where phone_number = ? and start_date = ?";
-
-	private static final String SQL_SELECT_BY_PHONE_NUMBER =
-			"select start_date, end_date, charge_rule from contracts where phone_number = ? order by start_date";
-
-	private static final String SQL_SELECT_PHONE_NUMBER =
-			"select phone_number from contracts order by phone_number";
 
 	public ContractDaoJdbc(PhoneBillDbManagerJdbc manager) {
 		this.manager = manager;
@@ -73,7 +65,8 @@ public class ContractDaoJdbc implements ContractDao {
 	@Override
 	public int update(Contract contract) {
 		Connection conn = manager.getConnection();
-		try (PreparedStatement ps = conn.prepareStatement(SQL_UPDATE)) {
+		String sql = "update contracts set end_date = ?, charge_rule = ? where phone_number = ? and start_date = ?";
+		try (PreparedStatement ps = conn.prepareStatement(sql)) {
 			ps.setDate(1, contract.endDate);
 			ps.setString(2, contract.rule);
 			ps.setString(3, contract.phoneNumber);
@@ -88,7 +81,8 @@ public class ContractDaoJdbc implements ContractDao {
 	public List<Contract> getContracts(String phoneNumber) {
 		Connection conn = manager.getConnection();
 		List<Contract> list = new ArrayList<>();
-		try (PreparedStatement ps = conn.prepareStatement(SQL_SELECT_BY_PHONE_NUMBER)) {
+		String sql = "select start_date, end_date, charge_rule from contracts where phone_number = ? order by start_date";
+		try (PreparedStatement ps = conn.prepareStatement(sql)) {
 			ps.setString(1, phoneNumber);
 			try (ResultSet rs = ps.executeQuery()) {
 				while (rs.next()) {
@@ -108,10 +102,38 @@ public class ContractDaoJdbc implements ContractDao {
 	}
 
 	@Override
+	public List<Contract> getContracts(Date start, Date end) {
+		Connection conn = manager.getConnection();
+		List<Contract> list = new ArrayList<>();
+		String sql = "select phone_number, start_date, end_date, charge_rule"
+				+ " from contracts where start_date <= ? and ( end_date is null or end_date >= ?)"
+				+ " order by phone_number";
+		try (PreparedStatement ps = conn.prepareStatement(sql)) {
+			ps.setDate(1, end);
+			ps.setDate(2, start);
+			try (ResultSet rs = ps.executeQuery()) {
+				while (rs.next()) {
+					Contract contract = new Contract();
+					contract.phoneNumber = rs.getString(1);
+					contract.startDate = rs.getDate(2);
+					contract.endDate = rs.getDate(3);
+					contract.rule = rs.getString(4);
+					list.add(contract);
+				}
+			}
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+		return list;
+	}
+
+
+	@Override
 	public List<String> getAllPhoneNumbers() {
 		Connection conn = manager.getConnection();
 		List<String> list = new ArrayList<>();
-		try (PreparedStatement ps = conn.prepareStatement(SQL_SELECT_PHONE_NUMBER)) {
+		String sql = "select phone_number from contracts order by phone_number";
+		try (PreparedStatement ps = conn.prepareStatement(sql)) {
 			try (ResultSet rs = ps.executeQuery()) {
 				while (rs.next()) {
 					String phoneNumber = rs.getString(1);
@@ -123,4 +145,5 @@ public class ContractDaoJdbc implements ContractDao {
 		}
 		return list;
 	}
+
 }

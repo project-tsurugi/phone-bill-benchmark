@@ -1,6 +1,7 @@
 package com.tsurugidb.benchmark.phonebill.db.jdbc;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -10,7 +11,11 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.tsurugidb.benchmark.phonebill.app.billing.BillingCalculator;
+import com.tsurugidb.benchmark.phonebill.app.billing.CalculationTarget;
+import com.tsurugidb.benchmark.phonebill.app.billing.CallChargeCalculator;
 import com.tsurugidb.benchmark.phonebill.db.doma2.dao.HistoryDao;
+import com.tsurugidb.benchmark.phonebill.db.doma2.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.db.doma2.entity.Contract.Key;
 import com.tsurugidb.benchmark.phonebill.db.doma2.entity.History;
 
@@ -151,5 +156,50 @@ public class HistoryDaoJdbc implements HistoryDao {
 			throw new RuntimeException(e);
 		}
 		return list;
+	}
+
+	@Override
+	public BillingCalculator updateChargeWithCalculateBilling(CalculationTarget target, String phoneNumber) {
+		Connection conn = manager.getConnection();
+		Contract contract = target.getContract();
+		Date start = target.getStart();
+		Date end = target.getEnd();
+		CallChargeCalculator callChargeCalculator = target.getCallChargeCalculator();
+		BillingCalculator billingCalculator = target.getBillingCalculator();
+
+		String sqlSelect = "select caller_phone_number, start_time, time_secs, charge"
+				+ " from history "
+				+ "where start_time >= ? and start_time < ?"
+				+ " and ((caller_phone_number = ? and payment_categorty = 'C') "
+				+ "  or (recipient_phone_number = ? and payment_categorty = 'R'))"
+				+ " and df = 0";
+
+		String sqlUpdate = "update history set charge = ? where caller_phone_number = ? and start_time = ?";
+
+		try (PreparedStatement psSelect = conn.prepareStatement(sqlSelect);
+				PreparedStatement psUpdate = conn.prepareStatement(sqlUpdate)) {
+			psSelect.setDate(1, start);
+			psSelect.setDate(2, DBUtils.nextDate(end));
+			psSelect.setString(3, contract.phoneNumber);
+			psSelect.setString(4, contract.phoneNumber);
+			try (ResultSet rs = psSelect.executeQuery()) {
+				while (rs.next()) {
+					int time = rs.getInt("time_secs"); // 通話時間を取得
+					if (time < 0) {
+						throw new RuntimeException("Negative time: " + time);
+					}
+					int callCharge = callChargeCalculator.calc(time);
+					psUpdate.setInt(1, callCharge);
+					psUpdate.setString(2, rs.getString("caller_phone_number"));
+					psUpdate.setTimestamp(3, rs.getTimestamp("start_time"));
+					psUpdate.addBatch();
+					billingCalculator.addCallCharge(callCharge);
+				}
+			}
+			psUpdate.executeBatch();
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+		return billingCalculator;
 	}
 }

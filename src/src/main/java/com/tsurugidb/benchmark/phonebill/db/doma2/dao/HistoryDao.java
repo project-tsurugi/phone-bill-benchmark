@@ -2,6 +2,8 @@ package com.tsurugidb.benchmark.phonebill.db.doma2.dao;
 
 import java.util.List;
 
+import com.tsurugidb.benchmark.phonebill.app.billing.BillingCalculator;
+import com.tsurugidb.benchmark.phonebill.app.billing.CalculationTarget;
 import com.tsurugidb.benchmark.phonebill.db.doma2.entity.Contract.Key;
 import com.tsurugidb.benchmark.phonebill.db.doma2.entity.History;
 
@@ -16,4 +18,5 @@ public interface HistoryDao {
 
 	List<History> getHistories(Key key);
 
+	BillingCalculator updateChargeWithCalculateBilling(CalculationTarget target, String phoneNumber);
 }

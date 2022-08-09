@@ -866,9 +866,8 @@ public class Config implements Cloneable {
 	 * @param requiredFile ファイル指定が必須の場合true
 	 * @throws IOException
 	 *
-	 * TODO コンパイルエラーが取れたらメソッド名をgetCOnfigに変更する
 	 */
-	public static Config setConfigForAppConfig(boolean requiredFile) throws IOException {
+	public static Config getConfig(boolean requiredFile) throws IOException {
         String s = System.getProperty("property");
         if (s == null) {
         	if (requiredFile) {

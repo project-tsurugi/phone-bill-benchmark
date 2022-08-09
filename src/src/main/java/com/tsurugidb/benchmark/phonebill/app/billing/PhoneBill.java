@@ -1,10 +1,7 @@
 package com.tsurugidb.benchmark.phonebill.app.billing;
 
 import java.io.IOException;
-import java.sql.Connection;
 import java.sql.Date;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -28,8 +25,9 @@ import org.slf4j.LoggerFactory;
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.ExecutableCommand;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
+import com.tsurugidb.benchmark.phonebill.db.doma2.dao.BillingDao;
+import com.tsurugidb.benchmark.phonebill.db.doma2.dao.ContractDao;
 import com.tsurugidb.benchmark.phonebill.db.doma2.entity.Contract;
-import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.Duration;
 import com.tsurugidb.benchmark.phonebill.online.AbstractOnlineApp;
 import com.tsurugidb.benchmark.phonebill.online.HistoryInsertApp;
@@ -44,16 +42,14 @@ import com.tsurugidb.benchmark.phonebill.testdata.SingleProcessContractBlockMana
 public class PhoneBill extends ExecutableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(PhoneBill.class);
 
-    private PhoneBillDbManager manager;
     private long elapsedTime = 0; // バッチの処理時間
 	private CalculationTargetQueue queue;
 	private String finalMessage;
 	private AtomicBoolean abortRequested = new AtomicBoolean(false);
-
-	Config config;
+	Config config; // UTからConfigを書き換え可能にするためにパッケージプライベートにしている
 
 	public static void main(String[] args) throws Exception {
-		Config config = Config.setConfigForAppConfig(false);
+		Config config = Config.getConfig(false);
 		PhoneBill phoneBill = new PhoneBill();
 		phoneBill.execute(config);
 	}
@@ -61,7 +57,6 @@ public class PhoneBill extends ExecutableCommand {
 	@Override
 	public void execute(Config config) throws Exception {
 		this.config = config;
-		this.manager = config.getDbManager();
 		DbContractBlockInfoInitializer initializer = new DbContractBlockInfoInitializer(config);
 		ContractBlockInfoAccessor accessor = new SingleProcessContractBlockManager(initializer);
 		List<AbstractOnlineApp> list = createOnlineApps(config, accessor);
@@ -157,52 +152,39 @@ public class PhoneBill extends ExecutableCommand {
 		LOG.info("Phone bill batch started.");
 		String batchExecId = UUID.randomUUID().toString();
 		int threadCount = config.threadCount;
-		boolean sharedConnection = config.sharedConnection;
 
 		ExecutorService service = null;
 		Set<Future<Exception>> futures = new HashSet<>(threadCount);
-		List<Connection> connections = new ArrayList<Connection>(threadCount);
+		Set<PhoneBillDbManager> managers = new HashSet<>(threadCount);
 		initQueue(threadCount);
 
 		long startTime = System.currentTimeMillis();
 		try {
-			Connection conn = DBUtils.getConnection(config);
-			connections.add(conn);
+			PhoneBillDbManager manager = config.getDbManager();
+			BillingDao billingDao = manager.getBillingDao();
+			ContractDao contractDao = manager.getContractDao();
+			managers.add(manager);
 			// 契約毎の計算を行うスレッドを生成する
 			service = Executors.newFixedThreadPool(threadCount);
 			for(int i =0; i < threadCount; i++) {
-				if (sharedConnection) {
-					futures.add(service.submit(new CalculationTask(queue, conn, config, batchExecId, abortRequested)));
-				} else {
-					Connection newConnection = DBUtils.getConnection(config);
-					connections.add(newConnection);
-					futures.add(service
-							.submit(new CalculationTask(queue, newConnection, config, batchExecId, abortRequested)));
-				}
+				CalculationTask task = new CalculationTask(queue, config, batchExecId, abortRequested);
+				managers.add(task.getManager());
+				futures.add(service.submit(task));
 			}
 
 			// Billingテーブルの計算対象月のレコードを削除する
-			deleteTargetManthRecords(conn, start);
+			billingDao.delete(start);
+
 			// 計算対象の契約を取りだし、キューに入れる
-			String sql = "select phone_number, start_date, end_date, charge_rule"
-					+ " from contracts where start_date <= ? and ( end_date is null or end_date >= ?)"
-					+ " order by phone_number";
-			try (PreparedStatement ps = conn.prepareStatement(sql)) {
-				ps.setDate(1, end);
-				ps.setDate(2, start);
-				try (ResultSet contractResultSet = ps.executeQuery()) {
-					while (contractResultSet.next()) {
-						Contract contract = getContract(contractResultSet);
-						LOG.debug(contract.toString());
-						// TODO 契約内容に合致した、CallChargeCalculator, BillingCalculatorを生成するようにする。
-						CallChargeCalculator callChargeCalculator = new SimpleCallChargeCalculator();
-						BillingCalculator billingCalculator = new SimpleBillingCalculator();
-						CalculationTarget target = new CalculationTarget(contract, billingCalculator,
-								callChargeCalculator, start, end, false);
-						queue.put(target);
-						;
-					}
-				}
+			List<Contract> list = contractDao.getContracts(start, end);
+			for (Contract contract : list) {
+				LOG.debug(contract.toString());
+				// TODO 契約内容に合致した、CallChargeCalculator, BillingCalculatorを生成するようにする。
+				CallChargeCalculator callChargeCalculator = new SimpleCallChargeCalculator();
+				BillingCalculator billingCalculator = new SimpleBillingCalculator();
+				CalculationTarget target = new CalculationTarget(contract, billingCalculator, callChargeCalculator,
+						start, end, false);
+				queue.put(target);
 			}
 		} finally {
 			// EndOfTaskをキューに入れる
@@ -210,7 +192,7 @@ public class PhoneBill extends ExecutableCommand {
 			if (service != null && !service.isTerminated()) {
 				service.shutdown();
 			}
-			cleanup(futures, connections, abortRequested);
+			cleanup(futures, managers, abortRequested);
 			queue.clear();
 		}
 		elapsedTime = System.currentTimeMillis() - startTime;
@@ -235,11 +217,11 @@ public class PhoneBill extends ExecutableCommand {
 	/**
 	 * @param conn
 	 * @param futures
-	 * @param connections
+	 * @param managers
 	 * @param abortRequested
 	 * @throws SQLException
 	 */
-	private void cleanup(Set<Future<Exception>> futures, List<Connection> connections, AtomicBoolean abortRequested)
+	private void cleanup(Set<Future<Exception>> futures, Set<PhoneBillDbManager> managers, AtomicBoolean abortRequested)
 			throws SQLException {
 		boolean needRollback = false;
 		while (!futures.isEmpty()) {
@@ -277,40 +259,14 @@ public class PhoneBill extends ExecutableCommand {
 		}
 
 		if (needRollback) {
-			for (Connection c : connections) {
-				if (c != null && !c.isClosed()) {
-					c.rollback();
-					c.close();
-				}
+			for (PhoneBillDbManager m : managers) {
+				m.rollback();
 			}
 		} else {
-			for (Connection c : connections) {
-				if (c != null && !c.isClosed()) {
-					c.commit();
-					c.close();
-				}
+			for (PhoneBillDbManager m : managers) {
+				m.commit();
 			}
 		}
-	}
-
-
-	private void deleteTargetManthRecords(Connection conn, Date start) throws SQLException {
-		String sql = "delete from billing where target_month = ?";
-		try (PreparedStatement ps = conn.prepareStatement(sql)) {
-			ps.setDate(1, start);
-			ps.executeUpdate();
-		}
-	}
-
-
-
-	private Contract getContract(ResultSet rs) throws SQLException {
-		Contract contract = new Contract();
-		contract.phoneNumber = rs.getString(1);
-		contract.startDate = rs.getDate(2);
-		contract.endDate = rs.getDate(3);
-		contract.rule = rs.getString(4);
-		return contract;
 	}
 
 	/**

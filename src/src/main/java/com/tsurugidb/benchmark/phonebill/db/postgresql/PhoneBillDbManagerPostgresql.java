@@ -5,6 +5,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
+import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.interfaces.DdlLExecutor;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.PhoneBillDbManagerJdbc;
 
@@ -14,8 +15,14 @@ public class PhoneBillDbManagerPostgresql extends PhoneBillDbManagerJdbc {
 
 	public PhoneBillDbManagerPostgresql(Config config) {
 		this.config = config;
-		ddlLExecutor = new DdlExectorPostgresql(this);
 	}
+
+	private PhoneBillDbManagerPostgresql(PhoneBillDbManagerPostgresql manager) {
+		super(manager);
+		this.config = manager.config;
+	}
+
+
 
 	@Override
 	protected Connection createConnection() throws SQLException {
@@ -39,17 +46,25 @@ public class PhoneBillDbManagerPostgresql extends PhoneBillDbManagerJdbc {
 
 
 	@Override
-	public DdlLExecutor getDdlLExecutor() {
+	public synchronized DdlLExecutor getDdlLExecutor() {
+		if (ddlLExecutor == null) {
+			ddlLExecutor = new DdlExectorPostgresql(this);
+		}
 		return ddlLExecutor;
 	}
 
 	@Override
-	protected boolean isRetriable(SQLException e) {
+	public boolean isRetriable(SQLException e) {
 		if (e.equals("40001")) {
 			// シリアライゼーション失敗
 			return true;
 		}
 		return false;
+	}
+
+	@Override
+	public PhoneBillDbManager creaetSessionSharedInstance() {
+		return new PhoneBillDbManagerPostgresql(this);
 	}
 
 }

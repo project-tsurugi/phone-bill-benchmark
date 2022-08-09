@@ -106,6 +106,10 @@ class PhoneBillTest extends AbstractJdbcTestCase {
 		assertEquals(toHistory("Phone-0005", "Phone-0008", "R", "2020-11-30 00:00:00.000", 30, 10, 0), histories.get(6));
 
 
+		billings = getBillings();
+		assertEquals(5, billings.size());
+
+
 		// Exception 発生時にrollbackされることの確認
         // Phone-0001が先に処理されテーブルが更新されるが、Phone-005の処理でExceptionが発生し、処理全体がロールバックされる
 		insertToHistory("Phone-0001", "Phone-0008", "C", "2020-11-01 00:30:00.000", 30, 0);  	// 計算対象

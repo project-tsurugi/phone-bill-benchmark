@@ -15,7 +15,7 @@ public class CreateTestDataCsv extends ExecutableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(CreateTestDataCsv.class);
 
     public static void main(String[] args) throws Exception {
-		Config config = Config.setConfigForAppConfig(false);
+		Config config = Config.getConfig(false);
     	CreateTestDataCsv createTestDataCsv = new CreateTestDataCsv();
 		createTestDataCsv.execute(config);
 	}

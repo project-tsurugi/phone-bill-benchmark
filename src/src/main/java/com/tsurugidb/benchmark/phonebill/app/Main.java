@@ -68,7 +68,7 @@ public class Main {
 		switch(command.argType) {
 		case CONFIG:
 			try {
-				Config config = Config.setConfigForAppConfig(false);
+				Config config = Config.getConfig(false);
 				executableCommand.execute(config);
 			} catch (RuntimeException | IOException e) {
 				e.printStackTrace();
