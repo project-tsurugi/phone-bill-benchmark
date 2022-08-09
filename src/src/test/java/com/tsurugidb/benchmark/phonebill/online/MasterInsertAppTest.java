@@ -10,7 +10,7 @@ import java.util.Random;
 
 import org.junit.jupiter.api.Test;
 
-import com.tsurugidb.benchmark.phonebill.AbstractDbTestCase;
+import com.tsurugidb.benchmark.phonebill.AbstractJdbcTestCase;
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.CreateTable;
 import com.tsurugidb.benchmark.phonebill.db.doma2.entity.Contract;
@@ -19,7 +19,7 @@ import com.tsurugidb.benchmark.phonebill.testdata.ContractBlockInfoAccessor;
 import com.tsurugidb.benchmark.phonebill.testdata.SingleProcessContractBlockManager;
 import com.tsurugidb.benchmark.phonebill.testdata.TestDataGenerator;
 
-class MasterInsertAppTest extends AbstractDbTestCase {
+class MasterInsertAppTest extends AbstractJdbcTestCase {
 
 	@Test
 	void test() throws Exception {

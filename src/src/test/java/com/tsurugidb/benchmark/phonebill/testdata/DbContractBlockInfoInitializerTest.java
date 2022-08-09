@@ -10,11 +10,11 @@ import java.util.Random;
 
 import org.junit.jupiter.api.Test;
 
-import com.tsurugidb.benchmark.phonebill.AbstractDbTestCase;
+import com.tsurugidb.benchmark.phonebill.AbstractJdbcTestCase;
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.CreateTable;
 
-class DbContractBlockInfoInitializerTest extends AbstractDbTestCase {
+class DbContractBlockInfoInitializerTest extends AbstractJdbcTestCase {
 	// 契約マスタのブロックサイズが100、レコード数が500、電話番号が連続になるようにconfigを指定
 	private static Config config;
 	static {

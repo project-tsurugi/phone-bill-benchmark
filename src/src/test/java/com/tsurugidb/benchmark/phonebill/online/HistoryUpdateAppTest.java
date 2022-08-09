@@ -15,7 +15,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.tsurugidb.benchmark.phonebill.AbstractDbTestCase;
+import com.tsurugidb.benchmark.phonebill.AbstractJdbcTestCase;
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.CreateTable;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
@@ -31,7 +31,7 @@ import com.tsurugidb.benchmark.phonebill.testdata.DefaultContractBlockInfoInitia
 import com.tsurugidb.benchmark.phonebill.testdata.SingleProcessContractBlockManager;
 import com.tsurugidb.benchmark.phonebill.util.RandomStub;
 
-class HistoryUpdateAppTest extends AbstractDbTestCase {
+class HistoryUpdateAppTest extends AbstractJdbcTestCase {
 	private Config config;
 	private HistoryUpdateApp app;
 	private RandomStub random;

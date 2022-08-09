@@ -26,7 +26,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
-import com.tsurugidb.benchmark.phonebill.AbstractDbTestCase;
+import com.tsurugidb.benchmark.phonebill.AbstractJdbcTestCase;
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.CreateTable;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
@@ -36,7 +36,7 @@ import com.tsurugidb.benchmark.phonebill.util.PathUtils;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-class TestDataGeneratorTest extends AbstractDbTestCase {
+class TestDataGeneratorTest extends AbstractJdbcTestCase {
 	private Path tempDir = null;
 
 

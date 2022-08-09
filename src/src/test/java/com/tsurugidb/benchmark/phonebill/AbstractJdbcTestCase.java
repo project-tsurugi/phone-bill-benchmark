@@ -16,20 +16,22 @@ import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.db.doma2.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.db.doma2.entity.History;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
+import com.tsurugidb.benchmark.phonebill.db.jdbc.PhoneBillDbManagerJdbc;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
- * DBにアクセスするテストケース共通用のクラス。
+ * JDBCでDBにアクセスするテストケース共通用のクラス。
  *
  */
-public abstract class AbstractDbTestCase {
+public abstract class AbstractJdbcTestCase {
 	private static Connection conn;
 	private static Statement stmt;
 
 	@BeforeAll
 	static void setUpBeforeClass() throws Exception {
-		conn = DBUtils.getConnection(Config.getConfig());
+		PhoneBillDbManagerJdbc managerJdbr = (PhoneBillDbManagerJdbc) Config.getConfig().getDbManager();
+		conn = managerJdbr.getIsoratedConnection();
 		conn.setAutoCommit(true);
 		stmt = conn.createStatement();
 	}

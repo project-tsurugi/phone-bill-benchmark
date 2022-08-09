@@ -17,14 +17,13 @@ import java.util.Set;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
-import com.tsurugidb.benchmark.phonebill.AbstractDbTestCase;
+import com.tsurugidb.benchmark.phonebill.AbstractJdbcTestCase;
 import com.tsurugidb.benchmark.phonebill.app.Config.DbmsType;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.SessionException;
 import com.tsurugidb.benchmark.phonebill.db.interfaces.DdlLExecutor;
-import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
 
-class CreateTableTest extends AbstractDbTestCase {
+class CreateTableTest extends AbstractJdbcTestCase {
 	private static String ORACLE_CONFIG_PATH = "src/test/config/oracle.properties";
 
 	@Test
@@ -84,7 +83,7 @@ class CreateTableTest extends AbstractDbTestCase {
 
 
 	private void testPrepareAndAfterLoadDataSub(Config config) throws Exception {
-		try (Connection conn = DBUtils.getConnection(config);
+		try (Connection conn = AbstractJdbcTestCase.getConn();
 				Statement stmt = conn.createStatement()) {
 			conn.setAutoCommit(false);
 
@@ -144,7 +143,7 @@ class CreateTableTest extends AbstractDbTestCase {
 	}
 
 	void testDropIndexAndDropPrimaryKeySub(Config config) throws Exception {
-		try (Connection conn = DBUtils.getConnection(config);
+		try (Connection conn = AbstractJdbcTestCase.getConn();
 				Statement stmt = conn.createStatement()) {
 			conn.setAutoCommit(true);
 

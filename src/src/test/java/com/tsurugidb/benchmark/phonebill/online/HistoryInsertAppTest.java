@@ -12,7 +12,7 @@ import java.util.Random;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.tsurugidb.benchmark.phonebill.AbstractDbTestCase;
+import com.tsurugidb.benchmark.phonebill.AbstractJdbcTestCase;
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.CreateTable;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
@@ -25,7 +25,7 @@ import com.tsurugidb.benchmark.phonebill.testdata.DefaultContractBlockInfoInitia
 import com.tsurugidb.benchmark.phonebill.testdata.HistoryKey;
 import com.tsurugidb.benchmark.phonebill.testdata.SingleProcessContractBlockManager;
 
-class HistoryInsertAppTest extends AbstractDbTestCase {
+class HistoryInsertAppTest extends AbstractJdbcTestCase {
 	private Config config = null;
 	private PhoneBillDbManager manager;
 	private ContractBlockInfoAccessor accessor = null;

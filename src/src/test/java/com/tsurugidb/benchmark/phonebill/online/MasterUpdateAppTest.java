@@ -14,7 +14,7 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
-import com.tsurugidb.benchmark.phonebill.AbstractDbTestCase;
+import com.tsurugidb.benchmark.phonebill.AbstractJdbcTestCase;
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.CreateTable;
 import com.tsurugidb.benchmark.phonebill.db.doma2.entity.Contract;
@@ -25,7 +25,7 @@ import com.tsurugidb.benchmark.phonebill.testdata.SingleProcessContractBlockMana
 import com.tsurugidb.benchmark.phonebill.testdata.TestDataGenerator;
 import com.tsurugidb.benchmark.phonebill.util.RandomStub;
 
-class MasterUpdateAppTest extends AbstractDbTestCase {
+class MasterUpdateAppTest extends AbstractJdbcTestCase {
 
 	@Test
 	void testExec() throws IOException, Exception {

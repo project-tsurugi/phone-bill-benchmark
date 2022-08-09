@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.tsurugidb.benchmark.phonebill.AbstractDbTestCase;
+import com.tsurugidb.benchmark.phonebill.AbstractJdbcTestCase;
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.Config.TransactionScope;
 import com.tsurugidb.benchmark.phonebill.app.CreateTable;
@@ -38,7 +38,7 @@ import com.tsurugidb.benchmark.phonebill.testdata.CreateTestData;
 import com.tsurugidb.benchmark.phonebill.testdata.DefaultContractBlockInfoInitializer;
 import com.tsurugidb.benchmark.phonebill.testdata.SingleProcessContractBlockManager;
 
-class PhoneBillTest extends AbstractDbTestCase {
+class PhoneBillTest extends AbstractJdbcTestCase {
     private static final Logger LOG = LoggerFactory.getLogger(PhoneBillTest.class);
 
 	@Test

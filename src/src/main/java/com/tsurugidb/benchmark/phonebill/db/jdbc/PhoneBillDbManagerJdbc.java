@@ -49,6 +49,11 @@ public abstract class PhoneBillDbManagerJdbc extends PhoneBillDbManager {
 	 */
 	protected abstract boolean isRetriable(SQLException e);
 
+	/**
+	 * スレッドローカルなコネクションを取得する。
+	 *
+	 * @return
+	 */
 	public Connection getConnection() {
 		return connectionThreadLocal.get();
 	}
@@ -171,5 +176,18 @@ public abstract class PhoneBillDbManagerJdbc extends PhoneBillDbManager {
 			historyDao = new HistoryDaoJdbc(this);
 		}
 		return historyDao;
+	}
+
+
+	/**
+	 * {@link PhoneBillDbManagerJdbc#getConnection()}で取得できるコネクションと別の
+	 * コネクションを取得する。UTで同一のスレッドで別のコネクションが必要になったときに使用する。
+	 * UT以外での使用禁止。
+	 *
+	 * @return
+	 * @throws SQLException
+	 */
+	public Connection getIsoratedConnection() throws SQLException {
+		return createConnection();
 	}
 }
