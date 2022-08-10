@@ -47,10 +47,10 @@ public class CalculationTask implements Callable<Exception> {
 		this.abortRequested = abortRequested;
 		manager = config.getDbManager();
 		if (config.sharedConnection) {
-			manager = getManager().creaetSessionSharedInstance();
+			manager = manager.creaetSessionSharedInstance();
 		}
-		billingDao = getManager().getBillingDao();
-		historyDao = getManager().getHistoryDao();
+		billingDao = manager.getBillingDao();
+		historyDao = manager.getHistoryDao();
 	}
 
 	@Override
@@ -76,8 +76,8 @@ public class CalculationTask implements Callable<Exception> {
 						doCalc(target);
 						break;
 					} catch (RuntimeException e) {
-						if (getManager().isRetriable(e) && config.transactionScope == TransactionScope.CONTRACT) {
-							getManager().rollback();
+						if (manager.isRetriable(e) && config.transactionScope == TransactionScope.CONTRACT) {
+							manager.rollback();
 						} else {
 							throw e;
 						}
@@ -101,7 +101,7 @@ public class CalculationTask implements Callable<Exception> {
 		BillingCalculator billingCalculator = historyDao.updateChargeWithCalculateBilling(target, batchExecId);
 		updateBilling(contract, billingCalculator, target.getStart());
 		if (config.transactionScope == TransactionScope.CONTRACT) {
-			getManager().commit();
+			manager.commit();
 		}
 		LOG.debug("End calcuration for  contract: {}.", contract);
 	}
@@ -127,14 +127,5 @@ public class CalculationTask implements Callable<Exception> {
 		billing.billingAmount = billingCalculator.getBillingAmount();
 		billing.batchExecId = batchExecId;
 		billingDao.insert(billing);
-	}
-
-	 /**
-	  * このインスタンスが使用している{@link PhoneBillDbManager}のインスタンスを返す
-	  *
-	 * @return
-	 */
-	PhoneBillDbManager getManager() {
-		return manager;
 	}
 }

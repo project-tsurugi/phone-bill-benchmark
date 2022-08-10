@@ -80,7 +80,6 @@ public abstract class PhoneBillDbManagerJdbc extends PhoneBillDbManager {
 	@Override
 	public void close() {
 		RuntimeException exception = null;
-
 		for (Connection c : connectionList) {
 			try {
 				c.close();
@@ -92,11 +91,51 @@ public abstract class PhoneBillDbManagerJdbc extends PhoneBillDbManager {
 				}
 			}
 		}
-
 		if (exception != null) {
 			throw exception;
 		}
 	}
+
+	@Override
+	public void commitAll() {
+		RuntimeException exception = null;
+		for (Connection c : connectionList) {
+			try {
+				c.commit();
+			} catch (SQLException e) {
+				if (exception == null) {
+					exception = new RuntimeException(e);
+				} else {
+					exception.addSuppressed(e);
+				}
+			}
+		}
+		if (exception != null) {
+			throw exception;
+		}
+	}
+
+	@Override
+	public void rollbackAll() {
+		RuntimeException exception = null;
+		for (Connection c : connectionList) {
+			try {
+				c.rollback();
+			} catch (SQLException e) {
+				if (exception == null) {
+					exception = new RuntimeException(e);
+				} else {
+					exception.addSuppressed(e);
+				}
+			}
+		}
+		if (exception != null) {
+			throw exception;
+		}
+	}
+
+
+
 
 	@Override
 	public void execute(TgTmSetting setting, Runnable runnable) {

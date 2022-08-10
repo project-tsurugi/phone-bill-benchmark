@@ -155,20 +155,17 @@ public class PhoneBill extends ExecutableCommand {
 
 		ExecutorService service = null;
 		Set<Future<Exception>> futures = new HashSet<>(threadCount);
-		Set<PhoneBillDbManager> managers = new HashSet<>(threadCount);
 		initQueue(threadCount);
 
 		long startTime = System.currentTimeMillis();
+		PhoneBillDbManager manager = config.getDbManager();
 		try {
-			PhoneBillDbManager manager = config.getDbManager();
 			BillingDao billingDao = manager.getBillingDao();
 			ContractDao contractDao = manager.getContractDao();
-			managers.add(manager);
 			// 契約毎の計算を行うスレッドを生成する
 			service = Executors.newFixedThreadPool(threadCount);
 			for(int i =0; i < threadCount; i++) {
 				CalculationTask task = new CalculationTask(queue, config, batchExecId, abortRequested);
-				managers.add(task.getManager());
 				futures.add(service.submit(task));
 			}
 
@@ -192,7 +189,7 @@ public class PhoneBill extends ExecutableCommand {
 			if (service != null && !service.isTerminated()) {
 				service.shutdown();
 			}
-			cleanup(futures, managers, abortRequested);
+			cleanup(futures, manager, abortRequested);
 			queue.clear();
 		}
 		elapsedTime = System.currentTimeMillis() - startTime;
@@ -221,7 +218,7 @@ public class PhoneBill extends ExecutableCommand {
 	 * @param abortRequested
 	 * @throws SQLException
 	 */
-	private void cleanup(Set<Future<Exception>> futures, Set<PhoneBillDbManager> managers, AtomicBoolean abortRequested)
+	private void cleanup(Set<Future<Exception>> futures, PhoneBillDbManager manager, AtomicBoolean abortRequested)
 			throws SQLException {
 		boolean needRollback = false;
 		while (!futures.isEmpty()) {
@@ -257,15 +254,10 @@ public class PhoneBill extends ExecutableCommand {
 				}
 			}
 		}
-
 		if (needRollback) {
-			for (PhoneBillDbManager m : managers) {
-				m.rollback();
-			}
+			manager.rollbackAll();
 		} else {
-			for (PhoneBillDbManager m : managers) {
-				m.commit();
-			}
+			manager.commitAll();
 		}
 	}
 

@@ -55,7 +55,7 @@ public class PhoneBillDbManagerPostgresql extends PhoneBillDbManagerJdbc {
 
 	@Override
 	public boolean isRetriable(SQLException e) {
-		if (e.equals("40001")) {
+		if (e.getSQLState().equals("40001")) {
 			// シリアライゼーション失敗
 			return true;
 		}
