@@ -11,6 +11,9 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tsurugidb.benchmark.phonebill.app.billing.BillingCalculator;
 import com.tsurugidb.benchmark.phonebill.app.billing.CalculationTarget;
 import com.tsurugidb.benchmark.phonebill.app.billing.CallChargeCalculator;
@@ -20,6 +23,8 @@ import com.tsurugidb.benchmark.phonebill.db.doma2.entity.Contract.Key;
 import com.tsurugidb.benchmark.phonebill.db.doma2.entity.History;
 
 public class HistoryDaoJdbc implements HistoryDao {
+    private static final Logger LOG = LoggerFactory.getLogger(HistoryDaoJdbc.class);
+
 	private final PhoneBillDbManagerJdbc manager;
 
 
@@ -159,7 +164,7 @@ public class HistoryDaoJdbc implements HistoryDao {
 	}
 
 	@Override
-	public BillingCalculator updateChargeWithCalculateBilling(CalculationTarget target, String phoneNumber) {
+	public BillingCalculator updateChargeWithCalculateBilling(CalculationTarget target) {
 		Connection conn = manager.getConnection();
 		Contract contract = target.getContract();
 		Date start = target.getStart();
@@ -182,6 +187,7 @@ public class HistoryDaoJdbc implements HistoryDao {
 			psSelect.setDate(2, DBUtils.nextDate(end));
 			psSelect.setString(3, contract.phoneNumber);
 			psSelect.setString(4, contract.phoneNumber);
+			int c = 1;
 			try (ResultSet rs = psSelect.executeQuery()) {
 				while (rs.next()) {
 					int time = rs.getInt("time_secs"); // 通話時間を取得
@@ -194,6 +200,7 @@ public class HistoryDaoJdbc implements HistoryDao {
 					psUpdate.setTimestamp(3, rs.getTimestamp("start_time"));
 					psUpdate.addBatch();
 					billingCalculator.addCallCharge(callCharge);
+					LOG.debug("=== phone_number = {}, count = {}, charge = {}", contract.phoneNumber, c++,  callCharge);
 				}
 			}
 			psUpdate.executeBatch();

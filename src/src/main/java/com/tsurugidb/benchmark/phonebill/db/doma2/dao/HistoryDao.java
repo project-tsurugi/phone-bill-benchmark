@@ -18,5 +18,5 @@ public interface HistoryDao {
 
 	List<History> getHistories(Key key);
 
-	BillingCalculator updateChargeWithCalculateBilling(CalculationTarget target, String phoneNumber);
+	BillingCalculator updateChargeWithCalculateBilling(CalculationTarget target);
 }

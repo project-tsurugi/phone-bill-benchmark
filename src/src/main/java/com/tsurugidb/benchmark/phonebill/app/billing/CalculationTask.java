@@ -95,7 +95,7 @@ public class CalculationTask implements Callable<Exception> {
 	private void doCalc(CalculationTarget target) {
 		Contract contract = target.getContract();
 		LOG.debug("Start calcuration for  contract: {}.", contract);
-		BillingCalculator billingCalculator = historyDao.updateChargeWithCalculateBilling(target, batchExecId);
+		BillingCalculator billingCalculator = historyDao.updateChargeWithCalculateBilling(target);
 		updateBilling(contract, billingCalculator, target.getStart());
 		if (config.transactionScope == TransactionScope.CONTRACT) {
 			manager.commit();

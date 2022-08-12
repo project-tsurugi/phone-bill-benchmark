@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +41,7 @@ import com.tsurugidb.benchmark.phonebill.testdata.SingleProcessContractBlockMana
 
 class PhoneBillTest extends AbstractJdbcTestCase {
     private static final Logger LOG = LoggerFactory.getLogger(PhoneBillTest.class);
+	private static String ORACLE_CONFIG_PATH = "src/test/config/oracle.properties";
 
 	@Test
 	void test() throws Exception {
@@ -309,16 +311,18 @@ class PhoneBillTest extends AbstractJdbcTestCase {
 		phoneBill.execute(config);
 		List<Billing> expected = getBillings();
 
-		// スレッド数 、コネクションプールの有無で結果が変わらないことを確認
-		boolean[] sharedConnections = { false, true };
+		// スレッド数 、コネクション共有の有無で結果が変わらないことを確認
+		boolean[] sharedConnections = { false }; 	// PostgreSQLのJDBCドライバはスレッドセーフでなく、コネクション
+		     											// を共有したときに正しい結果を得られないことがあるため、
+														// コネクション共有のセストは実施しない
 		int[] threadCounts = { 1, 2, 4, 8, 16 };
 		for (boolean sharedConnection : sharedConnections) {
 			for (int threadCount : threadCounts) {
 				Config newConfig = config.clone();
 				newConfig.threadCount = threadCount;
 				newConfig.sharedConnection = sharedConnection;
-				LOG.info("Executing phoneBill.exec() with threadCount =" + threadCount +
-						", sharedConnection = " + sharedConnection);
+				LOG.info("Executing phoneBill.exec() with threadCount =" + threadCount + ", sharedConnection = "
+						+ sharedConnection);
 				testNewConfig(phoneBill, expected, newConfig);
 			}
 		}
@@ -332,6 +336,50 @@ class PhoneBillTest extends AbstractJdbcTestCase {
 		}
 	}
 
+
+	/*
+	 * Configに違いがあっても処理結果が変わらないことを確認(Oracle版)
+	 */
+	@Test
+	@Tag("oracle")
+	void testConfigVariationForOracle() throws Exception {
+		// まず実行し、その結果を期待値とする
+		Config config = Config.getConfig(ORACLE_CONFIG_PATH);
+		config.duplicatePhoneNumberRate = 10;
+		config.expirationDateRate = 10;
+		config.noExpirationDateRate = 70;
+		config.numberOfContractsRecords = (int) 100;
+		config.numberOfHistoryRecords = (int) 1000;
+		config.threadCount = 1;
+		config.sharedConnection = false;
+		new CreateTable().execute(config);
+		new CreateTestData().execute(config);
+		PhoneBill phoneBill = new PhoneBill();
+		phoneBill.execute(config);
+		List<Billing> expected = getBillings();
+
+		// スレッド数 、コネクション共有の有無で結果が変わらないことを確認
+		boolean[] sharedConnections = { false, true };
+		int[] threadCounts = { 1, 2, 4, 8, 16 };
+		for (boolean sharedConnection : sharedConnections) {
+			for (int threadCount : threadCounts) {
+				Config newConfig = config.clone();
+				newConfig.threadCount = threadCount;
+				newConfig.sharedConnection = sharedConnection;
+				LOG.info("Executing phoneBill.exec() with threadCount =" + threadCount + ", sharedConnection = "
+						+ sharedConnection);
+				testNewConfig(phoneBill, expected, newConfig);
+			}
+		}
+
+		// トランザクションスコープの違いで結果が変わらないことの確認
+		for(TransactionScope ts: TransactionScope.values()) {
+			Config newConfig = config.clone();
+			newConfig.transactionScope= ts;
+			LOG.info("Executing phoneBill.exec() with transactionScope =" + ts);
+			testNewConfig(phoneBill, expected, newConfig);
+		}
+	}
 
 
 
