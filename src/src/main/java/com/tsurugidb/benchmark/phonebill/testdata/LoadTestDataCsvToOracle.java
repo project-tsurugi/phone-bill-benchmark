@@ -33,7 +33,7 @@ public class LoadTestDataCsvToOracle extends ExecutableCommand {
 		if (config.dbmsType != DbmsType.ORACLE_JDBC) {
 			LOG.error("This configuration is not for the Oracle.");
 		} else {
-			PhoneBillDbManager manager = config.getDbManager();
+			PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config);
 			DdlLExecutor ddlExector = manager.getDdlLExecutor();
 			ddlExector.prepareLoadData();
 			List<Path> list = createControlFiles(config);

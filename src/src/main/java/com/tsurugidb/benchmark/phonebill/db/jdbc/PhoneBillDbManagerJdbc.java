@@ -23,20 +23,19 @@ public abstract class PhoneBillDbManagerJdbc extends PhoneBillDbManager {
 	private final ConnectionHolder connectionHolder;
 
 
-	/**
-	 * デフォルトコンストラクタでは、スレッドローカルなコネクションを保持するインスタンスを生成する
-	 */
-	public PhoneBillDbManagerJdbc() {
-		connectionHolder = new ThreadLocalConnectionHolder();
+	public PhoneBillDbManagerJdbc(SessionHoldingType type) {
+		switch(type) {
+		case INSTANCE_FIELD:
+			connectionHolder = new InstanceFieldHolder();
+			break;
+		case THREAD_LOCAL:
+			connectionHolder = new ThreadLocalConnectionHolder();
+			break;
+		default:
+			connectionHolder = null;
+			assert false;
+		}
 	}
-
-	/**
-	 * 指定のPhoneBillDbManagerJdbcとコネクションを共有するインスタンスを作成する
-	 */
-	protected PhoneBillDbManagerJdbc(PhoneBillDbManagerJdbc phoneBillDbManagerJdbc)  {
-		connectionHolder = new SimpleConnectionHolder(phoneBillDbManagerJdbc.getConnection());
-	}
-
 
 	/**
 	 * JDBCコネクションを作成する
@@ -95,47 +94,6 @@ public abstract class PhoneBillDbManagerJdbc extends PhoneBillDbManager {
 			throw exception;
 		}
 	}
-
-	@Override
-	public void commitAll() {
-		RuntimeException exception = null;
-		for (Connection c : connectionList) {
-			try {
-				c.commit();
-			} catch (SQLException e) {
-				if (exception == null) {
-					exception = new RuntimeException(e);
-				} else {
-					exception.addSuppressed(e);
-				}
-			}
-		}
-		if (exception != null) {
-			throw exception;
-		}
-	}
-
-	@Override
-	public void rollbackAll() {
-		RuntimeException exception = null;
-		for (Connection c : connectionList) {
-			try {
-				c.rollback();
-			} catch (SQLException e) {
-				if (exception == null) {
-					exception = new RuntimeException(e);
-				} else {
-					exception.addSuppressed(e);
-				}
-			}
-		}
-		if (exception != null) {
-			throw exception;
-		}
-	}
-
-
-
 
 	@Override
 	public void execute(TgTmSetting setting, Runnable runnable) {
@@ -205,18 +163,6 @@ public abstract class PhoneBillDbManagerJdbc extends PhoneBillDbManager {
 	public abstract boolean isRetriable(SQLException e);
 
 
-	/**
-	 * {@link PhoneBillDbManagerJdbc#getConnection()}で取得できるコネクションと別の
-	 * コネクションを取得する。UTで同一のスレッドで別のコネクションが必要になったときに使用する。
-	 * UT以外での使用禁止。
-	 *
-	 * @return
-	 * @throws SQLException
-	 */
-	public Connection getIsoratedConnection() throws SQLException {
-		return createConnection();
-	}
-
 	// DAOの取得
 
 	private ContractDao contractDao;
@@ -257,21 +203,28 @@ public abstract class PhoneBillDbManagerJdbc extends PhoneBillDbManager {
 	}
 
 
-	private class SimpleConnectionHolder implements ConnectionHolder{
-		Connection conn;
-
-		public SimpleConnectionHolder(Connection conn) {
-			this.conn = conn;
-			connectionList.add(conn);
-		}
+	private class InstanceFieldHolder implements ConnectionHolder {
+		private volatile Connection c;
 
 		@Override
 		public Connection getConnection() {
-			return conn;
+			if (c == null) {
+				synchronized (this) {
+					if (c == null) {
+						try {
+							this.c = createConnection();
+							connectionList.add(c);
+						} catch (SQLException e) {
+							throw new RuntimeException(e);
+						}
+					}
+				}
+			}
+			return c;
 		}
 	}
 
-	private class ThreadLocalConnectionHolder implements ConnectionHolder{
+	private class ThreadLocalConnectionHolder implements ConnectionHolder {
 		private final ThreadLocal<Connection> connectionThreadLocal = new ThreadLocal<Connection>() {
 			@Override
 			protected Connection initialValue() {

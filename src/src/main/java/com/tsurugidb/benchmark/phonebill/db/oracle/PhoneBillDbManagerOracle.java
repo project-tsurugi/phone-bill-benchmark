@@ -4,7 +4,6 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
-import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.interfaces.DdlLExecutor;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.PhoneBillDbManagerJdbc;
 
@@ -15,13 +14,9 @@ public class PhoneBillDbManagerOracle extends PhoneBillDbManagerJdbc {
 	private DdlLExecutor ddlLExecutor;
 	private Config config;
 
-	public PhoneBillDbManagerOracle(Config config) {
+	public PhoneBillDbManagerOracle(Config config, SessionHoldingType type) {
+		super(type);
 		this.config = config;
-	}
-
-	private  PhoneBillDbManagerOracle(PhoneBillDbManagerOracle manager) {
-		super(manager);
-		this.config = manager.config;
 	}
 
 	@Override
@@ -64,10 +59,5 @@ public class PhoneBillDbManagerOracle extends PhoneBillDbManagerJdbc {
 			return true;
 		}
 		return false;
-	}
-
-	@Override
-	public PhoneBillDbManager creaetSessionSharedInstance() {
-		return new PhoneBillDbManagerOracle(this);
 	}
 }

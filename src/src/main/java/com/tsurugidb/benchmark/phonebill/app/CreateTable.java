@@ -14,7 +14,7 @@ public class CreateTable extends ExecutableCommand{
 
 	@Override
 	public void execute(Config config) throws Exception {
-		PhoneBillDbManager manager = config.getDbManager();
+		PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config);
 		ddlExector = manager.getDdlLExecutor();
 		ddlExector.dropTables();
 		ddlExector.createHistoryTable();

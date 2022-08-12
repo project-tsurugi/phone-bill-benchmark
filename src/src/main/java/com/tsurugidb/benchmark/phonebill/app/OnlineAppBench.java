@@ -38,7 +38,7 @@ public class OnlineAppBench extends ExecutableCommand {
 
 	@Override
 	public void execute(Config config) throws Exception {
-		manager = config.getDbManager();
+		manager = PhoneBillDbManager.createPhoneBillDbManager(config);
 		int historyInsertTransactionPerMin = config.historyInsertTransactionPerMin;
 		int historyUpdateRecordsPerMin = config.historyUpdateRecordsPerMin;
 		int masterInsertReccrdsPerMin = config.masterInsertReccrdsPerMin;

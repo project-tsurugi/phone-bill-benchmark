@@ -84,7 +84,7 @@ public class RunOnlineApp extends ExecutableCommand {
 	}
 
 	private Result executeOnlineApps(Config config) throws Exception {
-		PhoneBillDbManager manager = config.getDbManager();
+		PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config);
 
 		// テストデータの初期化
 		new CreateTestData().execute(config);

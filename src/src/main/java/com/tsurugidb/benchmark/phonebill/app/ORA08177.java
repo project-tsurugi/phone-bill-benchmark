@@ -7,7 +7,8 @@ import java.sql.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.tsurugidb.benchmark.phonebill.db.jdbc.PhoneBillDbManagerJdbc;
+import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager.SessionHoldingType;
+import com.tsurugidb.benchmark.phonebill.db.oracle.PhoneBillDbManagerOracle;
 
 /**
  * ORA-08177を再現するためのTP
@@ -27,25 +28,25 @@ public class ORA08177 extends ExecutableCommand {
 
 	@Override
 	public void execute(Config config) throws Exception {
-		// TODO: DAOを使用するように変更する
-		PhoneBillDbManagerJdbc manager = config.getDbManagerJdbc();
+		try (PhoneBillDbManagerOracle manager = new PhoneBillDbManagerOracle(config,
+				SessionHoldingType.INSTANCE_FIELD)) {
+			Connection conn = manager.getConnection();
+			conn.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+			stmt = conn.createStatement();
 
-		Connection conn = manager.getConnection();;
-		conn.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
-		stmt = conn.createStatement();
+			String create_table = "create table test(c integer, primary key(c)) SEGMENT CREATION DEFERRED ";
+			execSQL("drop table test");
+			execSQL(create_table);
+			execSQL("truncate table test");
 
-		String create_table = "create table test(c integer, primary key(c)) SEGMENT CREATION DEFERRED ";
-		execSQL("drop table test");
-		execSQL(create_table);
-		execSQL("truncate table test");
-
-		for (int i = 0; i < 10000; i++) {
-			if (i == 579) {
-				LOG.info("NOW");
+			for (int i = 0; i < 10000; i++) {
+				if (i == 579) {
+					LOG.info("NOW");
+				}
+				String sql = "insert into test(c) values(" + i + ")";
+				execSQL(sql);
+				conn.commit();
 			}
-			String sql = "insert into test(c) values(" + i + ")";
-			execSQL(sql);
-			conn.commit();
 		}
 	}
 

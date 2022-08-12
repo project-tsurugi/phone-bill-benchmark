@@ -19,8 +19,10 @@ import org.junit.jupiter.api.Test;
 import com.tsurugidb.benchmark.phonebill.AbstractJdbcTestCase;
 import com.tsurugidb.benchmark.phonebill.app.Config.DbmsType;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
+import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager.SessionHoldingType;
 import com.tsurugidb.benchmark.phonebill.db.SessionException;
 import com.tsurugidb.benchmark.phonebill.db.interfaces.DdlLExecutor;
+import com.tsurugidb.benchmark.phonebill.db.jdbc.PhoneBillDbManagerJdbc;
 
 class CreateTableTest extends AbstractJdbcTestCase {
 	private static String ORACLE_CONFIG_PATH = "src/test/config/oracle.properties";
@@ -28,7 +30,7 @@ class CreateTableTest extends AbstractJdbcTestCase {
 	@Test
 	void test() throws SQLException, IOException, SessionException {
 		Config config = Config.getConfig();
-		PhoneBillDbManager manager = config.getDbManager();
+		PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config);
 		DdlLExecutor ddlExector = manager.getDdlLExecutor();
 
 		ddlExector.dropTables();
@@ -82,7 +84,9 @@ class CreateTableTest extends AbstractJdbcTestCase {
 
 
 	private void testPrepareAndAfterLoadDataSub(Config config) throws Exception {
-		try (Connection conn = config.getDbManagerJdbc().getIsoratedConnection()) {
+		PhoneBillDbManagerJdbc manager = (PhoneBillDbManagerJdbc) PhoneBillDbManager.createPhoneBillDbManager(config,
+				SessionHoldingType.INSTANCE_FIELD);
+		try (Connection conn = manager.getConnection()) {
 			// テーブルを作成
 			CreateTable createTable = new CreateTable();
 			createTable.execute(config);
@@ -139,7 +143,9 @@ class CreateTableTest extends AbstractJdbcTestCase {
 	}
 
 	void testDropIndexAndDropPrimaryKeySub(Config config) throws Exception {
-		try (Connection conn = config.getDbManagerJdbc().getIsoratedConnection()) {
+		PhoneBillDbManagerJdbc manager = (PhoneBillDbManagerJdbc) PhoneBillDbManager.createPhoneBillDbManager(config,
+				SessionHoldingType.INSTANCE_FIELD);
+		try (Connection conn = manager.getConnection()) {
 			// テーブルを作成
 			CreateTable createTable = new CreateTable();
 			createTable.execute(config);

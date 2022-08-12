@@ -56,7 +56,7 @@ class HistoryUpdateAppTest extends AbstractJdbcTestCase {
 		accessor = new SingleProcessContractBlockManager(initializer);
 		random = new RandomStub();
 		app = new HistoryUpdateApp(config, random, accessor);
-		manager = config.getDbManager();
+		manager = PhoneBillDbManager.createPhoneBillDbManager(config);
 	}
 
 	@AfterEach

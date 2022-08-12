@@ -3,6 +3,7 @@ package com.tsurugidb.benchmark.phonebill.testdata;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Collections;
@@ -14,6 +15,8 @@ import org.slf4j.LoggerFactory;
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.Config.DbmsType;
 import com.tsurugidb.benchmark.phonebill.app.ExecutableCommand;
+import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
+import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager.SessionHoldingType;
 import com.tsurugidb.benchmark.phonebill.db.interfaces.DdlLExecutor;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.PhoneBillDbManagerJdbc;
 import com.tsurugidb.benchmark.phonebill.util.PathUtils;
@@ -35,16 +38,19 @@ public class LoadTestDataCsvToPostgreSql extends ExecutableCommand {
 			LOG.error("This configuration is not for the PostgreSQL.");
 		} else {
 			// TODO: DAOを使用する
-			PhoneBillDbManagerJdbc manager = config.getDbManagerJdbc();
-			DdlLExecutor ddlExector = manager.getDdlLExecutor();
-			ddlExector.prepareLoadData();
-			Path dir = Paths.get(config.csvDir);
-			List<Path> contractsList = Collections.singletonList(CsvUtils.getContractsFilePath(dir));
-			List<Path> historyList = CsvUtils.getHistortyFilePaths(dir);
-			Statement stmt = manager.getConnection().createStatement();
-			doCopy(stmt, config, "contracts", contractsList);
-			doCopy(stmt, config, "history", historyList);
-			ddlExector.afterLoadData();
+			PhoneBillDbManagerJdbc manager = (PhoneBillDbManagerJdbc) PhoneBillDbManager
+					.createPhoneBillDbManager(config, SessionHoldingType.INSTANCE_FIELD);
+			try (Connection conn = manager.getConnection()) {
+				DdlLExecutor ddlExector = manager.getDdlLExecutor();
+				ddlExector.prepareLoadData();
+				Path dir = Paths.get(config.csvDir);
+				List<Path> contractsList = Collections.singletonList(CsvUtils.getContractsFilePath(dir));
+				List<Path> historyList = CsvUtils.getHistortyFilePaths(dir);
+				Statement stmt = manager.getConnection().createStatement();
+				doCopy(stmt, config, "contracts", contractsList);
+				doCopy(stmt, config, "history", historyList);
+				ddlExector.afterLoadData();
+			}
 		}
 	}
 

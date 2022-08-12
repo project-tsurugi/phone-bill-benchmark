@@ -37,7 +37,7 @@ public class HistoryUpdateApp extends AbstractOnlineApp {
 		this.callTimeGenerator = CallTimeGenerator.createCallTimeGenerator(random, config);
 		this.contractInfoReader = ContractInfoReader.create(config, accessor, random);
 		this.random = random;
-		manager = config.getDbManager();
+		manager = PhoneBillDbManager.createPhoneBillDbManager(config);
 		historyDao = manager.getHistoryDao();
 	}
 

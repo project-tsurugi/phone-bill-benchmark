@@ -13,6 +13,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
+import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
+import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager.SessionHoldingType;
 import com.tsurugidb.benchmark.phonebill.db.doma2.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.db.doma2.entity.History;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
@@ -25,13 +27,14 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  *
  */
 public abstract class AbstractJdbcTestCase {
+	private static PhoneBillDbManager manager;
 	private static Connection conn;
 	private static Statement stmt;
 
 	@BeforeAll
 	static void setUpBeforeClass() throws Exception {
-		PhoneBillDbManagerJdbc managerJdbr =  Config.getConfig().getDbManagerJdbc();
-		conn = managerJdbr.getIsoratedConnection();
+		manager = PhoneBillDbManager.createPhoneBillDbManager(Config.getConfig(), SessionHoldingType.INSTANCE_FIELD);
+		conn = ((PhoneBillDbManagerJdbc)manager).getConnection();
 		conn.setAutoCommit(true);
 		stmt = conn.createStatement();
 	}
@@ -39,6 +42,7 @@ public abstract class AbstractJdbcTestCase {
 	@AfterAll
 	static void tearDownAfterClass() throws Exception {
 		conn.close();
+		manager.close();
 	}
 
 	@BeforeEach

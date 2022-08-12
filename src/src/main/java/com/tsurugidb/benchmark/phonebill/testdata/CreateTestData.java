@@ -28,7 +28,7 @@ public class CreateTestData extends ExecutableCommand {
 		// テストデータの作成時は、configの指定にかかわらずTRANSACTION_READ_COMMITTEDを使用する。
 		Config config = c.clone();
 		config.isolationLevel = Config.IsolationLevel.READ_COMMITTED;
-		PhoneBillDbManager manager = config.getDbManager();
+		PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config);
 		DdlLExecutor ddlExector = manager.getDdlLExecutor();
 
 		int seed = config.randomSeed;

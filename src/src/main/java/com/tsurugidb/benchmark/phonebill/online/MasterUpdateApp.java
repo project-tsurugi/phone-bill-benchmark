@@ -49,7 +49,7 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 		this.config = config;
 		this.random = random;
 		this.contractInfoReader = ContractInfoReader.create(config, accessor, random);
-		manager = config.getDbManager();
+		manager = PhoneBillDbManager.createPhoneBillDbManager(config);
 		dao = manager.getContractDao();
 	}
 

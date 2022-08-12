@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.ExecutableCommand;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
+import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager.SessionHoldingType;
 import com.tsurugidb.benchmark.phonebill.db.doma2.dao.BillingDao;
 import com.tsurugidb.benchmark.phonebill.db.doma2.dao.ContractDao;
 import com.tsurugidb.benchmark.phonebill.db.doma2.entity.Contract;
@@ -88,7 +89,7 @@ public class PhoneBill extends ExecutableCommand {
 	 */
 	public static List<AbstractOnlineApp> createOnlineApps(Config config, ContractBlockInfoAccessor accessor)
 			throws SQLException, IOException {
-		PhoneBillDbManager manager = config.getDbManager();
+		PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config);
 		Random random = new Random(config.randomSeed);
 		ActiveBlockNumberHolder blockHolder = accessor.getActiveBlockInfo();
 		if (blockHolder.getNumberOfActiveBlacks() < 1) {
@@ -158,14 +159,25 @@ public class PhoneBill extends ExecutableCommand {
 		initQueue(threadCount);
 
 		long startTime = System.currentTimeMillis();
-		PhoneBillDbManager manager = config.getDbManager();
+		PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config,
+				SessionHoldingType.INSTANCE_FIELD);
+		List<PhoneBillDbManager> managers = new ArrayList<>();
+		managers.add(manager);
 		try {
 			BillingDao billingDao = manager.getBillingDao();
 			ContractDao contractDao = manager.getContractDao();
 			// 契約毎の計算を行うスレッドを生成する
 			service = Executors.newFixedThreadPool(threadCount);
-			for(int i =0; i < threadCount; i++) {
-				CalculationTask task = new CalculationTask(queue, config, batchExecId, abortRequested);
+			for (int i = 0; i < threadCount; i++) {
+				PhoneBillDbManager managerForTask;
+				if (config.sharedConnection) {
+					managerForTask = manager;
+				} else {
+					managerForTask = PhoneBillDbManager.createPhoneBillDbManager(config,
+							SessionHoldingType.INSTANCE_FIELD);
+					managers.add(managerForTask);
+				}
+				CalculationTask task = new CalculationTask(queue, managerForTask, config, batchExecId, abortRequested);
 				futures.add(service.submit(task));
 			}
 
@@ -189,7 +201,7 @@ public class PhoneBill extends ExecutableCommand {
 			if (service != null && !service.isTerminated()) {
 				service.shutdown();
 			}
-			cleanup(futures, manager, abortRequested);
+			cleanup(futures, managers, abortRequested);
 			queue.clear();
 		}
 		elapsedTime = System.currentTimeMillis() - startTime;
@@ -218,7 +230,7 @@ public class PhoneBill extends ExecutableCommand {
 	 * @param abortRequested
 	 * @throws SQLException
 	 */
-	private void cleanup(Set<Future<Exception>> futures, PhoneBillDbManager manager, AtomicBoolean abortRequested)
+	private void cleanup(Set<Future<Exception>> futures, List<PhoneBillDbManager> managers, AtomicBoolean abortRequested)
 			throws SQLException {
 		boolean needRollback = false;
 		while (!futures.isEmpty()) {
@@ -255,10 +267,11 @@ public class PhoneBill extends ExecutableCommand {
 			}
 		}
 		if (needRollback) {
-			manager.rollbackAll();
+			managers.stream().forEach(m->m.rollback());
 		} else {
-			manager.commitAll();
+			managers.stream().forEach(m->m.commit());
 		}
+		managers.stream().forEach(m->m.close());
 	}
 
 	/**

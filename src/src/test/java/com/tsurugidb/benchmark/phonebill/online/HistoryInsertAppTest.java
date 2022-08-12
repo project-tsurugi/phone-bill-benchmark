@@ -39,7 +39,7 @@ class HistoryInsertAppTest extends AbstractJdbcTestCase {
 		config.noExpirationDateRate = 3;
 		config.duplicatePhoneNumberRate = 2;
 		config.numberOfHistoryRecords = 1000;
-		manager = config.getDbManager();
+		manager = PhoneBillDbManager.createPhoneBillDbManager(config);
 		new CreateTable().execute(config);
 		new CreateTestData().execute(config);
 

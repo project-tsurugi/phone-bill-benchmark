@@ -14,11 +14,7 @@ import java.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
-import com.tsurugidb.benchmark.phonebill.db.jdbc.PhoneBillDbManagerJdbc;
-import com.tsurugidb.benchmark.phonebill.db.oracle.PhoneBillDbManagerOracle;
-import com.tsurugidb.benchmark.phonebill.db.postgresql.PhoneBillDbManagerPostgresql;
 
 public class Config implements Cloneable {
     private static final Logger LOG = LoggerFactory.getLogger(Config.class);
@@ -323,14 +319,6 @@ public class Config implements Cloneable {
 	 */
 	public int listenPort;
 	private static final String LISTEN_PORT = "listen.port";
-
-
-
-	/**
-	 * このconfigで使用するPhoneBillDbManagerのインスタンス
-	 * TODO: UTつくる
-	 */
-	private PhoneBillDbManager dbManager;
 
 
 	/**
@@ -875,31 +863,5 @@ public class Config implements Cloneable {
         	}
         }
         return Config.getConfig(s);
-	}
-
-
-
-	/**
-	 * @return dbManager
-	 */
-	public synchronized PhoneBillDbManager getDbManager() {
-		if (dbManager == null) {
-			switch (dbmsType) {
-			default:
-				throw new UnsupportedOperationException("unsupported dbms type: " + dbmsType);
-			case ORACLE_JDBC:
-				dbManager = new PhoneBillDbManagerOracle(this);
-				break;
-			case POSTGRE_SQL_JDBC:
-				dbManager = new PhoneBillDbManagerPostgresql(this);
-				break;
-			}
-			LOG.info("using " + dbManager.getClass().getSimpleName());
-		}
-		return dbManager;
-	}
-
-	public PhoneBillDbManagerJdbc getDbManagerJdbc() {
-		return (PhoneBillDbManagerJdbc) getDbManager();
 	}
 }

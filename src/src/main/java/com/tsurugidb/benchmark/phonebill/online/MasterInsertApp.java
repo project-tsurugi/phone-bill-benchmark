@@ -35,7 +35,7 @@ public class MasterInsertApp extends AbstractOnlineApp {
 
 	public MasterInsertApp(Config config, Random random, ContractBlockInfoAccessor accessor) throws SQLException, IOException {
 		super(config.masterInsertReccrdsPerMin, config, random);
-		manager = config.getDbManager();
+		manager = PhoneBillDbManager.createPhoneBillDbManager(config);
 		testDataGenerator = new TestDataGenerator(config, new Random(config.randomSeed), accessor);
 	}
 

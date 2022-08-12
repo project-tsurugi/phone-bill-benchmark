@@ -39,16 +39,13 @@ public class CalculationTask implements Callable<Exception> {
 	 * @param queue
 	 * @param conn
 	 */
-	public CalculationTask(CalculationTargetQueue queue, Config config, String batchExecId,
+	public CalculationTask(CalculationTargetQueue queue, PhoneBillDbManager manager,  Config config, String batchExecId,
 			AtomicBoolean abortRequested) {
 		this.queue = queue;
 		this.config = config;
 		this.batchExecId = batchExecId;
 		this.abortRequested = abortRequested;
-		manager = config.getDbManager();
-		if (config.sharedConnection) {
-			manager = manager.creaetSessionSharedInstance();
-		}
+		this.manager = manager;
 		billingDao = manager.getBillingDao();
 		historyDao = manager.getHistoryDao();
 	}

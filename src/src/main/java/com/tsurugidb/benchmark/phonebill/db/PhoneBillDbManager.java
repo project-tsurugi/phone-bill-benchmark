@@ -3,13 +3,21 @@ package com.tsurugidb.benchmark.phonebill.db;
 import java.io.Closeable;
 import java.util.function.Supplier;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.db.doma2.dao.BillingDao;
 import com.tsurugidb.benchmark.phonebill.db.doma2.dao.ContractDao;
 import com.tsurugidb.benchmark.phonebill.db.doma2.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.interfaces.DdlLExecutor;
+import com.tsurugidb.benchmark.phonebill.db.oracle.PhoneBillDbManagerOracle;
+import com.tsurugidb.benchmark.phonebill.db.postgresql.PhoneBillDbManagerPostgresql;
 import com.tsurugidb.iceaxe.transaction.TgTmSetting;
 
 public abstract class PhoneBillDbManager implements Closeable {
+    private static final Logger LOG = LoggerFactory.getLogger(PhoneBillDbManager.class);
+
 	public abstract DdlLExecutor getDdlLExecutor();
 	public abstract ContractDao getContractDao();
 	public abstract HistoryDao getHistoryDao();
@@ -60,16 +68,6 @@ public abstract class PhoneBillDbManager implements Closeable {
     @Override
     public abstract void close();
 
-    /**
-     * 管理しているすべてのコネクションをコミットする
-     */
-    public abstract void commitAll();
-
-    /**
-     * 管理しているすべてのコネクションをロールバックする。
-     */
-    public abstract void rollbackAll();
-
 	/**
 	 * 指定のThrowableを調べ、リトライにより回復可能な場合はtrueを返す
 	 *
@@ -78,10 +76,33 @@ public abstract class PhoneBillDbManager implements Closeable {
 	 */
 	public abstract boolean isRetriable(Throwable t);
 
+
 	/**
-	 * このインスタンスの現在のセッションとセッションを共有するインスタンスを作成する。
-	 *
-	 * @return
+	 * セッションの保持方法を示すenum
 	 */
-	public abstract PhoneBillDbManager creaetSessionSharedInstance();
+	public enum SessionHoldingType {
+		THREAD_LOCAL,
+		INSTANCE_FIELD
+	}
+
+	public static PhoneBillDbManager createPhoneBillDbManager(Config config, SessionHoldingType type) {
+		PhoneBillDbManager dbManager;
+		switch (config.dbmsType) {
+		default:
+			throw new UnsupportedOperationException("unsupported dbms type: " + config.dbmsType);
+		case ORACLE_JDBC:
+			dbManager = new PhoneBillDbManagerOracle(config, type);
+			break;
+		case POSTGRE_SQL_JDBC:
+			dbManager = new PhoneBillDbManagerPostgresql(config, type);
+			break;
+		}
+		LOG.info("using " + dbManager.getClass().getSimpleName());
+		return dbManager;
+	}
+
+	public static PhoneBillDbManager createPhoneBillDbManager(Config config) {
+		return createPhoneBillDbManager(config, SessionHoldingType.THREAD_LOCAL);
+	}
+
 }

@@ -5,7 +5,6 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
-import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.interfaces.DdlLExecutor;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.PhoneBillDbManagerJdbc;
 
@@ -13,16 +12,10 @@ public class PhoneBillDbManagerPostgresql extends PhoneBillDbManagerJdbc {
 	private DdlLExecutor ddlLExecutor;
 	private Config config;
 
-	public PhoneBillDbManagerPostgresql(Config config) {
+	public PhoneBillDbManagerPostgresql(Config config, SessionHoldingType type) {
+		super(type);
 		this.config = config;
 	}
-
-	private PhoneBillDbManagerPostgresql(PhoneBillDbManagerPostgresql manager) {
-		super(manager);
-		this.config = manager.config;
-	}
-
-
 
 	@Override
 	protected Connection createConnection() throws SQLException {
@@ -61,10 +54,4 @@ public class PhoneBillDbManagerPostgresql extends PhoneBillDbManagerJdbc {
 		}
 		return false;
 	}
-
-	@Override
-	public PhoneBillDbManager creaetSessionSharedInstance() {
-		return new PhoneBillDbManagerPostgresql(this);
-	}
-
 }
