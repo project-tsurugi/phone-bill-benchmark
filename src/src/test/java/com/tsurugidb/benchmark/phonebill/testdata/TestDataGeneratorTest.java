@@ -29,6 +29,7 @@ import org.junit.jupiter.api.Test;
 import com.tsurugidb.benchmark.phonebill.AbstractJdbcTestCase;
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.CreateTable;
+import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.Duration;
 import com.tsurugidb.benchmark.phonebill.testdata.GenerateHistoryTask.Params;
@@ -116,7 +117,9 @@ class TestDataGeneratorTest extends AbstractJdbcTestCase {
 		int seed = config.randomSeed;
 		ContractBlockInfoAccessor accessor = new SingleProcessContractBlockManager();
 		TestDataGenerator generator = new TestDataGenerator(config, new Random(seed), accessor);
-		generator.generateContractsToDb();
+		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
+			generator.generateContractsToDb(manager);
+		}
 
 		String sql;
 
@@ -229,7 +232,9 @@ class TestDataGeneratorTest extends AbstractJdbcTestCase {
 		ContractBlockInfoAccessor accessor = new SingleProcessContractBlockManager();
 		int seed = config.randomSeed;
 		TestDataGenerator generator = new TestDataGenerator(config, new Random(seed), accessor);
-		generator.generateContractsToDb();
+		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
+			generator.generateContractsToDb(manager);
+		}
 		Path expectedFilePath = tempDir.resolve("contracts.db").toAbsolutePath();
 		String expectedFilePathString = PathUtils.toWls(expectedFilePath, File.separatorChar == '\\');
 
@@ -267,8 +272,10 @@ class TestDataGeneratorTest extends AbstractJdbcTestCase {
 
 		ContractBlockInfoAccessor accessor = new SingleProcessContractBlockManager();
 		TestDataGenerator g1 = new TestDataGenerator(config, new Random(config.randomSeed), accessor);
-		g1.generateContractsToDb(); // accessorの初期化のため契約データを作成する
-		g1.generateHistoryToDb();
+		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
+			g1.generateContractsToDb(manager); // accessorの初期化のため契約データを作成する
+			g1.generateHistoryToDb(manager);
+		}
 
 		Path expectedFilePath = tempDir.resolve("history.db").toAbsolutePath();
 		String expectedFilePathString = PathUtils.toWls(expectedFilePath, File.separatorChar == '\\');

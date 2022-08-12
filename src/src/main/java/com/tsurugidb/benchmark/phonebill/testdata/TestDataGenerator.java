@@ -10,7 +10,6 @@ import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.ArrayList;
@@ -71,17 +70,6 @@ public class TestDataGenerator {
 	 * 一度にインサートする行数
 	 */
 	private static final int SQL_BATCH_EXEC_SIZE = 300000;
-	/**
-	 * 契約マスタにレコードをインサートするためのSQL
-	 */
-	@Deprecated
-	public static final String SQL_INSERT_TO_CONTRACT = "insert into contracts("
-			+ "phone_number,"
-			+ "start_date,"
-			+ "end_date,"
-			+ "charge_rule"
-			+ ") values(?, ?, ?, ?)";
-
 
 	/**
 	 * 乱数生成器
@@ -264,32 +252,6 @@ public class TestDataGenerator {
 	}
 
 
-
-	/**
-	 * 契約マスタのテストデータをDBに生成する
-	 *
-	 * @throws SQLException
-	 * @throws IOException
-	 */
-	@Deprecated
-	public void generateContractsToDb() throws SQLException, IOException {
-		try (Connection conn = DBUtils.getConnection(config);
-				Statement stmt = conn.createStatement();
-				PreparedStatement ps = conn.prepareStatement(SQL_INSERT_TO_CONTRACT)) {
-			int batchSize = 0;
-			for (long n = 0; n < config.numberOfContractsRecords; n++) {
-				Contract c = getNewContract();
-				setContract(ps, c);
-				ps.addBatch();
-				if (++batchSize == SQL_BATCH_EXEC_SIZE) {
-					execBatch(ps);
-					batchSize = 0;
-				}
-			}
-			execBatch(ps);
-		}
-	}
-
 	/**
 	 * DAOを使用してContractテーブルにデータを入れる
 	 *
@@ -363,21 +325,6 @@ public class TestDataGenerator {
 		generateHistory(paramsList);
 	}
 
-
-	/**
-	 * 通話履歴のテストデータをDBに作成する
-	 *
-	 * @throws SQLException
-	 * @throws IOException
-	 */
-	@Deprecated
-	public void generateHistoryToDb() throws SQLException, IOException {
-		List<Params> paramsList = createParamsList();
-		for(Params params: paramsList) {
-			params.historyWriter = new DbHistoryWriter();
-		}
-		generateHistory(paramsList);
-	}
 
 	/**
 	 * 通話履歴のテストデータをCSVファイルに作成する
@@ -662,45 +609,6 @@ public class TestDataGenerator {
 		void cleanup() throws IOException {
 			if (bw != null) {
 				bw.close();
-			}
-		}
-	}
-
-	/**
-	 * DB出力用クラス
-	 *
-	 */
-	@Deprecated
-	private class DbHistoryWriter extends HistoryWriter {
-		List<History> histories = null;
-		Connection conn = null;
-
-		@Override
-		void init() throws IOException {
-			histories = new ArrayList<History>(SQL_BATCH_EXEC_SIZE);
-			conn = DBUtils.getConnection(config);
-		}
-
-		@Override
-		void cleanup() throws IOException, SQLException {
-			if (histories.size() != 0) {
-				insrtHistories(conn, histories);
-			}
-			if (conn != null && !conn.isClosed()) {
-				conn.close();
-			}
-		}
-
-		@Override
-		void write(History h) throws IOException, SQLException {
-			if (statisticsOnly) {
-				statistics.addHistoy(h);
-			} else {
-				histories.add(h);
-				if (histories.size() >= SQL_BATCH_EXEC_SIZE) {
-					insrtHistories(conn, histories);
-					histories.clear();
-				}
 			}
 		}
 	}

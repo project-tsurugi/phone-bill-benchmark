@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import com.tsurugidb.benchmark.phonebill.AbstractJdbcTestCase;
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.CreateTable;
+import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.doma2.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
 import com.tsurugidb.benchmark.phonebill.online.MasterUpdateApp.Updater;
@@ -35,7 +36,9 @@ class MasterUpdateAppTest extends AbstractJdbcTestCase {
 		int seed = config.randomSeed;
 		ContractBlockInfoAccessor accessor = new SingleProcessContractBlockManager();
 		TestDataGenerator generator = new TestDataGenerator(config, new Random(seed), accessor);
-		generator.generateContractsToDb();
+		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
+			generator.generateContractsToDb(manager);
+		}
 		List<Contract> expected = getContracts();
 
 

@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.ExecutableCommand;
+import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.testdata.Statistics.Counter;
 
 public class TestDataStatistics extends ExecutableCommand {
@@ -34,11 +35,13 @@ public class TestDataStatistics extends ExecutableCommand {
 		TestDataGenerator generator = new TestDataGenerator(config, new Random(seed), accessor);
 		generator.setStatisticsOnly(true);
 
-		// 契約マスタのテストデータ生成
-		generator.generateContractsToDb();
+		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
+			// 契約マスタのテストデータ生成
+			generator.generateContractsToDb(manager);
 
-		// 通話履歴のテストデータを作成
-		generator.generateHistoryToDb();
+			// 通話履歴のテストデータを作成
+			generator.generateHistoryToDb(manager);
+		}
 
 		// 統計情報を出力
 		Statistics statistics = generator.getStatistics();

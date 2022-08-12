@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import com.tsurugidb.benchmark.phonebill.AbstractJdbcTestCase;
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.CreateTable;
+import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.doma2.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
 import com.tsurugidb.benchmark.phonebill.testdata.ContractBlockInfoAccessor;
@@ -37,7 +38,9 @@ class MasterInsertAppTest extends AbstractJdbcTestCase {
 		int seed = config.randomSeed;
 		ContractBlockInfoAccessor accessor1 = new SingleProcessContractBlockManager();
 		TestDataGenerator generator = new TestDataGenerator(config, new Random(seed), accessor1);
-		generator.generateContractsToDb();
+		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
+			generator.generateContractsToDb(manager);
+		}
 		List<Contract> expectedList = getContracts();
 
 		// MasterInsertAppで5レコード生成し、Generatorで生成したレコードと一致することを確認

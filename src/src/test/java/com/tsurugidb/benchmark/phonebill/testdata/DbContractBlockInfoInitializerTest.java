@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import com.tsurugidb.benchmark.phonebill.AbstractJdbcTestCase;
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.CreateTable;
+import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 
 class DbContractBlockInfoInitializerTest extends AbstractJdbcTestCase {
 	// 契約マスタのブロックサイズが100、レコード数が500、電話番号が連続になるようにconfigを指定
@@ -36,7 +37,10 @@ class DbContractBlockInfoInitializerTest extends AbstractJdbcTestCase {
 		truncateTable("contracts");
 		ContractBlockInfoAccessor accessor = new SingleProcessContractBlockManager();
 		TestDataGenerator generator = new TestDataGenerator(config, new Random(), accessor);
-		generator.generateContractsToDb();
+		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
+			generator.generateContractsToDb(manager);
+
+		}
 	}
 
 

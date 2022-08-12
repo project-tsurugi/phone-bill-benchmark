@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.CreateTable;
+import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 
 /**
  * AbstractContractBlockInfoInitializerのサブクラスをまとめてテストする
@@ -65,7 +66,10 @@ class AbstractContractBlockInfoInitializerTest {
 		new CreateTable().execute(config);
 		ContractBlockInfoAccessor accessor = new SingleProcessContractBlockManager();
 		TestDataGenerator generator = new TestDataGenerator(config, new Random(), accessor);
-		generator.generateContractsToDb();
+		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
+			generator.generateContractsToDb(manager);
+		}
+
 		// テスト対象クラスのインスタンスを作成
 		List<AbstractContractBlockInfoInitializer> list;
 		list = new ArrayList<AbstractContractBlockInfoInitializer>();
