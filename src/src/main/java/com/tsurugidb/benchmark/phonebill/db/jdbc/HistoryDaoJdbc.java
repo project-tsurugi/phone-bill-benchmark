@@ -11,20 +11,13 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.tsurugidb.benchmark.phonebill.app.billing.BillingCalculator;
 import com.tsurugidb.benchmark.phonebill.app.billing.CalculationTarget;
-import com.tsurugidb.benchmark.phonebill.app.billing.CallChargeCalculator;
 import com.tsurugidb.benchmark.phonebill.db.doma2.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.doma2.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.db.doma2.entity.Contract.Key;
 import com.tsurugidb.benchmark.phonebill.db.doma2.entity.History;
 
 public class HistoryDaoJdbc implements HistoryDao {
-    private static final Logger LOG = LoggerFactory.getLogger(HistoryDaoJdbc.class);
-
 	private final PhoneBillDbManagerJdbc manager;
 
 
@@ -36,7 +29,7 @@ public class HistoryDaoJdbc implements HistoryDao {
 	public int[] batchInsert(List<History> histories) {
 		try (PreparedStatement ps = createInsertPs()) {
 			for (History h : histories) {
-				setHistoryToPs(ps, h);
+				setHistoryToInsertPs(ps, h);
 			}
 			return ps.executeBatch();
 		} catch (SQLException e) {
@@ -47,8 +40,8 @@ public class HistoryDaoJdbc implements HistoryDao {
 	@Override
 	public int insert(History history) {
 		try (PreparedStatement ps = createInsertPs()) {
-				setHistoryToPs(ps, history);
-				return ps.executeUpdate();
+			setHistoryToInsertPs(ps, history);
+			return ps.executeUpdate();
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}
@@ -75,7 +68,7 @@ public class HistoryDaoJdbc implements HistoryDao {
 	 * @param h
 	 * @throws SQLException
 	 */
-	private void setHistoryToPs(PreparedStatement ps, History h) throws SQLException {
+	private void setHistoryToInsertPs(PreparedStatement ps, History h) throws SQLException {
 		ps.setString(1, h.callerPhoneNumber);
 		ps.setString(2, h.recipientPhoneNumber);
 		ps.setString(3, h.paymentCategorty);
@@ -106,28 +99,56 @@ public class HistoryDaoJdbc implements HistoryDao {
 
 	@Override
 	public int update(History history) {
-		Connection conn = manager.getConnection();
-		String sql = "update history"
-				+ " set recipient_phone_number = ?, payment_categorty = ?, time_secs = ?, charge = ?, df = ?"
-				+ " where caller_phone_number = ? and start_time = ?";
-		try (PreparedStatement ps = conn.prepareStatement(sql)) {
-			ps.setString(1, history.recipientPhoneNumber);
-			ps.setString(2, history.paymentCategorty);
-			ps.setInt(3, history.timeSecs);
-			if (history.charge == null) {
-				ps.setNull(4, Types.INTEGER);
-			} else {
-				ps.setInt(4, history.charge);
-			}
-			ps.setInt(5, history.df);
-			ps.setString(6, history.callerPhoneNumber);
-			ps.setTimestamp(7, history.startTime);
-			ps.executeUpdate();
+		try (PreparedStatement ps = createUpdatePs()) {
+			setHistroryToUpdatePs(history, ps);
+			return ps.executeUpdate();
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}
-		return 0;
 	}
+
+	@Override
+	public int[] batchUpdate(List<History> list) {
+		try (PreparedStatement ps = createUpdatePs()) {
+			for(History h: list) {
+				setHistroryToUpdatePs(h, ps);
+				ps.addBatch();
+			}
+			return ps.executeBatch();
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+
+	/**
+	 * @param history
+	 * @param ps
+	 * @throws SQLException
+	 */
+	private void setHistroryToUpdatePs(History history, PreparedStatement ps) throws SQLException {
+		ps.setString(1, history.recipientPhoneNumber);
+		ps.setString(2, history.paymentCategorty);
+		ps.setInt(3, history.timeSecs);
+		if (history.charge == null) {
+			ps.setNull(4, Types.INTEGER);
+		} else {
+			ps.setInt(4, history.charge);
+		}
+		ps.setInt(5, history.df);
+		ps.setString(6, history.callerPhoneNumber);
+		ps.setTimestamp(7, history.startTime);
+	}
+
+	private PreparedStatement createUpdatePs() throws SQLException {
+		PreparedStatement ps = manager.getConnection().prepareStatement(
+				"update history"
+				+ " set recipient_phone_number = ?, payment_categorty = ?, time_secs = ?, charge = ?, df = ?"
+				+ " where caller_phone_number = ? and start_time = ?");
+		return ps;
+	}
+
+
 
 	@Override
 	public List<History> getHistories(Key key) {
@@ -163,50 +184,43 @@ public class HistoryDaoJdbc implements HistoryDao {
 		return list;
 	}
 
-	@Override
-	public BillingCalculator updateChargeWithCalculateBilling(CalculationTarget target) {
+	public List<History> getHistories(CalculationTarget target) {
 		Connection conn = manager.getConnection();
 		Contract contract = target.getContract();
 		Date start = target.getStart();
 		Date end = target.getEnd();
-		CallChargeCalculator callChargeCalculator = target.getCallChargeCalculator();
-		BillingCalculator billingCalculator = target.getBillingCalculator();
-
-		String sqlSelect = "select caller_phone_number, start_time, time_secs, charge"
-				+ " from history "
+		List<History> list = new ArrayList<History>();
+		String sql = "select caller_phone_number, recipient_phone_number, payment_categorty, start_time, time_secs,"
+				+ " charge, df" + " from history "
 				+ "where start_time >= ? and start_time < ?"
 				+ " and ((caller_phone_number = ? and payment_categorty = 'C') "
 				+ "  or (recipient_phone_number = ? and payment_categorty = 'R'))"
 				+ " and df = 0";
 
-		String sqlUpdate = "update history set charge = ? where caller_phone_number = ? and start_time = ?";
-
-		try (PreparedStatement psSelect = conn.prepareStatement(sqlSelect);
-				PreparedStatement psUpdate = conn.prepareStatement(sqlUpdate)) {
+		try (PreparedStatement psSelect = conn.prepareStatement(sql)) {
 			psSelect.setDate(1, start);
 			psSelect.setDate(2, DBUtils.nextDate(end));
 			psSelect.setString(3, contract.phoneNumber);
 			psSelect.setString(4, contract.phoneNumber);
-			int c = 1;
 			try (ResultSet rs = psSelect.executeQuery()) {
 				while (rs.next()) {
-					int time = rs.getInt("time_secs"); // 通話時間を取得
-					if (time < 0) {
-						throw new RuntimeException("Negative time: " + time);
+					History h = new History();
+					h.callerPhoneNumber = rs.getString(1);
+					h.recipientPhoneNumber = rs.getString(2);
+					h.paymentCategorty = rs.getString(3);
+					h.startTime = rs.getTimestamp(4);
+					h.timeSecs = rs.getInt(5);
+					h.charge = rs.getInt(6);
+					if (rs.wasNull()) {
+						h.charge = null;
 					}
-					int callCharge = callChargeCalculator.calc(time);
-					psUpdate.setInt(1, callCharge);
-					psUpdate.setString(2, rs.getString("caller_phone_number"));
-					psUpdate.setTimestamp(3, rs.getTimestamp("start_time"));
-					psUpdate.addBatch();
-					billingCalculator.addCallCharge(callCharge);
-					LOG.debug("=== phone_number = {}, count = {}, charge = {}", contract.phoneNumber, c++,  callCharge);
+					h.df = rs.getInt(7);
+					list.add(h);
 				}
 			}
-			psUpdate.executeBatch();
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}
-		return billingCalculator;
+		return list;
 	}
 }

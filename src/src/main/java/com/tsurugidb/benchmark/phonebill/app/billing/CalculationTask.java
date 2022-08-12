@@ -2,6 +2,7 @@ package com.tsurugidb.benchmark.phonebill.app.billing;
 
 import java.sql.Date;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -15,6 +16,7 @@ import com.tsurugidb.benchmark.phonebill.db.doma2.dao.BillingDao;
 import com.tsurugidb.benchmark.phonebill.db.doma2.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.doma2.entity.Billing;
 import com.tsurugidb.benchmark.phonebill.db.doma2.entity.Contract;
+import com.tsurugidb.benchmark.phonebill.db.doma2.entity.History;
 
 public class CalculationTask implements Callable<Exception> {
     private static final Logger LOG = LoggerFactory.getLogger(CalculationTask.class);
@@ -95,7 +97,18 @@ public class CalculationTask implements Callable<Exception> {
 	private void doCalc(CalculationTarget target) {
 		Contract contract = target.getContract();
 		LOG.debug("Start calcuration for  contract: {}.", contract);
-		BillingCalculator billingCalculator = historyDao.updateChargeWithCalculateBilling(target);
+		List<History> histories = historyDao.getHistories(target);
+
+		CallChargeCalculator callChargeCalculator = target.getCallChargeCalculator();
+		BillingCalculator billingCalculator = target.getBillingCalculator();
+		for(History h: histories) {
+			if (h.timeSecs < 0) {
+				throw new RuntimeException("Negative time: " + h.timeSecs);
+			}
+			h.charge  = callChargeCalculator.calc(h.timeSecs);
+			billingCalculator.addCallCharge(h.charge);
+		}
+		historyDao.batchUpdate(histories);
 		updateBilling(contract, billingCalculator, target.getStart());
 		if (config.transactionScope == TransactionScope.CONTRACT) {
 			manager.commit();

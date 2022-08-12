@@ -17,8 +17,6 @@ import org.slf4j.LoggerFactory;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
 
 public class Config implements Cloneable {
-    private static final Logger LOG = LoggerFactory.getLogger(Config.class);
-
 	/**
 	 * プロパティ
 	 */
