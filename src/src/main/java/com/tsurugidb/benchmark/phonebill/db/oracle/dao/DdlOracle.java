@@ -110,5 +110,4 @@ public class DdlOracle extends DdlJdbc {
 	protected int countDiff(String sql1, String sql2) {
 		return count("(" + sql1 + " minus " + sql2 + ")");
 	}
-
 }

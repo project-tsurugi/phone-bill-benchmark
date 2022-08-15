@@ -34,13 +34,13 @@ public class LoadTestDataCsvToOracle extends ExecutableCommand {
 			LOG.error("This configuration is not for the Oracle.");
 		} else {
 			PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config);
-			Ddl ddlExector = manager.getDdlLExecutor();
-			ddlExector.prepareLoadData();
+			Ddl ddl = manager.getDdl();
+			ddl.prepareLoadData();
 			List<Path> list = createControlFiles(config);
 			for (Path path : list) {
 				execSqlLoader(config, path);
 			}
-			ddlExector.afterLoadData();
+			ddl.afterLoadData();
 		}
 	}
 

@@ -111,7 +111,7 @@ public class OnlineAppBench extends ExecutableCommand {
 
 
 	private void afterExec(Config config) throws SQLException {
-		Ddl executor = manager.getDdlLExecutor();
+		Ddl executor = manager.getDdl();
 		int historyUpdated = executor.countHistoryUpdated();
 		int historyInserted = executor.count("history") - executor.count("history_back");
 		int masterUpdated = executor.countContractsUpdated();
@@ -141,7 +141,7 @@ public class OnlineAppBench extends ExecutableCommand {
 
 
 	private void beforeExec(Config config) throws SQLException {
-		Ddl executor = manager.getDdlLExecutor();
+		Ddl executor = manager.getDdl();
 		executor.dropTable("history_back");
 		executor.dropTable("contracts_back");
 		executor.createBackTable("history");

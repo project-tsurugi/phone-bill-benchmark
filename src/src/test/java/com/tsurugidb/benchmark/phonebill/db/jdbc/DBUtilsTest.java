@@ -3,13 +3,11 @@ package com.tsurugidb.benchmark.phonebill.db.jdbc;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
-import java.sql.BatchUpdateException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.text.ParseException;
 
 import org.junit.jupiter.api.Test;
-import org.postgresql.util.PSQLException;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
 
@@ -32,9 +30,6 @@ class DBUtilsTest {
 		assertEquals(SQLException.class, e.getCause().getClass());
 	}
 
-	/**
-	 * toDate()のテスト
-	 */
 	@Test
 	void testToDate() {
 		assertEquals("2010-01-13", DBUtils.toDate("2010-01-13").toString());
@@ -42,9 +37,6 @@ class DBUtilsTest {
 		assertEquals(ParseException.class, e.getCause().getClass());
 	}
 
-	/**
-	 * toTimestamp()のテスト
-	 */
 	@Test
 	void testToTimestamp() {
 		assertEquals("2010-01-13 18:12:21.999", DBUtils.toTimestamp("2010-01-13 18:12:21.999").toString());
@@ -53,18 +45,12 @@ class DBUtilsTest {
 		assertEquals(ParseException.class, e.getCause().getClass());
 	}
 
-	/**
-	 * nextDate()のテスト
-	 */
 	@Test
 	void testNextDate() {
 		assertEquals(DBUtils.toDate("2020-11-11"), DBUtils.nextDate(DBUtils.toDate("2020-11-10")));
 	}
 
 
-	/**
-	 * nextDate()のテスト
-	 */
 	@Test
 	void testNextMonth() {
 		assertEquals(DBUtils.toDate("2020-12-01"), DBUtils.nextMonth(DBUtils.toDate("2020-11-10")));
@@ -72,9 +58,6 @@ class DBUtilsTest {
 		assertEquals(DBUtils.toDate("2021-02-01"), DBUtils.nextMonth(DBUtils.toDate("2021-01-01")));
 	}
 
-	/**
-	 * previousMonthLastDay()のテスト
-	 */
 	@Test
 	void testPreviousMonthLastDay() {
 		assertEquals(DBUtils.toDate("2020-10-31"), DBUtils.previousMonthLastDay(DBUtils.toDate("2020-11-10")));
@@ -83,51 +66,4 @@ class DBUtilsTest {
 	}
 
 
-	/**
-	 * isRetriableSQLException()のテスト
-	 */
-	// DBManagerのテストケースに移す
-	@Test
-	void testIsRetriableSQLException() {
-		// Ora-8177のケース
-		assertTrue(DBUtils.isRetriableSQLException(new ORA8177()));
-
-		// PostgreSQLでserialization_failureが起きたときのケース
-		assertTrue(DBUtils.isRetriableSQLException(new SerializationFailureException("40001")));
-
-		// PostgreSQLでserialization_failure以外のExceptionが起きたときのケース
-		assertFalse(DBUtils.isRetriableSQLException(new SerializationFailureException("02000")));
-
-		// 上記のいずれでもないケース
-		assertFalse(DBUtils.isRetriableSQLException(new SQLException()));
-
-		// BatchUpdateExceptionにラッピングされているケース
-		assertTrue(DBUtils.isRetriableSQLException(new BatchUpdateException(new ORA8177())));
-
-		// BatchUpdateExceptionにSQLException以外がラッピングされているケース
-		assertFalse(DBUtils.isRetriableSQLException(new BatchUpdateException(new Exception())));
-
-	}
-
-
-	private static class ORA8177 extends SQLException {
-		@Override
-		public int getErrorCode() {
-			return 8177;
-		}
-	}
-
-	private static class SerializationFailureException extends PSQLException {
-		String errorCode;
-
-		public SerializationFailureException(String errorCode) {
-			super("serialization_failure", null);
-			this.errorCode = errorCode;
-		}
-
-		@Override
-		public String getSQLState() {
-			return errorCode;
-		}
-	}
 }

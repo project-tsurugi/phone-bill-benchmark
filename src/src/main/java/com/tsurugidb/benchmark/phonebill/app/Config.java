@@ -338,7 +338,7 @@ public class Config implements Cloneable {
 	 * @param finaname
 	 * @throws IOException
 	 */
-	private Config(String configFileName) throws IOException {
+	Config(String configFileName) throws IOException {
 		if (configFileName == null) {
 			init(null);
 		} else {
@@ -462,7 +462,7 @@ public class Config implements Cloneable {
 	 * @param defaultValue プロパティが存在しない時のデフォルト値
 	 * @return
 	 */
-	private TransactionScope getTransactionScope(String key, TransactionScope defaultValue) {
+	TransactionScope getTransactionScope(String key, TransactionScope defaultValue) {
 		if (!prop.containsKey(key)) {
 			return defaultValue;
 		}
@@ -484,7 +484,7 @@ public class Config implements Cloneable {
 	 * @param defaultValue プロパティが存在しない時のデフォルト値
 	 * @return
 	 */
-	private DistributionFunction getDistributionFunction(String key, DistributionFunction defaultValue) {
+	DistributionFunction getDistributionFunction(String key, DistributionFunction defaultValue) {
 		if (!prop.containsKey(key)) {
 			return defaultValue;
 		}

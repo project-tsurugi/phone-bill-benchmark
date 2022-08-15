@@ -26,6 +26,9 @@ class ConfigTest {
 	private static String NOT_DEFALUT_CONFIG_PATH = "src/test/config/not-default.properties";
 	private static String DEFALUT_CONFIG_PATH = "src/test/config/default.properties";
 	private static String INCONSISTENT_CONFIG_PATH = "src/test/config/inconsistent.properties";
+	private static String UNKNOWN_DISTRIBUTION_FUNCTION_TYPE = "src/test/config/unknown_distribution_function_type.properties";
+	private static String UNSUPPORTED_TRANSACTION_SCOPE = "src/test/config/unsupported_transaction_scope.properties";
+
 
 	private Map<String, String> sysPropBackup = new HashMap<String, String>();
 
@@ -39,12 +42,10 @@ class ConfigTest {
 
 	@BeforeEach
 	void sysPropRestore() {
-		System.getProperties().stringPropertyNames().stream()
-				.filter(k -> k.startsWith("phone-bill."))
-				.forEach(k -> {
-					sysPropBackup.put(k, System.getProperty(k));
-					System.clearProperty(k);
-				});
+		System.getProperties().stringPropertyNames().stream().filter(k -> k.startsWith("phone-bill.")).forEach(k -> {
+			sysPropBackup.put(k, System.getProperty(k));
+			System.clearProperty(k);
+		});
 	}
 
 	/**
@@ -63,13 +64,22 @@ class ConfigTest {
 		Config config = Config.getConfig(NOT_DEFALUT_CONFIG_PATH);
 		checkConfig(config);
 
+		// コマンドライン引数と同じ型で設定ファイルが指定されるケース
+		String[] args = {NOT_DEFALUT_CONFIG_PATH};
+		Config config2 = Config.getConfig(args);
+		checkConfig(config2);
+
+
+		// 引数なしのgetConfig()と空配列を引数に持つgetConfig(String[])は同じ結果を返す
+		assertEqualsIgnoreLineSeparator(defaultConfig.toString(), Config.getConfig(new String[0]).toString());
+
 		// テストケースの作成漏れ確認のため、configにデフォルト値以外が指定されていることを確認する
 		checkDifferent(defaultConfig, config);
 	}
 
-
 	/**
 	 * フィールドdbmsTypeに期待した値がセットされることのテスト
+	 *
 	 * @throws IOException
 	 */
 	@Test
@@ -108,14 +118,15 @@ class ConfigTest {
 		assertEquals(DbmsType.OTHER, config.dbmsType);
 
 		// 不正なDBMSタイプが指定されたケース
-		RuntimeException e = assertThrows(RuntimeException.class, () -> Config.getConfigFromSrtring("dbms.type=WRONG_TYPE"));
+		RuntimeException e = assertThrows(RuntimeException.class,
+				() -> Config.getConfigFromSrtring("dbms.type=WRONG_TYPE"));
 		assertEquals("unkown dbms.type: WRONG_TYPE", e.getMessage());
 
 	}
 
-
 	/**
 	 * パラメータの指定に矛盾がある設定ファイルを指定したときのテスト
+	 *
 	 * @throws IOException
 	 */
 	@Test
@@ -125,24 +136,21 @@ class ConfigTest {
 				e.getMessage());
 	}
 
-
-	private void checkDifferent(Config defaultConfig, Config config) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+	private void checkDifferent(Config defaultConfig, Config config)
+			throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
 		Map<String, Object> defaultMap = describe(defaultConfig);
 		Map<String, Object> map = describe(config);
 		assertEquals(defaultMap.keySet(), map.keySet());
-		for(Entry<String, Object> entry: defaultMap.entrySet()) {
-			System.out.println("key = " + entry.getKey() +
-					", default = " + entry.getValue() +
-					", not default = " + map.get(entry.getKey()));
+		for (Entry<String, Object> entry : defaultMap.entrySet()) {
+			System.out.println("key = " + entry.getKey() + ", default = " + entry.getValue() + ", not default = "
+					+ map.get(entry.getKey()));
 			assertNotEquals(entry.getValue(), map.get(entry.getKey()));
 		}
 	}
 
 	/**
-	 * 指定したconfigのフィールド名とフィールド値のmapを返す.
-	 * <br>
+	 * 指定したconfigのフィールド名とフィールド値のmapを返す. <br>
 	 * 大文字で始まるフィールドは定数フィールドとみなしmapに入れない。
-	 * またフィールドdbManagerは直接のconfig項目ではないため検査対象外としmapに入れない。
 	 *
 	 * @param config
 	 * @return
@@ -154,10 +162,6 @@ class ConfigTest {
 		for (Field field : config.getClass().getDeclaredFields()) {
 			field.setAccessible(true);
 			String key = field.getName();
-			if (key.equals("dbManager")) {
-				continue;
-			}
-
 			Object value = field.get(config);
 			if (Character.isLowerCase(key.charAt(0))) {
 				map.put(key, value);
@@ -165,7 +169,6 @@ class ConfigTest {
 		}
 		return map;
 	}
-
 
 	/**
 	 * 指定のconfigにデフォルト値が設定されていることを確認する
@@ -201,7 +204,7 @@ class ConfigTest {
 		assertEquals(DBUtils.toDate("2020-11-01"), config.historyMinDate);
 		assertEquals(DBUtils.toDate("2021-01-10"), config.historyMaxDate);
 
-		/* JDBCに関するパラメータ*/
+		/* JDBCに関するパラメータ */
 		assertEquals("jdbc:postgresql://127.0.0.1/phonebill", config.url);
 		assertEquals("phonebill", config.user);
 		assertEquals("phonebill", config.password);
@@ -213,7 +216,7 @@ class ConfigTest {
 
 		/* CSVに関するパラメータ */
 		assertEquals("/var/lib/csv", config.csvDir);
-		assertEquals(1000*1000, config.maxNumberOfLinesHistoryCsv);
+		assertEquals(1000 * 1000, config.maxNumberOfLinesHistoryCsv);
 
 		/* Oracle固有のパラメータ */
 		assertEquals(0, config.oracleInitran);
@@ -221,8 +224,7 @@ class ConfigTest {
 		assertEquals("", config.oracleSqlLoaderSid);
 		assertEquals("nologging parallel 32", config.oracleCreateIndexOption);
 
-
-		 /* オンラインアプリケーションに関するパラメータ */
+		/* オンラインアプリケーションに関するパラメータ */
 		assertEquals(0, config.masterUpdateRecordsPerMin);
 		assertEquals(0, config.masterInsertReccrdsPerMin);
 		assertEquals(0, config.historyUpdateRecordsPerMin);
@@ -289,7 +291,7 @@ class ConfigTest {
 		assertEquals("/tmp/csv", config.csvDir);
 		assertEquals(1000, config.maxNumberOfLinesHistoryCsv);
 
-		 /* オンラインアプリケーションに関するパラメータ */
+		/* オンラインアプリケーションに関するパラメータ */
 		assertEquals(50, config.masterUpdateRecordsPerMin);
 		assertEquals(20, config.masterInsertReccrdsPerMin);
 		assertEquals(15, config.historyUpdateRecordsPerMin);
@@ -301,7 +303,6 @@ class ConfigTest {
 		assertEquals(5, config.historyInsertThreadCount);
 		assertEquals(true, config.skipDatabaseAccess);
 
-
 		/* その他のパラメータ */
 		assertEquals(1969, config.randomSeed);
 		assertEquals(TransactionScope.CONTRACT, config.transactionScope);
@@ -311,7 +312,7 @@ class ConfigTest {
 		assertEquals(10, config.threadCount);
 		assertEquals(false, config.sharedConnection);
 
-		/* JDBCに関するパラメータ*/
+		/* JDBCに関するパラメータ */
 		assertEquals("jdbc:other://127.0.0.1/mydatabase", config.url);
 		assertEquals("myuser", config.user);
 		assertEquals("mypassword", config.password);
@@ -337,7 +338,6 @@ class ConfigTest {
 		String a = actual.replaceAll("[\r\n]+", System.lineSeparator());
 		assertEquals(e, a);
 	}
-
 
 	/**
 	 * toBoolean()のテスト
@@ -394,4 +394,28 @@ class ConfigTest {
 		}
 	}
 
+	@Test
+	public void testClone() throws IOException, IllegalArgumentException, IllegalAccessException {
+		// cloneのテスト
+		Config config = Config.getConfig();
+		Config clone = config.clone();
+		assertNotEquals(config, clone);
+		assertEquals(describe(config), describe(clone));
+	}
+
+	@Test
+	public void testGetTransactionScope() {
+		RuntimeException e = assertThrows(RuntimeException.class,
+				() -> Config.getConfig(UNSUPPORTED_TRANSACTION_SCOPE));
+		assertEquals("Unsupported transaction scope: BAD_SCOPE, only 'CONTRACT' or 'WHOLE' are supported.",
+				e.getMessage());
+	}
+
+	@Test
+	public void testGetDistributionFunction() {
+		RuntimeException e = assertThrows(RuntimeException.class,
+				() -> Config.getConfig(UNKNOWN_DISTRIBUTION_FUNCTION_TYPE));
+		assertEquals("Unknown distribution function type: BAD_FUNCTION, only 'UNIFORM' or 'LOGNORMAL' are supported.",
+				e.getMessage());
+	}
 }

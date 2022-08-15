@@ -18,7 +18,7 @@ import com.tsurugidb.iceaxe.transaction.TgTmSetting;
 public abstract class PhoneBillDbManager implements Closeable {
     private static final Logger LOG = LoggerFactory.getLogger(PhoneBillDbManager.class);
 
-	public abstract Ddl getDdlLExecutor();
+	public abstract Ddl getDdl();
 	public abstract ContractDao getContractDao();
 	public abstract HistoryDao getHistoryDao();
 	public abstract BillingDao getBillingDao();

@@ -76,7 +76,24 @@ public abstract class AbstractJdbcTestCase {
 		}
 	}
 
+
+	protected List<History> getHistories(PhoneBillDbManager manager) throws SQLException {
+		try  (Statement  stmt = ((PhoneBillDbManagerJdbc) manager).getConnection().createStatement()) {
+			return getHistories(stmt);
+		}
+	}
+
+
 	protected List<History> getHistories() throws SQLException {
+		return getHistories(AbstractJdbcTestCase.stmt);
+	}
+
+	/**
+	 * @param stmt
+	 * @return
+	 * @throws SQLException
+	 */
+	private List<History> getHistories(Statement stmt) throws SQLException {
 		List<History> list = new ArrayList<History>();
 		String sql = "select caller_phone_number, recipient_phone_number,"
 				+ " payment_categorty, start_time,time_secs,charge, df"
@@ -99,6 +116,8 @@ public abstract class AbstractJdbcTestCase {
 		}
 		return list;
 	}
+
+
 
 	protected History toHistory(String caller_phone_number, String recipient_phone_number, String payment_categorty,
 			String start_time, int time_secs, Integer charge,
@@ -130,7 +149,6 @@ public abstract class AbstractJdbcTestCase {
 		}
 		return contracts;
 	}
-
 
 
 	protected void executeSql(String sql) throws SQLException {

@@ -29,7 +29,7 @@ public class CreateTestData extends ExecutableCommand {
 		Config config = c.clone();
 		config.isolationLevel = Config.IsolationLevel.READ_COMMITTED;
 		PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config);
-		Ddl ddlExector = manager.getDdlLExecutor();
+		Ddl ddl = manager.getDdl();
 
 		int seed = config.randomSeed;
 		ContractBlockInfoAccessor accessor = new SingleProcessContractBlockManager();
@@ -37,7 +37,7 @@ public class CreateTestData extends ExecutableCommand {
 
 		// テーブルをTruncate
 		// インデックスの削除
-		ddlExector.prepareLoadData();
+		ddl.prepareLoadData();
 
 		// 契約マスタのテストデータ生成
 		long startTime = System.currentTimeMillis();
@@ -54,6 +54,6 @@ public class CreateTestData extends ExecutableCommand {
 		LOG.info(String.format(format, config.numberOfHistoryRecords, elapsedTime / 1000d));
 
 		// Indexの再生成とDBの統計情報を更新
-		ddlExector.afterLoadData();
+		ddl.afterLoadData();
 	}
 }

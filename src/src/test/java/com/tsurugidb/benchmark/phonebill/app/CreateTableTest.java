@@ -30,20 +30,20 @@ class CreateTableTest extends AbstractJdbcTestCase {
 	void test() throws SQLException, IOException {
 		Config config = Config.getConfig();
 		PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config);
-		Ddl ddlExector = manager.getDdlLExecutor();
+		Ddl ddl = manager.getDdl();
 
-		ddlExector.dropTables();
+		ddl.dropTables();
 		// テーブルが存在しないことを確認
 		assertFalse(existsTable("billing"));
 		assertFalse(existsTable("contracts"));
 		assertFalse(existsTable("history"));
 
 		// テーブルが作成されることを確認
-		ddlExector.createBillingTable();
+		ddl.createBillingTable();
 		assertTrue(existsTable("billing"));
-		ddlExector.createContractsTable();
+		ddl.createContractsTable();
 		assertTrue(existsTable("contracts"));
-		ddlExector.createHistoryTable();
+		ddl.createHistoryTable();
 		assertTrue(existsTable("history"));
 	}
 

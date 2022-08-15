@@ -41,15 +41,15 @@ public class LoadTestDataCsvToPostgreSql extends ExecutableCommand {
 			PhoneBillDbManagerJdbc manager = (PhoneBillDbManagerJdbc) PhoneBillDbManager
 					.createPhoneBillDbManager(config, SessionHoldingType.INSTANCE_FIELD);
 			try (Connection conn = manager.getConnection()) {
-				Ddl ddlExector = manager.getDdlLExecutor();
-				ddlExector.prepareLoadData();
+				Ddl ddl = manager.getDdl();
+				ddl.prepareLoadData();
 				Path dir = Paths.get(config.csvDir);
 				List<Path> contractsList = Collections.singletonList(CsvUtils.getContractsFilePath(dir));
 				List<Path> historyList = CsvUtils.getHistortyFilePaths(dir);
 				Statement stmt = manager.getConnection().createStatement();
 				doCopy(stmt, config, "contracts", contractsList);
 				doCopy(stmt, config, "history", historyList);
-				ddlExector.afterLoadData();
+				ddl.afterLoadData();
 			}
 		}
 	}

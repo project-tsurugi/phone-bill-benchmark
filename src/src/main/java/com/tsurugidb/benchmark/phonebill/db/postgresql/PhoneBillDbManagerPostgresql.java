@@ -40,7 +40,7 @@ public class PhoneBillDbManagerPostgresql extends PhoneBillDbManagerJdbc {
 
 
 	@Override
-	public synchronized Ddl getDdlLExecutor() {
+	public synchronized Ddl getDdl() {
 		if (ddlLExecutor == null) {
 			ddlLExecutor = new DdlPostgresql(this);
 		}
@@ -48,8 +48,9 @@ public class PhoneBillDbManagerPostgresql extends PhoneBillDbManagerJdbc {
 	}
 
 	@Override
-	public boolean isRetriable(SQLException e) {
-		if (e.getSQLState().equals("40001")) {
+	public boolean isRetriableSQLException(SQLException e) {
+		String sqlState = e.getSQLState();
+		if (sqlState != null && sqlState.equals("40001")) {
 			// シリアライゼーション失敗
 			return true;
 		}

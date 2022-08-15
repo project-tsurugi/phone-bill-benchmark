@@ -4,7 +4,7 @@ import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.dao.Ddl;
 
 public class CreateTable extends ExecutableCommand{
-	private Ddl ddlExector;
+	private Ddl ddl;
 
 	public static void main(String[] args) throws Exception {
 		Config config = Config.getConfig(args[0]);
@@ -15,20 +15,20 @@ public class CreateTable extends ExecutableCommand{
 	@Override
 	public void execute(Config config) throws Exception {
 		PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config);
-		ddlExector = manager.getDdlLExecutor();
-		ddlExector.dropTables();
-		ddlExector.createHistoryTable();
-		ddlExector.createContractsTable();
-		ddlExector.createBillingTable();
-		ddlExector.createIndexes();
+		ddl = manager.getDdl();
+		ddl.dropTables();
+		ddl.createHistoryTable();
+		ddl.createContractsTable();
+		ddl.createBillingTable();
+		ddl.createIndexes();
 	}
 
 	/**
 	 * UT専用、UT以外での使用禁止
 	 *
-	 * @return ddlExector
+	 * @return ddl
 	 */
 	Ddl getDdlExector() {
-		return ddlExector;
+		return ddl;
 	}
 }

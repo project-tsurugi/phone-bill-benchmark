@@ -22,7 +22,6 @@ public abstract class PhoneBillDbManagerJdbc extends PhoneBillDbManager {
     private static final Logger LOG = LoggerFactory.getLogger(PhoneBillDbManagerJdbc.class);
 
 	private final List<Connection> connectionList = new CopyOnWriteArrayList<>();
-
 	private final ConnectionHolder connectionHolder;
 
 
@@ -148,7 +147,7 @@ public abstract class PhoneBillDbManagerJdbc extends PhoneBillDbManager {
 		while (t != null) {
 			if (t instanceof SQLException) {
 				SQLException se = (SQLException) t;
-				boolean ret = isRetriable(se);
+				boolean ret = isRetriableSQLException(se);
 				LOG.debug("{} caught {} retriable exception, ErrorCode = {}, SQLStatus = {}.",
 						this.getClass().getName(), se.getErrorCode(), se.getSQLState(), se);
 
@@ -163,7 +162,7 @@ public abstract class PhoneBillDbManagerJdbc extends PhoneBillDbManager {
 	/**
 	 * SQLExceptionがリトライ可能か調べる
 	 */
-	public abstract boolean isRetriable(SQLException e);
+	public abstract boolean isRetriableSQLException(SQLException e);
 
 
 	// DAOの取得
@@ -227,7 +226,7 @@ public abstract class PhoneBillDbManagerJdbc extends PhoneBillDbManager {
 		}
 	}
 
-	private class ThreadLocalConnectionHolder implements ConnectionHolder {
+	class ThreadLocalConnectionHolder implements ConnectionHolder {
 		private final ThreadLocal<Connection> connectionThreadLocal = new ThreadLocal<Connection>() {
 			@Override
 			protected Connection initialValue() {
