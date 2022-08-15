@@ -32,32 +32,32 @@ class AbstractContractBlockInfoInitializerTest {
 	@Test
 	final void test() throws Exception {
 		// numberOfContractsRecords == blockSize * 10の前後のケースケース
-		config.numberOfContractsRecords = config.getContractBlockSize() * 10;
+		config.numberOfContractsRecords = ContractInfoReader.getContractBlockSize(config) * 10;
 		testSub(config, 10, false);
 
-		config.numberOfContractsRecords = config.getContractBlockSize() * 10 - 1;
+		config.numberOfContractsRecords = ContractInfoReader.getContractBlockSize(config) * 10 - 1;
 		testSub(config, 10, true);
 
-		config.numberOfContractsRecords = config.getContractBlockSize() * 10 + 1;
+		config.numberOfContractsRecords = ContractInfoReader.getContractBlockSize(config) * 10 + 1;
 		testSub(config, 11, true);
 
 		// numberOfContractsRecords == blockSize * 2の前後のケースケース
-		config.numberOfContractsRecords = config.getContractBlockSize() * 2;
+		config.numberOfContractsRecords = ContractInfoReader.getContractBlockSize(config) * 2;
 		testSub(config, 2, false);
 
-		config.numberOfContractsRecords = config.getContractBlockSize() * 2 - 1;
+		config.numberOfContractsRecords = ContractInfoReader.getContractBlockSize(config) * 2 - 1;
 		testSub(config, 2, true);
 
-		config.numberOfContractsRecords = config.getContractBlockSize() * 2 + 1;
+		config.numberOfContractsRecords = ContractInfoReader.getContractBlockSize(config) * 2 + 1;
 		testSub(config, 3, true);
 
 		// numberOfContractsRecords == blockSize の前後のケースケース
 		// numberOfContractsRecords < blockSizeはテストデータ生成時のチェックによりテストデータの生成ができない
 		// ため実際に発生し得ないケースと考えテスト対象外
-		config.numberOfContractsRecords = config.getContractBlockSize();
+		config.numberOfContractsRecords = ContractInfoReader.getContractBlockSize(config);
 		testSub(config, 1, false);
 
-		config.numberOfContractsRecords = config.getContractBlockSize() + 1;
+		config.numberOfContractsRecords = ContractInfoReader.getContractBlockSize(config) + 1;
 		testSub(config, 2, true);
 	}
 

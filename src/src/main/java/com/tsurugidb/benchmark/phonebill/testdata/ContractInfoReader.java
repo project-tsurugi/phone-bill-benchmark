@@ -112,12 +112,9 @@ public class ContractInfoReader {
 		PhoneNumberGenerator phoneNumberGenerator = new PhoneNumberGenerator(config);
 		ContractInfoReader reader = new ContractInfoReader(durationList, statusList, accessor, phoneNumberGenerator, random);
 		int bs = reader.getBlockSize();
-		if (config.getContractBlockSize() != bs) {
-			// このエラーは、initDurationList()の修正に合わせて、
-			// Config#getContractBlockSizeを修正していないことを示唆する
-			throw new AssertionError("Block size missmatch!");
-		}
 
+		// このassertでエラーが起きるのはinitDurationList()の修正に合わせて、getContractBlockSize()を修正していないことを示唆する
+		assert getContractBlockSize(config) == bs;
 
 		long cs = config.numberOfContractsRecords;
 		if (cs < bs ) {
@@ -354,6 +351,15 @@ public class ContractInfoReader {
 
 	public ActiveBlockNumberHolder getBlockInfos() {
 		return blockInfos;
+	}
+
+	/**
+	 * 指定のConfig値のときの契約マスタのブロックサイズを取得する
+	 *
+	 * @return
+	 */
+	public static int getContractBlockSize(Config config) {
+		return config.duplicatePhoneNumberRate * 2 + config.expirationDateRate + config.noExpirationDateRate;
 	}
 
 }

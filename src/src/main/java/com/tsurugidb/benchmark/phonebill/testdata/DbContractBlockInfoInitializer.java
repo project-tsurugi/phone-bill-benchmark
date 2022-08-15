@@ -28,7 +28,7 @@ public class DbContractBlockInfoInitializer extends AbstractContractBlockInfoIni
 
 		// 前処理
 		PhoneNumberGenerator phoneNumberGenerator = new PhoneNumberGenerator(config);
-		int blockSize = config.getContractBlockSize();
+		int blockSize = ContractInfoReader.getContractBlockSize(config);
 
 		// Contractsテーブルをフルスキャンしてブロック情報を作成する
 		PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config);

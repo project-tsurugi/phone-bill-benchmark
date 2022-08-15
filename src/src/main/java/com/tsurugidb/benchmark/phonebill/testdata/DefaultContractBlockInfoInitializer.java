@@ -21,7 +21,7 @@ public class DefaultContractBlockInfoInitializer extends AbstractContractBlockIn
 
 	@Override
 	void init() {
-		int blockSize = config.getContractBlockSize();
+		int blockSize = ContractInfoReader.getContractBlockSize(config);
 		activeBlockNumberHolder = new ActiveBlockNumberHolder();
 		waitingBlocks = new HashSet<Integer>();
 		if (config.numberOfContractsRecords % blockSize == 0) {

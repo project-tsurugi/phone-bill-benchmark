@@ -854,13 +854,4 @@ public class Config implements Cloneable {
 		SERIALIZABLE,
 		READ_COMMITTED;
 	}
-
-	/**
-	 * 現在のConfig値のときの契約マスタのブロックサイズを取得する
-	 *
-	 * @return
-	 */
-	public int getContractBlockSize() {
-		return duplicatePhoneNumberRate * 2 + expirationDateRate + noExpirationDateRate;
-	}
 }
