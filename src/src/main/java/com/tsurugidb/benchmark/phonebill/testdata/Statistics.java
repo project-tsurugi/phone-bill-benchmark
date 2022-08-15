@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import com.tsurugidb.benchmark.phonebill.db.doma2.entity.History;
+import com.tsurugidb.benchmark.phonebill.db.entity.History;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
 
 /**

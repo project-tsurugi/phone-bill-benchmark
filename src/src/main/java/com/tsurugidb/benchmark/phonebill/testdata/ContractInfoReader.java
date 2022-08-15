@@ -10,8 +10,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
-import com.tsurugidb.benchmark.phonebill.db.doma2.entity.Contract;
-import com.tsurugidb.benchmark.phonebill.db.doma2.entity.Contract.Key;
+import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
+import com.tsurugidb.benchmark.phonebill.db.entity.Contract.Key;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.Duration;
 

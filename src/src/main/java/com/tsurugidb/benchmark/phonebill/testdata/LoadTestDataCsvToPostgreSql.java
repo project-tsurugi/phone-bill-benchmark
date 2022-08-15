@@ -17,7 +17,7 @@ import com.tsurugidb.benchmark.phonebill.app.Config.DbmsType;
 import com.tsurugidb.benchmark.phonebill.app.ExecutableCommand;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager.SessionHoldingType;
-import com.tsurugidb.benchmark.phonebill.db.interfaces.DdlLExecutor;
+import com.tsurugidb.benchmark.phonebill.db.dao.Ddl;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.PhoneBillDbManagerJdbc;
 import com.tsurugidb.benchmark.phonebill.util.PathUtils;
 
@@ -41,7 +41,7 @@ public class LoadTestDataCsvToPostgreSql extends ExecutableCommand {
 			PhoneBillDbManagerJdbc manager = (PhoneBillDbManagerJdbc) PhoneBillDbManager
 					.createPhoneBillDbManager(config, SessionHoldingType.INSTANCE_FIELD);
 			try (Connection conn = manager.getConnection()) {
-				DdlLExecutor ddlExector = manager.getDdlLExecutor();
+				Ddl ddlExector = manager.getDdlLExecutor();
 				ddlExector.prepareLoadData();
 				Path dir = Paths.get(config.csvDir);
 				List<Path> contractsList = Collections.singletonList(CsvUtils.getContractsFilePath(dir));

@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.ExecutableCommand;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
-import com.tsurugidb.benchmark.phonebill.db.interfaces.DdlLExecutor;
+import com.tsurugidb.benchmark.phonebill.db.dao.Ddl;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -29,7 +29,7 @@ public class CreateTestData extends ExecutableCommand {
 		Config config = c.clone();
 		config.isolationLevel = Config.IsolationLevel.READ_COMMITTED;
 		PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config);
-		DdlLExecutor ddlExector = manager.getDdlLExecutor();
+		Ddl ddlExector = manager.getDdlLExecutor();
 
 		int seed = config.randomSeed;
 		ContractBlockInfoAccessor accessor = new SingleProcessContractBlockManager();

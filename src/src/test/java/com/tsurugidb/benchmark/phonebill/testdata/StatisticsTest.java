@@ -9,7 +9,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import com.tsurugidb.benchmark.phonebill.db.doma2.entity.History;
+import com.tsurugidb.benchmark.phonebill.db.entity.History;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
 import com.tsurugidb.benchmark.phonebill.testdata.Statistics.Counter;
 

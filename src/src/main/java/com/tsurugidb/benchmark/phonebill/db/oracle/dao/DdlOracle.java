@@ -1,17 +1,17 @@
-package com.tsurugidb.benchmark.phonebill.db.oracle;
+package com.tsurugidb.benchmark.phonebill.db.oracle.dao;
 
 import java.sql.SQLException;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
-import com.tsurugidb.benchmark.phonebill.db.jdbc.DdlExectorJdbc;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.PhoneBillDbManagerJdbc;
+import com.tsurugidb.benchmark.phonebill.db.jdbc.dao.DdlJdbc;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-public class DdlLExecutorOracle extends DdlExectorJdbc {
+public class DdlOracle extends DdlJdbc {
 	private Config config;
 
-	public DdlLExecutorOracle(PhoneBillDbManagerJdbc manager, Config config) {
+	public DdlOracle(PhoneBillDbManagerJdbc manager, Config config) {
 		super(manager);
 		this.config = config;
 	}

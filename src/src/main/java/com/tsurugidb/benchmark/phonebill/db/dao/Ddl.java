@@ -1,6 +1,6 @@
-package com.tsurugidb.benchmark.phonebill.db.interfaces;
+package com.tsurugidb.benchmark.phonebill.db.dao;
 
-public interface DdlLExecutor {
+public interface Ddl {
 	/**
 	 * 指定のテーブルを削除する。テーブルが存在しない場合もエラーにならない。
 	 */

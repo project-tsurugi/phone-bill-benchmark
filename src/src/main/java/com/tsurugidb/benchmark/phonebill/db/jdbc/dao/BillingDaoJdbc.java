@@ -1,12 +1,13 @@
-package com.tsurugidb.benchmark.phonebill.db.jdbc;
+package com.tsurugidb.benchmark.phonebill.db.jdbc.dao;
 
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
-import com.tsurugidb.benchmark.phonebill.db.doma2.dao.BillingDao;
-import com.tsurugidb.benchmark.phonebill.db.doma2.entity.Billing;
+import com.tsurugidb.benchmark.phonebill.db.dao.BillingDao;
+import com.tsurugidb.benchmark.phonebill.db.entity.Billing;
+import com.tsurugidb.benchmark.phonebill.db.jdbc.PhoneBillDbManagerJdbc;
 
 public class BillingDaoJdbc implements BillingDao {
 	private final PhoneBillDbManagerJdbc manager;

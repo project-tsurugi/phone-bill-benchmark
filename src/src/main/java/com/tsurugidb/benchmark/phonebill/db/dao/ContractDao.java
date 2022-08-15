@@ -1,9 +1,9 @@
-package com.tsurugidb.benchmark.phonebill.db.doma2.dao;
+package com.tsurugidb.benchmark.phonebill.db.dao;
 
 import java.sql.Date;
 import java.util.List;
 
-import com.tsurugidb.benchmark.phonebill.db.doma2.entity.Contract;
+import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
 
 public interface ContractDao {
 	int[] batchInsert(List<Contract> contracts);

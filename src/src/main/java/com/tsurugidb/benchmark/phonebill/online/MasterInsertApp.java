@@ -10,8 +10,8 @@ import org.slf4j.LoggerFactory;
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.TgTmSettingDummy;
-import com.tsurugidb.benchmark.phonebill.db.doma2.dao.ContractDao;
-import com.tsurugidb.benchmark.phonebill.db.doma2.entity.Contract;
+import com.tsurugidb.benchmark.phonebill.db.dao.ContractDao;
+import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.testdata.ContractBlockInfoAccessor;
 import com.tsurugidb.benchmark.phonebill.testdata.TestDataGenerator;
 

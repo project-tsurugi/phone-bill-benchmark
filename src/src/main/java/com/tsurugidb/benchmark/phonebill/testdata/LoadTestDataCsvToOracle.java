@@ -17,7 +17,7 @@ import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.Config.DbmsType;
 import com.tsurugidb.benchmark.phonebill.app.ExecutableCommand;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
-import com.tsurugidb.benchmark.phonebill.db.interfaces.DdlLExecutor;
+import com.tsurugidb.benchmark.phonebill.db.dao.Ddl;
 
 public class LoadTestDataCsvToOracle extends ExecutableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(LoadTestDataCsvToOracle.class);
@@ -34,7 +34,7 @@ public class LoadTestDataCsvToOracle extends ExecutableCommand {
 			LOG.error("This configuration is not for the Oracle.");
 		} else {
 			PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config);
-			DdlLExecutor ddlExector = manager.getDdlLExecutor();
+			Ddl ddlExector = manager.getDdlLExecutor();
 			ddlExector.prepareLoadData();
 			List<Path> list = createControlFiles(config);
 			for (Path path : list) {

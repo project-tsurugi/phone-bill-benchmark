@@ -1,8 +1,8 @@
-package com.tsurugidb.benchmark.phonebill.db.doma2.dao;
+package com.tsurugidb.benchmark.phonebill.db.dao;
 
 import java.sql.Date;
 
-import com.tsurugidb.benchmark.phonebill.db.doma2.entity.Billing;
+import com.tsurugidb.benchmark.phonebill.db.entity.Billing;
 
 public interface BillingDao {
 	public void insert(Billing billing);

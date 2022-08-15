@@ -1,4 +1,4 @@
-package com.tsurugidb.benchmark.phonebill.db.doma2.entity;
+package com.tsurugidb.benchmark.phonebill.db.entity;
 
 import java.sql.Timestamp;
 

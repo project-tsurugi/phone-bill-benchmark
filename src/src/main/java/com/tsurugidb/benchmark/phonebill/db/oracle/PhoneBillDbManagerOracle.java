@@ -4,14 +4,15 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
-import com.tsurugidb.benchmark.phonebill.db.interfaces.DdlLExecutor;
+import com.tsurugidb.benchmark.phonebill.db.dao.Ddl;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.PhoneBillDbManagerJdbc;
+import com.tsurugidb.benchmark.phonebill.db.oracle.dao.DdlOracle;
 
 import oracle.ucp.jdbc.PoolDataSource;
 import oracle.ucp.jdbc.PoolDataSourceFactory;
 
 public class PhoneBillDbManagerOracle extends PhoneBillDbManagerJdbc {
-	private DdlLExecutor ddlLExecutor;
+	private Ddl ddlLExecutor;
 	private Config config;
 
 	public PhoneBillDbManagerOracle(Config config, SessionHoldingType type) {
@@ -45,9 +46,9 @@ public class PhoneBillDbManagerOracle extends PhoneBillDbManagerJdbc {
 
 
 	@Override
-	public synchronized DdlLExecutor getDdlLExecutor() {
+	public synchronized Ddl getDdlLExecutor() {
 		if (ddlLExecutor == null) {
-			ddlLExecutor = new DdlLExecutorOracle(this, config);
+			ddlLExecutor = new DdlOracle(this, config);
 		}
 		return ddlLExecutor;
 	}

@@ -1,13 +1,13 @@
-package com.tsurugidb.benchmark.phonebill.db.postgresql;
+package com.tsurugidb.benchmark.phonebill.db.postgresql.dao;
 
-import com.tsurugidb.benchmark.phonebill.db.jdbc.DdlExectorJdbc;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.PhoneBillDbManagerJdbc;
+import com.tsurugidb.benchmark.phonebill.db.jdbc.dao.DdlJdbc;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-public class DdlExectorPostgresql extends DdlExectorJdbc {
+public class DdlPostgresql extends DdlJdbc {
 
-	public DdlExectorPostgresql(PhoneBillDbManagerJdbc manager) {
+	public DdlPostgresql(PhoneBillDbManagerJdbc manager) {
 		super(manager);
 	}
 

@@ -6,7 +6,7 @@ import java.util.List;
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.TgTmSettingDummy;
-import com.tsurugidb.benchmark.phonebill.db.doma2.dao.ContractDao;
+import com.tsurugidb.benchmark.phonebill.db.dao.ContractDao;
 
 /**
  * データベースを読み取り、契約マスタのブロック情報を初期化する

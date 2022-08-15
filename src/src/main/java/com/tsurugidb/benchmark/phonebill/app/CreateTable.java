@@ -1,10 +1,10 @@
 package com.tsurugidb.benchmark.phonebill.app;
 
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
-import com.tsurugidb.benchmark.phonebill.db.interfaces.DdlLExecutor;
+import com.tsurugidb.benchmark.phonebill.db.dao.Ddl;
 
 public class CreateTable extends ExecutableCommand{
-	private DdlLExecutor ddlExector;
+	private Ddl ddlExector;
 
 	public static void main(String[] args) throws Exception {
 		Config config = Config.getConfig(false);
@@ -28,7 +28,7 @@ public class CreateTable extends ExecutableCommand{
 	 *
 	 * @return ddlExector
 	 */
-	DdlLExecutor getDdlExector() {
+	Ddl getDdlExector() {
 		return ddlExector;
 	}
 }

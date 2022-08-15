@@ -1,4 +1,4 @@
-package com.tsurugidb.benchmark.phonebill.db.jdbc;
+package com.tsurugidb.benchmark.phonebill.db.jdbc.dao;
 
 import java.sql.Connection;
 import java.sql.Date;
@@ -8,8 +8,9 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.tsurugidb.benchmark.phonebill.db.doma2.dao.ContractDao;
-import com.tsurugidb.benchmark.phonebill.db.doma2.entity.Contract;
+import com.tsurugidb.benchmark.phonebill.db.dao.ContractDao;
+import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
+import com.tsurugidb.benchmark.phonebill.db.jdbc.PhoneBillDbManagerJdbc;
 
 public class ContractDaoJdbc implements ContractDao {
 	private final PhoneBillDbManagerJdbc manager;

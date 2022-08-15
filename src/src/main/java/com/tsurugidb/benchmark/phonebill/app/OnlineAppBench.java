@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.app.billing.PhoneBill;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
-import com.tsurugidb.benchmark.phonebill.db.interfaces.DdlLExecutor;
+import com.tsurugidb.benchmark.phonebill.db.dao.Ddl;
 import com.tsurugidb.benchmark.phonebill.testdata.CreateTestData;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -111,7 +111,7 @@ public class OnlineAppBench extends ExecutableCommand {
 
 
 	private void afterExec(Config config) throws SQLException {
-		DdlLExecutor executor = manager.getDdlLExecutor();
+		Ddl executor = manager.getDdlLExecutor();
 		int historyUpdated = executor.countHistoryUpdated();
 		int historyInserted = executor.count("history") - executor.count("history_back");
 		int masterUpdated = executor.countContractsUpdated();
@@ -141,7 +141,7 @@ public class OnlineAppBench extends ExecutableCommand {
 
 
 	private void beforeExec(Config config) throws SQLException {
-		DdlLExecutor executor = manager.getDdlLExecutor();
+		Ddl executor = manager.getDdlLExecutor();
 		executor.dropTable("history_back");
 		executor.dropTable("contracts_back");
 		executor.createBackTable("history");

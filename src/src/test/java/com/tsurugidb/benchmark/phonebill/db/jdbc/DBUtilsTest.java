@@ -19,6 +19,7 @@ class DBUtilsTest {
 	 * @throws SQLException
 	 * @throws IOException
 	 */
+	// TODO DBManagerのテストケースに移す
 	@Test
 	void testGetConnection() throws SQLException, IOException {
 		Config config = Config.getConfig();
@@ -85,6 +86,7 @@ class DBUtilsTest {
 	/**
 	 * isRetriableSQLException()のテスト
 	 */
+	// DBManagerのテストケースに移す
 	@Test
 	void testIsRetriableSQLException() {
 		// Ora-8177のケース

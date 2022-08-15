@@ -1,4 +1,4 @@
-package com.tsurugidb.benchmark.phonebill.db.jdbc;
+package com.tsurugidb.benchmark.phonebill.db.jdbc.dao;
 
 import java.sql.Connection;
 import java.sql.Date;
@@ -12,10 +12,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.tsurugidb.benchmark.phonebill.app.billing.CalculationTarget;
-import com.tsurugidb.benchmark.phonebill.db.doma2.dao.HistoryDao;
-import com.tsurugidb.benchmark.phonebill.db.doma2.entity.Contract;
-import com.tsurugidb.benchmark.phonebill.db.doma2.entity.Contract.Key;
-import com.tsurugidb.benchmark.phonebill.db.doma2.entity.History;
+import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
+import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
+import com.tsurugidb.benchmark.phonebill.db.entity.Contract.Key;
+import com.tsurugidb.benchmark.phonebill.db.entity.History;
+import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
+import com.tsurugidb.benchmark.phonebill.db.jdbc.PhoneBillDbManagerJdbc;
 
 public class HistoryDaoJdbc implements HistoryDao {
 	private final PhoneBillDbManagerJdbc manager;

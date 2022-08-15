@@ -7,10 +7,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
-import com.tsurugidb.benchmark.phonebill.db.doma2.dao.BillingDao;
-import com.tsurugidb.benchmark.phonebill.db.doma2.dao.ContractDao;
-import com.tsurugidb.benchmark.phonebill.db.doma2.dao.HistoryDao;
-import com.tsurugidb.benchmark.phonebill.db.interfaces.DdlLExecutor;
+import com.tsurugidb.benchmark.phonebill.db.dao.BillingDao;
+import com.tsurugidb.benchmark.phonebill.db.dao.ContractDao;
+import com.tsurugidb.benchmark.phonebill.db.dao.Ddl;
+import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.oracle.PhoneBillDbManagerOracle;
 import com.tsurugidb.benchmark.phonebill.db.postgresql.PhoneBillDbManagerPostgresql;
 import com.tsurugidb.iceaxe.transaction.TgTmSetting;
@@ -18,7 +18,7 @@ import com.tsurugidb.iceaxe.transaction.TgTmSetting;
 public abstract class PhoneBillDbManager implements Closeable {
     private static final Logger LOG = LoggerFactory.getLogger(PhoneBillDbManager.class);
 
-	public abstract DdlLExecutor getDdlLExecutor();
+	public abstract Ddl getDdlLExecutor();
 	public abstract ContractDao getContractDao();
 	public abstract HistoryDao getHistoryDao();
 	public abstract BillingDao getBillingDao();

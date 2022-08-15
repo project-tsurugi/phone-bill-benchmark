@@ -12,11 +12,11 @@ import org.slf4j.LoggerFactory;
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.Config.TransactionScope;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
-import com.tsurugidb.benchmark.phonebill.db.doma2.dao.BillingDao;
-import com.tsurugidb.benchmark.phonebill.db.doma2.dao.HistoryDao;
-import com.tsurugidb.benchmark.phonebill.db.doma2.entity.Billing;
-import com.tsurugidb.benchmark.phonebill.db.doma2.entity.Contract;
-import com.tsurugidb.benchmark.phonebill.db.doma2.entity.History;
+import com.tsurugidb.benchmark.phonebill.db.dao.BillingDao;
+import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
+import com.tsurugidb.benchmark.phonebill.db.entity.Billing;
+import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
+import com.tsurugidb.benchmark.phonebill.db.entity.History;
 
 public class CalculationTask implements Callable<Exception> {
     private static final Logger LOG = LoggerFactory.getLogger(CalculationTask.class);

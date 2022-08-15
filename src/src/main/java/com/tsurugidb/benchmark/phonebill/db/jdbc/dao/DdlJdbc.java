@@ -1,4 +1,4 @@
-package com.tsurugidb.benchmark.phonebill.db.jdbc;
+package com.tsurugidb.benchmark.phonebill.db.jdbc.dao;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -7,13 +7,14 @@ import java.sql.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.tsurugidb.benchmark.phonebill.db.interfaces.DdlLExecutor;
+import com.tsurugidb.benchmark.phonebill.db.dao.Ddl;
+import com.tsurugidb.benchmark.phonebill.db.jdbc.PhoneBillDbManagerJdbc;
 
-public abstract class DdlExectorJdbc implements DdlLExecutor {
-    protected static final Logger LOG = LoggerFactory.getLogger(DdlExectorJdbc.class);
+public abstract class DdlJdbc implements Ddl {
+    protected static final Logger LOG = LoggerFactory.getLogger(DdlJdbc.class);
     private PhoneBillDbManagerJdbc managerJdbc;
 
-	public DdlExectorJdbc(PhoneBillDbManagerJdbc managerJdbc) {
+	public DdlJdbc(PhoneBillDbManagerJdbc managerJdbc) {
 		this.managerJdbc = managerJdbc;
 	}
 

@@ -20,18 +20,17 @@ import com.tsurugidb.benchmark.phonebill.AbstractJdbcTestCase;
 import com.tsurugidb.benchmark.phonebill.app.Config.DbmsType;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager.SessionHoldingType;
-import com.tsurugidb.benchmark.phonebill.db.SessionException;
-import com.tsurugidb.benchmark.phonebill.db.interfaces.DdlLExecutor;
+import com.tsurugidb.benchmark.phonebill.db.dao.Ddl;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.PhoneBillDbManagerJdbc;
 
 class CreateTableTest extends AbstractJdbcTestCase {
 	private static String ORACLE_CONFIG_PATH = "src/test/config/oracle.properties";
 
 	@Test
-	void test() throws SQLException, IOException, SessionException {
+	void test() throws SQLException, IOException {
 		Config config = Config.getConfig();
 		PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config);
-		DdlLExecutor ddlExector = manager.getDdlLExecutor();
+		Ddl ddlExector = manager.getDdlLExecutor();
 
 		ddlExector.dropTables();
 		// テーブルが存在しないことを確認
@@ -109,7 +108,7 @@ class CreateTableTest extends AbstractJdbcTestCase {
 			assertEquals(contractsIndexSet, getIndexNameSet(conn,  contracts));
 
 			// インデックス削除されたことを確認
-			DdlLExecutor executor = createTable.getDdlExector();
+			Ddl executor = createTable.getDdlExector();
 			executor.prepareLoadData();
 			assertEquals(Collections.EMPTY_SET, getIndexNameSet(conn,  history));
 			assertEquals(Collections.EMPTY_SET, getIndexNameSet(conn,  contracts));
@@ -149,7 +148,7 @@ class CreateTableTest extends AbstractJdbcTestCase {
 			// テーブルを作成
 			CreateTable createTable = new CreateTable();
 			createTable.execute(config);
-			DdlLExecutor executor = createTable.getDdlExector();
+			Ddl executor = createTable.getDdlExector();
 
 			String tableName = config.dbmsType == DbmsType.ORACLE_JDBC ? "HISTORY" : "history";
 

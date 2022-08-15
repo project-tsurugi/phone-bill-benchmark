@@ -1,10 +1,10 @@
-package com.tsurugidb.benchmark.phonebill.db.doma2.dao;
+package com.tsurugidb.benchmark.phonebill.db.dao;
 
 import java.util.List;
 
 import com.tsurugidb.benchmark.phonebill.app.billing.CalculationTarget;
-import com.tsurugidb.benchmark.phonebill.db.doma2.entity.Contract.Key;
-import com.tsurugidb.benchmark.phonebill.db.doma2.entity.History;
+import com.tsurugidb.benchmark.phonebill.db.entity.History;
+import com.tsurugidb.benchmark.phonebill.db.entity.Contract.Key;
 
 public interface HistoryDao {
 	int[] batchInsert(List<History> histories);

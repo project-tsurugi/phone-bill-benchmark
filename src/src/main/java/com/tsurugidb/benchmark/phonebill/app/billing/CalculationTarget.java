@@ -2,7 +2,7 @@ package com.tsurugidb.benchmark.phonebill.app.billing;
 
 import java.sql.Date;
 
-import com.tsurugidb.benchmark.phonebill.db.doma2.entity.Contract;
+import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
 
 /**
  * 料金計算対象の契約と、計算ロジックを格納するクラス

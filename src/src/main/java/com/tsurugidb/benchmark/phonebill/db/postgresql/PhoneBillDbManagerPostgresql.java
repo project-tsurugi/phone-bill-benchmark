@@ -5,11 +5,12 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
-import com.tsurugidb.benchmark.phonebill.db.interfaces.DdlLExecutor;
+import com.tsurugidb.benchmark.phonebill.db.dao.Ddl;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.PhoneBillDbManagerJdbc;
+import com.tsurugidb.benchmark.phonebill.db.postgresql.dao.DdlPostgresql;
 
 public class PhoneBillDbManagerPostgresql extends PhoneBillDbManagerJdbc {
-	private DdlLExecutor ddlLExecutor;
+	private Ddl ddlLExecutor;
 	private Config config;
 
 	public PhoneBillDbManagerPostgresql(Config config, SessionHoldingType type) {
@@ -39,9 +40,9 @@ public class PhoneBillDbManagerPostgresql extends PhoneBillDbManagerJdbc {
 
 
 	@Override
-	public synchronized DdlLExecutor getDdlLExecutor() {
+	public synchronized Ddl getDdlLExecutor() {
 		if (ddlLExecutor == null) {
-			ddlLExecutor = new DdlExectorPostgresql(this);
+			ddlLExecutor = new DdlPostgresql(this);
 		}
 		return ddlLExecutor;
 	}
