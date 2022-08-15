@@ -1,6 +1,5 @@
 package com.tsurugidb.benchmark.phonebill.app;
 
-import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -49,12 +48,14 @@ public class Main {
 		if (args.length == 0) {
 			System.err.println("ERROR: No argument is specified.");
 			usage();
+			System.exit(1);
 		}
 		String cmd = args[0];
 		Command command = COMMAND_MAP.get(cmd);
 		if (command == null) {
 			System.err.println("ERROR: Command '" + cmd + "' is not available.");
 			usage();
+			System.exit(1);
 		}
 
 		ExecutableCommand executableCommand;
@@ -67,13 +68,8 @@ public class Main {
 
 		switch(command.argType) {
 		case CONFIG:
-			try {
-				Config config = Config.getConfig(false);
-				executableCommand.execute(config);
-			} catch (RuntimeException | IOException e) {
-				e.printStackTrace();
-				usage();
-			}
+			Config config = Config.getConfig(args[1]);
+			executableCommand.execute(config);
 			break;
 		case HOST_AND_PORT:
 			if (args.length == 1 || !args[1].contains(":")) {
@@ -90,11 +86,11 @@ public class Main {
 
 	private static void usage() {
 		System.err.println();
-		System.err.println("usage: run command");
+		System.err.println("usage: run command [file]");
 		System.err.println("  or:  run command hostname:port");
 		System.err.println();
-		System.err.println("The following command requires a property file to be specified in the JAVA_OPTS");
-		System.err.println("environment variable in the form -Dproperty=property-file-path.");
+		System.err.println("Following commands can specify a filename of configuration file,");
+		System.err.println("If not specified filename, the default value is used.");
 		System.err.println();
 		for(Command command: COMMAND_MAP.values()) {
 			if (command.argType == ArgType.CONFIG) {
@@ -102,14 +98,13 @@ public class Main {
 			}
 		}
 		System.err.println();
-		System.err.println("The following commands must specify a hostname and port number of server.");
+		System.err.println("Following commands must specify a hostname and port number of server.");
 		System.err.println();
 		for(Command command: COMMAND_MAP.values()) {
 			if (command.argType == ArgType.HOST_AND_PORT) {
 				System.err.println("  " + command.name+": " + command.description);
 			}
 		}
-		System.exit(1);
 	}
 
 	private static  class Command {

@@ -50,7 +50,7 @@ public class PhoneBill extends ExecutableCommand {
 	Config config; // UTからConfigを書き換え可能にするためにパッケージプライベートにしている
 
 	public static void main(String[] args) throws Exception {
-		Config config = Config.getConfig(false);
+		Config config = Config.getConfig(args);
 		PhoneBill phoneBill = new PhoneBill();
 		phoneBill.execute(config);
 	}

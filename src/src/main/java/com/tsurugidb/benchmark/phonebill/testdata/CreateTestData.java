@@ -16,7 +16,7 @@ public class CreateTestData extends ExecutableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(CreateTestData.class);
 
     public static void main(String[] args) throws Exception {
-		Config config = Config.getConfig(false);
+		Config config = Config.getConfig(args);
 		CreateTestData createTestData = new CreateTestData();
 		createTestData.execute(config);
 	}

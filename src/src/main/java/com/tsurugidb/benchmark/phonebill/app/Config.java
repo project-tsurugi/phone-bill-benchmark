@@ -677,9 +677,28 @@ public class Config implements Cloneable {
 	 * @return
 	 * @throws IOException
 	 */
-	public static Config getConfig(String arg) throws IOException {
-		return new Config(arg);
+	public static Config getConfig(String[] args) throws IOException {
+		if (args.length == 0) {
+			return new Config((String)null);
+		}
+		return new Config(args[0]);
 	}
+
+	/**
+	 * configオブジェクトの生成.
+	 * <br>
+	 * 引数で指定されたファイル名のファイルを使用してconfigオブジェクトを生成する。
+	 *
+	 * @param args
+	 * @return
+	 * @throws IOException
+	 */
+	public static Config getConfig(String filename) throws IOException {
+		return new Config(filename);
+	}
+
+
+
 
 	/**
 	 * configオブジェクトの生成.
@@ -843,23 +862,5 @@ public class Config implements Cloneable {
 	 */
 	public int getContractBlockSize() {
 		return duplicatePhoneNumberRate * 2 + expirationDateRate + noExpirationDateRate;
-	}
-
-	/**
-	 *
-	 * @param システムプロパティpropertyで指定したファイルを使用してコンフィグを作成し、Config.configForAppCOnfigにセットする。
-	 *
-	 * @param requiredFile ファイル指定が必須の場合true
-	 * @throws IOException
-	 *
-	 */
-	public static Config getConfig(boolean requiredFile) throws IOException {
-        String s = System.getProperty("property");
-        if (s == null) {
-        	if (requiredFile) {
-        		throw new RuntimeException("not found -Dproperty=property-file-path");
-        	}
-        }
-        return Config.getConfig(s);
 	}
 }
