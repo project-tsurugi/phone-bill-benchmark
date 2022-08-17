@@ -110,13 +110,19 @@ public class HistoryDaoJdbc implements HistoryDao {
 	}
 
 	@Override
-	public int[] batchUpdate(List<History> list) {
+	public int batchUpdate(List<History> list) {
 		try (PreparedStatement ps = createUpdatePs()) {
 			for(History h: list) {
 				setHistroryToUpdatePs(h, ps);
 				ps.addBatch();
 			}
-			return ps.executeBatch();
+			int[] rets = ps.executeBatch();
+			for (int ret : rets) {
+				if (ret < 0 && ret != PreparedStatement.SUCCESS_NO_INFO) {
+					throw new RuntimeException("Fail to update history.");
+				}
+			}
+			return rets.length;
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}

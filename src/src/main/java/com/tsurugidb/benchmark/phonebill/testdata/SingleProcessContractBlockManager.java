@@ -1,6 +1,5 @@
 package com.tsurugidb.benchmark.phonebill.testdata;
 
-import java.sql.SQLException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -49,10 +48,8 @@ public class SingleProcessContractBlockManager implements ContractBlockInfoAcces
 	 * 指定のInitializeを用いて初期化したインスタンスを生成する
 	 *
 	 * @param initializer
-	 * @throws SQLException
 	 */
-	public SingleProcessContractBlockManager(AbstractContractBlockInfoInitializer initializer)
-			throws SQLException {
+	public SingleProcessContractBlockManager(AbstractContractBlockInfoInitializer initializer) {
 		initializer.init();
 		numberOfBlacks = initializer.numberOfBlocks;
 		waitingBlocks = initializer.waitingBlocks;

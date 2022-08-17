@@ -2,7 +2,6 @@ package com.tsurugidb.benchmark.phonebill.app.billing;
 
 import java.io.IOException;
 import java.sql.Date;
-import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -86,12 +85,11 @@ public class PhoneBill extends ExecutableCommand {
 	 * Configに従ってオンラインアプリのインスタンスを生成する
 	 *
 	 * @return オンラインアプリのインスタンスのリスト
-	 * @throws SQLException
 	 * @throws IOException
 	 */
 	@SuppressFBWarnings(value={"DMI_RANDOM_USED_ONLY_ONCE"})
 	public static List<AbstractOnlineApp> createOnlineApps(Config config, ContractBlockInfoAccessor accessor)
-			throws SQLException, IOException {
+			throws IOException {
 		PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config);
 		Random random = new Random(config.randomSeed);
 		ActiveBlockNumberHolder blockHolder = accessor.getActiveBlockInfo();
@@ -151,7 +149,7 @@ public class PhoneBill extends ExecutableCommand {
 	 * @param end
 	 * @throws Exception
 	 */
-	void doCalc(Date start, Date end) throws SQLException {
+	void doCalc(Date start, Date end) {
 		abortRequested.set(false);
 		LOG.info("Phone bill batch started.");
 		String batchExecId = UUID.randomUUID().toString();
@@ -231,10 +229,9 @@ public class PhoneBill extends ExecutableCommand {
 	 * @param futures
 	 * @param managers
 	 * @param abortRequested
-	 * @throws SQLException
 	 */
-	private void cleanup(Set<Future<Exception>> futures, List<PhoneBillDbManager> managers, AtomicBoolean abortRequested)
-			throws SQLException {
+	private void cleanup(Set<Future<Exception>> futures, List<PhoneBillDbManager> managers,
+			AtomicBoolean abortRequested) {
 		boolean needRollback = false;
 		while (!futures.isEmpty()) {
 			try {

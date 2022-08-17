@@ -1,4 +1,4 @@
-package com.tsurugidb.benchmark.phonebill.app;
+package com.tsurugidb.benchmark.phonebill.db.oracle;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -7,8 +7,10 @@ import java.sql.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.tsurugidb.benchmark.phonebill.app.Config;
+import com.tsurugidb.benchmark.phonebill.app.CreateTable;
+import com.tsurugidb.benchmark.phonebill.app.ExecutableCommand;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager.SessionHoldingType;
-import com.tsurugidb.benchmark.phonebill.db.oracle.PhoneBillDbManagerOracle;
 
 /**
  * ORA-08177を再現するためのTP

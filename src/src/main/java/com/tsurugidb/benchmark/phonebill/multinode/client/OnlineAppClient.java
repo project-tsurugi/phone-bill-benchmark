@@ -3,7 +3,6 @@ package com.tsurugidb.benchmark.phonebill.multinode.client;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.sql.SQLException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
@@ -41,7 +40,7 @@ public class OnlineAppClient extends ExecutableCommand{
 	}
 
 	@Override
-	public void execute(String hostname, int port) throws UnknownHostException, IOException, SQLException  {
+	public void execute(String hostname, int port) throws UnknownHostException, IOException {
 		Socket socket = new Socket(hostname, port);
 		try (NetworkIO io = new NetworkIO(socket)) {
 			List<String> response = io.request(Message.INIT_ONLINE_APP);

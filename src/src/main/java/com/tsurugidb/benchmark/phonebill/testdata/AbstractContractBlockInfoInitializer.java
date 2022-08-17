@@ -1,6 +1,5 @@
 package com.tsurugidb.benchmark.phonebill.testdata;
 
-import java.sql.SQLException;
 import java.util.Set;
 
 /**
@@ -28,8 +27,7 @@ public abstract class AbstractContractBlockInfoInitializer {
 	 * 契約のブロック情報を初期化する
 	 *
 	 * @param config
-	 * @throws SQLException
 	 */
-	abstract void init() throws SQLException;
+	abstract void init();
 
 }

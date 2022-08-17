@@ -2,7 +2,6 @@ package com.tsurugidb.benchmark.phonebill.online;
 
 import java.io.IOException;
 import java.sql.Date;
-import java.sql.SQLException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -41,10 +40,9 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 	 * @param accessor
 	 * @param config
 	 * @param seed
-	 * @throws SQLException
 	 * @throws IOException
 	 */
-	public MasterUpdateApp(Config config, Random random, ContractBlockInfoAccessor accessor) throws SQLException, IOException {
+	public MasterUpdateApp(Config config, Random random, ContractBlockInfoAccessor accessor) throws IOException {
 		super(config.masterUpdateRecordsPerMin, config, random);
 		this.config = config;
 		this.random = random;
@@ -112,7 +110,6 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 	 *
 	 * @param key
 	 * @return
-	 * @throws SQLException
 	 */
 	List<Contract> getContracts(String phoneNumber) {
 		return manager.execute(TgTmSettingDummy.getInstance(), ()->dao.getContracts(phoneNumber));

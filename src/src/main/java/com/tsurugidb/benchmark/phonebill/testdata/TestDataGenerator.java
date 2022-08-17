@@ -6,12 +6,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.sql.Connection;
 import java.sql.Date;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -185,21 +181,7 @@ public class TestDataGenerator {
 		return list;
 	}
 
-	/**
-	 * 新規契約レコードの値をセットする
-	 *
-	 * @return セットした契約レコード
-	 * @throws SQLException
-	 * @throws IOException
-	 */
-	public void setContract(PreparedStatement ps, Contract c) throws SQLException, IOException {
-		ps.setString(1, c.phoneNumber);
-		ps.setDate(2, c.startDate);
-		ps.setDate(3, c.endDate);
-		ps.setString(4, c.rule);
-	}
-
-	/**
+		/**
 	 * 二つの期間に共通の期間を返す
 	 *
 	 * @param d1
@@ -231,12 +213,10 @@ public class TestDataGenerator {
 
 	/**
 	 * 契約マスタのテストデータをDBに生成する
-	 * @param manager
 	 *
-	 * @throws SQLException
-	 * @throws IOException
+	 * @param manager
 	 */
-	public void generateContractsToDb(PhoneBillDbManager manager) throws SQLException, IOException {
+	public void generateContractsToDb(PhoneBillDbManager manager) {
 		manager.execute(TgTmSettingDummy.getInstance(), () -> {
 			int batchSize = 0;
 			List<Contract> contracts = new ArrayList<>(SQL_BATCH_EXEC_SIZE);
@@ -261,11 +241,9 @@ public class TestDataGenerator {
 	 */
 	private void insertContracts(PhoneBillDbManager manager, List<Contract> contracts) {
 		ContractDao dao = manager.getContractDao();
-		int rets[] = manager.execute(TgTmSettingDummy.getInstance(), () -> dao.batchInsert(contracts));
-		for (int ret : rets) {
-			if (ret < 0 && ret != PreparedStatement.SUCCESS_NO_INFO) {
-				throw new RuntimeException("Fail to batch insert to table contracts.");
-			}
+		int ret = manager.execute(TgTmSettingDummy.getInstance(), () -> dao.batchInsert(contracts));
+		if (ret < 0) {
+			throw new RuntimeException("Fail to batch insert to table contracts.");
 		}
 		contracts.clear();
 	}
@@ -314,10 +292,9 @@ public class TestDataGenerator {
 	/**
 	 * 通話履歴のテストデータをDBに作成する
 	 *
-	 * @throws SQLException
 	 * @throws IOException
 	 */
-	public void generateHistoryToDb(PhoneBillDbManager manager) throws SQLException, IOException {
+	public void generateHistoryToDb(PhoneBillDbManager manager) throws IOException {
 		List<Params> paramsList = createParamsList();
 		for(Params params: paramsList) {
 			params.historyWriter = new DaoHistoryWriter(manager);
@@ -330,9 +307,8 @@ public class TestDataGenerator {
 	 * 通話履歴のテストデータをCSVファイルに作成する
 	 *
 	 * @throws IOException
-	 * @throws SQLException
 	 */
-	public void generateHistoryToCsv(Path dir) throws IOException, SQLException {
+	public void generateHistoryToCsv(Path dir) throws IOException {
 		List<Params> paramsList = createParamsList();
 		for(Params params: paramsList) {
 			Path outputPath = CsvUtils.getHistortyFilePath(dir, params.taskId);
@@ -379,9 +355,8 @@ public class TestDataGenerator {
 	 * 通話履歴を生成するタスクを実行し、生成された通話履歴を書き出す
 	 *
 	 * @throws IOException
-	 * @throws SQLException
 	 */
-	public void generateHistory(List<Params> paramsList) throws IOException, SQLException {
+	public void generateHistory(List<Params> paramsList) throws IOException {
 
 		// 通話履歴を生成するタスクとスレッドの生成
 		ExecutorService service = Executors.newFixedThreadPool(config.threadCount);
@@ -439,44 +414,6 @@ public class TestDataGenerator {
 		}
 	}
 
-
-
-	/**
-	 * 通話履歴をインサートする
-	 *
-	 * @param conn
-	 * @param histories
-	 * @throws SQLException
-	 */
-	@Deprecated
-	public static void insrtHistories(Connection conn, List<History> histories) throws SQLException {
-		try (PreparedStatement ps = conn.prepareStatement("insert into history("
-				+ "caller_phone_number,"
-				+ "recipient_phone_number,"
-				+ "payment_categorty,"
-				+ "start_time,"
-				+ "time_secs,"
-				+ "charge,"
-				+ "df"
-				+ ") values(?, ?, ?, ?, ?, ?, ? )")) {
-			for (History h : histories) {
-				ps.setString(1, h.callerPhoneNumber);
-				ps.setString(2, h.recipientPhoneNumber);
-				ps.setString(3, h.paymentCategorty);
-				ps.setTimestamp(4, h.startTime);
-				ps.setInt(5, h.timeSecs);
-				if (h.charge == null) {
-					ps.setNull(6, Types.INTEGER);
-				} else {
-					ps.setInt(6, h.charge);
-				}
-				ps.setInt(7, h.df);
-				ps.addBatch();
-			}
-			execBatch(ps);
-		}
-	}
-
 	/**
 	 * minDate～maxDateの間の全ての日付に対して、当該日付を含むdurationがlistに二つ以上あることを確認する
 	 *
@@ -508,18 +445,6 @@ public class TestDataGenerator {
 		return true;
 	}
 
-	@Deprecated
-	private static void execBatch(PreparedStatement ps) throws SQLException {
-		int rets[] = ps.executeBatch();
-		for (int ret : rets) {
-			if (ret < 0 && ret != PreparedStatement.SUCCESS_NO_INFO) {
-				throw new SQLException("Fail to batch exexecute");
-			}
-		}
-		ps.getConnection().commit();
-		ps.clearBatch();
-	}
-
 	/**
 	 * @return statistics
 	 */
@@ -549,16 +474,14 @@ public class TestDataGenerator {
 		/**
 		 * 1レコード分出力する
 		 * @throws IOException
-		 * @throws SQLException
 		 */
-		abstract void write(History h) throws IOException, SQLException;
+		abstract void write(History h) throws IOException;
 
 		/**
 		 * クリーンナップ処理
 		 * @throws IOException
-		 * @throws SQLException
 		 */
-		abstract void cleanup() throws IOException, SQLException;
+		abstract void cleanup() throws IOException;
 	}
 
 	/**
@@ -633,14 +556,14 @@ public class TestDataGenerator {
 		}
 
 		@Override
-		void cleanup() throws IOException, SQLException {
+		void cleanup() throws IOException {
 			if (histories.size() != 0) {
 				insertHistories();
 			}
 		}
 
 		@Override
-		void write(History h) throws IOException, SQLException {
+		void write(History h) throws IOException {
 			if (statisticsOnly) {
 				statistics.addHistoy(h);
 			} else {
@@ -671,11 +594,11 @@ public class TestDataGenerator {
 		}
 
 		@Override
-		void write(History h) throws IOException, SQLException {
+		void write(History h) throws IOException {
 		}
 
 		@Override
-		void cleanup() throws IOException, SQLException {
+		void cleanup() throws IOException {
 		}
 
 	}

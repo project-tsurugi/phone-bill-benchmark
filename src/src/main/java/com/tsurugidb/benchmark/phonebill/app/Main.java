@@ -4,6 +4,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.tsurugidb.benchmark.phonebill.app.billing.PhoneBill;
+import com.tsurugidb.benchmark.phonebill.db.oracle.LoadTestDataCsvToOracle;
+import com.tsurugidb.benchmark.phonebill.db.postgresql.LoadTestDataCsvToPostgreSql;
 import com.tsurugidb.benchmark.phonebill.multinode.NetworkIO.Message;
 import com.tsurugidb.benchmark.phonebill.multinode.client.CommandLineClient;
 import com.tsurugidb.benchmark.phonebill.multinode.client.OnlineAppClient;
@@ -11,8 +13,6 @@ import com.tsurugidb.benchmark.phonebill.multinode.client.PhoneBillClient;
 import com.tsurugidb.benchmark.phonebill.multinode.server.Server;
 import com.tsurugidb.benchmark.phonebill.testdata.CreateTestData;
 import com.tsurugidb.benchmark.phonebill.testdata.CreateTestDataCsv;
-import com.tsurugidb.benchmark.phonebill.testdata.LoadTestDataCsvToOracle;
-import com.tsurugidb.benchmark.phonebill.testdata.LoadTestDataCsvToPostgreSql;
 import com.tsurugidb.benchmark.phonebill.testdata.TestDataStatistics;
 
 public class Main {

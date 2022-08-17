@@ -1,4 +1,4 @@
-package com.tsurugidb.benchmark.phonebill.testdata;
+package com.tsurugidb.benchmark.phonebill.db.postgresql;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -19,6 +19,7 @@ import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager.SessionHoldingType;
 import com.tsurugidb.benchmark.phonebill.db.dao.Ddl;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.PhoneBillDbManagerJdbc;
+import com.tsurugidb.benchmark.phonebill.testdata.CsvUtils;
 import com.tsurugidb.benchmark.phonebill.util.PathUtils;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -37,7 +38,6 @@ public class LoadTestDataCsvToPostgreSql extends ExecutableCommand {
 		if (config.dbmsType != DbmsType.POSTGRE_SQL_JDBC) {
 			LOG.error("This configuration is not for the PostgreSQL.");
 		} else {
-			// TODO: DAOを使用する
 			PhoneBillDbManagerJdbc manager = (PhoneBillDbManagerJdbc) PhoneBillDbManager
 					.createPhoneBillDbManager(config, SessionHoldingType.INSTANCE_FIELD);
 			try (Connection conn = manager.getConnection()) {
@@ -60,7 +60,6 @@ public class LoadTestDataCsvToPostgreSql extends ExecutableCommand {
 	 *
 	 * @param conn
 	 * @param tablename
-	 * @throws SQLException
 	 */
 	@SuppressFBWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
 	private void doCopy(Statement stmt, Config config, String tablename, List<Path> pathList) throws SQLException {

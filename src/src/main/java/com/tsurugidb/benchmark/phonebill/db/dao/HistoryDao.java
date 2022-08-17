@@ -15,7 +15,7 @@ public interface HistoryDao {
 
 	int update(History history);
 
-	int[] batchUpdate(List<History> histories);
+	int batchUpdate(List<History> histories);
 
 	List<History> getHistories(Key key);
 

@@ -1,4 +1,4 @@
-package com.tsurugidb.benchmark.phonebill.testdata;
+package com.tsurugidb.benchmark.phonebill.db.oracle;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -18,6 +18,7 @@ import com.tsurugidb.benchmark.phonebill.app.Config.DbmsType;
 import com.tsurugidb.benchmark.phonebill.app.ExecutableCommand;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.dao.Ddl;
+import com.tsurugidb.benchmark.phonebill.testdata.CsvUtils;
 
 public class LoadTestDataCsvToOracle extends ExecutableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(LoadTestDataCsvToOracle.class);

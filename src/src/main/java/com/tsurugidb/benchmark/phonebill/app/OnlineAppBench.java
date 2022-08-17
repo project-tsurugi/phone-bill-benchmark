@@ -1,9 +1,5 @@
 package com.tsurugidb.benchmark.phonebill.app;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,8 +7,6 @@ import com.tsurugidb.benchmark.phonebill.app.billing.PhoneBill;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.dao.Ddl;
 import com.tsurugidb.benchmark.phonebill.testdata.CreateTestData;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * 以下の条件を変えて、バッチの処理時間がどう変化するのかを測定する
@@ -110,7 +104,7 @@ public class OnlineAppBench extends ExecutableCommand {
 	}
 
 
-	private void afterExec(Config config) throws SQLException {
+	private void afterExec(Config config) {
 		Ddl executor = manager.getDdl();
 		int historyUpdated = executor.countHistoryUpdated();
 		int historyInserted = executor.count("history") - executor.count("history_back");
@@ -123,24 +117,8 @@ public class OnlineAppBench extends ExecutableCommand {
 
 	}
 
-	@SuppressFBWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
-	int count(Statement stmt , String sql1, String sql2, boolean isOracle) throws SQLException {
-		String sql;
-		if (isOracle) {
-			sql = "select count(*) from(" + sql1 + " minus " + sql2 + ")";
-		} else {
-			sql = "select count(*) from(" + sql1 + " except " + sql2 + ") as subq";
-		}
-		try (ResultSet rs = stmt.executeQuery(sql)) {
-			if (rs.next()) {
-				return rs.getInt(1);
-			}
-		}
-		throw new RuntimeException("No recoreds selected.");
-	}
 
-
-	private void beforeExec(Config config) throws SQLException {
+	private void beforeExec(Config config) {
 		Ddl executor = manager.getDdl();
 		executor.dropTable("history_back");
 		executor.dropTable("contracts_back");

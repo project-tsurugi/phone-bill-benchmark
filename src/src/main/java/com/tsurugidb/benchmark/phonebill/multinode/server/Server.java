@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
-import java.sql.SQLException;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.HashMap;
@@ -100,11 +99,10 @@ public class Server extends ExecutableCommand {
 
 	/**
 	 * コマンドを実行する
-	 * @throws SQLException
 	 * @throws InterruptedException
 	 */
 	@Override
-	public void execute(Config config) throws SQLException, InterruptedException  {
+	public void execute(Config config) throws InterruptedException  {
 		this.config = config;
 		LOG.info("Starting server...");
 

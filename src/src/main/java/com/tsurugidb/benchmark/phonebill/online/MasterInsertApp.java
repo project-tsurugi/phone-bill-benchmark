@@ -1,7 +1,6 @@
 package com.tsurugidb.benchmark.phonebill.online;
 
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.Random;
 
 import org.slf4j.Logger;
@@ -33,7 +32,7 @@ public class MasterInsertApp extends AbstractOnlineApp {
      */
     private Contract contract;
 
-	public MasterInsertApp(Config config, Random random, ContractBlockInfoAccessor accessor) throws SQLException, IOException {
+	public MasterInsertApp(Config config, Random random, ContractBlockInfoAccessor accessor) throws IOException {
 		super(config.masterInsertReccrdsPerMin, config, random);
 		manager = PhoneBillDbManager.createPhoneBillDbManager(config);
 		testDataGenerator = new TestDataGenerator(config, new Random(config.randomSeed), accessor);
@@ -47,7 +46,7 @@ public class MasterInsertApp extends AbstractOnlineApp {
 	@Override
 	protected void updateDatabase() {
 		ContractDao dao = manager.getContractDao();
-		int ret = manager.execute(TgTmSettingDummy.getInstance(), () -> dao.batchInsert(contract));
+		int ret = manager.execute(TgTmSettingDummy.getInstance(), () -> dao.inserf(contract));
 		LOG.debug("ONLINE APP: Insert {} record to contracs(phoneNumber = {}, startDate = {}).", ret,
 				contract.phoneNumber, contract.startDate);
 	}

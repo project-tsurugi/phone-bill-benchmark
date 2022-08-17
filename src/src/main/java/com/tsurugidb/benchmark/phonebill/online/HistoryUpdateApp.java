@@ -1,7 +1,6 @@
 package com.tsurugidb.benchmark.phonebill.online;
 
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -13,8 +12,8 @@ import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.TgTmSettingDummy;
 import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
-import com.tsurugidb.benchmark.phonebill.db.entity.History;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract.Key;
+import com.tsurugidb.benchmark.phonebill.db.entity.History;
 import com.tsurugidb.benchmark.phonebill.testdata.CallTimeGenerator;
 import com.tsurugidb.benchmark.phonebill.testdata.ContractBlockInfoAccessor;
 import com.tsurugidb.benchmark.phonebill.testdata.ContractInfoReader;
@@ -32,7 +31,7 @@ public class HistoryUpdateApp extends AbstractOnlineApp {
 	private PhoneBillDbManager manager;
 
 	public HistoryUpdateApp(Config config, Random random, ContractBlockInfoAccessor accessor)
-			throws SQLException, IOException {
+			throws IOException {
 		super(config.historyUpdateRecordsPerMin, config, random);
 		this.callTimeGenerator = CallTimeGenerator.createCallTimeGenerator(random, config);
 		this.contractInfoReader = ContractInfoReader.create(config, accessor, random);
@@ -50,7 +49,6 @@ public class HistoryUpdateApp extends AbstractOnlineApp {
 	 *
 	 * @param key
 	 * @return
-	 * @throws SQLException
 	 */
 	List<History> getHistories(Key key) {
 		return manager.execute(TgTmSettingDummy.getInstance(), () -> historyDao.getHistories(key));

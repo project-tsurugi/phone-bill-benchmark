@@ -1,7 +1,6 @@
 package com.tsurugidb.benchmark.phonebill.online;
 
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -55,11 +54,10 @@ public class HistoryInsertApp extends AbstractOnlineApp {
 	 * @param seed
 	 * @param baseTime
 	 * @param duration
-	 * @throws SQLException
 	 * @throws IOException
 	 */
 	private HistoryInsertApp(PhoneBillDbManager manager,  ContractBlockInfoAccessor accessor, Config config, Random random, long baseTime,
-			int duration) throws SQLException, IOException {
+			int duration) throws IOException {
 		super(config.historyInsertTransactionPerMin, config, random);
 		this.manager = manager;
 		this.historyInsertRecordsPerTransaction = config.historyInsertRecordsPerTransaction;
@@ -81,10 +79,9 @@ public class HistoryInsertApp extends AbstractOnlineApp {
 	 * @param num
 	 * @return
 	 * @throws IOException
-	 * @throws SQLException
 	 */
 	public static List<AbstractOnlineApp> createHistoryInsertApps(PhoneBillDbManager manager, Config config,
-			Random random, ContractBlockInfoAccessor accessor, int num) throws SQLException, IOException {
+			Random random, ContractBlockInfoAccessor accessor, int num) throws IOException {
 		List<AbstractOnlineApp> list = new ArrayList<>();
 		if (num > 0) {
 			int duration = CREATE_SCHEDULE_INTERVAL_MILLS / num;
@@ -119,9 +116,8 @@ public class HistoryInsertApp extends AbstractOnlineApp {
 	 *
 	 * @param config
 	 * @return
-	 * @throws SQLException
 	 */
-	static long getBaseTime(PhoneBillDbManager manager, Config config) throws SQLException {
+	static long getBaseTime(PhoneBillDbManager manager, Config config) {
 		HistoryDao dao = manager.getHistoryDao();
 		long maxStartTime = manager.execute(TgTmSettingDummy.getInstance(), () -> dao.getMaxStartTime());
 		return Math.max(maxStartTime, DateUtils.nextDate(config.historyMaxDate).getTime());

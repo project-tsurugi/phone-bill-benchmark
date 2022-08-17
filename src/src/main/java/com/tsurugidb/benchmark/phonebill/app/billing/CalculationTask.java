@@ -1,7 +1,6 @@
 package com.tsurugidb.benchmark.phonebill.app.billing;
 
 import java.sql.Date;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -92,7 +91,6 @@ public class CalculationTask implements Callable<Exception> {
 	 * 料金計算のメインロジック
 	 *
 	 * @param target
-	 * @throws SQLException
 	 */
 	private void doCalc(CalculationTarget target) {
 		Contract contract = target.getContract();

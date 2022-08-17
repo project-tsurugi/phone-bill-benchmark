@@ -1,7 +1,6 @@
 package com.tsurugidb.benchmark.phonebill.online;
 
 import java.io.IOException;
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -78,7 +77,7 @@ public abstract class AbstractOnlineApp implements Runnable{
 	private String baseName;
 
 
-	public AbstractOnlineApp(int execPerMin, Config config, Random random) throws SQLException {
+	public AbstractOnlineApp(int execPerMin, Config config, Random random) {
 		this.execPerMin = execPerMin;
 		this.random = random;
 		skipDatabaseAccess = config.skipDatabaseAccess;
@@ -101,7 +100,7 @@ public abstract class AbstractOnlineApp implements Runnable{
 	 * createData()でデータを生成し、updateDatabase()で生成したデータを
 	 * DBに反映する。
 	 */
-	final void exec() throws SQLException, IOException {
+	final void exec() throws IOException {
 		createData();
 		if (!skipDatabaseAccess) {
 			updateDatabase();
@@ -110,14 +109,12 @@ public abstract class AbstractOnlineApp implements Runnable{
 
 	/**
 	 * DBに入れるデータを生成する
-	 * @throws SQLException
 	 * @throws IOException
 	 */
 	protected abstract void createData();
 
 	/**
 	 * createDataで生成したデータをDBに反映する
-	 * @throws SQLException
 	 * @throws IOException
 	 */
 	protected abstract void updateDatabase();
@@ -139,7 +136,7 @@ public abstract class AbstractOnlineApp implements Runnable{
 				schedule();
 			}
 			LOG.info("{} terminated.", name);
-		} catch (RuntimeException | SQLException | IOException  e) {
+		} catch (RuntimeException | IOException e) {
 			LOG.error("Aborting by exception", e);
 			System.exit(1);
 		}
@@ -147,10 +144,9 @@ public abstract class AbstractOnlineApp implements Runnable{
 
 	/**
 	 * スケジュールに従いexec()を呼び出す
-	 * @throws SQLException
 	 * @throws IOException
 	 */
-	private void schedule() throws SQLException, IOException {
+	private void schedule() throws IOException {
 		Long schedule = scheduleList.get(0);
 		if (System.currentTimeMillis() < schedule ) {
 			if (execPerMin > 0) {

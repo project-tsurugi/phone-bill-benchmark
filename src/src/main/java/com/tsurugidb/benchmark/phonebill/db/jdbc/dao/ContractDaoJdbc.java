@@ -27,21 +27,27 @@ public class ContractDaoJdbc implements ContractDao {
 	}
 
 	@Override
-	public int[] batchInsert(List<Contract> contracts) {
+	public int batchInsert(List<Contract> contracts) {
 		Connection conn = manager.getConnection();
 		try (PreparedStatement ps = conn.prepareStatement(SQL_INSERT);) {
 			for (Contract c : contracts) {
 				setPsToContract(c, ps);
 				ps.addBatch();
 			}
-			return ps.executeBatch();
+			int[] rets = ps.executeBatch();
+			for (int ret : rets) {
+				if (ret < 0 && ret != PreparedStatement.SUCCESS_NO_INFO) {
+					throw new RuntimeException("Fail to batch insert to contracts.");
+				}
+			}
+			return rets.length;
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
 	@Override
-	public int batchInsert(Contract c) {
+	public int inserf(Contract c) {
 		Connection conn = manager.getConnection();
 		try (PreparedStatement ps = conn.prepareStatement(SQL_INSERT);) {
 				setPsToContract(c, ps);
