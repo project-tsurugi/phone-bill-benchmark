@@ -24,6 +24,17 @@ public class ClientInfo {
 	private StatusChangeEventHandler statusChangeEventHandler;
 	private Instant start;
 
+	public ClientInfo(ClientInfo c) {
+		this.type = c.type;
+		this.status = c.status;
+		this.requestForClientQueue = c.requestForClientQueue;
+		this.messageFromClient = c.messageFromClient;
+		this.node = c.node;
+		this.statusChangeEventHandler = c.statusChangeEventHandler;
+		this.start = c.start;
+	}
+
+
 	public ClientInfo(ClientType type, StatusChangeEventHandler statusChangeEventHandler) {
 		this.type = type;
 		status = Status.INITIALIZING;

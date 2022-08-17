@@ -18,6 +18,8 @@ import com.tsurugidb.benchmark.phonebill.testdata.CreateTestData;
 import com.tsurugidb.benchmark.phonebill.testdata.DbContractBlockInfoInitializer;
 import com.tsurugidb.benchmark.phonebill.testdata.SingleProcessContractBlockManager;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 /**
  *
  *
@@ -83,6 +85,7 @@ public class RunOnlineApp extends ExecutableCommand {
 		}
 	}
 
+	@SuppressFBWarnings(value={"DMI_RANDOM_USED_ONLY_ONCE"})
 	private Result executeOnlineApps(Config config) throws Exception {
 		PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config);
 

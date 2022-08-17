@@ -158,7 +158,7 @@ public class ContractInfoReader {
 	 * アクティブなブロック番号のリストをロードする。
 	 * @throws IOException
 	 */
-	public void loadActiveBlockNumberList() throws IOException {
+	public final void loadActiveBlockNumberList() throws IOException {
 		LOG.info("Loading active block number list.");
 		blockInfos = contractBlockInfoAccessor.getActiveBlockInfo();
 	}

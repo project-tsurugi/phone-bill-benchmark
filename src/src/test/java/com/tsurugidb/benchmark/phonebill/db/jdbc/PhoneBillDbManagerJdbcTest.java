@@ -22,13 +22,16 @@ import java.sql.Struct;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -276,7 +279,7 @@ class PhoneBillDbManagerJdbcTest extends  AbstractPhoneBillDbManagerTest{
 		// Configの指定に従ったDBMSのコネクションが取得できること
 
 		Connection conn = managerPostgresql.getConnection();
-		assertTrue(conn.getClass().getName().toLowerCase().contains("postgresql"));
+		assertTrue(conn.getClass().getName().toLowerCase(Locale.ROOT).contains("postgresql"));
 
 		// 指定のIsorationLevelが設定されていること
 		Config config = configPostgresql.clone();
@@ -311,7 +314,7 @@ class PhoneBillDbManagerJdbcTest extends  AbstractPhoneBillDbManagerTest{
 		// Configの指定に従ったDBMSのコネクションが取得できること
 		Connection conn = managerOracle.getConnection();
 		assertTrue(conn.isValid(1));
-		assertTrue(conn.getClass().getName().toLowerCase().contains("oracle"));
+		assertTrue(conn.getClass().getName().toLowerCase(Locale.ROOT).contains("oracle"));
 
 		// 指定のIsorationLevelが設定されていること
 		Config config = configOracle.clone();
@@ -401,6 +404,7 @@ class PhoneBillDbManagerJdbcTest extends  AbstractPhoneBillDbManagerTest{
 	 */
 	private int createThreadAndCountConnections(Config config, int threads, SessionHoldingType type) {
 		int connectionCount;
+		List<Future<?>> futures = new ArrayList<>();
 		try (PhoneBillDbManagerJdbc manager = (PhoneBillDbManagerJdbc) PhoneBillDbManagerJdbc
 				.createPhoneBillDbManager(config, type)) {
 			ExecutorService service = Executors.newFixedThreadPool(threads);
@@ -410,7 +414,8 @@ class PhoneBillDbManagerJdbcTest extends  AbstractPhoneBillDbManagerTest{
 			for (int i = 0; i < threads; i++) {
 				Task task = new Task(manager);
 				tasks.add(task);
-				service.submit(task);
+				Future<?> f = service.submit(task);
+				futures.add(f);
 				task.waitForConnectionGet();
 				connections.add(task.connection);
 			}
@@ -436,13 +441,20 @@ class PhoneBillDbManagerJdbcTest extends  AbstractPhoneBillDbManagerTest{
 			});
 
 			tasks.stream().forEach(t -> t.end.countDown());
+			futures.stream().forEach(f -> {
+				try {
+					f.get();
+				} catch (InterruptedException | ExecutionException e) {
+					throw new RuntimeException(e);
+				}
+			});
 			service.shutdown();
 		}
 		return connectionCount;
 	}
 
 
-	private class Task implements Runnable {
+	private static class Task implements Runnable {
 		final PhoneBillDbManagerJdbc manager;
 		final CountDownLatch connectionGotten = new CountDownLatch(1);
 		final CountDownLatch end = new CountDownLatch(1);
@@ -840,7 +852,7 @@ class PhoneBillDbManagerJdbcTest extends  AbstractPhoneBillDbManagerTest{
 	 * ロールバックに失敗するケースのテストのためのテストクラス.
 	 * ロールバック時にコンストラクタで指定したExceptionをスローする。
 	 */
-	private class DbManagerRollbackFailure extends PhoneBillDbManagerPostgresql {
+	private static class DbManagerRollbackFailure extends PhoneBillDbManagerPostgresql {
 		RuntimeException e;
 
 		public DbManagerRollbackFailure(Config config, RuntimeException e) {

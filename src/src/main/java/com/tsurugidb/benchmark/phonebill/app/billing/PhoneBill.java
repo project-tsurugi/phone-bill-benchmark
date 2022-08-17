@@ -40,6 +40,8 @@ import com.tsurugidb.benchmark.phonebill.testdata.ContractBlockInfoAccessor;
 import com.tsurugidb.benchmark.phonebill.testdata.DbContractBlockInfoInitializer;
 import com.tsurugidb.benchmark.phonebill.testdata.SingleProcessContractBlockManager;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 public class PhoneBill extends ExecutableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(PhoneBill.class);
 
@@ -87,6 +89,7 @@ public class PhoneBill extends ExecutableCommand {
 	 * @throws SQLException
 	 * @throws IOException
 	 */
+	@SuppressFBWarnings(value={"DMI_RANDOM_USED_ONLY_ONCE"})
 	public static List<AbstractOnlineApp> createOnlineApps(Config config, ContractBlockInfoAccessor accessor)
 			throws SQLException, IOException {
 		PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config);

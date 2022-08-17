@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
@@ -37,7 +38,7 @@ public abstract class AbstractOnlineApp implements Runnable{
 	/**
 	 * 終了リクエストの有無を表すフラグ
 	 */
-	private volatile boolean terminationRequested = false;
+	private AtomicBoolean terminationRequested = new AtomicBoolean(false);
 
 	/*
 	 * 1分間に実行する回数、負数の場合は連続で実行する
@@ -134,11 +135,11 @@ public abstract class AbstractOnlineApp implements Runnable{
 			LOG.info("{} started.", name);
 			startTime = System.currentTimeMillis();
 			scheduleList.add(startTime);
-			while (!terminationRequested) {
+			while (!terminationRequested.get()) {
 				schedule();
 			}
 			LOG.info("{} terminated.", name);
-		} catch (Exception  e) {
+		} catch (RuntimeException | SQLException | IOException  e) {
 			LOG.error("Aborting by exception", e);
 			System.exit(1);
 		}
@@ -217,7 +218,7 @@ public abstract class AbstractOnlineApp implements Runnable{
 	 * このオンラインアプリケーションをアボートする
 	 */
 	public void terminate() {
-		terminationRequested = true;
+		terminationRequested.set(true);
 	}
 
 	/**

@@ -10,6 +10,8 @@ import org.slf4j.LoggerFactory;
 import com.tsurugidb.benchmark.phonebill.db.dao.Ddl;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.PhoneBillDbManagerJdbc;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 public abstract class DdlJdbc implements Ddl {
     protected static final Logger LOG = LoggerFactory.getLogger(DdlJdbc.class);
     private PhoneBillDbManagerJdbc managerJdbc;
@@ -48,16 +50,19 @@ public abstract class DdlJdbc implements Ddl {
 	}
 
 	@Override
+	@SuppressFBWarnings(value = "SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
 	public void truncateTable(String tableName) {
 		execute("truncate table " + tableName);
 	}
 
 	@Override
+	@SuppressFBWarnings(value = "SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
 	public void createBackTable(String tableName) {
 		execute("create table " + tableName + "_back as select * from " + tableName);
 	}
 
 	@Override
+	@SuppressFBWarnings(value = "SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
 	public int count(String tableName) {
 		try (Statement stmt = managerJdbc.getConnection().createStatement();
 				ResultSet rs = stmt.executeQuery("select count(*) from " + tableName)) {

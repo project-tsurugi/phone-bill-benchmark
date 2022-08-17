@@ -46,10 +46,11 @@ public class LoadTestDataCsvToPostgreSql extends ExecutableCommand {
 				Path dir = Paths.get(config.csvDir);
 				List<Path> contractsList = Collections.singletonList(CsvUtils.getContractsFilePath(dir));
 				List<Path> historyList = CsvUtils.getHistortyFilePaths(dir);
-				Statement stmt = manager.getConnection().createStatement();
-				doCopy(stmt, config, "contracts", contractsList);
-				doCopy(stmt, config, "history", historyList);
-				ddl.afterLoadData();
+				try (Statement stmt = manager.getConnection().createStatement()) {
+					doCopy(stmt, config, "contracts", contractsList);
+					doCopy(stmt, config, "history", historyList);
+					ddl.afterLoadData();
+				}
 			}
 		}
 	}

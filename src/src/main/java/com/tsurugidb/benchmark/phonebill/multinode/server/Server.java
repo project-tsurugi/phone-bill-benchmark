@@ -45,6 +45,8 @@ import com.tsurugidb.benchmark.phonebill.multinode.server.handler.UpdateStatus;
 import com.tsurugidb.benchmark.phonebill.testdata.DbContractBlockInfoInitializer;
 import com.tsurugidb.benchmark.phonebill.testdata.SingleProcessContractBlockManager;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 public class Server extends ExecutableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(Server.class);
 
@@ -133,6 +135,7 @@ public class Server extends ExecutableCommand {
 	 * クライアントからの接続要求を処理するタスク
 	 *
 	 */
+	@SuppressFBWarnings(value="RV_RETURN_VALUE_IGNORED_BAD_PRACTICE")
 	public class ListenerTask implements Runnable {
 		@Override
 		public void run() {
@@ -276,11 +279,11 @@ public class Server extends ExecutableCommand {
 			if (this.clientInfo != null) {
 				throw new RuntimeException("ClientInfo already setten.");
 			}
-			this.clientInfo = clientInfo;
+			this.clientInfo = new ClientInfo(clientInfo);
 			if (clientInfo.getType() != ClientType.COMMAND_LINE) {
-				clientInfo.setNode(socket.getInetAddress().getHostName());
-				clientInfo.setStart(Instant.now());
-				clientInfos.add(clientInfo);
+				this.clientInfo.setNode(socket.getInetAddress().getHostName());
+				this.clientInfo.setStart(Instant.now());
+				clientInfos.add(this.clientInfo);
 			}
 		}
 

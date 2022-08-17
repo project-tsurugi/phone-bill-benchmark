@@ -30,37 +30,6 @@ class OnlineAppClientTest {
 	@Test
 	final void testCreateStatusMessage() throws SQLException, IOException {
 
-		/**
-		 * createStatusMessag()のテストに使うAbstractOnlineAppの実装
-		 */
-		class TestApp extends AbstractOnlineApp {
-			private String baseName;
-			private int count;
-
-			public TestApp(String baseName, int count) throws SQLException, IOException {
-				super(0, Config.getConfig(), new Random());
-				this.baseName = baseName;
-				this.count = count;
-			}
-
-			@Override
-			protected void createData() {
-			}
-
-			@Override
-			protected void updateDatabase() {
-			}
-
-			@Override
-			public int getExecCount() {
-				return count;
-			}
-
-			@Override
-			public String getBaseName() {
-				return baseName;
-			}
-		}
 
 		List<AbstractOnlineApp> list = Arrays.asList(
 				new TestApp("Name-C", 21),
@@ -81,5 +50,35 @@ class OnlineAppClientTest {
 			assertEquals(expected, actual);
 	}
 
+	/**
+	 * createStatusMessag()のテストに使うAbstractOnlineAppの実装
+	 */
+	static class TestApp extends AbstractOnlineApp {
+		private String baseName;
+		private int count;
 
+		public TestApp(String baseName, int count) throws SQLException, IOException {
+			super(0, Config.getConfig(), new Random());
+			this.baseName = baseName;
+			this.count = count;
+		}
+
+		@Override
+		protected void createData() {
+		}
+
+		@Override
+		protected void updateDatabase() {
+		}
+
+		@Override
+		public int getExecCount() {
+			return count;
+		}
+
+		@Override
+		public String getBaseName() {
+			return baseName;
+		}
+	}
 }

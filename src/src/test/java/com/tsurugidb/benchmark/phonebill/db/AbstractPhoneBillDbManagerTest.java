@@ -15,8 +15,11 @@ import com.tsurugidb.benchmark.phonebill.testdata.ContractBlockInfoAccessor;
 import com.tsurugidb.benchmark.phonebill.testdata.SingleProcessContractBlockManager;
 import com.tsurugidb.benchmark.phonebill.testdata.TestDataGenerator;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
+@SuppressFBWarnings(value = "MS_CANNOT_BE_FINAL")
 public class AbstractPhoneBillDbManagerTest extends AbstractJdbcTestCase {
-	protected static String ORACLE_CONFIG_PATH = "src/test/config/oracle.properties";
+	protected static final String ORACLE_CONFIG_PATH = "src/test/config/oracle.properties";
 
 	protected static PhoneBillDbManagerJdbc managerOracle;
 	protected static PhoneBillDbManagerJdbc managerPostgresql;

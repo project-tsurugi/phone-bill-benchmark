@@ -27,7 +27,7 @@ class PhoneBillDbManagerTest extends AbstractPhoneBillDbManagerTest {
 	int rollbackCount = 0;
 
 	@Test
-	void TestCommitAndRollback() throws Exception {
+	void testCommitAndRollback() throws Exception {
 
 		Config config = Config.getConfig();
 		createTestData(config);
