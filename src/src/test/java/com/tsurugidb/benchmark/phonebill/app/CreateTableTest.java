@@ -108,13 +108,13 @@ class CreateTableTest extends AbstractJdbcTestCase {
 			assertEquals(contractsIndexSet, getIndexNameSet(conn,  contracts));
 
 			// インデックス削除されたことを確認
-			Ddl executor = createTable.getDdlExector();
-			executor.prepareLoadData();
+			Ddl ddl = manager.getDdl();
+			ddl.prepareLoadData();
 			assertEquals(Collections.EMPTY_SET, getIndexNameSet(conn,  history));
 			assertEquals(Collections.EMPTY_SET, getIndexNameSet(conn,  contracts));
 
 			// インデックスが復活したことを確認
-			executor.afterLoadData();
+			ddl.afterLoadData();
 			assertEquals(historyIndexSet, getIndexNameSet(conn,  history));
 			assertEquals(contractsIndexSet, getIndexNameSet(conn,  contracts));
 		}
@@ -148,7 +148,7 @@ class CreateTableTest extends AbstractJdbcTestCase {
 			// テーブルを作成
 			CreateTable createTable = new CreateTable();
 			createTable.execute(config);
-			Ddl executor = createTable.getDdlExector();
+			Ddl ddl = manager.getDdl();
 
 			String tableName = config.dbmsType == DbmsType.ORACLE_JDBC ? "HISTORY" : "history";
 
@@ -157,12 +157,12 @@ class CreateTableTest extends AbstractJdbcTestCase {
 			assertTrue(getIndexNameSet(conn,  tableName).contains("history_pkey"));
 
 			// インデックス、PK削除
-			executor.prepareLoadData();
+			ddl.prepareLoadData();
 			assertFalse(getIndexNameSet(conn,  tableName).contains("idx_df"));
 			assertFalse(getIndexNameSet(conn,  tableName).contains("history_pkey"));
 
 			// 2回呼んでもエラーにならない
-			executor.prepareLoadData();
+			ddl.prepareLoadData();
 			assertFalse(getIndexNameSet(conn,  tableName).contains("idx_df"));
 			assertFalse(getIndexNameSet(conn,  tableName).contains("history_pkey"));
 		}

@@ -48,14 +48,14 @@ class CalculationTargetTest {
 
 	@Test
 	final void testGetStart() {
-		Date date = DateUtils.toDate("2021-05-15 13:24:35");
+		Date date = DateUtils.toDate("2021-05-15");
 		assertEquals(date, new CalculationTarget(null, null, null, date, null, false).getStart());
 		assertEquals(null, new CalculationTarget(null, null, null, null, null, false).getStart());
 	}
 
 	@Test
 	final void testGetEnd() {
-		Date date = DateUtils.toDate("2021-05-15 13:24:35");
+		Date date = DateUtils.toDate("2021-05-15");
 		assertEquals(date, new CalculationTarget(null, null, null, null, date, false).getEnd());
 		assertEquals(null, new CalculationTarget(null, null, null, null, null, false).getEnd());
 	}

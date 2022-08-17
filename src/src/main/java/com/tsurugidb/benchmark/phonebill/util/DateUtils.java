@@ -2,34 +2,27 @@ package com.tsurugidb.benchmark.phonebill.util;
 
 import java.sql.Date;
 import java.sql.Timestamp;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
-public class DateUtils {
+public interface DateUtils {
 	/**
 	 * ミリ秒で表した1日
 	 */
 	public static final long A_DAY_IN_MILLISECONDS = 24 * 3600 * 1000;
 
-	private static  DateFormat DF_DATE = new SimpleDateFormat("yyyy-MM-dd");
-	private static  DateFormat DF_TIMESTAMP = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+	static  DateTimeFormatter DF_DATE = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+	static  DateTimeFormatter DF_TIMESTAMP = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
 
-	public static synchronized Date toDate(String date) {
-		try {
-			return new Date(DF_DATE.parse(date).getTime());
-		} catch (ParseException e) {
-			throw new RuntimeException(e);
-		}
+	static Date toDate(String date) {
+		LocalDate ld = LocalDate.parse(date, DF_DATE);
+		return Date.valueOf(ld);
 	}
 
-	public static synchronized Timestamp toTimestamp(String date) {
-		try {
-			return new Timestamp(DF_TIMESTAMP.parse(date).getTime());
-		} catch (ParseException e) {
-			throw new RuntimeException(e);
-		}
+	static Timestamp toTimestamp(String date) {
+		LocalDateTime ldt = LocalDateTime.parse(date, DF_TIMESTAMP);
+		return Timestamp.valueOf(ldt);
 	}
 
 	/**
@@ -39,7 +32,9 @@ public class DateUtils {
 	 * @return
 	 */
 	public static Date nextDate(Date date) {
-		return new Date(date.getTime() + DateUtils.A_DAY_IN_MILLISECONDS);
+		LocalDate localDate = date.toLocalDate();
+		localDate = localDate.plusDays(1);
+		return Date.valueOf(localDate);
 	}
 
 	/**

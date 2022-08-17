@@ -22,13 +22,4 @@ public class CreateTable extends ExecutableCommand{
 		ddl.createBillingTable();
 		ddl.createIndexes();
 	}
-
-	/**
-	 * UT専用、UT以外での使用禁止
-	 *
-	 * @return ddl
-	 */
-	Ddl getDdlExector() {
-		return ddl;
-	}
 }

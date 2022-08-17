@@ -2,24 +2,20 @@ package com.tsurugidb.benchmark.phonebill.util;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.text.ParseException;
-
 import org.junit.jupiter.api.Test;
 
 class DateUtilsTest {
 	@Test
 	void testToDate() {
 		assertEquals("2010-01-13", DateUtils.toDate("2010-01-13").toString());
-		RuntimeException e =  assertThrows(RuntimeException.class, () -> DateUtils.toDate("Bad String"));
-		assertEquals(ParseException.class, e.getCause().getClass());
+		assertThrows(RuntimeException.class, () -> DateUtils.toDate("Bad String"));
 	}
 
 	@Test
 	void testToTimestamp() {
 		assertEquals("2010-01-13 18:12:21.999", DateUtils.toTimestamp("2010-01-13 18:12:21.999").toString());
 		assertEquals("2010-01-13 18:12:21.0", DateUtils.toTimestamp("2010-01-13 18:12:21.000").toString());
-		RuntimeException e =  assertThrows(RuntimeException.class, () -> DateUtils.toTimestamp("Bad String"));
-		assertEquals(ParseException.class, e.getCause().getClass());
+		assertThrows(RuntimeException.class, () -> DateUtils.toTimestamp("Bad String"));
 	}
 
 	@Test
