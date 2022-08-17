@@ -22,13 +22,13 @@ import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract.Key;
-import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
 import com.tsurugidb.benchmark.phonebill.online.HistoryUpdateApp.Updater;
 import com.tsurugidb.benchmark.phonebill.testdata.AbstractContractBlockInfoInitializer;
 import com.tsurugidb.benchmark.phonebill.testdata.ContractBlockInfoAccessor;
 import com.tsurugidb.benchmark.phonebill.testdata.CreateTestData;
 import com.tsurugidb.benchmark.phonebill.testdata.DefaultContractBlockInfoInitializer;
 import com.tsurugidb.benchmark.phonebill.testdata.SingleProcessContractBlockManager;
+import com.tsurugidb.benchmark.phonebill.util.DateUtils;
 import com.tsurugidb.benchmark.phonebill.util.RandomStub;
 
 class HistoryUpdateAppTest extends AbstractJdbcTestCase {
@@ -167,7 +167,7 @@ class HistoryUpdateAppTest extends AbstractJdbcTestCase {
 	 */
 	Map<Key, List<History>> getContractHistoryMap(List<Contract> contracts, List<History> histories) throws SQLException {
 		// 通話履歴の開始時刻との比較を簡単にするため、契約のendDateを書き換える
-		contracts.stream().forEach( c -> c.endDate =  c.endDate == null ? DBUtils.toDate("2099-12-31") : DBUtils.nextDate(c.endDate));
+		contracts.stream().forEach( c -> c.endDate =  c.endDate == null ? DateUtils.toDate("2099-12-31") : DateUtils.nextDate(c.endDate));
 		Map<Key, List<History>> map = new HashMap<>();
 		for (Contract c : contracts) {
 			List<History> list = new ArrayList<History>();

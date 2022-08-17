@@ -15,18 +15,18 @@ import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.CreateTable;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
-import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
 import com.tsurugidb.benchmark.phonebill.testdata.ContractBlockInfoAccessor;
 import com.tsurugidb.benchmark.phonebill.testdata.SingleProcessContractBlockManager;
 import com.tsurugidb.benchmark.phonebill.testdata.TestDataGenerator;
+import com.tsurugidb.benchmark.phonebill.util.DateUtils;
 
 class MasterInsertAppTest extends AbstractJdbcTestCase {
 
 	@Test
 	void test() throws Exception {
 		Config config = Config.getConfig();
-		config.minDate = DBUtils.toDate("2010-01-11");
-		config.maxDate = DBUtils.toDate("2020-12-21");
+		config.minDate = DateUtils.toDate("2010-01-11");
+		config.maxDate = DateUtils.toDate("2020-12-21");
 		config.numberOfContractsRecords = 10;
 		config.expirationDateRate =3;
 		config.noExpirationDateRate = 3;

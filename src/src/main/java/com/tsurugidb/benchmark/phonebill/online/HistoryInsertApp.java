@@ -16,12 +16,12 @@ import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.TgTmSettingDummy;
 import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
-import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
 import com.tsurugidb.benchmark.phonebill.testdata.ContractBlockInfoAccessor;
 import com.tsurugidb.benchmark.phonebill.testdata.ContractInfoReader;
 import com.tsurugidb.benchmark.phonebill.testdata.GenerateHistoryTask;
 import com.tsurugidb.benchmark.phonebill.testdata.HistoryKey;
 import com.tsurugidb.benchmark.phonebill.testdata.TestDataGenerator;
+import com.tsurugidb.benchmark.phonebill.util.DateUtils;
 
 /**
  * 通話履歴を追加するオンラインアプリケーション.
@@ -124,7 +124,7 @@ public class HistoryInsertApp extends AbstractOnlineApp {
 	static long getBaseTime(PhoneBillDbManager manager, Config config) throws SQLException {
 		HistoryDao dao = manager.getHistoryDao();
 		long maxStartTime = manager.execute(TgTmSettingDummy.getInstance(), () -> dao.getMaxStartTime());
-		return Math.max(maxStartTime, DBUtils.nextDate(config.historyMaxDate).getTime());
+		return Math.max(maxStartTime, DateUtils.nextDate(config.historyMaxDate).getTime());
 	}
 
 

@@ -7,7 +7,7 @@ import java.sql.Date;
 import org.junit.jupiter.api.Test;
 
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
-import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
+import com.tsurugidb.benchmark.phonebill.util.DateUtils;
 
 class CalculationTargetTest {
 
@@ -48,14 +48,14 @@ class CalculationTargetTest {
 
 	@Test
 	final void testGetStart() {
-		Date date = DBUtils.toDate("2021-05-15 13:24:35");
+		Date date = DateUtils.toDate("2021-05-15 13:24:35");
 		assertEquals(date, new CalculationTarget(null, null, null, date, null, false).getStart());
 		assertEquals(null, new CalculationTarget(null, null, null, null, null, false).getStart());
 	}
 
 	@Test
 	final void testGetEnd() {
-		Date date = DBUtils.toDate("2021-05-15 13:24:35");
+		Date date = DateUtils.toDate("2021-05-15 13:24:35");
 		assertEquals(date, new CalculationTarget(null, null, null, null, date, false).getEnd());
 		assertEquals(null, new CalculationTarget(null, null, null, null, null, false).getEnd());
 	}

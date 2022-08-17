@@ -14,13 +14,13 @@ import java.util.TreeSet;
 import org.junit.jupiter.api.Test;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
-import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.Duration;
+import com.tsurugidb.benchmark.phonebill.util.DateUtils;
 
 
 class UniformPhoneNumberSelectorTest {
-	private static final Date DATE01 = DBUtils.toDate("2020-01-01");
-	private static final Date DATE02 = DBUtils.toDate("2020-02-02");
+	private static final Date DATE01 = DateUtils.toDate("2020-01-01");
+	private static final Date DATE02 = DateUtils.toDate("2020-02-02");
 
 	/**
 	 * getContractPos()のテスト

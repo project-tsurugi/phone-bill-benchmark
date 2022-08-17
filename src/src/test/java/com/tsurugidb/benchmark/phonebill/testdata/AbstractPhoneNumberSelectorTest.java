@@ -14,16 +14,16 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
-import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.Duration;
+import com.tsurugidb.benchmark.phonebill.util.DateUtils;
 
 class AbstractPhoneNumberSelectorTest {
-	private static final Date DATE01 = DBUtils.toDate("2020-01-01");
-	private static final Date DATE02 = DBUtils.toDate("2020-02-02");
-	private static final Date DATE03 = DBUtils.toDate("2020-03-03");
-	private static final Date DATE04 = DBUtils.toDate("2020-04-04");
-	private static final Date DATE05 = DBUtils.toDate("2020-05-05");
-	private static final Date DATE06 = DBUtils.toDate("2020-06-06");
+	private static final Date DATE01 = DateUtils.toDate("2020-01-01");
+	private static final Date DATE02 = DateUtils.toDate("2020-02-02");
+	private static final Date DATE03 = DateUtils.toDate("2020-03-03");
+	private static final Date DATE04 = DateUtils.toDate("2020-04-04");
+	private static final Date DATE05 = DateUtils.toDate("2020-05-05");
+	private static final Date DATE06 = DateUtils.toDate("2020-06-06");
 
 
 	/**

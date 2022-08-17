@@ -17,8 +17,8 @@ import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager.SessionHoldingType;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
-import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.PhoneBillDbManagerJdbc;
+import com.tsurugidb.benchmark.phonebill.util.DateUtils;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -126,7 +126,7 @@ public abstract class AbstractJdbcTestCase {
 		history.callerPhoneNumber = caller_phone_number;
 		history.recipientPhoneNumber = recipient_phone_number;
 		history.paymentCategorty = payment_categorty;
-		history.startTime = DBUtils.toTimestamp(start_time);
+		history.startTime = DateUtils.toTimestamp(start_time);
 		history.timeSecs = time_secs;
 		history.charge = charge;
 		history.df = df;

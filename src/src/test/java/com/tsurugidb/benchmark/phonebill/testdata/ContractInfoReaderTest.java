@@ -21,17 +21,17 @@ import org.junit.jupiter.api.Test;
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract.Key;
-import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.Duration;
+import com.tsurugidb.benchmark.phonebill.util.DateUtils;
 import com.tsurugidb.benchmark.phonebill.util.RandomStub;
 
 class ContractInfoReaderTest {
 	// TODO: 後から追加したメソッドのテストケースを作成する
 
-	private static final Date DATE01 = DBUtils.toDate("2020-01-01");
-	private static final Date DATE02 = DBUtils.toDate("2021-08-15");
-	private static final Date DATE03 = DBUtils.toDate("2010-01-01");
-	private static final Date DATE04 = DBUtils.toDate("2016-01-27");
+	private static final Date DATE01 = DateUtils.toDate("2020-01-01");
+	private static final Date DATE02 = DateUtils.toDate("2021-08-15");
+	private static final Date DATE03 = DateUtils.toDate("2010-01-01");
+	private static final Date DATE04 = DateUtils.toDate("2016-01-27");
 
 	/**
 	 * ContractBlockInfoAccessorのテスト用スタブ
@@ -335,12 +335,12 @@ class ContractInfoReaderTest {
 	 */
 	@Test
 	void tesGetDate3() throws IOException {
-		Date start = DBUtils.toDate("2020-11-30");
-		Date end = DBUtils.toDate("2020-12-02");
+		Date start = DateUtils.toDate("2020-11-30");
+		Date end = DateUtils.toDate("2020-12-02");
 		Set<Date> expected = new TreeSet<>(Arrays.asList(
-				DBUtils.toDate("2020-11-30"),
-				DBUtils.toDate("2020-12-01"),
-				DBUtils.toDate("2020-12-02")));
+				DateUtils.toDate("2020-11-30"),
+				DateUtils.toDate("2020-12-01"),
+				DateUtils.toDate("2020-12-02")));
 		Set<Date> actual = new TreeSet<>();
 
 		Config config = Config.getConfig();
@@ -358,16 +358,16 @@ class ContractInfoReaderTest {
 	 */
 	@Test
 	void tesGetDate7() throws IOException {
-		Date start = DBUtils.toDate("2020-11-30");
-		Date end = DBUtils.toDate("2020-12-06");
+		Date start = DateUtils.toDate("2020-11-30");
+		Date end = DateUtils.toDate("2020-12-06");
 		Set<Date> expected = new TreeSet<>(Arrays.asList(
-				DBUtils.toDate("2020-11-30"),
-				DBUtils.toDate("2020-12-01"),
-				DBUtils.toDate("2020-12-02"),
-				DBUtils.toDate("2020-12-03"),
-				DBUtils.toDate("2020-12-04"),
-				DBUtils.toDate("2020-12-05"),
-				DBUtils.toDate("2020-12-06")));
+				DateUtils.toDate("2020-11-30"),
+				DateUtils.toDate("2020-12-01"),
+				DateUtils.toDate("2020-12-02"),
+				DateUtils.toDate("2020-12-03"),
+				DateUtils.toDate("2020-12-04"),
+				DateUtils.toDate("2020-12-05"),
+				DateUtils.toDate("2020-12-06")));
 		Set<Date> actual = new TreeSet<>();
 
 		Config config = Config.getConfig();
@@ -387,18 +387,18 @@ class ContractInfoReaderTest {
 	@Test
 	void testInitDurationList() throws IOException {
 		// 通常ケース
-		testInitDurationLisSub(1, 3, 7, DBUtils.toDate("2010-11-11"), DBUtils.toDate("2020-01-01"));
-		testInitDurationLisSub(13, 5, 2, DBUtils.toDate("2010-11-11"), DBUtils.toDate("2020-01-01"));
+		testInitDurationLisSub(1, 3, 7, DateUtils.toDate("2010-11-11"), DateUtils.toDate("2020-01-01"));
+		testInitDurationLisSub(13, 5, 2, DateUtils.toDate("2010-11-11"), DateUtils.toDate("2020-01-01"));
 		// 一項目が0
-		testInitDurationLisSub(3, 7, 0, DBUtils.toDate("2010-11-11"), DBUtils.toDate("2020-01-01"));
-		testInitDurationLisSub(3, 0, 5, DBUtils.toDate("2010-11-11"), DBUtils.toDate("2020-01-01"));
-		testInitDurationLisSub(0, 7, 5, DBUtils.toDate("2010-11-11"), DBUtils.toDate("2020-01-01"));
+		testInitDurationLisSub(3, 7, 0, DateUtils.toDate("2010-11-11"), DateUtils.toDate("2020-01-01"));
+		testInitDurationLisSub(3, 0, 5, DateUtils.toDate("2010-11-11"), DateUtils.toDate("2020-01-01"));
+		testInitDurationLisSub(0, 7, 5, DateUtils.toDate("2010-11-11"), DateUtils.toDate("2020-01-01"));
 		// 二項目が0
-		testInitDurationLisSub(0, 7, 0, DBUtils.toDate("2010-11-11"), DBUtils.toDate("2020-01-01"));
-		testInitDurationLisSub(3, 0, 0, DBUtils.toDate("2010-11-11"), DBUtils.toDate("2020-01-01"));
-		testInitDurationLisSub(0, 0, 5, DBUtils.toDate("2010-11-11"), DBUtils.toDate("2020-01-01"));
+		testInitDurationLisSub(0, 7, 0, DateUtils.toDate("2010-11-11"), DateUtils.toDate("2020-01-01"));
+		testInitDurationLisSub(3, 0, 0, DateUtils.toDate("2010-11-11"), DateUtils.toDate("2020-01-01"));
+		testInitDurationLisSub(0, 0, 5, DateUtils.toDate("2010-11-11"), DateUtils.toDate("2020-01-01"));
 		// startの翌日=endのケース
-		testInitDurationLisSub(13, 5, 2, DBUtils.toDate("2019-12-31"), DBUtils.toDate("2020-01-01"));
+		testInitDurationLisSub(13, 5, 2, DateUtils.toDate("2019-12-31"), DateUtils.toDate("2020-01-01"));
 
 	}
 

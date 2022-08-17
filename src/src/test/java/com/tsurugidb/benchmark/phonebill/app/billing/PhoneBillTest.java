@@ -26,7 +26,6 @@ import com.tsurugidb.benchmark.phonebill.db.entity.Billing;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
 import com.tsurugidb.benchmark.phonebill.db.entity.History.Key;
-import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.Duration;
 import com.tsurugidb.benchmark.phonebill.online.AbstractOnlineApp;
 import com.tsurugidb.benchmark.phonebill.online.HistoryInsertApp;
@@ -38,6 +37,7 @@ import com.tsurugidb.benchmark.phonebill.testdata.ContractBlockInfoAccessor;
 import com.tsurugidb.benchmark.phonebill.testdata.CreateTestData;
 import com.tsurugidb.benchmark.phonebill.testdata.DefaultContractBlockInfoInitializer;
 import com.tsurugidb.benchmark.phonebill.testdata.SingleProcessContractBlockManager;
+import com.tsurugidb.benchmark.phonebill.util.DateUtils;
 
 class PhoneBillTest extends AbstractJdbcTestCase {
     private static final Logger LOG = LoggerFactory.getLogger(PhoneBillTest.class);
@@ -52,7 +52,7 @@ class PhoneBillTest extends AbstractJdbcTestCase {
 		phoneBill.config = config;
 
 		// データが存在しない状態での料金計算
-		phoneBill.doCalc(DBUtils.toDate("2020-11-01"), DBUtils.toDate("2020-11-30"));
+		phoneBill.doCalc(DateUtils.toDate("2020-11-01"), DateUtils.toDate("2020-11-30"));
 		assertEquals(0, getBillings().size());
 
 		// 契約マスタにテストデータをセット
@@ -68,7 +68,7 @@ class PhoneBillTest extends AbstractJdbcTestCase {
 
 
 		// 通話履歴がない状態での料金計算
-		phoneBill.doCalc(DBUtils.toDate("2020-11-01"), DBUtils.toDate("2020-11-30"));
+		phoneBill.doCalc(DateUtils.toDate("2020-11-01"), DateUtils.toDate("2020-11-30"));
 		List<Billing> billings = getBillings();
 		assertEquals(5, billings.size());
 		assertEquals(toBilling("Phone-0001", "2020-11-01", 3000, 0, 3000), billings.get(0));
@@ -89,7 +89,7 @@ class PhoneBillTest extends AbstractJdbcTestCase {
 		insertToHistory("Phone-0005", "Phone-0001", "C", "2020-11-10 00:00:00.000", 250, 0);  	// 計算対象
 		insertToHistory("Phone-0005", "Phone-0008", "R", "2020-11-30 00:00:00.000", 30, 0);  	// 計算対象(受信者負担)
 
-		phoneBill.doCalc(DBUtils.toDate("2020-11-01"), DBUtils.toDate("2020-11-30"));
+		phoneBill.doCalc(DateUtils.toDate("2020-11-01"), DateUtils.toDate("2020-11-30"));
 		billings = getBillings();
 		assertEquals(5, billings.size());
 		assertEquals(toBilling("Phone-0001", "2020-11-01", 3000, 30, 3000), billings.get(0));
@@ -116,7 +116,7 @@ class PhoneBillTest extends AbstractJdbcTestCase {
         // Phone-0001が先に処理されテーブルが更新されるが、Phone-005の処理でExceptionが発生し、処理全体がロールバックされる
 		insertToHistory("Phone-0001", "Phone-0008", "C", "2020-11-01 00:30:00.000", 30, 0);  	// 計算対象
 		insertToHistory("Phone-0005", "Phone-0001", "C", "2020-11-10 01:00:00.000", -1, 0);  	// 通話時間が負数なのでExceptionがスローされる
-		phoneBill.doCalc( DBUtils.toDate("2020-11-01"), DBUtils.toDate("2020-11-30"));
+		phoneBill.doCalc( DateUtils.toDate("2020-11-01"), DateUtils.toDate("2020-11-30"));
 		billings = getBillings();
 		assertEquals(5, billings.size());
 		assertEquals(toBilling("Phone-0001", "2020-11-01", 3000, 30, 3000), billings.get(0));
@@ -141,7 +141,7 @@ class PhoneBillTest extends AbstractJdbcTestCase {
 		// Exceptionの原因となるレコードを削除して再実行
 		String sql = "delete from history where caller_phone_number = 'Phone-0005' and start_time = '2020-11-10 01:00:00'";
 		getStmt().execute(sql);
-		phoneBill.doCalc( DBUtils.toDate("2020-11-01"), DBUtils.toDate("2020-11-30"));
+		phoneBill.doCalc( DateUtils.toDate("2020-11-01"), DateUtils.toDate("2020-11-30"));
 		billings = getBillings();
 		assertEquals(5, billings.size());
 		assertEquals(toBilling("Phone-0001", "2020-11-01", 3000, 40, 3000), billings.get(0));
@@ -165,7 +165,7 @@ class PhoneBillTest extends AbstractJdbcTestCase {
 		// 論理削除フラグを立てたレコードが計算対象外になることの確認
 		sql = "update history set df = 1 where caller_phone_number = 'Phone-0001' and start_time = '2020-11-30 23:59:59.999'";
 		getStmt().execute(sql);
-		phoneBill.doCalc( DBUtils.toDate("2020-11-01"), DBUtils.toDate("2020-11-30"));
+		phoneBill.doCalc( DateUtils.toDate("2020-11-01"), DateUtils.toDate("2020-11-30"));
 		billings = getBillings();
 		assertEquals(5, billings.size());
 		assertEquals(toBilling("Phone-0001", "2020-11-01", 3000, 20, 3000), billings.get(0));
@@ -209,7 +209,7 @@ class PhoneBillTest extends AbstractJdbcTestCase {
 			int billingAmount) {
 		Billing billing = new Billing();
 		billing.phoneNumber = phoneNumber;
-		billing.targetMonth = DBUtils.toDate(targetMonth);
+		billing.targetMonth = DateUtils.toDate(targetMonth);
 		billing.basicCharge = basicCharge;
 		billing.meteredCharge = meteredCharge;
 		billing.billingAmount = billingAmount;
@@ -230,11 +230,11 @@ class PhoneBillTest extends AbstractJdbcTestCase {
 		String sql = "insert into contracts(phone_number, start_date, end_date, charge_rule) values(?, ?, ?, ?)";
 		try (PreparedStatement ps = getConn().prepareStatement(sql)) {
 			ps.setString(1, phoneNumber);
-			ps.setDate(2, DBUtils.toDate(startDate));
+			ps.setDate(2, DateUtils.toDate(startDate));
 			if (endDate == null) {
 				ps.setNull(3, Types.DATE);
 			} else {
-				ps.setDate(3, DBUtils.toDate(endDate));
+				ps.setDate(3, DateUtils.toDate(endDate));
 			}
 			ps.setString(4, chargeRule);
 			int c = ps.executeUpdate();
@@ -260,7 +260,7 @@ class PhoneBillTest extends AbstractJdbcTestCase {
 			ps.setString(1, caller_phone_number);
 			ps.setString(2, recipient_phone_number);
 			ps.setString(3, payment_categorty);
-			ps.setTimestamp(4, DBUtils.toTimestamp(start_time));
+			ps.setTimestamp(4, DateUtils.toTimestamp(start_time));
 			ps.setInt(5, time_secs);
 			ps.setNull(6, Types.INTEGER);
 			ps.setInt(7, df);
@@ -277,17 +277,17 @@ class PhoneBillTest extends AbstractJdbcTestCase {
 	void testToDuration() {
 		Duration d;
 
-		d = PhoneBill.toDuration(DBUtils.toDate("2020-12-01"));
-		assertEquals(DBUtils.toDate("2020-12-01"), d.getStatDate());
-		assertEquals(DBUtils.toDate("2020-12-31"), d.getEndDate());
+		d = PhoneBill.toDuration(DateUtils.toDate("2020-12-01"));
+		assertEquals(DateUtils.toDate("2020-12-01"), d.getStatDate());
+		assertEquals(DateUtils.toDate("2020-12-31"), d.getEndDate());
 
-		d = PhoneBill.toDuration(DBUtils.toDate("2020-12-31"));
-		assertEquals(DBUtils.toDate("2020-12-01"), d.getStatDate());
-		assertEquals(DBUtils.toDate("2020-12-31"), d.getEndDate());
+		d = PhoneBill.toDuration(DateUtils.toDate("2020-12-31"));
+		assertEquals(DateUtils.toDate("2020-12-01"), d.getStatDate());
+		assertEquals(DateUtils.toDate("2020-12-31"), d.getEndDate());
 
-		d = PhoneBill.toDuration(DBUtils.toDate("2021-02-05"));
-		assertEquals(DBUtils.toDate("2021-02-01"), d.getStatDate());
-		assertEquals(DBUtils.toDate("2021-02-28"), d.getEndDate());
+		d = PhoneBill.toDuration(DateUtils.toDate("2021-02-05"));
+		assertEquals(DateUtils.toDate("2021-02-01"), d.getStatDate());
+		assertEquals(DateUtils.toDate("2021-02-28"), d.getEndDate());
 
 	}
 

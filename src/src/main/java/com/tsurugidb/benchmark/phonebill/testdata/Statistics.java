@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
-import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
+import com.tsurugidb.benchmark.phonebill.util.DateUtils;
 
 /**
  * 電話番号、および通話時間に関する統計情報を生成する.
@@ -54,7 +54,7 @@ public class Statistics {
 
 	public Statistics(Date minDate, Date maxDate) {
 		this.startDate = minDate.getTime();
-		this.endDate = DBUtils.nextDate(maxDate).getTime();
+		this.endDate = DateUtils.nextDate(maxDate).getTime();
 	}
 
 

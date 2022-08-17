@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test;
 import com.tsurugidb.benchmark.phonebill.app.Config.DbmsType;
 import com.tsurugidb.benchmark.phonebill.app.Config.DistributionFunction;
 import com.tsurugidb.benchmark.phonebill.app.Config.TransactionScope;
-import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
+import com.tsurugidb.benchmark.phonebill.util.DateUtils;
 
 class ConfigTest {
 	private static String NOT_DEFALUT_CONFIG_PATH = "src/test/config/not-default.properties";
@@ -178,15 +178,15 @@ class ConfigTest {
 	 */
 	private void checkDefault(Config config) throws IOException {
 		// 料金計算に関するパラメータ
-		assertEquals(DBUtils.toDate("2020-12-01"), config.targetMonth);
+		assertEquals(DateUtils.toDate("2020-12-01"), config.targetMonth);
 
 		/* 契約マスタ生成に関するパラメータ */
 		assertEquals((int) 1e3, config.numberOfContractsRecords);
 		assertEquals(10, config.duplicatePhoneNumberRate);
 		assertEquals(30, config.expirationDateRate);
 		assertEquals(50, config.noExpirationDateRate);
-		assertEquals(DBUtils.toDate("2010-11-11"), config.minDate);
-		assertEquals(DBUtils.toDate("2021-03-01"), config.maxDate);
+		assertEquals(DateUtils.toDate("2010-11-11"), config.minDate);
+		assertEquals(DateUtils.toDate("2021-03-01"), config.maxDate);
 
 		/* 通話履歴生成に関するパラメータ */
 		assertEquals(1000, config.numberOfHistoryRecords);
@@ -201,8 +201,8 @@ class ConfigTest {
 		assertEquals(1.5d, config.callTimeShape);
 		assertEquals(3600, config.maxCallTimeSecs);
 		assertEquals(null, config.statisticsOutputDir);
-		assertEquals(DBUtils.toDate("2020-11-01"), config.historyMinDate);
-		assertEquals(DBUtils.toDate("2021-01-10"), config.historyMaxDate);
+		assertEquals(DateUtils.toDate("2020-11-01"), config.historyMinDate);
+		assertEquals(DateUtils.toDate("2021-01-10"), config.historyMaxDate);
 
 		/* JDBCに関するパラメータ */
 		assertEquals("jdbc:postgresql://127.0.0.1/phonebill", config.url);
@@ -255,15 +255,15 @@ class ConfigTest {
 	 */
 	private void checkConfig(Config config) throws IOException {
 		// 料金計算に関するパラメータ
-		assertEquals(DBUtils.toDate("2030-12-01"), config.targetMonth);
+		assertEquals(DateUtils.toDate("2030-12-01"), config.targetMonth);
 
 		/* 契約マスタ生成に関するパラメータ */
 		assertEquals((int) 1e4, config.numberOfContractsRecords);
 		assertEquals(100, config.duplicatePhoneNumberRate);
 		assertEquals(300, config.expirationDateRate);
 		assertEquals(500, config.noExpirationDateRate);
-		assertEquals(DBUtils.toDate("2020-11-11"), config.minDate);
-		assertEquals(DBUtils.toDate("2031-03-01"), config.maxDate);
+		assertEquals(DateUtils.toDate("2020-11-11"), config.minDate);
+		assertEquals(DateUtils.toDate("2031-03-01"), config.maxDate);
 
 		/* 通話履歴生成に関するパラメータ */
 		assertEquals((int) 1e7, config.numberOfHistoryRecords);
@@ -278,8 +278,8 @@ class ConfigTest {
 		assertEquals(8.5d, config.callTimeShape);
 		assertEquals(1192, config.maxCallTimeSecs);
 		assertEquals("/tmp/statistics", config.statisticsOutputDir);
-		assertEquals(DBUtils.toDate("2010-11-01"), config.historyMinDate);
-		assertEquals(DBUtils.toDate("2011-01-10"), config.historyMaxDate);
+		assertEquals(DateUtils.toDate("2010-11-01"), config.historyMinDate);
+		assertEquals(DateUtils.toDate("2011-01-10"), config.historyMaxDate);
 
 		/* Oracle固有のパラメータ */
 		assertEquals(22, config.oracleInitran);

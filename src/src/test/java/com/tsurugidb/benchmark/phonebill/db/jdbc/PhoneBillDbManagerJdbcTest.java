@@ -503,6 +503,7 @@ class PhoneBillDbManagerJdbcTest extends  AbstractPhoneBillDbManagerTest{
 		// リフレクションを使用してコネクションのリストを取得
 		Field field = PhoneBillDbManagerJdbc.class.getDeclaredField("connectionList");
 		field.setAccessible(true);
+		@SuppressWarnings("unchecked")
 		List<Connection> list = (List<Connection>) field.get(manager);
 
 		// クローズ時にSQLExceptionをスローするテスト用のコネクションをセット

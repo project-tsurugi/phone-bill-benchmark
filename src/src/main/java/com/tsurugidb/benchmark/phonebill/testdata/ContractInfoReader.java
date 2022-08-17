@@ -12,8 +12,8 @@ import org.slf4j.LoggerFactory;
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract.Key;
-import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.Duration;
+import com.tsurugidb.benchmark.phonebill.util.DateUtils;
 
 /**
  * 契約マスタの情報を取得するためのクラス
@@ -310,8 +310,8 @@ public class ContractInfoReader {
 		}
 		// 同一電話番号の契約が複数あるパターン用のduration
 		for (int i = 0; i < config.duplicatePhoneNumberRate; i++) {
-			Date end = getDate(config.minDate, DBUtils.previousMonthLastDay(config.maxDate), random);
-			Date start = getDate(DBUtils.nextMonth(end), config.maxDate, random);
+			Date end = getDate(config.minDate, DateUtils.previousMonthLastDay(config.maxDate), random);
+			Date start = getDate(DateUtils.nextMonth(end), config.maxDate, random);
 			list.add(new Duration(config.minDate, end));
 			list.add(new Duration(start, null));
 		}
@@ -327,8 +327,8 @@ public class ContractInfoReader {
 	 * @return
 	 */
 	static Date getDate(Date min, Date max, Random random) {
-		int days = (int) ((max.getTime() - min.getTime()) / DBUtils.A_DAY_IN_MILLISECONDS);
-		long offset = random.nextInt(days + 1) * DBUtils.A_DAY_IN_MILLISECONDS;
+		int days = (int) ((max.getTime() - min.getTime()) / DateUtils.A_DAY_IN_MILLISECONDS);
+		long offset = random.nextInt(days + 1) * DateUtils.A_DAY_IN_MILLISECONDS;
 		return new Date(min.getTime() + offset);
 	}
 
@@ -340,7 +340,7 @@ public class ContractInfoReader {
 	 * @return
 	 */
 	private static Date getHistoryInsertAppStartTimeDate(Config config) {
-		return DBUtils.nextDate(config.maxDate);
+		return DateUtils.nextDate(config.maxDate);
 	}
 
 

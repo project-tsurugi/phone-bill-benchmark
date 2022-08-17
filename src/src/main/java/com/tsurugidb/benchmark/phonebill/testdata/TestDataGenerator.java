@@ -34,10 +34,10 @@ import com.tsurugidb.benchmark.phonebill.db.dao.ContractDao;
 import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
-import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.Duration;
 import com.tsurugidb.benchmark.phonebill.testdata.GenerateHistoryTask.Params;
 import com.tsurugidb.benchmark.phonebill.testdata.GenerateHistoryTask.Result;
+import com.tsurugidb.benchmark.phonebill.util.DateUtils;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -488,7 +488,7 @@ public class TestDataGenerator {
 		if (minDate.getTime() > maxDate.getTime()) {
 			return false;
 		}
-		for (Date date = minDate; date.getTime() <= maxDate.getTime(); date = DBUtils.nextDate(date)) {
+		for (Date date = minDate; date.getTime() <= maxDate.getTime(); date = DateUtils.nextDate(date)) {
 			int c = 0;
 			for (Duration duration : list) {
 				long start = duration.start;

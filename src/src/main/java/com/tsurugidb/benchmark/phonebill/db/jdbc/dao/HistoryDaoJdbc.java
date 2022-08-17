@@ -16,8 +16,8 @@ import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract.Key;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
-import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.PhoneBillDbManagerJdbc;
+import com.tsurugidb.benchmark.phonebill.util.DateUtils;
 
 public class HistoryDaoJdbc implements HistoryDao {
 	private final PhoneBillDbManagerJdbc manager;
@@ -201,7 +201,7 @@ public class HistoryDaoJdbc implements HistoryDao {
 
 		try (PreparedStatement psSelect = conn.prepareStatement(sql)) {
 			psSelect.setDate(1, start);
-			psSelect.setDate(2, DBUtils.nextDate(end));
+			psSelect.setDate(2, DateUtils.nextDate(end));
 			psSelect.setString(3, contract.phoneNumber);
 			psSelect.setString(4, contract.phoneNumber);
 			try (ResultSet rs = psSelect.executeQuery()) {

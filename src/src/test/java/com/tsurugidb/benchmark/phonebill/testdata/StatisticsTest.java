@@ -10,15 +10,15 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
-import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
 import com.tsurugidb.benchmark.phonebill.testdata.Statistics.Counter;
+import com.tsurugidb.benchmark.phonebill.util.DateUtils;
 
 class StatisticsTest {
 	private static final String LS = System.lineSeparator();
 
 	@Test
 	void test() throws IOException {
-		Statistics s = new Statistics(DBUtils.toDate("2020-10-31"), DBUtils.toDate("2020-11-01"));
+		Statistics s = new Statistics(DateUtils.toDate("2020-10-31"), DateUtils.toDate("2020-11-01"));
 		s.addHistoy(createHistory(1, 5, "2020-10-30 23:59:59.999", 10, "C"));
 		s.addHistoy(createHistory(2, 5, "2020-10-31 00:00:00.000", 10, "C"));
 		s.addHistoy(createHistory(31, 8, "2020-10-31 23:59:59.999", 1, "C"));
@@ -128,7 +128,7 @@ class StatisticsTest {
 		h.callerPhoneNumber = toPhoneNumber(callerPhoneNumber);
 		h.recipientPhoneNumber = toPhoneNumber(recipientPhoneNumber);
 		h.timeSecs = timeSec;
-		h.startTime = DBUtils.toTimestamp(startTime);
+		h.startTime = DateUtils.toTimestamp(startTime);
 		h.paymentCategorty = paymentCategorty;
 		return h;
 	}

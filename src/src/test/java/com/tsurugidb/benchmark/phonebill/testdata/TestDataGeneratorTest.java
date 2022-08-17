@@ -30,9 +30,9 @@ import com.tsurugidb.benchmark.phonebill.AbstractJdbcTestCase;
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.CreateTable;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
-import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.Duration;
 import com.tsurugidb.benchmark.phonebill.testdata.GenerateHistoryTask.Params;
+import com.tsurugidb.benchmark.phonebill.util.DateUtils;
 import com.tsurugidb.benchmark.phonebill.util.PathUtils;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -94,7 +94,7 @@ class TestDataGeneratorTest extends AbstractJdbcTestCase {
 	}
 
 	boolean isValidDurationListSub(List<Duration> list, String start, String end) {
-		return TestDataGenerator.isValidDurationList(list, DBUtils.toDate(start), DBUtils.toDate(end));
+		return TestDataGenerator.isValidDurationList(list, DateUtils.toDate(start), DateUtils.toDate(end));
 	}
 
 
@@ -107,8 +107,8 @@ class TestDataGeneratorTest extends AbstractJdbcTestCase {
 		new CreateTable().execute(Config.getConfig());
 
 		Config config = Config.getConfig();
-		config.minDate = DBUtils.toDate("2010-01-11");
-		config.maxDate = DBUtils.toDate("2020-12-21");
+		config.minDate = DateUtils.toDate("2010-01-11");
+		config.maxDate = DateUtils.toDate("2020-12-21");
 		config.numberOfContractsRecords = 10000;
 		config.expirationDateRate =5;
 		config.noExpirationDateRate = 11;
@@ -201,7 +201,7 @@ class TestDataGeneratorTest extends AbstractJdbcTestCase {
 	}
 
 	private Duration toDuration(String start, String end) {
-		return new Duration(DBUtils.toDate(start), DBUtils.toDate(end));
+		return new Duration(DateUtils.toDate(start), DateUtils.toDate(end));
 	}
 
 

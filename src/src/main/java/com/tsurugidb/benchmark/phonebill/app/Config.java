@@ -14,7 +14,7 @@ import java.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
+import com.tsurugidb.benchmark.phonebill.util.DateUtils;
 
 public class Config implements Cloneable {
 	/**
@@ -377,15 +377,15 @@ public class Config implements Cloneable {
 	 */
 	private void init() {
 		// 料金計算に関するパラメータ
-		targetMonth = getDate(TARGET_MONTH, DBUtils.toDate("2020-12-01"));
+		targetMonth = getDate(TARGET_MONTH, DateUtils.toDate("2020-12-01"));
 
 		// 契約マスタ生成に関するパラメータ
 		numberOfContractsRecords = getInt(NUMBER_OF_CONTRACTS_RECORDS, 1000);
 		duplicatePhoneNumberRate = getInt(DUPLICATE_PHONE_NUMBER_RATIO, 10);
 		expirationDateRate = getInt(EXPIRATION_DATE_RATE, 30);
 		noExpirationDateRate = getInt(NO_EXPIRATION_DATE_RATE, 50);
-		minDate = getDate(MIN_DATE, DBUtils.toDate("2010-11-11"));
-		maxDate = getDate(MAX_DATE, DBUtils.toDate("2021-03-01"));
+		minDate = getDate(MIN_DATE, DateUtils.toDate("2010-11-11"));
+		maxDate = getDate(MAX_DATE, DateUtils.toDate("2021-03-01"));
 
 		// 通話履歴生成に関するパラメータ
 		numberOfHistoryRecords = getLong(NUMBER_OF_HISTORY_RECORDS, 1000);
@@ -400,8 +400,8 @@ public class Config implements Cloneable {
 		callTimeShape = getDouble(CALL_TIME_SHAPE, 1.5d);
 		maxCallTimeSecs = getInt(MAX_CALL_TIME_SECS, 3600);
 		statisticsOutputDir  = getString(STATISTICS_OUTPUT_DIR, null);
-		historyMinDate = getDate(HISTORY_MIN_DATE, DBUtils.toDate("2020-11-01"));
-		historyMaxDate = getDate(HISTORY_MAX_DATE, DBUtils.toDate("2021-01-10"));
+		historyMinDate = getDate(HISTORY_MIN_DATE, DateUtils.toDate("2020-11-01"));
+		historyMaxDate = getDate(HISTORY_MAX_DATE, DateUtils.toDate("2021-01-10"));
 
 		// JDBCに関するパラメータ
 		url = getString(URL, "jdbc:postgresql://127.0.0.1/phonebill");
@@ -661,7 +661,7 @@ public class Config implements Cloneable {
 		Date value = defaultValue;
 		if (prop.containsKey(key)) {
 			String s = prop.getProperty(key);
-			value = DBUtils.toDate(s);
+			value = DateUtils.toDate(s);
 		}
 		return value;
 	}

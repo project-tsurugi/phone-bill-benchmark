@@ -17,13 +17,13 @@ import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.CreateTable;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
-import com.tsurugidb.benchmark.phonebill.db.jdbc.DBUtils;
 import com.tsurugidb.benchmark.phonebill.testdata.AbstractContractBlockInfoInitializer;
 import com.tsurugidb.benchmark.phonebill.testdata.ContractBlockInfoAccessor;
 import com.tsurugidb.benchmark.phonebill.testdata.CreateTestData;
 import com.tsurugidb.benchmark.phonebill.testdata.DefaultContractBlockInfoInitializer;
 import com.tsurugidb.benchmark.phonebill.testdata.HistoryKey;
 import com.tsurugidb.benchmark.phonebill.testdata.SingleProcessContractBlockManager;
+import com.tsurugidb.benchmark.phonebill.util.DateUtils;
 
 class HistoryInsertAppTest extends AbstractJdbcTestCase {
 	private Config config = null;
@@ -126,7 +126,7 @@ class HistoryInsertAppTest extends AbstractJdbcTestCase {
 	@Test
 	void testCreateHistoryInsertApps() throws Exception {
 		// 初期データだけの場合、baseTimeは、config.historyMaxDateの翌日0時になる
-		testCreateHistoryInsertAppsSub(config, DBUtils.nextDate(config.historyMaxDate).getTime());
+		testCreateHistoryInsertAppsSub(config, DateUtils.nextDate(config.historyMaxDate).getTime());
 
 		// historyInsertAppによるテストデータを投入
 		AbstractOnlineApp app = HistoryInsertApp.createHistoryInsertApps(manager, config, new Random(), accessor, 1).get(0);
