@@ -6,7 +6,7 @@ import java.util.Random;
  * テストデータ生成に使用するUtilクラス
  *
  */
-public class TestDataUtils {
+public interface TestDataUtils {
 	/**
 	 * 指定の乱数生成器を使用してmin以上max未満のランダムなlong値を取得する
 	 *
