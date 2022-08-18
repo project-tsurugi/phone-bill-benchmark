@@ -32,15 +32,12 @@ class DbContractBlockInfoInitializerTest extends AbstractJdbcTestCase {
 	}
 	private static PhoneNumberGenerator generator = new PhoneNumberGenerator(config);
 
-	private void initDb() throws Exception {
+	private void initDb(PhoneBillDbManager manager) throws Exception {
 		// テストデータの投入
 		truncateTable("contracts");
 		ContractBlockInfoAccessor accessor = new SingleProcessContractBlockManager();
 		TestDataGenerator generator = new TestDataGenerator(config, new Random(), accessor);
-		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
-			generator.generateContractsToDb(manager);
-
-		}
+		generator.generateContractsToDb(manager);
 	}
 
 
@@ -55,147 +52,132 @@ class DbContractBlockInfoInitializerTest extends AbstractJdbcTestCase {
 		executeSql(sql);
 	}
 
-
 	@Test
 	final void test() throws Exception {
 		DbContractBlockInfoInitializer initializer = new DbContractBlockInfoInitializer(config);
+		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
+			// 完全なブロックのみ存在するケース
+			initDb(manager);
+			initializer.init();
+			assertEquals(5, initializer.numberOfBlocks);
+			assertEquals(Collections.emptySet(), initializer.waitingBlocks);
+			assertEquals(5, initializer.activeBlockNumberHolder.getNumberOfActiveBlacks());
+			assertEquals(Collections.emptyList(), initializer.activeBlockNumberHolder.getActiveBlocks());
+			assertEquals(4, initializer.activeBlockNumberHolder.getMaximumBlockNumberOfFirstConsecutiveActiveBlock());
 
-		// 完全なブロックのみ存在するケース
-		initDb();
-		initializer.init();
-		assertEquals(5, initializer.numberOfBlocks);
-		assertEquals(Collections.emptySet(), initializer.waitingBlocks);
-		assertEquals(5, initializer.activeBlockNumberHolder.getNumberOfActiveBlacks());
-		assertEquals(Collections.emptyList(), initializer.activeBlockNumberHolder.getActiveBlocks());
-		assertEquals(4, initializer.activeBlockNumberHolder.getMaximumBlockNumberOfFirstConsecutiveActiveBlock());
+			// 最初のブロックの最初の電話番号の契約が欠損しているケース
+			initDb(manager);
+			delete(0);
+			initializer.init();
+			assertEquals(5, initializer.numberOfBlocks);
+			assertEquals(Collections.singleton(0), initializer.waitingBlocks);
+			assertEquals(4, initializer.activeBlockNumberHolder.getNumberOfActiveBlacks());
+			assertEquals(Arrays.asList(1, 2, 3, 4), initializer.activeBlockNumberHolder.getActiveBlocks());
+			assertEquals(-1, initializer.activeBlockNumberHolder.getMaximumBlockNumberOfFirstConsecutiveActiveBlock());
 
-		// 完全なブロックのみ存在するケース
-		initDb();
-		initializer.init();
-		assertEquals(5, initializer.numberOfBlocks);
-		assertEquals(Collections.emptySet(), initializer.waitingBlocks);
-		assertEquals(5, initializer.activeBlockNumberHolder.getNumberOfActiveBlacks());
-		assertEquals(Collections.emptyList(), initializer.activeBlockNumberHolder.getActiveBlocks());
-		assertEquals(4, initializer.activeBlockNumberHolder.getMaximumBlockNumberOfFirstConsecutiveActiveBlock());
+			// 最初のブロックの中間のの電話番号の契約が欠損しているケース
+			initDb(manager);
+			delete(50);
+			initializer.init();
+			assertEquals(5, initializer.numberOfBlocks);
+			assertEquals(Collections.singleton(0), initializer.waitingBlocks);
+			assertEquals(4, initializer.activeBlockNumberHolder.getNumberOfActiveBlacks());
+			assertEquals(Arrays.asList(1, 2, 3, 4), initializer.activeBlockNumberHolder.getActiveBlocks());
+			assertEquals(-1, initializer.activeBlockNumberHolder.getMaximumBlockNumberOfFirstConsecutiveActiveBlock());
 
-		// 最初のブロックの最初の電話番号の契約が欠損しているケース
-		initDb();
-		delete(0);
-		initializer.init();
-		assertEquals(5, initializer.numberOfBlocks);
-		assertEquals(Collections.singleton(0), initializer.waitingBlocks);
-		assertEquals(4, initializer.activeBlockNumberHolder.getNumberOfActiveBlacks());
-		assertEquals(Arrays.asList(1, 2, 3, 4), initializer.activeBlockNumberHolder.getActiveBlocks());
-		assertEquals(-1, initializer.activeBlockNumberHolder.getMaximumBlockNumberOfFirstConsecutiveActiveBlock());
+			// 最初のブロックの最後の電話番号の契約が欠損しているケース
+			initDb(manager);
+			delete(99);
+			initializer.init();
+			assertEquals(5, initializer.numberOfBlocks);
+			assertEquals(Collections.singleton(0), initializer.waitingBlocks);
+			assertEquals(4, initializer.activeBlockNumberHolder.getNumberOfActiveBlacks());
+			assertEquals(Arrays.asList(1, 2, 3, 4), initializer.activeBlockNumberHolder.getActiveBlocks());
+			assertEquals(-1, initializer.activeBlockNumberHolder.getMaximumBlockNumberOfFirstConsecutiveActiveBlock());
 
-		// 最初のブロックの中間のの電話番号の契約が欠損しているケース
-		initDb();
-		delete(50);
-		initializer.init();
-		assertEquals(5, initializer.numberOfBlocks);
-		assertEquals(Collections.singleton(0), initializer.waitingBlocks);
-		assertEquals(4, initializer.activeBlockNumberHolder.getNumberOfActiveBlacks());
-		assertEquals(Arrays.asList(1, 2, 3, 4), initializer.activeBlockNumberHolder.getActiveBlocks());
-		assertEquals(-1, initializer.activeBlockNumberHolder.getMaximumBlockNumberOfFirstConsecutiveActiveBlock());
+			// ２番目のブロックの最初の電話番号の契約が欠損しているケース
+			initDb(manager);
+			delete(100);
+			initializer.init();
+			assertEquals(5, initializer.numberOfBlocks);
+			assertEquals(Collections.singleton(1), initializer.waitingBlocks);
+			assertEquals(4, initializer.activeBlockNumberHolder.getNumberOfActiveBlacks());
+			assertEquals(Arrays.asList(2, 3, 4), initializer.activeBlockNumberHolder.getActiveBlocks());
+			assertEquals(0, initializer.activeBlockNumberHolder.getMaximumBlockNumberOfFirstConsecutiveActiveBlock());
 
+			// ２番目のブロックの中間のの電話番号の契約が欠損しているケース
+			initDb(manager);
+			delete(150);
+			initializer.init();
+			assertEquals(5, initializer.numberOfBlocks);
+			assertEquals(Collections.singleton(1), initializer.waitingBlocks);
+			assertEquals(4, initializer.activeBlockNumberHolder.getNumberOfActiveBlacks());
+			assertEquals(Arrays.asList(2, 3, 4), initializer.activeBlockNumberHolder.getActiveBlocks());
+			assertEquals(0, initializer.activeBlockNumberHolder.getMaximumBlockNumberOfFirstConsecutiveActiveBlock());
 
-		// 最初のブロックの最後の電話番号の契約が欠損しているケース
-		initDb();
-		delete(99);
-		initializer.init();
-		assertEquals(5, initializer.numberOfBlocks);
-		assertEquals(Collections.singleton(0), initializer.waitingBlocks);
-		assertEquals(4, initializer.activeBlockNumberHolder.getNumberOfActiveBlacks());
-		assertEquals(Arrays.asList(1, 2, 3, 4), initializer.activeBlockNumberHolder.getActiveBlocks());
-		assertEquals(-1, initializer.activeBlockNumberHolder.getMaximumBlockNumberOfFirstConsecutiveActiveBlock());
+			// ２番目のブロックの最後の電話番号の契約が欠損しているケース
+			initDb(manager);
+			delete(199);
+			initializer.init();
+			assertEquals(5, initializer.numberOfBlocks);
+			assertEquals(Collections.singleton(1), initializer.waitingBlocks);
+			assertEquals(4, initializer.activeBlockNumberHolder.getNumberOfActiveBlacks());
+			assertEquals(Arrays.asList(2, 3, 4), initializer.activeBlockNumberHolder.getActiveBlocks());
+			assertEquals(0, initializer.activeBlockNumberHolder.getMaximumBlockNumberOfFirstConsecutiveActiveBlock());
 
-		// ２番目のブロックの最初の電話番号の契約が欠損しているケース
-		initDb();
-		delete(100);
-		initializer.init();
-		assertEquals(5, initializer.numberOfBlocks);
-		assertEquals(Collections.singleton(1), initializer.waitingBlocks);
-		assertEquals(4, initializer.activeBlockNumberHolder.getNumberOfActiveBlacks());
-		assertEquals(Arrays.asList(2, 3, 4), initializer.activeBlockNumberHolder.getActiveBlocks());
-		assertEquals(0, initializer.activeBlockNumberHolder.getMaximumBlockNumberOfFirstConsecutiveActiveBlock());
+			// 最後のブロックの最初の電話番号の契約が欠損しているケース
+			initDb(manager);
+			delete(400);
+			initializer.init();
+			assertEquals(5, initializer.numberOfBlocks);
+			assertEquals(Collections.singleton(4), initializer.waitingBlocks);
+			assertEquals(4, initializer.activeBlockNumberHolder.getNumberOfActiveBlacks());
+			assertEquals(Collections.emptyList(), initializer.activeBlockNumberHolder.getActiveBlocks());
+			assertEquals(3, initializer.activeBlockNumberHolder.getMaximumBlockNumberOfFirstConsecutiveActiveBlock());
 
-		// ２番目のブロックの中間のの電話番号の契約が欠損しているケース
-		initDb();
-		delete(150);
-		initializer.init();
-		assertEquals(5, initializer.numberOfBlocks);
-		assertEquals(Collections.singleton(1), initializer.waitingBlocks);
-		assertEquals(4, initializer.activeBlockNumberHolder.getNumberOfActiveBlacks());
-		assertEquals(Arrays.asList(2, 3, 4), initializer.activeBlockNumberHolder.getActiveBlocks());
-		assertEquals(0, initializer.activeBlockNumberHolder.getMaximumBlockNumberOfFirstConsecutiveActiveBlock());
+			// 最後のブロックの中間のの電話番号の契約が欠損しているケース
+			initDb(manager);
+			delete(450);
+			initializer.init();
+			assertEquals(5, initializer.numberOfBlocks);
+			assertEquals(Collections.singleton(4), initializer.waitingBlocks);
+			assertEquals(4, initializer.activeBlockNumberHolder.getNumberOfActiveBlacks());
+			assertEquals(Collections.emptyList(), initializer.activeBlockNumberHolder.getActiveBlocks());
+			assertEquals(3, initializer.activeBlockNumberHolder.getMaximumBlockNumberOfFirstConsecutiveActiveBlock());
 
+			// 最後のブロックの最後の電話番号の契約が欠損しているケース
+			initDb(manager);
+			delete(499);
+			initializer.init();
+			assertEquals(5, initializer.numberOfBlocks);
+			assertEquals(Collections.singleton(4), initializer.waitingBlocks);
+			assertEquals(4, initializer.activeBlockNumberHolder.getNumberOfActiveBlacks());
+			assertEquals(Collections.emptyList(), initializer.activeBlockNumberHolder.getActiveBlocks());
+			assertEquals(3, initializer.activeBlockNumberHolder.getMaximumBlockNumberOfFirstConsecutiveActiveBlock());
 
-		// ２番目のブロックの最後の電話番号の契約が欠損しているケース
-		initDb();
-		delete(199);
-		initializer.init();
-		assertEquals(5, initializer.numberOfBlocks);
-		assertEquals(Collections.singleton(1), initializer.waitingBlocks);
-		assertEquals(4, initializer.activeBlockNumberHolder.getNumberOfActiveBlacks());
-		assertEquals(Arrays.asList(2, 3, 4), initializer.activeBlockNumberHolder.getActiveBlocks());
-		assertEquals(0, initializer.activeBlockNumberHolder.getMaximumBlockNumberOfFirstConsecutiveActiveBlock());
+			// 複数のブロックの電話番号の契約が欠損しているケース
+			initDb(manager);
+			delete(125);
+			delete(332);
+			initializer.init();
+			assertEquals(5, initializer.numberOfBlocks);
+			assertEquals(new HashSet<Integer>(Arrays.asList(1, 3)), initializer.waitingBlocks);
+			assertEquals(3, initializer.activeBlockNumberHolder.getNumberOfActiveBlacks());
+			assertEquals(Arrays.asList(2, 4), initializer.activeBlockNumberHolder.getActiveBlocks());
+			assertEquals(0, initializer.activeBlockNumberHolder.getMaximumBlockNumberOfFirstConsecutiveActiveBlock());
 
-		// 最後のブロックの最初の電話番号の契約が欠損しているケース
-		initDb();
-		delete(400);
-		initializer.init();
-		assertEquals(5, initializer.numberOfBlocks);
-		assertEquals(Collections.singleton(4), initializer.waitingBlocks);
-		assertEquals(4, initializer.activeBlockNumberHolder.getNumberOfActiveBlacks());
-		assertEquals(Collections.emptyList(), initializer.activeBlockNumberHolder.getActiveBlocks());
-		assertEquals(3, initializer.activeBlockNumberHolder.getMaximumBlockNumberOfFirstConsecutiveActiveBlock());
-
-		// 最後のブロックの中間のの電話番号の契約が欠損しているケース
-		initDb();
-		delete(450);
-		initializer.init();
-		assertEquals(5, initializer.numberOfBlocks);
-		assertEquals(Collections.singleton(4), initializer.waitingBlocks);
-		assertEquals(4, initializer.activeBlockNumberHolder.getNumberOfActiveBlacks());
-		assertEquals(Collections.emptyList(), initializer.activeBlockNumberHolder.getActiveBlocks());
-		assertEquals(3, initializer.activeBlockNumberHolder.getMaximumBlockNumberOfFirstConsecutiveActiveBlock());
-
-
-		// 最後のブロックの最後の電話番号の契約が欠損しているケース
-		initDb();
-		delete(499);
-		initializer.init();
-		assertEquals(5, initializer.numberOfBlocks);
-		assertEquals(Collections.singleton(4), initializer.waitingBlocks);
-		assertEquals(4, initializer.activeBlockNumberHolder.getNumberOfActiveBlacks());
-		assertEquals(Collections.emptyList(), initializer.activeBlockNumberHolder.getActiveBlocks());
-		assertEquals(3, initializer.activeBlockNumberHolder.getMaximumBlockNumberOfFirstConsecutiveActiveBlock());
-
-		// 複数のブロックの電話番号の契約が欠損しているケース
-		initDb();
-		delete(125);
-		delete(332);
-		initializer.init();
-		assertEquals(5, initializer.numberOfBlocks);
-		assertEquals(new HashSet<Integer>(Arrays.asList(1, 3)), initializer.waitingBlocks);
-		assertEquals(3, initializer.activeBlockNumberHolder.getNumberOfActiveBlacks());
-		assertEquals(Arrays.asList(2, 4), initializer.activeBlockNumberHolder.getActiveBlocks());
-		assertEquals(0, initializer.activeBlockNumberHolder.getMaximumBlockNumberOfFirstConsecutiveActiveBlock());
-
-		// 同一ブロックの複数の電話番号の契約が欠損しているケース
-		initDb();
-		delete(125);
-		delete(178);
-		delete(300);
-		delete(332);
-		initializer.init();
-		assertEquals(5, initializer.numberOfBlocks);
-		assertEquals(new HashSet<Integer>(Arrays.asList(1, 3)), initializer.waitingBlocks);
-		assertEquals(3, initializer.activeBlockNumberHolder.getNumberOfActiveBlacks());
-		assertEquals(Arrays.asList(2, 4), initializer.activeBlockNumberHolder.getActiveBlocks());
-		assertEquals(0, initializer.activeBlockNumberHolder.getMaximumBlockNumberOfFirstConsecutiveActiveBlock());
-
-
+			// 同一ブロックの複数の電話番号の契約が欠損しているケース
+			initDb(manager);
+			delete(125);
+			delete(178);
+			delete(300);
+			delete(332);
+			initializer.init();
+			assertEquals(5, initializer.numberOfBlocks);
+			assertEquals(new HashSet<Integer>(Arrays.asList(1, 3)), initializer.waitingBlocks);
+			assertEquals(3, initializer.activeBlockNumberHolder.getNumberOfActiveBlacks());
+			assertEquals(Arrays.asList(2, 4), initializer.activeBlockNumberHolder.getActiveBlocks());
+			assertEquals(0, initializer.activeBlockNumberHolder.getMaximumBlockNumberOfFirstConsecutiveActiveBlock());
+		}
 	}
-
 }

@@ -217,20 +217,17 @@ public class TestDataGenerator {
 	 * @param manager
 	 */
 	public void generateContractsToDb(PhoneBillDbManager manager) {
-		manager.execute(TgTmSettingDummy.getInstance(), () -> {
-			int batchSize = 0;
-			List<Contract> contracts = new ArrayList<>(SQL_BATCH_EXEC_SIZE);
-			for (long n = 0; n < config.numberOfContractsRecords; n++) {
-				Contract c = getNewContract().clone();
-				contracts.add(c);
-				if (++batchSize == SQL_BATCH_EXEC_SIZE) {
-					insertContracts(manager, contracts);
-				}
+		int batchSize = 0;
+		List<Contract> contracts = new ArrayList<>(SQL_BATCH_EXEC_SIZE);
+		for (long n = 0; n < config.numberOfContractsRecords; n++) {
+			Contract c = getNewContract().clone();
+			contracts.add(c);
+			if (++batchSize == SQL_BATCH_EXEC_SIZE) {
+				insertContracts(manager, contracts);
 			}
-			insertContracts(manager, contracts);
-		});
+		}
+		insertContracts(manager, contracts);
 	}
-
 
 	/**
 	 * DAOを使用してContractテーブルにデータを入れる

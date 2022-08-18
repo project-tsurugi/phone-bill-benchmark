@@ -31,25 +31,27 @@ public class DbContractBlockInfoInitializer extends AbstractContractBlockInfoIni
 		int blockSize = ContractInfoReader.getContractBlockSize(config);
 
 		// Contractsテーブルをフルスキャンしてブロック情報を作成する
-		PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config);
-		ContractDao dao = manager.getContractDao();
-		List<String> phoneNumbers = manager.execute(TgTmSettingDummy.getInstance(), ()->dao.getAllPhoneNumbers());
+		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
+			ContractDao dao = manager.getContractDao();
+			List<String> phoneNumbers = manager.execute(TgTmSettingDummy.getInstance(), () -> dao.getAllPhoneNumbers());
 
-		int blockNumber = 0;
-		int recordsInBlock = 0;
-		long topPhoneNumberOfNextBlock = blockSize;
-		for (String s : phoneNumbers) {
-			long phoneNumber = Long.parseLong(s);
-			while (phoneNumber >= topPhoneNumberOfNextBlock) {
-				checkBlockFilled(blockSize, blockNumber, recordsInBlock);
-				blockNumber++;
-				recordsInBlock = 0;
-				topPhoneNumberOfNextBlock = phoneNumberGenerator.getPhoneNumberAsLong((blockNumber + 1) * blockSize);
+			int blockNumber = 0;
+			int recordsInBlock = 0;
+			long topPhoneNumberOfNextBlock = blockSize;
+			for (String s : phoneNumbers) {
+				long phoneNumber = Long.parseLong(s);
+				while (phoneNumber >= topPhoneNumberOfNextBlock) {
+					checkBlockFilled(blockSize, blockNumber, recordsInBlock);
+					blockNumber++;
+					recordsInBlock = 0;
+					topPhoneNumberOfNextBlock = phoneNumberGenerator
+							.getPhoneNumberAsLong((blockNumber + 1) * blockSize);
+				}
+				recordsInBlock++;
 			}
-			recordsInBlock++;
+			checkBlockFilled(blockSize, blockNumber, recordsInBlock);
+			numberOfBlocks = blockNumber + 1;
 		}
-		checkBlockFilled(blockSize, blockNumber, recordsInBlock);
-		numberOfBlocks = blockNumber + 1;
 	}
 
 	/**
