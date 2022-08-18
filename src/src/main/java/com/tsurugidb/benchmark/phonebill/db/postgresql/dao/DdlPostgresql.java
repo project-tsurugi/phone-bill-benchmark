@@ -24,6 +24,7 @@ public class DdlPostgresql extends DdlJdbc {
 		execute(create_table);
 	}
 
+	@Override
 	public void prepareLoadData() {
 			long startTime = System.currentTimeMillis();
 			execute("truncate table history");
@@ -42,6 +43,7 @@ public class DdlPostgresql extends DdlJdbc {
 	}
 
 	@SuppressFBWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
+	@Override
 	public void createIndexes() {
 		long startTime = System.currentTimeMillis();
 		executeWithLogging("create index idx_df on history(df)");
@@ -78,6 +80,7 @@ public class DdlPostgresql extends DdlJdbc {
 	}
 
 	@SuppressFBWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
+	@Override
 	public void updateStatistics() {
 		long startTime = System.currentTimeMillis();
 		execute("analyze history");

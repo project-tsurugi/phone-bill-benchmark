@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeAll;
 import com.tsurugidb.benchmark.phonebill.AbstractJdbcTestCase;
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.CreateTable;
+import com.tsurugidb.benchmark.phonebill.db.iceaxe.PhoneBillDbManagerIceaxe;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.PhoneBillDbManagerJdbc;
 import com.tsurugidb.benchmark.phonebill.testdata.ContractBlockInfoAccessor;
 import com.tsurugidb.benchmark.phonebill.testdata.SingleProcessContractBlockManager;
@@ -20,18 +21,23 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 @SuppressFBWarnings(value = "MS_CANNOT_BE_FINAL")
 public class AbstractPhoneBillDbManagerTest extends AbstractJdbcTestCase {
 	protected static final String ORACLE_CONFIG_PATH = "src/test/config/oracle.properties";
+	protected static final String ICEAXE_CONFIG_PATH = "src/test/config/iceaxe.properties";
 
 	protected static PhoneBillDbManagerJdbc managerOracle;
 	protected static PhoneBillDbManagerJdbc managerPostgresql;
+	protected static PhoneBillDbManagerIceaxe managerIceaxe;
 	protected static Config configOracle;
 	protected static Config configPostgresql;
+	protected static Config configIceaxe;
 
 	@BeforeAll
 	static void beforeAllTests() throws IOException {
 		configOracle = Config.getConfig(ORACLE_CONFIG_PATH);
 		configPostgresql = Config.getConfig();
+		configIceaxe = Config.getConfig(ICEAXE_CONFIG_PATH);
 		managerOracle = (PhoneBillDbManagerJdbc) PhoneBillDbManager.createPhoneBillDbManager(configOracle);
-		managerPostgresql = (PhoneBillDbManagerJdbc) PhoneBillDbManagerJdbc.createPhoneBillDbManager(configPostgresql);
+		managerPostgresql = (PhoneBillDbManagerJdbc) PhoneBillDbManager.createPhoneBillDbManager(configPostgresql);
+		managerIceaxe = (PhoneBillDbManagerIceaxe) PhoneBillDbManager.createPhoneBillDbManager(configIceaxe);
 	}
 
 	@AfterAll

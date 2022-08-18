@@ -11,9 +11,10 @@ import java.util.function.Supplier;
 import org.junit.jupiter.api.Test;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
-import com.tsurugidb.benchmark.phonebill.app.Config.DbmsType;
 import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
+import com.tsurugidb.benchmark.phonebill.db.iceaxe.PhoneBillDbManagerIceaxe;
+import com.tsurugidb.benchmark.phonebill.db.iceaxe.dao.DdlIceaxe;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.PhoneBillDbManagerJdbc;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.dao.BillingDaoJdbc;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.dao.ContractDaoJdbc;
@@ -136,6 +137,7 @@ class PhoneBillDbManagerTest extends AbstractPhoneBillDbManagerTest {
 	void testGetDdl() {
 		doTestGet(DdlPostgresql.class, ()->managerPostgresql.getDdl());
 		doTestGet(DdlOracle.class, ()->managerOracle.getDdl());
+		doTestGet(DdlIceaxe.class, ()->managerIceaxe.getDdl());
 	}
 
 	@Test
@@ -158,21 +160,13 @@ class PhoneBillDbManagerTest extends AbstractPhoneBillDbManagerTest {
 
 	@Test
 	void testCreatePhoneBillDbManager() throws IOException {
-		Config config = Config.getConfig();
+		assertEquals(PhoneBillDbManagerOracle.class, PhoneBillDbManager.createPhoneBillDbManager(configOracle).getClass());
 
-		config.dbmsType = DbmsType.ORACLE_JDBC;
-		assertEquals(PhoneBillDbManagerOracle.class , PhoneBillDbManager.createPhoneBillDbManager(config).getClass());
+		assertEquals(PhoneBillDbManagerPostgresql.class,
+				PhoneBillDbManager.createPhoneBillDbManager(configPostgresql).getClass());
 
-
-		config.dbmsType = DbmsType.POSTGRE_SQL_JDBC;
-		assertEquals(PhoneBillDbManagerPostgresql.class , PhoneBillDbManager.createPhoneBillDbManager(config).getClass());
-
-
-		config.dbmsType = DbmsType.ICEAXE;
-		UnsupportedOperationException e =
-		assertThrows(UnsupportedOperationException.class,
-				() -> PhoneBillDbManager.createPhoneBillDbManager(config).getClass());
-		assertEquals("unsupported dbms type: OTHER", e.getMessage());
+		assertEquals(PhoneBillDbManagerIceaxe.class,
+				PhoneBillDbManager.createPhoneBillDbManager(configIceaxe).getClass());
 	}
 
 }

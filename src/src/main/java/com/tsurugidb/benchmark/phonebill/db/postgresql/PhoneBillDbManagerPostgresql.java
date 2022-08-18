@@ -10,7 +10,7 @@ import com.tsurugidb.benchmark.phonebill.db.jdbc.PhoneBillDbManagerJdbc;
 import com.tsurugidb.benchmark.phonebill.db.postgresql.dao.DdlPostgresql;
 
 public class PhoneBillDbManagerPostgresql extends PhoneBillDbManagerJdbc {
-	private Ddl ddlLExecutor;
+	private Ddl ddl;
 	private Config config;
 
 	public PhoneBillDbManagerPostgresql(Config config, SessionHoldingType type) {
@@ -41,10 +41,10 @@ public class PhoneBillDbManagerPostgresql extends PhoneBillDbManagerJdbc {
 
 	@Override
 	public synchronized Ddl getDdl() {
-		if (ddlLExecutor == null) {
-			ddlLExecutor = new DdlPostgresql(this);
+		if (ddl == null) {
+			ddl = new DdlPostgresql(this);
 		}
-		return ddlLExecutor;
+		return ddl;
 	}
 
 	@Override

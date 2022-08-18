@@ -12,7 +12,7 @@ import oracle.ucp.jdbc.PoolDataSource;
 import oracle.ucp.jdbc.PoolDataSourceFactory;
 
 public class PhoneBillDbManagerOracle extends PhoneBillDbManagerJdbc {
-	private Ddl ddlLExecutor;
+	private Ddl ddl;
 	private Config config;
 
 	public PhoneBillDbManagerOracle(Config config, SessionHoldingType type) {
@@ -47,10 +47,10 @@ public class PhoneBillDbManagerOracle extends PhoneBillDbManagerJdbc {
 
 	@Override
 	public synchronized Ddl getDdl() {
-		if (ddlLExecutor == null) {
-			ddlLExecutor = new DdlOracle(this, config);
+		if (ddl == null) {
+			ddl = new DdlOracle(this, config);
 		}
-		return ddlLExecutor;
+		return ddl;
 	}
 
 	@Override

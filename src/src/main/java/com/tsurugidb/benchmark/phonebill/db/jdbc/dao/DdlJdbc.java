@@ -20,7 +20,7 @@ public abstract class DdlJdbc implements Ddl {
 		this.managerJdbc = managerJdbc;
 	}
 
-
+	@Override
 	public void createContractsTable() {
 		String create_table = "create table contracts ("
 				+ "phone_number varchar(15) not null," 		// 電話番号
@@ -31,6 +31,7 @@ public abstract class DdlJdbc implements Ddl {
 		execute(create_table);
 	}
 
+	@Override
 	public void createBillingTable() {
 		String create_table = "create table billing ("
 				+ "phone_number varchar(15) not null," 					// 電話番号
@@ -44,6 +45,7 @@ public abstract class DdlJdbc implements Ddl {
 		execute(create_table);
 	}
 
+	@Override
 	public void afterLoadData() {
 		createIndexes();
 		updateStatistics();

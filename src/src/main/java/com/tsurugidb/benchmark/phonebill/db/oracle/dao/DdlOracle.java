@@ -16,6 +16,7 @@ public class DdlOracle extends DdlJdbc {
 		this.config = config;
 	}
 
+	@Override
 	public void createHistoryTable() {
 		String create_table = "create table history ("
 				+ "caller_phone_number varchar(15) not null," 		// 発信者電話番号
@@ -32,6 +33,7 @@ public class DdlOracle extends DdlJdbc {
 		execute(create_table);
 	}
 
+	@Override
 	public void prepareLoadData() {
 		long startTime = System.currentTimeMillis();
 		execute("truncate table history");
@@ -92,6 +94,7 @@ public class DdlOracle extends DdlJdbc {
 		execute("drop index " + index, 1418);
 	}
 
+	@Override
 	public void updateStatistics() {
 		long startTime = System.currentTimeMillis();
 		execute("{call DBMS_STATS.GATHER_SCHEMA_STATS(ownname => '" + config.user
