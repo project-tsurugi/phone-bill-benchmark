@@ -168,7 +168,7 @@ class PhoneBillDbManagerTest extends AbstractPhoneBillDbManagerTest {
 		assertEquals(PhoneBillDbManagerPostgresql.class , PhoneBillDbManager.createPhoneBillDbManager(config).getClass());
 
 
-		config.dbmsType = DbmsType.OTHER;
+		config.dbmsType = DbmsType.ICEAXE;
 		UnsupportedOperationException e =
 		assertThrows(UnsupportedOperationException.class,
 				() -> PhoneBillDbManager.createPhoneBillDbManager(config).getClass());

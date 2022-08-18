@@ -529,12 +529,13 @@ public class Config implements Cloneable {
 				return DbmsType.ORACLE_JDBC;
 			} else if (url.toLowerCase(Locale.JAPAN).contains("postgresql")) {
 				return DbmsType.POSTGRE_SQL_JDBC;
-			} else {
-				return DbmsType.OTHER;
 			}
 		}
 
 		String s = prop.getProperty(key);
+		if (s == null) {
+			throw new RuntimeException("dbms.type is not specified, nor determine dbms.type from the url.");
+		}
 		try {
 			 return DbmsType.valueOf(s);
 		} catch (IllegalArgumentException e) {
@@ -835,7 +836,7 @@ public class Config implements Cloneable {
 	public static enum DbmsType {
 		ORACLE_JDBC,
 		POSTGRE_SQL_JDBC,
-		OTHER,
+		ICEAXE,
 	}
 
 	@Override

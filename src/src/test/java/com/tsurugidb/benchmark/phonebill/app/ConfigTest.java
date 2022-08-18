@@ -93,8 +93,8 @@ class ConfigTest {
 		config = Config.getConfigFromSrtring("dbms.type=ORACLE_JDBC");
 		assertEquals(DbmsType.ORACLE_JDBC, config.dbmsType);
 
-		config = Config.getConfigFromSrtring("dbms.type=OTHER");
-		assertEquals(DbmsType.OTHER, config.dbmsType);
+		config = Config.getConfigFromSrtring("dbms.type=ICEAXE");
+		assertEquals(DbmsType.ICEAXE, config.dbmsType);
 
 		// DBMSタイプが無指定でJDBCのURLからDBMSタイプが決まるケース
 		config = Config.getConfigFromSrtring("url=jdbc:postgresql://127.0.0.1/phonebill");
@@ -103,8 +103,10 @@ class ConfigTest {
 		config = Config.getConfigFromSrtring("url=jdbc:oracle:thin:@localhost:1521:ORCL");
 		assertEquals(DbmsType.ORACLE_JDBC, config.dbmsType);
 
-		config = Config.getConfigFromSrtring("url=jdbc:other://127.0.0.1/mydatabase");
-		assertEquals(DbmsType.OTHER, config.dbmsType);
+		// DBMSタイプが無指定でJDBCのURLからDBMSタイプが決められないケース
+		RuntimeException e1 = assertThrows(RuntimeException.class,
+				() -> Config.getConfigFromSrtring("url=jdbc:other://127.0.0.1/mydatabase"));
+		assertEquals("dbms.type is not specified, nor determine dbms.type from the url.", e1.getMessage());
 
 		// DBMSタイプが指定されていてDBMSタイプに一致しないURLが指定されているケース => DBMSタイプの指定が優先される
 
@@ -114,13 +116,13 @@ class ConfigTest {
 		config = Config.getConfigFromSrtring("dbms.type=ORACLE_JDBC\r\nurl=jdbc:other://127.0.0.1/mydatabase");
 		assertEquals(DbmsType.ORACLE_JDBC, config.dbmsType);
 
-		config = Config.getConfigFromSrtring("dbms.type=OTHER\r\nurl=jdbc:oracle:thin:@localhost:1521:ORCL");
-		assertEquals(DbmsType.OTHER, config.dbmsType);
+		config = Config.getConfigFromSrtring("dbms.type=ICEAXE\r\nurl=jdbc:oracle:thin:@localhost:1521:ORCL");
+		assertEquals(DbmsType.ICEAXE, config.dbmsType);
 
 		// 不正なDBMSタイプが指定されたケース
-		RuntimeException e = assertThrows(RuntimeException.class,
+		RuntimeException e2 = assertThrows(RuntimeException.class,
 				() -> Config.getConfigFromSrtring("dbms.type=WRONG_TYPE"));
-		assertEquals("unkown dbms.type: WRONG_TYPE", e.getMessage());
+		assertEquals("unkown dbms.type: WRONG_TYPE", e2.getMessage());
 
 	}
 
@@ -319,7 +321,7 @@ class ConfigTest {
 		assertEquals(Config.IsolationLevel.SERIALIZABLE, config.isolationLevel);
 
 		/* DBMSタイプ */
-		assertEquals(DbmsType.OTHER, config.dbmsType);
+		assertEquals(DbmsType.ICEAXE, config.dbmsType);
 
 		// toStringのチェック
 		Path path = Paths.get(NOT_DEFALUT_CONFIG_PATH);
