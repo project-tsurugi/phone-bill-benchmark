@@ -24,6 +24,8 @@ jobs:
         working-directory: src
     env:
       JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF8
+      GPR_USER: ${{ github.repository_owner }}
+      GPR_KEY: ${{ secrets.GHCR_PAT }}
 
     services:
       postgres:
