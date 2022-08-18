@@ -129,3 +129,22 @@ eclipse {
     }
 }
 
+task showTsubakuroManifest {
+    doLast {
+        def tsubakuroJar = configurations["compileClasspath"].filter {
+            it.name.startsWith("tsubakuro-session")
+        }
+        def version = resources.text.fromArchiveEntry(tsubakuroJar, "META-INF/MANIFEST.MF")
+        print(version.asString())
+    }
+}
+
+task showIceaxeManifest {
+    doLast {
+        def iceaxeJar = configurations["compileClasspath"].filter {
+            it.name.startsWith("iceaxe-core")
+        }
+        def version = resources.text.fromArchiveEntry(iceaxeJar, "META-INF/MANIFEST.MF")
+        print(version.asString())
+    }
+}
