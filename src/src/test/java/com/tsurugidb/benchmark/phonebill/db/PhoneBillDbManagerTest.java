@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 import org.junit.jupiter.api.Test;
 
@@ -114,39 +115,46 @@ class PhoneBillDbManagerTest extends AbstractPhoneBillDbManagerTest {
 
 	}
 
+	/**
+	 * getDdl, getXXXDaoのテストのためのメソッド。
+	 * 想定通りの型のクラスが取得できることとと、2回目の呼び出しで最初と同じ
+	 * オブジェクトが取得できることを確認する。
+	 *
+	 * @param <T>
+	 * @param clazz
+	 * @param supplier
+	 * @return
+	 */
+	private <T> T doTestGet(Class<?> clazz, Supplier<T> supplier) {
+		T t = supplier.get();
+		assertEquals(clazz, t.getClass());
+		assertEquals(t, supplier.get());
+		return t;
+	}
 
 	@Test
 	void testGetDdl() {
-		assertEquals(DdlOracle.class, managerOracle.getDdl().getClass());
-		assertEquals(DdlPostgresql.class, managerPostgresql.getDdl().getClass());
-		assertEquals(DdlOracle.class, managerOracle.getDdl().getClass());
-		assertEquals(DdlPostgresql.class, managerPostgresql.getDdl().getClass());
+		doTestGet(DdlPostgresql.class, ()->managerPostgresql.getDdl());
+		doTestGet(DdlOracle.class, ()->managerOracle.getDdl());
 	}
 
 	@Test
 	void testGetContractDao() {
-		assertEquals(ContractDaoJdbc.class, managerOracle.getContractDao().getClass());
-		assertEquals(ContractDaoJdbc.class, managerPostgresql.getContractDao().getClass());
-		assertEquals(ContractDaoJdbc.class, managerOracle.getContractDao().getClass());
-		assertEquals(ContractDaoJdbc.class, managerPostgresql.getContractDao().getClass());
+		doTestGet(ContractDaoJdbc.class, ()->managerPostgresql.getContractDao());
+		doTestGet(ContractDaoJdbc.class, ()->managerOracle.getContractDao());
 	}
 
 	@Test
 	void testGetHistoryDao() {
-		assertEquals(HistoryDaoJdbc.class, managerOracle.getHistoryDao().getClass());
-		assertEquals(HistoryDaoJdbc.class, managerPostgresql.getHistoryDao().getClass());
-		assertEquals(HistoryDaoJdbc.class, managerOracle.getHistoryDao().getClass());
-		assertEquals(HistoryDaoJdbc.class, managerPostgresql.getHistoryDao().getClass());
+		doTestGet(HistoryDaoJdbc.class, ()->managerPostgresql.getHistoryDao());
+		doTestGet(HistoryDaoJdbc.class, ()->managerOracle.getHistoryDao());
 	}
 
 	@Test
 	void testGetBillingDao() {
-		assertEquals(BillingDaoJdbc.class, managerOracle.getBillingDao().getClass());
-		assertEquals(BillingDaoJdbc.class, managerPostgresql.getBillingDao().getClass());
-		assertEquals(BillingDaoJdbc.class, managerOracle.getBillingDao().getClass());
-		assertEquals(BillingDaoJdbc.class, managerPostgresql.getBillingDao().getClass());
+		doTestGet(BillingDaoJdbc.class, ()->managerPostgresql.getBillingDao());
+		doTestGet(BillingDaoJdbc.class, ()->managerOracle.getBillingDao());
 	}
-
 
 	@Test
 	void testCreatePhoneBillDbManager() throws IOException {
