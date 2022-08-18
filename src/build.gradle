@@ -6,6 +6,35 @@ plugins {
     id 'org.seasar.doma.compile' version '1.1.0'
     id 'com.github.spotbugs' version '4.7.1'
 }
+
+if (hasProperty('mavenLocal')) {
+    repositories {
+        mavenLocal()
+    }
+} else {
+    repositories {
+        maven {
+            url 'https://maven.pkg.github.com/project-tsurugi/*'
+            content {
+                includeGroupByRegex 'com\\.tsurugidb.*'
+            }
+            credentials {
+                username findProperty('gpr.user') ?: System.getenv('GPR_USER')
+                password findProperty('gpr.key') ?: System.getenv('GPR_KEY')
+            }
+        }
+    }
+}
+
+repositories {
+    mavenCentral {
+        content {
+            excludeGroupByRegex 'com\\.tsurugidb.*'
+        }
+    }
+}
+
+
 java {
     sourceCompatibility = JavaVersion.VERSION_11
     targetCompatibility = JavaVersion.VERSION_11
@@ -40,10 +69,8 @@ test {
         systemProperty "phone-bill.url", project.getProperty("phone-bill.url")
     }
 }
-repositories {
-  mavenCentral()
-  mavenLocal()
-}
+
+
 dependencies {
   api 'com.tsurugidb.iceaxe:iceaxe-core:0.0.1-SNAPSHOT'
 
