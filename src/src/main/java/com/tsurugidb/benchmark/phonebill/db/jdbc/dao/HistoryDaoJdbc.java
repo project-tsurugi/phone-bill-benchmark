@@ -161,7 +161,6 @@ public class HistoryDaoJdbc implements HistoryDao {
 	@Override
 	public List<History> getHistories(Key key) {
 		Connection conn = manager.getConnection();
-		List<History> list = new ArrayList<History>();
 		String sql = "select" + " h.caller_phone_number, h.recipient_phone_number, h.payment_categorty, h.start_time, h.time_secs,"
 				+ " h.charge, h.df" + " from history h"
 				+ " inner join contracts c on c.phone_number = h.caller_phone_number"

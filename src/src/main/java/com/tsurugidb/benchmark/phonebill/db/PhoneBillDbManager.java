@@ -15,8 +15,16 @@ import com.tsurugidb.benchmark.phonebill.db.iceaxe.PhoneBillDbManagerIceaxe;
 import com.tsurugidb.benchmark.phonebill.db.oracle.PhoneBillDbManagerOracle;
 import com.tsurugidb.benchmark.phonebill.db.postgresql.PhoneBillDbManagerPostgresql;
 import com.tsurugidb.iceaxe.transaction.TgTmSetting;
+import com.tsurugidb.iceaxe.transaction.TgTxOption;
 
 public abstract class PhoneBillDbManager implements Closeable {
+	// 頻繁に使用されるTgTmSetting
+	public static final TgTmSetting OCC_RTX = TgTmSetting.of(TgTxOption.ofOCC(), TgTxOption.ofRTX());
+	public static final TgTmSetting OCC = TgTmSetting.of(TgTxOption.ofOCC());
+	public static final TgTmSetting RTX = TgTmSetting.of(TgTxOption.ofRTX());
+	public static final TgTmSetting LTX = TgTmSetting.of(TgTxOption.ofLTX());
+
+
     private static final Logger LOG = LoggerFactory.getLogger(PhoneBillDbManager.class);
 
 	public abstract Ddl getDdl();

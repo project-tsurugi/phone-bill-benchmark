@@ -14,8 +14,6 @@ import com.tsurugidb.iceaxe.statement.TgParameterList;
 import com.tsurugidb.iceaxe.statement.TgParameterMapping;
 import com.tsurugidb.iceaxe.statement.TgVariable;
 import com.tsurugidb.iceaxe.statement.TgVariableList;
-import com.tsurugidb.iceaxe.transaction.TgTmSetting;
-import com.tsurugidb.iceaxe.transaction.TgTxOption;
 import com.tsurugidb.iceaxe.transaction.TsurugiTransaction;
 import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionException;
 import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionRuntimeException;
@@ -27,8 +25,6 @@ import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionRuntimeExcep
  *
  */
 public class IceaxeTestTools {
-	private static final TgTmSetting TGT_SETTING = TgTmSetting.of(TgTxOption.ofOCC(), TgTxOption.ofRTX());
-
 	private  final PhoneBillDbManagerIceaxe manager;
 	private  final TsurugiSession session;
 
@@ -172,10 +168,10 @@ public class IceaxeTestTools {
 
 
     public void execute(Runnable runnable) {
-    	manager.execute(TGT_SETTING, runnable);
+    	manager.execute(PhoneBillDbManager.OCC_RTX, runnable);
     }
 
     public <T> T execute(Supplier<T> supplier) {
-    	return manager.execute(TGT_SETTING, supplier);
+    	return manager.execute(PhoneBillDbManager.OCC_RTX, supplier);
     }
 }
