@@ -29,7 +29,7 @@ public class DdlIceaxe implements Ddl {
 
 	@Override
 	public void truncateTable(String tableName) {
-		execute("truncate table " + tableName);
+		execute("delete from " + tableName);
 	}
 
 	@Override
