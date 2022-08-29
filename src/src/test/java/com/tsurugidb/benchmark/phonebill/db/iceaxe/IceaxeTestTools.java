@@ -63,24 +63,12 @@ public class IceaxeTestTools {
 	 * @return テーブルが存在するときtrue
 	 */
 	public boolean tableExists(String tableName) {
-		// TODO テーブルの存在を確認する方法が提供されてから適切な方法に変更する
-		// テーブルに大量のデータが存在すると非常に遅くなる。そのようなケースでの使用は想定していない。
-		String sql = "select count(*) from " + tableName;
-
-		return execute(() ->{
-			try (var ps = session.createPreparedQuery(sql) ) {
-				 List<TsurugiResultEntity> list = ps.executeAndGetList(manager.getCurrentTransaction());
-				 if (list.size() == 1) {
-					 return true;
-				 }
-			} catch (IOException e) {
-				return false;
-			} catch (TsurugiTransactionException e) {
-				return false;
-			}
-			assert false;
-			return false;
-		} );
+		try {
+			var opt = session.findTableMetadata(tableName);
+			return opt.isPresent();
+		} catch (IOException e1) {
+			throw new RuntimeException();
+		}
 	}
 
 	/**
