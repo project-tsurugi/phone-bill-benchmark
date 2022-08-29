@@ -108,9 +108,4 @@ public class DdlOracle extends DdlJdbc {
 	public void dropTable(String tableName) {
 		execute("drop table " + tableName, 942);
 	}
-
-	@Override
-	protected int countDiff(String sql1, String sql2) {
-		return count("(" + sql1 + " minus " + sql2 + ")");
-	}
 }

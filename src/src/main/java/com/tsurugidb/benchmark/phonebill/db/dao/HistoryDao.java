@@ -21,8 +21,12 @@ public interface HistoryDao {
 
 	List<History> getHistories(CalculationTarget target);
 
+	List<History> getHistories();
+
+
 	// RuntimeExceptionを発生させる => UT専用
 	default void throwRuntimeException() {
 		throw new RuntimeException();
 	}
+
 }

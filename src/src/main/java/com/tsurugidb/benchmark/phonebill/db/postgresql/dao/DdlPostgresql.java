@@ -94,10 +94,4 @@ public class DdlPostgresql extends DdlJdbc {
 	public void dropTable(String tableName) {
 		execute("drop table if exists " + tableName);
 	}
-
-	@Override
-	protected int countDiff(String sql1, String sql2) {
-		return count("(" + sql1 + " except " + sql2 + ") as subq");
-	}
-
 }

@@ -33,30 +33,6 @@ public class DdlIceaxe implements Ddl {
 	}
 
 	@Override
-	public void createBackTable(String tableName) {
-		// TODO 自動生成されたメソッド・スタブ
-
-	}
-
-	@Override
-	public int count(String tableName) {
-		// TODO 自動生成されたメソッド・スタブ
-		return 0;
-	}
-
-	@Override
-	public int countHistoryUpdated() {
-		// TODO 自動生成されたメソッド・スタブ
-		return 0;
-	}
-
-	@Override
-	public int countContractsUpdated() {
-		// TODO 自動生成されたメソッド・スタブ
-		return 0;
-	}
-
-	@Override
 	public void createHistoryTable() {
 		String create_table = "create table history ("
 				+ "caller_phone_number varchar(15) not null," 		// 発信者電話番号

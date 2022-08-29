@@ -11,5 +11,6 @@ public interface ContractDao {
 	int update(Contract contract);
 	List<Contract> getContracts(String phoneNumber);
 	List<Contract> getContracts(Date start, Date end);
+	List<Contract> getContracts();
 	List<String> getAllPhoneNumbers();
 }

@@ -111,7 +111,6 @@ public class ContractDaoJdbc implements ContractDao {
 	@Override
 	public List<Contract> getContracts(Date start, Date end) {
 		Connection conn = manager.getConnection();
-		List<Contract> list = new ArrayList<>();
 		String sql = "select phone_number, start_date, end_date, charge_rule"
 				+ " from contracts where start_date <= ? and ( end_date is null or end_date >= ?)"
 				+ " order by phone_number";
@@ -119,17 +118,40 @@ public class ContractDaoJdbc implements ContractDao {
 			ps.setDate(1, end);
 			ps.setDate(2, start);
 			try (ResultSet rs = ps.executeQuery()) {
-				while (rs.next()) {
-					Contract contract = new Contract();
-					contract.phoneNumber = rs.getString(1);
-					contract.startDate = rs.getDate(2);
-					contract.endDate = rs.getDate(3);
-					contract.rule = rs.getString(4);
-					list.add(contract);
-				}
+				return createContractList(rs);
 			}
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
+		}
+	}
+
+	@Override
+	public List<Contract> getContracts() {
+		Connection conn = manager.getConnection();
+		String sql = "select phone_number, start_date, end_date, charge_rule from contracts";
+		try (PreparedStatement ps = conn.prepareStatement(sql)) {
+			try (ResultSet rs = ps.executeQuery()) {
+				return createContractList(rs);
+			}
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	/**
+	 * @param rs
+	 * @return
+	 * @throws SQLException
+	 */
+	private List<Contract> createContractList(ResultSet rs) throws SQLException {
+		List<Contract> list = new ArrayList<>();
+		while (rs.next()) {
+			Contract contract = new Contract();
+			contract.phoneNumber = rs.getString(1);
+			contract.startDate = rs.getDate(2);
+			contract.endDate = rs.getDate(3);
+			contract.rule = rs.getString(4);
+			list.add(contract);
 		}
 		return list;
 	}

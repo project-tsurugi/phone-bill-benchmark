@@ -1,12 +1,21 @@
 package com.tsurugidb.benchmark.phonebill.app;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.app.billing.PhoneBill;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
-import com.tsurugidb.benchmark.phonebill.db.dao.Ddl;
+import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
+import com.tsurugidb.benchmark.phonebill.db.entity.History;
 import com.tsurugidb.benchmark.phonebill.testdata.CreateTestData;
+import com.tsurugidb.iceaxe.transaction.TgTmSetting;
+import com.tsurugidb.iceaxe.transaction.TgTxOption;
 
 /**
  * 以下の条件を変えて、バッチの処理時間がどう変化するのかを測定する
@@ -105,24 +114,55 @@ public class OnlineAppBench extends ExecutableCommand {
 
 
 	private void afterExec(Config config) {
-		Ddl executor = manager.getDdl();
-		int historyUpdated = executor.countHistoryUpdated();
-		int historyInserted = executor.count("history") - executor.count("history_back");
-		int masterUpdated = executor.countContractsUpdated();
-		int masterInserted = executor.count("contracts") - executor.count("contracts_back");
+		List<History> histories = new ArrayList<>();
+		manager.execute(TgTmSetting.of(TgTxOption.ofOCC(), TgTxOption.ofRTX()), () -> {
+			histories.addAll(manager.getHistoryDao().getHistories());
+		});
+		int historyUpdated = countUpdated(histories, orgHistories, History::getKey);
+		int historyInserted = histories.size() - orgHistories.size();
+
+		List<Contract> contracts = new ArrayList<>();
+		manager.execute(TgTmSetting.of(TgTxOption.ofOCC(), TgTxOption.ofRTX()), () -> {
+			contracts.addAll(manager.getContractDao().getContracts());
+		});
+		int masterUpdated = countUpdated(contracts, orgContracts, Contract::getKey);
+		int masterInserted = contracts.size() - orgContracts.size();
+		contracts.clear();
+		orgContracts.clear();
+
 		LOG.info("history updated = " + historyUpdated);
 		LOG.info("history inserted = " + historyInserted);
 		LOG.info("master updated = " + masterUpdated);
 		LOG.info("master inserted = " + masterInserted);
-
 	}
 
 
+	/**
+	 * EntityのList newList と orgListを比較して更新されたレコード数を返す
+	 *
+	 * @param historyMap
+	 * @return
+	 */
+	private <K,T> int countUpdated(List<T> newList, List<T> orgList, Function<T, K> getKeyFunc) {
+		Map<K, T> map = newList.stream().collect(Collectors.toMap(t -> getKeyFunc.apply(t), t -> t));
+		int c = 0;
+		for (T t: orgList) {
+			T nh = map.get(getKeyFunc.apply(t));
+			if (!t.equals(nh)) {
+				c++;
+			}
+		}
+		return c;
+	}
+
+
+	List<History> orgHistories;
+	List<Contract> orgContracts;
+
 	private void beforeExec(Config config) {
-		Ddl executor = manager.getDdl();
-		executor.dropTable("history_back");
-		executor.dropTable("contracts_back");
-		executor.createBackTable("history");
-		executor.createBackTable("contracts");
+		manager.execute(TgTmSetting.of(TgTxOption.ofOCC(), TgTxOption.ofRTX()), () -> {
+			orgHistories = manager.getHistoryDao().getHistories();
+			orgContracts = manager.getContractDao().getContracts();
+		});
 	}
 }

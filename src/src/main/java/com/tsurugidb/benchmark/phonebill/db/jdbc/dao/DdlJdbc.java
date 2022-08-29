@@ -1,6 +1,5 @@
 package com.tsurugidb.benchmark.phonebill.db.jdbc.dao;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
@@ -57,26 +56,6 @@ public abstract class DdlJdbc implements Ddl {
 		execute("truncate table " + tableName);
 	}
 
-	@Override
-	@SuppressFBWarnings(value = "SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
-	public void createBackTable(String tableName) {
-		execute("create table " + tableName + "_back as select * from " + tableName);
-	}
-
-	@Override
-	@SuppressFBWarnings(value = "SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
-	public int count(String tableName) {
-		try (Statement stmt = managerJdbc.getConnection().createStatement();
-				ResultSet rs = stmt.executeQuery("select count(*) from " + tableName)) {
-			if (rs.next()) {
-				return rs.getInt(1);
-			}
-		} catch (SQLException e) {
-			throw new RuntimeException(e);
-		}
-		throw new RuntimeException("No recoreds selected.");
-	}
-
 	/**
 	 * 指定の文字列のSQLを実行する.
 	 * <br>
@@ -128,28 +107,4 @@ public abstract class DdlJdbc implements Ddl {
 			throw new RuntimeException(e);
 		}
 	}
-
-	@Override
-	public int countHistoryUpdated() {
-		// ここで知りたいのはオンラインアプリで更新されたレコード数のため、バッチで更新されるカラムchargeは比較対象外
-		return countDiff(
-				"select caller_phone_number, recipient_phone_number, payment_categorty, start_time, time_secs, df from history_back",
-				"select caller_phone_number, recipient_phone_number, payment_categorty, start_time, time_secs, df from history");
-	}
-
-	@Override
-	public int countContractsUpdated() {
-		return countDiff("select * from contracts_back", "select * from contracts");
-	}
-
-
-	/**
-	 * 二つのqueryの差分をカウントする
-	 *
-	 * @param sql1
-	 * @param sql2
-	 * @return
-	 */
-	abstract protected int countDiff(String sql1, String sql2);
-
 }
