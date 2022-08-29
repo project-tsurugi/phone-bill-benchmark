@@ -162,7 +162,7 @@ public class HistoryDaoJdbc implements HistoryDao {
 	public List<History> getHistories(Key key) {
 		Connection conn = manager.getConnection();
 		List<History> list = new ArrayList<History>();
-		String sql = "select" + " h.recipient_phone_number, h.payment_categorty, h.start_time, h.time_secs,"
+		String sql = "select" + " h.caller_phone_number, h.recipient_phone_number, h.payment_categorty, h.start_time, h.time_secs,"
 				+ " h.charge, h.df" + " from history h"
 				+ " inner join contracts c on c.phone_number = h.caller_phone_number"
 				+ " where c.start_date < h.start_time and" + " (h.start_time < c.end_date + 1"
@@ -170,26 +170,10 @@ public class HistoryDaoJdbc implements HistoryDao {
 		try (PreparedStatement ps = conn.prepareStatement(sql)) {
 			ps.setString(1, key.phoneNumber);
 			ps.setDate(2, key.startDate);
-			try (ResultSet rs = ps.executeQuery()) {
-				while (rs.next()) {
-					History h = new History();
-					h.callerPhoneNumber = key.phoneNumber;
-					h.recipientPhoneNumber = rs.getString(1);
-					h.paymentCategorty = rs.getString(2);
-					h.startTime = rs.getTimestamp(3);
-					h.timeSecs = rs.getInt(4);
-					h.charge = rs.getInt(5);
-					if (rs.wasNull()) {
-						h.charge = null;
-					}
-					h.df = rs.getInt(6);
-					list.add(h);
-				}
-			}
+			return createHistoriesLlist(ps);
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}
-		return list;
 	}
 
 	public List<History> getHistories(CalculationTarget target) {
@@ -197,7 +181,6 @@ public class HistoryDaoJdbc implements HistoryDao {
 		Contract contract = target.getContract();
 		Date start = target.getStart();
 		Date end = target.getEnd();
-		List<History> list = new ArrayList<History>();
 		String sql = "select caller_phone_number, recipient_phone_number, payment_categorty, start_time, time_secs,"
 				+ " charge, df" + " from history "
 				+ "where start_time >= ? and start_time < ?"
@@ -205,29 +188,50 @@ public class HistoryDaoJdbc implements HistoryDao {
 				+ "  or (recipient_phone_number = ? and payment_categorty = 'R'))"
 				+ " and df = 0";
 
-		try (PreparedStatement psSelect = conn.prepareStatement(sql)) {
-			psSelect.setDate(1, start);
-			psSelect.setDate(2, DateUtils.nextDate(end));
-			psSelect.setString(3, contract.phoneNumber);
-			psSelect.setString(4, contract.phoneNumber);
-			try (ResultSet rs = psSelect.executeQuery()) {
-				while (rs.next()) {
-					History h = new History();
-					h.callerPhoneNumber = rs.getString(1);
-					h.recipientPhoneNumber = rs.getString(2);
-					h.paymentCategorty = rs.getString(3);
-					h.startTime = rs.getTimestamp(4);
-					h.timeSecs = rs.getInt(5);
-					h.charge = rs.getInt(6);
-					if (rs.wasNull()) {
-						h.charge = null;
-					}
-					h.df = rs.getInt(7);
-					list.add(h);
-				}
-			}
+		try (PreparedStatement ps = conn.prepareStatement(sql)) {
+			ps.setDate(1, start);
+			ps.setDate(2, DateUtils.nextDate(end));
+			ps.setString(3, contract.phoneNumber);
+			ps.setString(4, contract.phoneNumber);
+			return createHistoriesLlist(ps);
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
+		}
+	}
+
+	public List<History> getHistories() {
+		Connection conn = manager.getConnection();
+		String sql = "select caller_phone_number, recipient_phone_number, payment_categorty, start_time, time_secs,"
+				+ " charge, df" + " from history ";
+		try (PreparedStatement ps = conn.prepareStatement(sql)) {
+			return createHistoriesLlist(ps);
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	/**
+	 * @param list
+	 * @param psSelect
+	 * @throws SQLException
+	 */
+	private List<History> createHistoriesLlist(PreparedStatement psSelect) throws SQLException {
+		List<History> list = new ArrayList<History>();
+		try (ResultSet rs = psSelect.executeQuery()) {
+			while (rs.next()) {
+				History h = new History();
+				h.callerPhoneNumber = rs.getString(1);
+				h.recipientPhoneNumber = rs.getString(2);
+				h.paymentCategorty = rs.getString(3);
+				h.startTime = rs.getTimestamp(4);
+				h.timeSecs = rs.getInt(5);
+				h.charge = rs.getInt(6);
+				if (rs.wasNull()) {
+					h.charge = null;
+				}
+				h.df = rs.getInt(7);
+				list.add(h);
+			}
 		}
 		return list;
 	}
