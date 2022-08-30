@@ -257,32 +257,32 @@ class PhoneBillDbManagerJdbcTest extends  AbstractPhoneBillDbManagerTest{
 	@Test
 	final void testIsRetriableThrowable() throws IOException {
 		// 引数にSQLExceptionが渡されたとき
-		assertTrue(managerOracle.isRetriableSQLException(new ORA8177()));
-		assertFalse(managerOracle.isRetriableSQLException(new SQLException()));
+		assertTrue(getManagerOracle().isRetriableSQLException(new ORA8177()));
+		assertFalse(getManagerOracle().isRetriableSQLException(new SQLException()));
 
 		// 引数にSQLExceptionをラッピングしたRuntimeExceptionが渡されたとき
-		assertTrue(managerOracle.isRetriable(new RuntimeException(new ORA8177())));
-		assertFalse(managerOracle.isRetriable(new RuntimeException(new SQLException())));
+		assertTrue(getManagerOracle().isRetriable(new RuntimeException(new ORA8177())));
+		assertFalse(getManagerOracle().isRetriable(new RuntimeException(new SQLException())));
 
 		// 複数回ネストしたExceptionが渡されたとき
-		assertTrue(managerOracle.isRetriable(new RuntimeException(new RuntimeException(new ORA8177()))));
-		assertFalse(managerOracle.isRetriable(new RuntimeException(new RuntimeException(new SQLException()))));
+		assertTrue(getManagerOracle().isRetriable(new RuntimeException(new RuntimeException(new ORA8177()))));
+		assertFalse(getManagerOracle().isRetriable(new RuntimeException(new RuntimeException(new SQLException()))));
 
 		// SQLException以外のExceptionが渡されとき
-		assertFalse(managerOracle.isRetriable(new Exception()));
-		assertFalse(managerOracle.isRetriable(new RuntimeException(new Exception())));
-		assertFalse(managerOracle.isRetriable(new RuntimeException(new RuntimeException(new Exception()))));
+		assertFalse(getManagerOracle().isRetriable(new Exception()));
+		assertFalse(getManagerOracle().isRetriable(new RuntimeException(new Exception())));
+		assertFalse(getManagerOracle().isRetriable(new RuntimeException(new RuntimeException(new Exception()))));
 	}
 
 	@Test
 	final void testGetConnection() throws Exception {
 		// Configの指定に従ったDBMSのコネクションが取得できること
 
-		Connection conn = managerPostgresql.getConnection();
+		Connection conn = getManagerPostgresql().getConnection();
 		assertTrue(conn.getClass().getName().toLowerCase(Locale.ROOT).contains("postgresql"));
 
 		// 指定のIsorationLevelが設定されていること
-		Config config = configPostgresql.clone();
+		Config config = getConfigPostgresql().clone();
 		config.isolationLevel = IsolationLevel.READ_COMMITTED;
 		try (PhoneBillDbManagerJdbc manager = (PhoneBillDbManagerJdbc) PhoneBillDbManager
 				.createPhoneBillDbManager(config)) {
@@ -312,12 +312,12 @@ class PhoneBillDbManagerJdbcTest extends  AbstractPhoneBillDbManagerTest{
 	@Tag("oracle")
 	final void testGetConnectionOracle() throws Exception {
 		// Configの指定に従ったDBMSのコネクションが取得できること
-		Connection conn = managerOracle.getConnection();
+		Connection conn = getManagerOracle().getConnection();
 		assertTrue(conn.isValid(1));
 		assertTrue(conn.getClass().getName().toLowerCase(Locale.ROOT).contains("oracle"));
 
 		// 指定のIsorationLevelが設定されていること
-		Config config = configOracle.clone();
+		Config config = getConfigOracle().clone();
 		config.isolationLevel = IsolationLevel.READ_COMMITTED;
 		try (PhoneBillDbManagerJdbc manager = (PhoneBillDbManagerJdbc) PhoneBillDbManager
 				.createPhoneBillDbManager(config)) {
@@ -348,20 +348,20 @@ class PhoneBillDbManagerJdbcTest extends  AbstractPhoneBillDbManagerTest{
 	@Test
 	final void testIsRetriableSQLException() throws IOException {
 		// Ora-8177のケース
-		assertTrue(managerOracle.isRetriableSQLException(new ORA8177()));
-		assertFalse(managerPostgresql.isRetriableSQLException(new ORA8177()));
+		assertTrue(getManagerOracle().isRetriableSQLException(new ORA8177()));
+		assertFalse(getManagerPostgresql().isRetriableSQLException(new ORA8177()));
 
 		// PostgreSQLでserialization_failureが起きたときのケース
-		assertFalse(managerOracle.isRetriableSQLException(new SerializationFailureException("40001")));
-		assertTrue(managerPostgresql.isRetriableSQLException(new SerializationFailureException("40001")));
+		assertFalse(getManagerOracle().isRetriableSQLException(new SerializationFailureException("40001")));
+		assertTrue(getManagerPostgresql().isRetriableSQLException(new SerializationFailureException("40001")));
 
 		// PostgreSQLでserialization_failure以外のExceptionが起きたときのケース
-		assertFalse(managerOracle.isRetriableSQLException(new SerializationFailureException("20001")));
-		assertFalse(managerPostgresql.isRetriableSQLException(new SerializationFailureException("20001")));
+		assertFalse(getManagerOracle().isRetriableSQLException(new SerializationFailureException("20001")));
+		assertFalse(getManagerPostgresql().isRetriableSQLException(new SerializationFailureException("20001")));
 
 		// 上記のいずれでもないSQLExceptionのケース
-		assertFalse(managerOracle.isRetriableSQLException(new SQLException()));
-		assertFalse(managerPostgresql.isRetriableSQLException(new SQLException()));
+		assertFalse(getManagerOracle().isRetriableSQLException(new SQLException()));
+		assertFalse(getManagerPostgresql().isRetriableSQLException(new SQLException()));
 	}
 
 	private static class ORA8177 extends SQLException {

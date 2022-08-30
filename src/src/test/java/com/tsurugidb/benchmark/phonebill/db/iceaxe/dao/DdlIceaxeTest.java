@@ -10,6 +10,7 @@ import java.io.IOException;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
@@ -19,6 +20,7 @@ import com.tsurugidb.benchmark.phonebill.db.iceaxe.IceaxeTestTools;
 /**
  *
  */
+@Tag("tsurugi")
 class DdlIceaxeTest {
 	private static String ICEAXE_CONFIG_PATH = "src/test/config/iceaxe.properties";
 	private static IceaxeTestTools testTools;
@@ -111,6 +113,12 @@ class DdlIceaxeTest {
 		testTools.insertToHistory("Phone-0005", "Phone-0008", "R", "2020-11-30 00:00:00.000", 30, 0);  	// 計算対象(受信者負担)
 
 		assertEquals(7, testTools.countRecords("history"));
+
+		testTools.execute(() -> {
+			ddl.truncateTable("history");
+		});
+
+		assertEquals(0, testTools.countRecords("history"));
 
 
 	}

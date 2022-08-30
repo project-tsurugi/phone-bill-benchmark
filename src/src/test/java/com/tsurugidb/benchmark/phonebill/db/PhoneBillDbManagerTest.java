@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
@@ -135,38 +136,54 @@ class PhoneBillDbManagerTest extends AbstractPhoneBillDbManagerTest {
 
 	@Test
 	void testGetDdl() {
-		doTestGet(DdlPostgresql.class, ()->managerPostgresql.getDdl());
-		doTestGet(DdlOracle.class, ()->managerOracle.getDdl());
-		doTestGet(DdlIceaxe.class, ()->managerIceaxe.getDdl());
+		doTestGet(DdlPostgresql.class, ()->getManagerPostgresql().getDdl());
+		doTestGet(DdlOracle.class, ()->getManagerOracle().getDdl());
 	}
 
 	@Test
+	@Tag("tsurugi")
+	void testGetDdlIceaxe() {
+		doTestGet(DdlIceaxe.class, ()->getManagerIceaxe().getDdl());
+	}
+
+
+	@Test
 	void testGetContractDao() {
-		doTestGet(ContractDaoJdbc.class, ()->managerPostgresql.getContractDao());
-		doTestGet(ContractDaoJdbc.class, ()->managerOracle.getContractDao());
+		doTestGet(ContractDaoJdbc.class, ()->getManagerPostgresql().getContractDao());
+		doTestGet(ContractDaoJdbc.class, ()->getManagerOracle().getContractDao());
 	}
 
 	@Test
 	void testGetHistoryDao() {
-		doTestGet(HistoryDaoJdbc.class, ()->managerPostgresql.getHistoryDao());
-		doTestGet(HistoryDaoJdbc.class, ()->managerOracle.getHistoryDao());
+		doTestGet(HistoryDaoJdbc.class, ()->getManagerPostgresql().getHistoryDao());
+		doTestGet(HistoryDaoJdbc.class, ()->getManagerOracle().getHistoryDao());
 	}
 
 	@Test
 	void testGetBillingDao() {
-		doTestGet(BillingDaoJdbc.class, ()->managerPostgresql.getBillingDao());
-		doTestGet(BillingDaoJdbc.class, ()->managerOracle.getBillingDao());
+		doTestGet(BillingDaoJdbc.class, ()->getManagerPostgresql().getBillingDao());
+		doTestGet(BillingDaoJdbc.class, ()->getManagerOracle().getBillingDao());
 	}
 
 	@Test
 	void testCreatePhoneBillDbManager() throws IOException {
-		assertEquals(PhoneBillDbManagerOracle.class, PhoneBillDbManager.createPhoneBillDbManager(configOracle).getClass());
+		assertEquals(PhoneBillDbManagerOracle.class, PhoneBillDbManager.createPhoneBillDbManager(getConfigOracle()).getClass());
 
 		assertEquals(PhoneBillDbManagerPostgresql.class,
-				PhoneBillDbManager.createPhoneBillDbManager(configPostgresql).getClass());
+				PhoneBillDbManager.createPhoneBillDbManager(getConfigPostgresql()).getClass());
+
+	}
+
+	@Test
+	@Tag("tsurugi")
+	void testCreatePhoneBillDbManagerIceaxe() throws IOException {
+		assertEquals(PhoneBillDbManagerOracle.class, PhoneBillDbManager.createPhoneBillDbManager(getConfigOracle()).getClass());
+
+		assertEquals(PhoneBillDbManagerPostgresql.class,
+				PhoneBillDbManager.createPhoneBillDbManager(getConfigPostgresql()).getClass());
 
 		assertEquals(PhoneBillDbManagerIceaxe.class,
-				PhoneBillDbManager.createPhoneBillDbManager(configIceaxe).getClass());
+				PhoneBillDbManager.createPhoneBillDbManager(getConfigIceaxe()).getClass());
 	}
 
 }

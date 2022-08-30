@@ -63,6 +63,7 @@ test {
     useJUnitPlatform() {
         excludeTags 'oracle'
         excludeTags 'copy-command'
+        excludeTags 'tsurugi'
     }
     testLogging {
         showStandardStreams true
@@ -95,9 +96,16 @@ dependencies {
   compileOnly"com.github.spotbugs:spotbugs-annotations:4.2.3"
   testCompileOnly"com.github.spotbugs:spotbugs-annotations:4.2.3"
 }
+
 startScripts {
     applicationName = 'run'
 }
+
+tasks.withType(JavaCompile) { task ->
+    task.options.encoding = 'UTF-8'
+}
+
+
 spotbugsMain {
     ignoreFailures = true
     reports {

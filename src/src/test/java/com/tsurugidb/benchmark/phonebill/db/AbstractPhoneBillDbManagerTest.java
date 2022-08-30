@@ -20,30 +20,34 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 @SuppressFBWarnings(value = "MS_CANNOT_BE_FINAL")
 public class AbstractPhoneBillDbManagerTest extends AbstractJdbcTestCase {
-	protected static final String ORACLE_CONFIG_PATH = "src/test/config/oracle.properties";
-	protected static final String ICEAXE_CONFIG_PATH = "src/test/config/iceaxe.properties";
+	private static final String ORACLE_CONFIG_PATH = "src/test/config/oracle.properties";
+	private static final String ICEAXE_CONFIG_PATH = "src/test/config/iceaxe.properties";
 
-	protected static PhoneBillDbManagerJdbc managerOracle;
-	protected static PhoneBillDbManagerJdbc managerPostgresql;
-	protected static PhoneBillDbManagerIceaxe managerIceaxe;
-	protected static Config configOracle;
-	protected static Config configPostgresql;
-	protected static Config configIceaxe;
+	private static PhoneBillDbManagerJdbc managerOracle;
+	private static PhoneBillDbManagerJdbc managerPostgresql;
+	private static PhoneBillDbManagerIceaxe managerIceaxe;
+	private static Config configOracle;
+	private static Config configPostgresql;
+	private static Config configIceaxe;
 
 	@BeforeAll
 	static void beforeAllTests() throws IOException {
 		configOracle = Config.getConfig(ORACLE_CONFIG_PATH);
 		configPostgresql = Config.getConfig();
 		configIceaxe = Config.getConfig(ICEAXE_CONFIG_PATH);
-		managerOracle = (PhoneBillDbManagerJdbc) PhoneBillDbManager.createPhoneBillDbManager(configOracle);
-		managerPostgresql = (PhoneBillDbManagerJdbc) PhoneBillDbManager.createPhoneBillDbManager(configPostgresql);
-		managerIceaxe = (PhoneBillDbManagerIceaxe) PhoneBillDbManager.createPhoneBillDbManager(configIceaxe);
 	}
 
 	@AfterAll
 	static void afterAllTests() {
-		managerOracle.close();
-		managerPostgresql.close();
+		if (managerOracle != null) {
+			managerOracle.close();
+		}
+		if (managerPostgresql != null) {
+			managerPostgresql.close();
+		}
+		if (managerIceaxe != null) {
+			managerIceaxe.close();
+		}
 	}
 
 	protected void createTestData(Config config) throws IOException, Exception {
@@ -63,5 +67,38 @@ public class AbstractPhoneBillDbManagerTest extends AbstractJdbcTestCase {
 			generator.generateContractsToDb(manager);
 			generator.generateHistoryToDb(manager);
 		}
+	}
+
+	protected static synchronized PhoneBillDbManagerJdbc getManagerOracle() {
+		if (managerOracle == null) {
+			managerOracle = (PhoneBillDbManagerJdbc) PhoneBillDbManager.createPhoneBillDbManager(getConfigOracle());
+		}
+		return managerOracle;
+	}
+
+	protected static synchronized PhoneBillDbManagerJdbc getManagerPostgresql() {
+		if (managerPostgresql == null) {
+			managerPostgresql = (PhoneBillDbManagerJdbc) PhoneBillDbManager.createPhoneBillDbManager(getConfigPostgresql());
+		}
+		return managerPostgresql;
+	}
+
+	protected static synchronized PhoneBillDbManagerIceaxe getManagerIceaxe() {
+		if (managerIceaxe == null) {
+			managerIceaxe = (PhoneBillDbManagerIceaxe) PhoneBillDbManager.createPhoneBillDbManager(getConfigIceaxe());
+		}
+		return managerIceaxe;
+	}
+
+	protected static  Config getConfigOracle() {
+		return configOracle;
+	}
+
+	protected static Config getConfigPostgresql() {
+		return configPostgresql;
+	}
+
+	protected static Config getConfigIceaxe() {
+		return configIceaxe;
 	}
 }
