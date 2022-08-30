@@ -125,11 +125,11 @@ class StatisticsTest {
 	 */
 	private History createHistory(int callerPhoneNumber, int recipientPhoneNumber, String startTime, int timeSec, String paymentCategorty) {
 		History h = new History();
-		h.callerPhoneNumber = toPhoneNumber(callerPhoneNumber);
-		h.recipientPhoneNumber = toPhoneNumber(recipientPhoneNumber);
-		h.timeSecs = timeSec;
-		h.startTime = DateUtils.toTimestamp(startTime);
-		h.paymentCategorty = paymentCategorty;
+		h.setCallerPhoneNumber(toPhoneNumber(callerPhoneNumber));
+		h.setRecipientPhoneNumber(toPhoneNumber(recipientPhoneNumber));
+		h.setTimeSecs(timeSec);
+		h.setStartTime(DateUtils.toTimestamp(startTime));
+		h.setPaymentCategorty(paymentCategorty);
 		return h;
 	}
 

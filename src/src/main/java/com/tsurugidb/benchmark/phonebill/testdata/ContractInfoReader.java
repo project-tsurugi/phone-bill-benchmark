@@ -169,7 +169,7 @@ public class ContractInfoReader {
 	 */
 	private static Contract retContract = new Contract();
 	static {
-		retContract.rule = "dummy";
+		retContract.setRule("dummy");
 	}
 
 	/**
@@ -186,10 +186,10 @@ public class ContractInfoReader {
 			newBlock();
 		}
 		long n = blockNumber * getBlockSize() + posInBlock++;
-		retContract.phoneNumber = phoneNumberGenerator.getPhoneNumber(n);
+		retContract.setPhoneNumber(phoneNumberGenerator.getPhoneNumber(n));
 		Duration d = getInitialDuration(n);
-		retContract.startDate = d.getStatDate();
-		retContract.endDate = d.getEndDate();
+		retContract.setStartDate(d.getStatDate());
+		retContract.setEndDate(d.getEndDate());
 		if (posInBlock >= blockSize) {
 			contractBlockInfoAccessor.submit(blockNumber);
 			blockNumber = -1;
@@ -209,8 +209,8 @@ public class ContractInfoReader {
 		// 次の２つの式は乱数生成器の使用順が固定されるように、意図的に2行に分けている
 		long n = getRandomBlockNumber() * getBlockSize();
 		n =  n + random.nextInt(getBlockSize());
-		retKey.phoneNumber = phoneNumberGenerator.getPhoneNumber(n);
-		retKey.startDate = durationList.get((int) (n % getBlockSize())).getStatDate();
+		retKey.setPhoneNumber(phoneNumberGenerator.getPhoneNumber(n));
+		retKey.setStartDate(durationList.get((int) (n % getBlockSize())).getStatDate());
 		return retKey;
 	}
 

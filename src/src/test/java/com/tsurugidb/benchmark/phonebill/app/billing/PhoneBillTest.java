@@ -193,11 +193,11 @@ class PhoneBillTest extends AbstractJdbcTestCase {
 		try (ResultSet rs = getStmt().executeQuery(sql)) {
 			while (rs.next()) {
 				Billing billing = new Billing();
-				billing.phoneNumber = rs.getString(1);
-				billing.targetMonth = rs.getDate(2);
-				billing.basicCharge = rs.getInt(3);
-				billing.meteredCharge = rs.getInt(4);
-				billing.billingAmount = rs.getInt(5);
+				billing.setPhoneNumber(rs.getString(1));
+				billing.setTargetMonth(rs.getDate(2));
+				billing.setBasicCharge(rs.getInt(3));
+				billing.setMeteredCharge(rs.getInt(4));
+				billing.setBillingAmount(rs.getInt(5));
 				list.add(billing);
 			}
 		}
@@ -208,11 +208,11 @@ class PhoneBillTest extends AbstractJdbcTestCase {
 	private Billing toBilling(String phoneNumber, String targetMonth, int basicCharge, int meteredCharge,
 			int billingAmount) {
 		Billing billing = new Billing();
-		billing.phoneNumber = phoneNumber;
-		billing.targetMonth = DateUtils.toDate(targetMonth);
-		billing.basicCharge = basicCharge;
-		billing.meteredCharge = meteredCharge;
-		billing.billingAmount = billingAmount;
+		billing.setPhoneNumber(phoneNumber);
+		billing.setTargetMonth(DateUtils.toDate(targetMonth));
+		billing.setBasicCharge(basicCharge);
+		billing.setMeteredCharge(meteredCharge);
+		billing.setBillingAmount(billingAmount);
 		return billing;
 	}
 
@@ -511,7 +511,7 @@ class PhoneBillTest extends AbstractJdbcTestCase {
 		for (int i = 0; i < contractsBefore.size(); i++) {
 			Contract before = contractsBefore.get(i);
 			Contract after = contractsAfter.get(i);
-			if (before.endDate == null && after.endDate != null) {
+			if (before.getEndDate() == null && after.getEndDate() != null) {
 				exist = true;
 				System.out.println("before = " + before);
 				System.out.println("after  = " + after);
@@ -525,7 +525,7 @@ class PhoneBillTest extends AbstractJdbcTestCase {
 		for (int i = 0; i < contractsBefore.size(); i++) {
 			Contract before = contractsBefore.get(i);
 			Contract after = contractsAfter.get(i);
-			if (before.endDate != null && after.endDate != null && !before.endDate.equals(after.endDate)) {
+			if (before.getEndDate() != null && after.getEndDate() != null && !before.getEndDate().equals(after.getEndDate())) {
 				exist = true;
 				System.out.println("before = " + before);
 				System.out.println("after  = " + after);
@@ -541,7 +541,7 @@ class PhoneBillTest extends AbstractJdbcTestCase {
 		for (int i = 0; i < historiesBefore.size(); i++) {
 			History before = historiesBefore.get(i);
 			History after = map.get(before.getKey());
-			if (before.df == 0 && after.df == 1) {
+			if (before.getDf() == 0 && after.getDf() == 1) {
 				exist = true;
 				System.out.println("before = " + before);
 				System.out.println("after  = " + after);
@@ -554,7 +554,7 @@ class PhoneBillTest extends AbstractJdbcTestCase {
 		for (int i = 0; i < historiesBefore.size(); i++) {
 			History before = historiesBefore.get(i);
 			History after = map.get(before.getKey());
-			if (before.timeSecs != after.timeSecs) {
+			if (before.getTimeSecs() != after.getTimeSecs()) {
 				exist = true;
 				System.out.println("before = " + before);
 				System.out.println("after  = " + after);

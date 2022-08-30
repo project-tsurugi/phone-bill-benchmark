@@ -190,19 +190,19 @@ public class GenerateHistoryTask implements Callable<Result> {
 	 */
 	public History createHistoryRecord(HistoryKey key) {
 		History history = new History();
-		history.startTime = new Timestamp(key.startTime);
+		history.setStartTime(new Timestamp(key.startTime));
 
 		// 電話番号の生成
 		long r = recipientPhoneNumberSelector.selectPhoneNumber(key.startTime, key.callerPhoneNumber);
-		history.callerPhoneNumber = phoneNumberGenerator.getPhoneNumber(key.callerPhoneNumber);
-		history.recipientPhoneNumber = phoneNumberGenerator.getPhoneNumber(r);
+		history.setCallerPhoneNumber(phoneNumberGenerator.getPhoneNumber(key.callerPhoneNumber));
+		history.setRecipientPhoneNumber(phoneNumberGenerator.getPhoneNumber(r));
 
 		// 料金区分(発信者負担、受信社負担)
 		// TODO 割合を指定可能にする
-		history.paymentCategorty = random.nextInt(2) == 0 ? "C" : "R";
+		history.setPaymentCategorty(random.nextInt(2) == 0 ? "C" : "R");
 
 		// 通話時間
-		history.timeSecs = callTimeGenerator.getTimeSecs();
+		history.setTimeSecs(callTimeGenerator.getTimeSecs());
 		return history;
 	}
 

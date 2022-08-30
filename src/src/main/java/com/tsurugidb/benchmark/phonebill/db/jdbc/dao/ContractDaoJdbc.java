@@ -63,10 +63,10 @@ public class ContractDaoJdbc implements ContractDao {
 	 * @throws SQLException
 	 */
 	private void setPsToContract(Contract c, PreparedStatement ps) throws SQLException {
-		ps.setString(1, c.phoneNumber);
-		ps.setDate(2, c.startDate);
-		ps.setDate(3, c.endDate);
-		ps.setString(4, c.rule);
+		ps.setString(1, c.getPhoneNumber());
+		ps.setDate(2, c.getStartDate());
+		ps.setDate(3, c.getEndDate());
+		ps.setString(4, c.getRule());
 	}
 
 	@Override
@@ -74,10 +74,10 @@ public class ContractDaoJdbc implements ContractDao {
 		Connection conn = manager.getConnection();
 		String sql = "update contracts set end_date = ?, charge_rule = ? where phone_number = ? and start_date = ?";
 		try (PreparedStatement ps = conn.prepareStatement(sql)) {
-			ps.setDate(1, contract.endDate);
-			ps.setString(2, contract.rule);
-			ps.setString(3, contract.phoneNumber);
-			ps.setDate(4, contract.startDate);
+			ps.setDate(1, contract.getEndDate());
+			ps.setString(2, contract.getRule());
+			ps.setString(3, contract.getPhoneNumber());
+			ps.setDate(4, contract.getStartDate());
 			return ps.executeUpdate();
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
@@ -94,10 +94,10 @@ public class ContractDaoJdbc implements ContractDao {
 			try (ResultSet rs = ps.executeQuery()) {
 				while (rs.next()) {
 					Contract c = new Contract();
-					c.phoneNumber = phoneNumber;
-					c.startDate = rs.getDate(1);
-					c.endDate = rs.getDate(2);
-					c.rule = rs.getString(3);
+					c.setPhoneNumber(phoneNumber);
+					c.setStartDate(rs.getDate(1));
+					c.setEndDate(rs.getDate(2));
+					c.setRule(rs.getString(3));
 					list.add(c);
 				}
 			}
@@ -147,10 +147,10 @@ public class ContractDaoJdbc implements ContractDao {
 		List<Contract> list = new ArrayList<>();
 		while (rs.next()) {
 			Contract contract = new Contract();
-			contract.phoneNumber = rs.getString(1);
-			contract.startDate = rs.getDate(2);
-			contract.endDate = rs.getDate(3);
-			contract.rule = rs.getString(4);
+			contract.setPhoneNumber(rs.getString(1));
+			contract.setStartDate(rs.getDate(2));
+			contract.setEndDate(rs.getDate(3));
+			contract.setRule(rs.getString(4));
 			list.add(contract);
 		}
 		return list;

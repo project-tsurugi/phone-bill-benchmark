@@ -23,12 +23,12 @@ public class BillingDaoJdbc implements BillingDao {
 				+ "phone_number, target_month, basic_charge, metered_charge, billing_amount, batch_exec_id)"
 				+ " values(?, ?, ?, ?, ?, ?)";
 		try (PreparedStatement ps = conn.prepareStatement(sql)) {
-			ps.setString(1, billing.phoneNumber);
-			ps.setDate(2, billing.targetMonth);
-			ps.setInt(3, billing.basicCharge);
-			ps.setInt(4, billing.meteredCharge);
-			ps.setInt(5, billing.billingAmount);
-			ps.setString(6, billing.batchExecId);
+			ps.setString(1, billing.getPhoneNumber());
+			ps.setDate(2, billing.getTargetMonth());
+			ps.setInt(3, billing.getBasicCharge());
+			ps.setInt(4, billing.getMeteredCharge());
+			ps.setInt(5, billing.getBillingAmount());
+			ps.setString(6, billing.getBatchExecId());
 			ps.executeUpdate();
 		} catch (SQLException e) {
 			throw new RuntimeException(e);

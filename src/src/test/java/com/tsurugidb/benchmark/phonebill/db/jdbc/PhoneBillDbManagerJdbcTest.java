@@ -63,7 +63,7 @@ class PhoneBillDbManagerJdbcTest extends  AbstractPhoneBillDbManagerTest{
 
 			// 1レコード更新
 			final History h = before.get(0).clone();
-			h.charge = h.charge == null ? 300 : h.charge + 300;
+			h.setCharge(h.getCharge() == null ? 300 : h.getCharge() + 300);
 			after.set(0, h);
 			manager.execute(TgTmSettingDummy.getInstance(), () -> {
 				HistoryDao dao = manager.getHistoryDao();
@@ -90,7 +90,7 @@ class PhoneBillDbManagerJdbcTest extends  AbstractPhoneBillDbManagerTest{
 			after.set(0, h);
 			try {
 				manager.execute(TgTmSettingDummy.getInstance(), () -> {
-					h.charge += 500;
+					h.setCharge(h.getCharge() + 500);
 					HistoryDao dao = manager.getHistoryDao();
 					dao.update(h);
 					// コミット前は別コネクションに更新が反映されない
@@ -117,7 +117,7 @@ class PhoneBillDbManagerJdbcTest extends  AbstractPhoneBillDbManagerTest{
 
 			// 1レコード更新
 			final History h = before.get(0).clone();
-			h.charge = h.charge == null ? 300 : h.charge + 300;
+			h.setCharge(h.getCharge() == null ? 300 : h.getCharge() + 300);
 			after.set(0, h);
 			tryCount = 0;
 			manager.execute(TgTmSettingDummy.getInstance(), () -> {
@@ -170,7 +170,7 @@ class PhoneBillDbManagerJdbcTest extends  AbstractPhoneBillDbManagerTest{
 
 			// 1レコード更新
 			final History h = before.get(0).clone();
-			h.charge = h.charge == null ? 300 : h.charge + 300;
+			h.setCharge(h.getCharge() == null ? 300 : h.getCharge() + 300);
 			after.set(0, h);
 			HistoryDao dao = manager.getHistoryDao();
 			manager.execute(TgTmSettingDummy.getInstance(), () -> dao.update(h));
@@ -188,7 +188,7 @@ class PhoneBillDbManagerJdbcTest extends  AbstractPhoneBillDbManagerTest{
 			after.set(0, h);
 			try {
 				manager.execute(TgTmSettingDummy.getInstance(), () -> {
-					h.charge += 500;
+					h.setCharge(h.getCharge() + 500);
 					HistoryDao dao = manager.getHistoryDao();
 					dao.update(h);
 					// コミット前は別コネクションに更新が反映されない
@@ -215,7 +215,7 @@ class PhoneBillDbManagerJdbcTest extends  AbstractPhoneBillDbManagerTest{
 
 			// 1レコード更新
 			final History h = before.get(0).clone();
-			h.charge = h.charge == null ? 300 : h.charge + 300;
+			h.setCharge(h.getCharge() == null ? 300 : h.getCharge() + 300);
 			after.set(0, h);
 			HistoryDao dao = new HistoryDaoJdbc((PhoneBillDbManagerJdbc) manager) {
 

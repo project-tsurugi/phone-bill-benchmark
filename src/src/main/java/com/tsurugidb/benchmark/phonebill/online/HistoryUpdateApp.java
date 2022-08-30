@@ -79,7 +79,7 @@ public class HistoryUpdateApp extends AbstractOnlineApp {
 	protected void updateDatabase() {
 		updateDatabase(history);
 		LOG.debug("ONLINE APP: Update 1 record from history(callerPhoneNumber = {}, startTime = {}).",
-				history.callerPhoneNumber, history.startTime);
+				history.getCallerPhoneNumber(), history.getStartTime());
 	}
 
 	/**
@@ -113,8 +113,8 @@ public class HistoryUpdateApp extends AbstractOnlineApp {
 
 		@Override
 		public void update(History history) {
-			history.df = 1;
-			history.charge = null;
+			history.setDf(1);
+			history.setCharge(null);
 		}
 	}
 
@@ -124,8 +124,8 @@ public class HistoryUpdateApp extends AbstractOnlineApp {
 	class Updater2 implements Updater {
 		@Override
 		public void update(History history) {
-			history.timeSecs = callTimeGenerator.getTimeSecs();
-			history.charge = null;
+			history.setTimeSecs(callTimeGenerator.getTimeSecs());
+			history.setCharge(null);
 		}
 	}
 }

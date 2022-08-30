@@ -6,37 +6,37 @@ public class History implements Cloneable{
 	/**
 	 * 発信者電話番号
 	 */
-	public String callerPhoneNumber;
+	private String callerPhoneNumber;
 
 	/**
 	 * 受信者電話番号
 	 */
-	public String recipientPhoneNumber;
+	private String recipientPhoneNumber;
 
 	/**
 	 * 料金区分(発信者負担(C)、受信社負担(R))
 	 */
-	public String paymentCategorty; // TODO enumにする
+	private String paymentCategorty; // TODO enumにする
 
 	/**
 	 * 通話開始時刻
 	 */
-	public Timestamp startTime;
+	private Timestamp startTime;
 
 	/**
 	 * 通話時間(秒)
 	 */
-	public int timeSecs;
+	private int timeSecs;
 
 	/**
 	 * 料金
 	 */
-	public Integer charge;
+	private Integer charge;
 
 	/**
 	 * 削除フラグ
 	 */
-	public int df = 0;
+	private int df = 0;
 
 	@Override
 	public String toString() {
@@ -126,9 +126,72 @@ public class History implements Cloneable{
 
 	public Key getKey() {
 		Key key = new Key();
-		key.callerPhoneNumber = callerPhoneNumber;
-		key.startTime = startTime;
+		key.setCallerPhoneNumber(callerPhoneNumber);
+		key.setStartTime(startTime);
 		return key;
+	}
+
+
+	public String getCallerPhoneNumber() {
+		return callerPhoneNumber;
+	}
+
+	public void setCallerPhoneNumber(String callerPhoneNumber) {
+		this.callerPhoneNumber = callerPhoneNumber;
+	}
+
+
+	public String getRecipientPhoneNumber() {
+		return recipientPhoneNumber;
+	}
+
+	public void setRecipientPhoneNumber(String recipientPhoneNumber) {
+		this.recipientPhoneNumber = recipientPhoneNumber;
+	}
+
+
+	public String getPaymentCategorty() {
+		return paymentCategorty;
+	}
+
+	public void setPaymentCategorty(String paymentCategorty) {
+		this.paymentCategorty = paymentCategorty;
+	}
+
+
+	public Timestamp getStartTime() {
+		return startTime;
+	}
+
+	public void setStartTime(Timestamp startTime) {
+		this.startTime = startTime;
+	}
+
+
+	public int getTimeSecs() {
+		return timeSecs;
+	}
+
+	public void setTimeSecs(int timeSecs) {
+		this.timeSecs = timeSecs;
+	}
+
+
+	public Integer getCharge() {
+		return charge;
+	}
+
+	public void setCharge(Integer charge) {
+		this.charge = charge;
+	}
+
+
+	public int getDf() {
+		return df;
+	}
+
+	public void setDf(int df) {
+		this.df = df;
 	}
 
 
@@ -136,8 +199,8 @@ public class History implements Cloneable{
 	 * HistoryのPK
 	 */
 	public static class Key {
-		public String callerPhoneNumber;
-		public Timestamp startTime;
+		private String callerPhoneNumber;
+		private Timestamp startTime;
 		@Override
 		public int hashCode() {
 			final int prime = 31;
@@ -166,6 +229,18 @@ public class History implements Cloneable{
 			} else if (!startTime.equals(other.startTime))
 				return false;
 			return true;
+		}
+		public String getCallerPhoneNumber() {
+			return callerPhoneNumber;
+		}
+		public void setCallerPhoneNumber(String callerPhoneNumber) {
+			this.callerPhoneNumber = callerPhoneNumber;
+		}
+		public Timestamp getStartTime() {
+			return startTime;
+		}
+		public void setStartTime(Timestamp startTime) {
+			this.startTime = startTime;
 		}
 	}
 

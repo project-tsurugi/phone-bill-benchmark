@@ -110,8 +110,8 @@ class HistoryInsertAppTest extends AbstractJdbcTestCase {
 		truncateTable("history");
 		app = (HistoryInsertApp) HistoryInsertApp.createHistoryInsertApps(manager, config, new Random(0), accessor, 1).get(0);
 		HistoryKey key = new HistoryKey();
-		key.startTime = expected.get(0).startTime.getTime();
-		key.callerPhoneNumber = Integer.parseInt(expected.get(0).callerPhoneNumber);
+		key.startTime = expected.get(0).getStartTime().getTime();
+		key.callerPhoneNumber = Integer.parseInt(expected.get(0).getCallerPhoneNumber());
 		app.getKeySet().add(key);
 		app.exec();
 		assertNotEquals(expected, getHistories());
@@ -133,7 +133,7 @@ class HistoryInsertAppTest extends AbstractJdbcTestCase {
 		app.exec();
 
 		// テストデータ投入後は、baseTimeが通話開始時刻の最大値になる
-		long max = getHistories().stream().mapToLong(h -> h.startTime.getTime()).max().getAsLong();
+		long max = getHistories().stream().mapToLong(h -> h.getStartTime().getTime()).max().getAsLong();
 		testCreateHistoryInsertAppsSub(config, max);
 
 		// numに0を指定したときのテスト

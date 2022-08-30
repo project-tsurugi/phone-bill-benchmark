@@ -6,32 +6,32 @@ public class Billing {
 	/**
 	* 電話番号
 	*/
-	public String phoneNumber;
+	private String phoneNumber;
 
 	/**
 	 * 対象年月
 	 */
-	public Date targetMonth;
+	private Date targetMonth;
 
 	/**
 	 * 基本料金
 	 */
-	public int basicCharge;
+	private int basicCharge;
 
 	/**
 	 * 従量料金
 	 */
-	public int meteredCharge;
+	private int meteredCharge;
 
 	/**
 	* 請求金額
 	*/
-	public int billingAmount;
+	private int billingAmount;
 
 	/**
 	 * バッチ実行ID
 	 */
-	public String batchExecId;
+	private String batchExecId;
 
 	@Override
 	public String toString() {
@@ -96,5 +96,53 @@ public class Billing {
 		} else if (!targetMonth.equals(other.targetMonth))
 			return false;
 		return true;
+	}
+
+	public String getPhoneNumber() {
+		return phoneNumber;
+	}
+
+	public void setPhoneNumber(String phoneNumber) {
+		this.phoneNumber = phoneNumber;
+	}
+
+	public Date getTargetMonth() {
+		return targetMonth;
+	}
+
+	public void setTargetMonth(Date targetMonth) {
+		this.targetMonth = targetMonth;
+	}
+
+	public int getBasicCharge() {
+		return basicCharge;
+	}
+
+	public void setBasicCharge(int basicCharge) {
+		this.basicCharge = basicCharge;
+	}
+
+	public int getMeteredCharge() {
+		return meteredCharge;
+	}
+
+	public void setMeteredCharge(int meteredCharge) {
+		this.meteredCharge = meteredCharge;
+	}
+
+	public int getBillingAmount() {
+		return billingAmount;
+	}
+
+	public void setBillingAmount(int billingAmount) {
+		this.billingAmount = billingAmount;
+	}
+
+	public String getBatchExecId() {
+		return batchExecId;
+	}
+
+	public void setBatchExecId(String batchExecId) {
+		this.batchExecId = batchExecId;
 	}
 }

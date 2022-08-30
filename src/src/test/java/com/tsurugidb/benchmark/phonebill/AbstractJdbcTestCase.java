@@ -101,16 +101,16 @@ public abstract class AbstractJdbcTestCase {
 		try (ResultSet rs = stmt.executeQuery(sql)) {
 			while (rs.next()) {
 				History history = new History();
-				history.callerPhoneNumber = rs.getString(1);
-				history.recipientPhoneNumber = rs.getString(2);
-				history.paymentCategorty = rs.getString(3);
-				history.startTime = rs.getTimestamp(4);
-				history.timeSecs = rs.getInt(5);
-				history.charge = rs.getInt(6);
+				history.setCallerPhoneNumber(rs.getString(1));
+				history.setRecipientPhoneNumber(rs.getString(2));
+				history.setPaymentCategorty(rs.getString(3));
+				history.setStartTime(rs.getTimestamp(4));
+				history.setTimeSecs(rs.getInt(5));
+				history.setCharge(rs.getInt(6));
 				if (rs.wasNull()) {
-					history.charge = null;
+					history.setCharge(null);
 				}
-				history.df = rs.getInt(7);
+				history.setDf(rs.getInt(7));
 				list.add(history);
 			}
 		}
@@ -123,13 +123,13 @@ public abstract class AbstractJdbcTestCase {
 			String start_time, int time_secs, Integer charge,
 			int df) {
 		History history = new History();
-		history.callerPhoneNumber = caller_phone_number;
-		history.recipientPhoneNumber = recipient_phone_number;
-		history.paymentCategorty = payment_categorty;
-		history.startTime = DateUtils.toTimestamp(start_time);
-		history.timeSecs = time_secs;
-		history.charge = charge;
-		history.df = df;
+		history.setCallerPhoneNumber(caller_phone_number);
+		history.setRecipientPhoneNumber(recipient_phone_number);
+		history.setPaymentCategorty(payment_categorty);
+		history.setStartTime(DateUtils.toTimestamp(start_time));
+		history.setTimeSecs(time_secs);
+		history.setCharge(charge);
+		history.setDf(df);
 		return history;
 	}
 
@@ -140,10 +140,10 @@ public abstract class AbstractJdbcTestCase {
 		try (ResultSet rs = getStmt().executeQuery(sql)) {
 			while (rs.next()) {
 				Contract c = new Contract();
-				c.phoneNumber = rs.getString(1);
-				c.startDate = rs.getDate(2);
-				c.endDate = rs.getDate(3);
-				c.rule = rs.getString(4);
+				c.setPhoneNumber(rs.getString(1));
+				c.setStartDate(rs.getDate(2));
+				c.setEndDate(rs.getDate(3));
+				c.setRule(rs.getString(4));
 				contracts.add(c);
 			}
 		}

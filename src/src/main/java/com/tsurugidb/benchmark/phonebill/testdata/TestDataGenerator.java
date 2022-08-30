@@ -271,15 +271,15 @@ public class TestDataGenerator {
 			for (long n = 0; n < config.numberOfContractsRecords; n++) {
 				Contract c = getNewContract();
 				sb.setLength(0);
-				sb.append(c.phoneNumber);
+				sb.append(c.getPhoneNumber());
 				sb.append(',');
-				sb.append(c.startDate);
+				sb.append(c.getStartDate());
 				sb.append(',');
-				if (c.endDate != null) {
-					sb.append(c.endDate);
+				if (c.getEndDate() != null) {
+					sb.append(c.getEndDate());
 				}
 				sb.append(',');
-				sb.append(c.rule);
+				sb.append(c.getRule());
 				bw.write(sb.toString());
 				bw.newLine();
 			}
@@ -506,21 +506,21 @@ public class TestDataGenerator {
 		@Override
 		void write(History h) throws IOException {
 			sb.setLength(0);
-			sb.append(h.callerPhoneNumber);
+			sb.append(h.getCallerPhoneNumber());
 			sb.append(',');
-			sb.append(h.recipientPhoneNumber);
+			sb.append(h.getRecipientPhoneNumber());
 			sb.append(',');
-			sb.append(h.paymentCategorty);
+			sb.append(h.getPaymentCategorty());
 			sb.append(',');
-			sb.append(h.startTime);
+			sb.append(h.getStartTime());
 			sb.append(',');
-			sb.append(h.timeSecs);
+			sb.append(h.getTimeSecs());
 			sb.append(',');
-			if (h.charge != null) {
-				sb.append(h.charge);
+			if (h.getCharge() != null) {
+				sb.append(h.getCharge());
 			}
 			sb.append(',');
-			sb.append(h.df);
+			sb.append(h.getDf());
 			bw.write(sb.toString());
 			bw.newLine();
 		}

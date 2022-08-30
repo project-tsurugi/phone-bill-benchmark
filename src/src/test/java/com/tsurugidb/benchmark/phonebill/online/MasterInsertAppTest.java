@@ -78,10 +78,10 @@ class MasterInsertAppTest extends AbstractJdbcTestCase {
 		try (ResultSet rs = getStmt().executeQuery(sql)) {
 			while (rs.next()) {
 				Contract c = new Contract();
-				c.phoneNumber = rs.getString(1);
-				c.startDate = rs.getDate(2);
-				c.endDate = rs.getDate(3);
-				c.rule = rs.getString(4);
+				c.setPhoneNumber(rs.getString(1));
+				c.setStartDate(rs.getDate(2));
+				c.setEndDate(rs.getDate(3));
+				c.setRule(rs.getString(4));
 				list.add(c);
 			}
 		}

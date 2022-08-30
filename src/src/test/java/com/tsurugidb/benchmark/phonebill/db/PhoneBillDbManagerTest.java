@@ -41,7 +41,7 @@ class PhoneBillDbManagerTest extends AbstractPhoneBillDbManagerTest {
 
 			// 1レコード更新
 			History h = before.get(0).clone();
-			h.charge = h.charge == null ? 300 : h.charge + 300;
+			h.setCharge(h.getCharge() == null ? 300 : h.getCharge() + 300);
 			after.set(0, h);
 			HistoryDao dao = manager.getHistoryDao();
 			dao.update(h);
@@ -61,7 +61,7 @@ class PhoneBillDbManagerTest extends AbstractPhoneBillDbManagerTest {
 
 			assertEquals(before, after);
 			h = h.clone();
-			h.charge += 500;
+			h.setCharge(h.getCharge() + 500);
 			dao.update(h);
 			after.set(0, h);
 

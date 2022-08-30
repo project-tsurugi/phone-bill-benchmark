@@ -88,11 +88,11 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 	 * @return 共通の月があるときtrue
 	 */
 	static boolean commonDuration(Contract contract, Collection<Contract> contracts) {
-		long start = toEpochMonth(contract.startDate);
-		long end = toEpochMonth(contract.endDate);
+		long start = toEpochMonth(contract.getStartDate());
+		long end = toEpochMonth(contract.getEndDate());
 		for(Contract target: contracts) {
-			long targetStart = toEpochMonth(target.startDate);
-			long targetEnd = toEpochMonth(target.endDate);
+			long targetStart = toEpochMonth(target.getStartDate());
+			long targetEnd = toEpochMonth(target.getEndDate());
 			if (start <= targetEnd && targetStart <= end) {
 				return true;
 			}
@@ -131,10 +131,10 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 		}
 
 		// 当該電話番号の契約を取得
-		List<Contract> contracts = getContracts(key.phoneNumber);
+		List<Contract> contracts = getContracts(key.getPhoneNumber());
 		if (contracts.isEmpty()) {
 			// 電話番号にマッチする契約がなかったとき(DBに追加される前の電話番号を選んだ場合) => 基本的にありえない
-			LOG.warn("No contract found for phoneNumber = {}.", key.phoneNumber);
+			LOG.warn("No contract found for phoneNumber = {}.", key.getPhoneNumber());
 			return;
 		}
 
@@ -142,7 +142,7 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 		Contract updatingContract = getUpdatingContract(contracts, key);
 		if (updatingContract == null) {
 			// 契約の更新に失敗したとき(DBが壊れている可能性が高い)
-			LOG.warn("Fail to create valid update contracts for phone number: {}", contracts.get(0).phoneNumber);
+			LOG.warn("Fail to create valid update contracts for phone number: {}", contracts.get(0).getPhoneNumber());
 			for(Contract c: contracts) {
 				LOG.warn("   " + c.toString());
 			}
@@ -158,7 +158,7 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 		}
 		if (LOG.isDebugEnabled()) {
 			LOG.debug("ONLINE APP: Update 1 record from contracs(phoneNumber = {}, startDate = {}, endDate = {}).",
-					updatingContract.phoneNumber, updatingContract.startDate, updatingContract.endDate);
+					updatingContract.getPhoneNumber(), updatingContract.getStartDate(), updatingContract.getEndDate());
 		}
 	}
 
@@ -190,7 +190,7 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 	class Updater1 implements Updater {
 		@Override
 		public void update(Contract contract) {
-			contract.endDate = null;
+			contract.setEndDate(null);
 		}
 	}
 
@@ -201,10 +201,10 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 	class Updater2 implements Updater {
 		@Override
 		public void update(Contract contract) {
-			long startTime = contract.startDate.getTime();
+			long startTime = contract.getStartDate().getTime();
 			int d = (int) ((config.maxDate.getTime() - startTime) / DAY_IN_MILLS);
 			int r = random.nextInt(d + 1);
-			contract.endDate = new Date(startTime + r * DAY_IN_MILLS);
+			contract.setEndDate(new Date(startTime + r * DAY_IN_MILLS));
 		}
 	}
 }

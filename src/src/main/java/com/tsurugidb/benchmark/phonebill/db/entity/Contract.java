@@ -6,22 +6,22 @@ public class Contract implements Cloneable {
 	/**
 	 * 電話番号
 	 */
-	public String phoneNumber;
+	private String phoneNumber;
 
 	/**
 	 * 契約開始日
 	 */
-	public Date startDate;
+	private Date startDate;
 
 	/**
 	 * 契約終了日
 	 */
-	public Date endDate;
+	private Date endDate;
 
 	/**
 	 * 料金計算ルール
 	 */
-	public String rule;
+	private String rule;
 
 	@Override
 	public String toString() {
@@ -99,8 +99,8 @@ public class Contract implements Cloneable {
 	 * Contractsの主キー
 	 */
 	public static class Key {
-		public String phoneNumber;
-		public Date startDate;
+		private String phoneNumber;
+		private Date startDate;
 
 		@Override
 		public int hashCode() {
@@ -132,6 +132,22 @@ public class Contract implements Cloneable {
 				return false;
 			return true;
 		}
+
+		public String getPhoneNumber() {
+			return phoneNumber;
+		}
+
+		public void setPhoneNumber(String phoneNumber) {
+			this.phoneNumber = phoneNumber;
+		}
+
+		public Date getStartDate() {
+			return startDate;
+		}
+
+		public void setStartDate(Date startDate) {
+			this.startDate = startDate;
+		}
 	}
 
 	/**
@@ -143,8 +159,41 @@ public class Contract implements Cloneable {
 	 */
 	public static Key createKey(String phoneNumber, Date startDate) {
 		Key key = new Key();
-		key.phoneNumber = phoneNumber;
-		key.startDate = startDate;
+		key.setPhoneNumber(phoneNumber);
+		key.setStartDate(startDate);
 		return key;
+	}
+
+	public String getPhoneNumber() {
+		return phoneNumber;
+	}
+
+	public void setPhoneNumber(String phoneNumber) {
+		this.phoneNumber = phoneNumber;
+	}
+
+	public Date getStartDate() {
+		return startDate;
+	}
+
+	public void setStartDate(Date startDate) {
+		this.startDate = startDate;
+	}
+
+	public Date getEndDate() {
+		return endDate;
+	}
+
+	public Date setEndDate(Date endDate) {
+		this.endDate = endDate;
+		return endDate;
+	}
+
+	public String getRule() {
+		return rule;
+	}
+
+	public void setRule(String rule) {
+		this.rule = rule;
 	}
 }

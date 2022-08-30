@@ -71,17 +71,17 @@ public class HistoryDaoJdbc implements HistoryDao {
 	 * @throws SQLException
 	 */
 	private void setHistoryToInsertPs(PreparedStatement ps, History h) throws SQLException {
-		ps.setString(1, h.callerPhoneNumber);
-		ps.setString(2, h.recipientPhoneNumber);
-		ps.setString(3, h.paymentCategorty);
-		ps.setTimestamp(4, h.startTime);
-		ps.setInt(5, h.timeSecs);
-		if (h.charge == null) {
+		ps.setString(1, h.getCallerPhoneNumber());
+		ps.setString(2, h.getRecipientPhoneNumber());
+		ps.setString(3, h.getPaymentCategorty());
+		ps.setTimestamp(4, h.getStartTime());
+		ps.setInt(5, h.getTimeSecs());
+		if (h.getCharge() == null) {
 			ps.setNull(6, Types.INTEGER);
 		} else {
-			ps.setInt(6, h.charge);
+			ps.setInt(6, h.getCharge());
 		}
-		ps.setInt(7, h.df);
+		ps.setInt(7, h.getDf());
 		ps.addBatch();
 	}
 
@@ -135,17 +135,17 @@ public class HistoryDaoJdbc implements HistoryDao {
 	 * @throws SQLException
 	 */
 	private void setHistroryToUpdatePs(History history, PreparedStatement ps) throws SQLException {
-		ps.setString(1, history.recipientPhoneNumber);
-		ps.setString(2, history.paymentCategorty);
-		ps.setInt(3, history.timeSecs);
-		if (history.charge == null) {
+		ps.setString(1, history.getRecipientPhoneNumber());
+		ps.setString(2, history.getPaymentCategorty());
+		ps.setInt(3, history.getTimeSecs());
+		if (history.getCharge() == null) {
 			ps.setNull(4, Types.INTEGER);
 		} else {
-			ps.setInt(4, history.charge);
+			ps.setInt(4, history.getCharge());
 		}
-		ps.setInt(5, history.df);
-		ps.setString(6, history.callerPhoneNumber);
-		ps.setTimestamp(7, history.startTime);
+		ps.setInt(5, history.getDf());
+		ps.setString(6, history.getCallerPhoneNumber());
+		ps.setTimestamp(7, history.getStartTime());
 	}
 
 	private PreparedStatement createUpdatePs() throws SQLException {
@@ -167,8 +167,8 @@ public class HistoryDaoJdbc implements HistoryDao {
 				+ " where c.start_date < h.start_time and" + " (h.start_time < c.end_date + 1"
 				+ " or c.end_date is null)" + " and c.phone_number = ? and c.start_date = ?" + " order by h.start_time";
 		try (PreparedStatement ps = conn.prepareStatement(sql)) {
-			ps.setString(1, key.phoneNumber);
-			ps.setDate(2, key.startDate);
+			ps.setString(1, key.getPhoneNumber());
+			ps.setDate(2, key.getStartDate());
 			return createHistoriesLlist(ps);
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
@@ -190,8 +190,8 @@ public class HistoryDaoJdbc implements HistoryDao {
 		try (PreparedStatement ps = conn.prepareStatement(sql)) {
 			ps.setDate(1, start);
 			ps.setDate(2, DateUtils.nextDate(end));
-			ps.setString(3, contract.phoneNumber);
-			ps.setString(4, contract.phoneNumber);
+			ps.setString(3, contract.getPhoneNumber());
+			ps.setString(4, contract.getPhoneNumber());
 			return createHistoriesLlist(ps);
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
@@ -219,16 +219,16 @@ public class HistoryDaoJdbc implements HistoryDao {
 		try (ResultSet rs = psSelect.executeQuery()) {
 			while (rs.next()) {
 				History h = new History();
-				h.callerPhoneNumber = rs.getString(1);
-				h.recipientPhoneNumber = rs.getString(2);
-				h.paymentCategorty = rs.getString(3);
-				h.startTime = rs.getTimestamp(4);
-				h.timeSecs = rs.getInt(5);
-				h.charge = rs.getInt(6);
+				h.setCallerPhoneNumber(rs.getString(1));
+				h.setRecipientPhoneNumber(rs.getString(2));
+				h.setPaymentCategorty(rs.getString(3));
+				h.setStartTime(rs.getTimestamp(4));
+				h.setTimeSecs(rs.getInt(5));
+				h.setCharge(rs.getInt(6));
 				if (rs.wasNull()) {
-					h.charge = null;
+					h.setCharge(null);
 				}
-				h.df = rs.getInt(7);
+				h.setDf(rs.getInt(7));
 				list.add(h);
 			}
 		}

@@ -100,11 +100,11 @@ public class CalculationTask implements Callable<Exception> {
 		CallChargeCalculator callChargeCalculator = target.getCallChargeCalculator();
 		BillingCalculator billingCalculator = target.getBillingCalculator();
 		for(History h: histories) {
-			if (h.timeSecs < 0) {
-				throw new RuntimeException("Negative time: " + h.timeSecs);
+			if (h.getTimeSecs() < 0) {
+				throw new RuntimeException("Negative time: " + h.getTimeSecs());
 			}
-			h.charge  = callChargeCalculator.calc(h.timeSecs);
-			billingCalculator.addCallCharge(h.charge);
+			h.setCharge(callChargeCalculator.calc(h.getTimeSecs()));
+			billingCalculator.addCallCharge(h.getCharge());
 		}
 		historyDao.batchUpdate(histories);
 		updateBilling(contract, billingCalculator, target.getStart());
@@ -125,15 +125,15 @@ public class CalculationTask implements Callable<Exception> {
 		LOG.debug(
 				"Inserting to billing table: phone_number = {}, target_month = {}"
 						+ ", basic_charge = {}, metered_charge = {}, billing_amount = {}, batch_exec_id = {} ",
-				contract.phoneNumber, targetMonth, billingCalculator.getBasicCharge(),
+				contract.getPhoneNumber(), targetMonth, billingCalculator.getBasicCharge(),
 				billingCalculator.getMeteredCharge(), billingCalculator.getBillingAmount(), batchExecId);
 		Billing billing = new Billing();
-		billing.phoneNumber = contract.phoneNumber;
-		billing.targetMonth = targetMonth;
-		billing.basicCharge = billingCalculator.getBasicCharge();
-		billing.meteredCharge = billingCalculator.getMeteredCharge();
-		billing.billingAmount = billingCalculator.getBillingAmount();
-		billing.batchExecId = batchExecId;
+		billing.setPhoneNumber(contract.getPhoneNumber());
+		billing.setTargetMonth(targetMonth);
+		billing.setBasicCharge(billingCalculator.getBasicCharge());
+		billing.setMeteredCharge(billingCalculator.getMeteredCharge());
+		billing.setBillingAmount(billingCalculator.getBillingAmount());
+		billing.setBatchExecId(batchExecId);
 		billingDao.insert(billing);
 	}
 }

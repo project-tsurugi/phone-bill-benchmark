@@ -63,22 +63,22 @@ public class Statistics {
 	 */
 	public void addHistoy(History h) {
 		numberOfHistories++;
-		increment(callerMap, h.callerPhoneNumber);
-		increment(recipientMap, h.recipientPhoneNumber);
-		increment(callTimeMap, h.timeSecs);
-		long time = h.startTime.getTime();
+		increment(callerMap, h.getCallerPhoneNumber());
+		increment(recipientMap, h.getRecipientPhoneNumber());
+		increment(callTimeMap, h.getTimeSecs());
+		long time = h.getStartTime().getTime();
 		if (startDate <= time && time < endDate) {
-			increment(targetCallerMap, h.callerPhoneNumber);
-			increment(targetRecipientMap, h.recipientPhoneNumber);
-			switch (h.paymentCategorty) {
+			increment(targetCallerMap, h.getCallerPhoneNumber());
+			increment(targetRecipientMap, h.getRecipientPhoneNumber());
+			switch (h.getPaymentCategorty()) {
 			case "R":
-				increment(targetNumberMap, h.recipientPhoneNumber);
+				increment(targetNumberMap, h.getRecipientPhoneNumber());
 				break;
 			case "C":
-				increment(targetNumberMap, h.callerPhoneNumber);
+				increment(targetNumberMap, h.getCallerPhoneNumber());
 				break;
 			default:
-				throw new AssertionError("Unexpected value: " + h.paymentCategorty);
+				throw new AssertionError("Unexpected value: " + h.getPaymentCategorty());
 			}
 		}
 	}

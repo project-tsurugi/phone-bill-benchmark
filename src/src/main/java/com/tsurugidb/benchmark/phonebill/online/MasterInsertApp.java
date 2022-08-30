@@ -48,6 +48,6 @@ public class MasterInsertApp extends AbstractOnlineApp {
 		ContractDao dao = manager.getContractDao();
 		int ret = manager.execute(TgTmSettingDummy.getInstance(), () -> dao.inserf(contract));
 		LOG.debug("ONLINE APP: Insert {} record to contracs(phoneNumber = {}, startDate = {}).", ret,
-				contract.phoneNumber, contract.startDate);
+				contract.getPhoneNumber(), contract.getStartDate());
 	}
 }

@@ -76,16 +76,16 @@ class HistoryUpdateAppTest extends AbstractJdbcTestCase {
 		target = histories.get(48);
 		setRandom(contracts, map, target, true, 0);
 		app.exec();
-		target.df = 1;
-		target.charge = null;
+		target.setDf(1);
+		target.setCharge(null);
 		testExecSub(histories);
 
 		// 通話時間を更新するケース
 		target = histories.get(48);
 		setRandom(contracts, map, target, false, 3185);
 		app.exec();
-		target.timeSecs = 3185 +1; // 通話時間は random.next() + 1 なので、
-		target.charge = null;
+		target.setTimeSecs(3185 +1); // 通話時間は random.next() + 1 なので、
+		target.setCharge(null);
 		testExecSub(histories);
 
 
@@ -145,7 +145,7 @@ class HistoryUpdateAppTest extends AbstractJdbcTestCase {
 	void testGetHistories() throws Exception {
 		// chargeがnullでない履歴を作る
 		History h = getHistories().get(0);
-		h.charge = 200;
+		h.setCharge(200);
 		app.updateDatabase(h);
 		List<History> histories = getHistories();
 		List<Contract> contracts = getContracts();
@@ -167,14 +167,14 @@ class HistoryUpdateAppTest extends AbstractJdbcTestCase {
 	 */
 	Map<Key, List<History>> getContractHistoryMap(List<Contract> contracts, List<History> histories) throws SQLException {
 		// 通話履歴の開始時刻との比較を簡単にするため、契約のendDateを書き換える
-		contracts.stream().forEach( c -> c.endDate =  c.endDate == null ? DateUtils.toDate("2099-12-31") : DateUtils.nextDate(c.endDate));
+		contracts.stream().forEach( c -> c.setEndDate(c.getEndDate() == null ? DateUtils.toDate("2099-12-31") : DateUtils.nextDate(c.getEndDate())));
 		Map<Key, List<History>> map = new HashMap<>();
 		for (Contract c : contracts) {
 			List<History> list = new ArrayList<History>();
 			for (History h : histories) {
-				if (h.callerPhoneNumber.equals(c.phoneNumber) &&
-						c.startDate.getTime() <= h.startTime.getTime() &&
-						h.startTime.getTime() < c.endDate.getTime()) {
+				if (h.getCallerPhoneNumber().equals(c.getPhoneNumber()) &&
+						c.getStartDate().getTime() <= h.getStartTime().getTime() &&
+						h.getStartTime().getTime() < c.getEndDate().getTime()) {
 					list.add(h);
 				}
 			}
@@ -196,22 +196,22 @@ class HistoryUpdateAppTest extends AbstractJdbcTestCase {
 		// 最初のレコードを書き換える
 		{
 			History history = expected.get(0);
-			history.recipientPhoneNumber = "RECV";
-			history.charge = 999;
-			history.df = 1;
-			history.paymentCategorty = "C";
-			history.timeSecs = 221;
+			history.setRecipientPhoneNumber("RECV");
+			history.setCharge(999);
+			history.setDf(1);
+			history.setPaymentCategorty("C");
+			history.setTimeSecs(221);
 			app.updateDatabase(history);
 		}
 
 		// 52番目のレコードを書き換える
 		{
 			History history = expected.get(52);
-			history.recipientPhoneNumber = "TEST_NUMBER";
-			history.charge = 55899988;
-			history.df = 0;
-			history.paymentCategorty = "C";
-			history.timeSecs = 22551;
+			history.setRecipientPhoneNumber("TEST_NUMBER");
+			history.setCharge(55899988);
+			history.setDf(0);
+			history.setPaymentCategorty("C");
+			history.setTimeSecs(22551);
 			app.updateDatabase(history);
 		}
 
@@ -241,7 +241,7 @@ class HistoryUpdateAppTest extends AbstractJdbcTestCase {
 		updater.update(history);
 
 		// 削除フラグが立っていることを確認
-		expected.df = 1;
+		expected.setDf(1);
 		assertEquals(expected, history);
 		// 2回呼び出しても変化ないことを確認
 		updater.update(history);
@@ -267,13 +267,13 @@ class HistoryUpdateAppTest extends AbstractJdbcTestCase {
 		// 通話時間が変わっていることを確認
 		random.setValues(960);
 		updater.update(history);
-		expected.timeSecs = 961;
+		expected.setTimeSecs(961);
 		assertEquals(expected, history);
 
 		// 通話時間が変わっていることを確認
 		random.setValues(3148);
 		updater.update(history);
-		expected.timeSecs = 3149;
+		expected.setTimeSecs(3149);
 		assertEquals(expected, history);
 	}
 }

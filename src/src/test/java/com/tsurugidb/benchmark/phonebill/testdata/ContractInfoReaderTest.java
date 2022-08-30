@@ -153,46 +153,46 @@ class ContractInfoReaderTest {
 		Contract c;
 		// アクティブなブロックの最大値が7なので、新しいブロックのブロック番号は8になる
 		c = contractInfoReader.getNewContract();
-		assertEquals(g.getPhoneNumber(24), c.phoneNumber);
-		assertEquals(DATE01, c.startDate);
-		assertEquals(null, c.endDate);
-		assertEquals("dummy", c.rule);
+		assertEquals(g.getPhoneNumber(24), c.getPhoneNumber());
+		assertEquals(DATE01, c.getStartDate());
+		assertEquals(null, c.getEndDate());
+		assertEquals("dummy", c.getRule());
 
 		c = contractInfoReader.getNewContract();
-		assertEquals(g.getPhoneNumber(25), c.phoneNumber);
-		assertEquals(DATE01, c.startDate);
-		assertEquals(DATE02, c.endDate);
-		assertEquals("dummy", c.rule);
+		assertEquals(g.getPhoneNumber(25), c.getPhoneNumber());
+		assertEquals(DATE01, c.getStartDate());
+		assertEquals(DATE02, c.getEndDate());
+		assertEquals("dummy", c.getRule());
 
 		c = contractInfoReader.getNewContract();
-		assertEquals(g.getPhoneNumber(26), c.phoneNumber);
-		assertEquals(DATE03, c.startDate);
-		assertEquals(DATE04, c.endDate);
-		assertEquals("dummy", c.rule);
+		assertEquals(g.getPhoneNumber(26), c.getPhoneNumber());
+		assertEquals(DATE03, c.getStartDate());
+		assertEquals(DATE04, c.getEndDate());
+		assertEquals("dummy", c.getRule());
 
 		c = contractInfoReader.getNewContract();
-		assertEquals(g.getPhoneNumber(27), c.phoneNumber);
-		assertEquals(DATE01, c.startDate);
-		assertEquals(null, c.endDate);
-		assertEquals("dummy", c.rule);
+		assertEquals(g.getPhoneNumber(27), c.getPhoneNumber());
+		assertEquals(DATE01, c.getStartDate());
+		assertEquals(null, c.getEndDate());
+		assertEquals("dummy", c.getRule());
 
 		c = contractInfoReader.getNewContract();
-		assertEquals(g.getPhoneNumber(28), c.phoneNumber);
-		assertEquals(DATE01, c.startDate);
-		assertEquals(DATE02, c.endDate);
-		assertEquals("dummy", c.rule);
+		assertEquals(g.getPhoneNumber(28), c.getPhoneNumber());
+		assertEquals(DATE01, c.getStartDate());
+		assertEquals(DATE02, c.getEndDate());
+		assertEquals("dummy", c.getRule());
 
 		c = contractInfoReader.getNewContract();
-		assertEquals(g.getPhoneNumber(29), c.phoneNumber);
-		assertEquals(DATE03, c.startDate);
-		assertEquals(DATE04, c.endDate);
-		assertEquals("dummy", c.rule);
+		assertEquals(g.getPhoneNumber(29), c.getPhoneNumber());
+		assertEquals(DATE03, c.getStartDate());
+		assertEquals(DATE04, c.getEndDate());
+		assertEquals("dummy", c.getRule());
 
 		c = contractInfoReader.getNewContract();
-		assertEquals(g.getPhoneNumber(30), c.phoneNumber);
-		assertEquals(DATE01, c.startDate);
-		assertEquals(null, c.endDate);
-		assertEquals("dummy", c.rule);
+		assertEquals(g.getPhoneNumber(30), c.getPhoneNumber());
+		assertEquals(DATE01, c.getStartDate());
+		assertEquals(null, c.getEndDate());
+		assertEquals("dummy", c.getRule());
 
 	}
 
@@ -210,28 +210,28 @@ class ContractInfoReaderTest {
 		// アクティブなブロックの最大値が7なので、新しいブロックのブロック番号は8になる
 		// 1ブロックのサイズが3なので、n = 3 * 8 = 24のキーが生成される
 		key = contractInfoReader.getKeyUpdatingContract();
-		assertEquals(g.getPhoneNumber(3), key.phoneNumber);
-		assertEquals(DATE01, key.startDate);
+		assertEquals(g.getPhoneNumber(3), key.getPhoneNumber());
+		assertEquals(DATE01, key.getStartDate());
 
 		key = contractInfoReader.getKeyUpdatingContract();
-		assertEquals(g.getPhoneNumber(22), key.phoneNumber);
-		assertEquals(DATE01, key.startDate);
+		assertEquals(g.getPhoneNumber(22), key.getPhoneNumber());
+		assertEquals(DATE01, key.getStartDate());
 
 		key = contractInfoReader.getKeyUpdatingContract();
-		assertEquals(g.getPhoneNumber(15), key.phoneNumber);
-		assertEquals(DATE01, key.startDate);
+		assertEquals(g.getPhoneNumber(15), key.getPhoneNumber());
+		assertEquals(DATE01, key.getStartDate());
 
 		key = contractInfoReader.getKeyUpdatingContract();
-		assertEquals(g.getPhoneNumber(17), key.phoneNumber);
-		assertEquals(DATE03, key.startDate);
+		assertEquals(g.getPhoneNumber(17), key.getPhoneNumber());
+		assertEquals(DATE03, key.getStartDate());
 
 		key = contractInfoReader.getKeyUpdatingContract();
-		assertEquals(g.getPhoneNumber(15), key.phoneNumber);
-		assertEquals(DATE01, key.startDate);
+		assertEquals(g.getPhoneNumber(15), key.getPhoneNumber());
+		assertEquals(DATE01, key.getStartDate());
 
 		key = contractInfoReader.getKeyUpdatingContract();
-		assertEquals(g.getPhoneNumber(23), key.phoneNumber);
-		assertEquals(DATE03, key.startDate);
+		assertEquals(g.getPhoneNumber(23), key.getPhoneNumber());
+		assertEquals(DATE03, key.getStartDate());
 	}
 
 	@Test
