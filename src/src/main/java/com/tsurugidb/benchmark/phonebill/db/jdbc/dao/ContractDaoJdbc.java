@@ -6,6 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import com.tsurugidb.benchmark.phonebill.db.dao.ContractDao;
@@ -27,7 +28,7 @@ public class ContractDaoJdbc implements ContractDao {
 	}
 
 	@Override
-	public int batchInsert(List<Contract> contracts) {
+	public int batchInsert(Collection<Contract> contracts) {
 		Connection conn = manager.getConnection();
 		try (PreparedStatement ps = conn.prepareStatement(SQL_INSERT);) {
 			for (Contract c : contracts) {

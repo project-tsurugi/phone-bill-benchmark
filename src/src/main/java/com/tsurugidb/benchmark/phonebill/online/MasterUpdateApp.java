@@ -190,7 +190,7 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 	class Updater1 implements Updater {
 		@Override
 		public void update(Contract contract) {
-			contract.setEndDate(null);
+			contract.setEndDate((Date)null);
 		}
 	}
 

@@ -56,13 +56,13 @@ class MasterUpdateAppTest extends AbstractJdbcTestCase {
 		// 0番目の契約の契約終了日をnullにする
 		setRandomValues(random, 0, 0, 0);
 		app.exec();
-		expected.get(0).setEndDate(null);
+		expected.get(0).setEndDate((Date)null);
 		testContracts(expected);
 
 		// 13番目の契約の契約終了日をnullにする
 		setRandomValues(random, 13, 0, 0);
 		app.exec();
-		expected.get(13).setEndDate(null);
+		expected.get(13).setEndDate((Date)null);
 		testContracts(expected);
 
 		// 15番目の契約の契約終了日を契約完了日の3日後にする
@@ -232,19 +232,19 @@ class MasterUpdateAppTest extends AbstractJdbcTestCase {
 
 		// c2のend_dateがnullで、期間の重複があるケース
 		c2.setStartDate(DateUtils.toDate("2015-01-10"));
-		c2.setEndDate(null);
+		c2.setEndDate((Date)null);
 		assertTrue(MasterUpdateApp.commonDuration(c1, contracts));
 
 
 
 		// c2のend_dateがnullで、期間の重複がないケース
 		c2.setStartDate(DateUtils.toDate("2019-01-10"));
-		c2.setEndDate(null);
+		c2.setEndDate((Date)null);
 		assertFalse(MasterUpdateApp.commonDuration(c1, contracts));
 
 		// c1のend_dateがnullで、期間の重複があるケース
 		c1.setStartDate(DateUtils.toDate("2013-01-01"));
-		c1.setEndDate(null);
+		c1.setEndDate((Date)null);
 		c2.setStartDate(DateUtils.toDate("2015-01-10"));
 		c2.setEndDate(DateUtils.toDate("2015-05-01"));
 		assertTrue(MasterUpdateApp.commonDuration(c1, contracts));
@@ -256,24 +256,24 @@ class MasterUpdateAppTest extends AbstractJdbcTestCase {
 
 		// c1,c2のend_dateがともにnullで、c1.start_date < c2_start_dateのケース
 		c1.setStartDate(DateUtils.toDate("2013-01-01"));
-		c1.setEndDate(null);
+		c1.setEndDate((Date)null);
 		c2.setStartDate(DateUtils.toDate("2015-01-10"));
-		c2.setEndDate(null);
+		c2.setEndDate((Date)null);
 		assertTrue(MasterUpdateApp.commonDuration(c1, contracts));
 
 		// c1,c2のend_dateがともにnullで、c1.start_date < c2_start_dateのケース
 		c1.setStartDate(DateUtils.toDate("2015-01-01"));
-		c1.setEndDate(null);
+		c1.setEndDate((Date)null);
 		c2.setStartDate(DateUtils.toDate("2013-01-10"));
-		c2.setEndDate(null);
+		c2.setEndDate((Date)null);
 		assertTrue(MasterUpdateApp.commonDuration(c1, contracts));
 
 
 		// c1,c2のend_dateがともにnullで、c1.start_date - c2_start_dateのケース
 		c1.setStartDate(DateUtils.toDate("2013-01-01"));
-		c1.setEndDate(null);
+		c1.setEndDate((Date)null);
 		c2.setStartDate(DateUtils.toDate("2013-01-10"));
-		c2.setEndDate(null);
+		c2.setEndDate((Date)null);
 		assertTrue(MasterUpdateApp.commonDuration(c1, contracts));
 
 
@@ -336,7 +336,7 @@ class MasterUpdateAppTest extends AbstractJdbcTestCase {
 		for (int i = 0; i < 100; i++) {
 			Contract contract = new Contract();
 			contract.setStartDate(config.maxDate);
-			contract.setEndDate(null);
+			contract.setEndDate((Date)null);
 			updater.update(contract);
 			assertEquals(DateUtils.toDate("2020-02-15"), contract.getEndDate());
 		}
@@ -351,7 +351,7 @@ class MasterUpdateAppTest extends AbstractJdbcTestCase {
 		for (int i = 0; i < 100; i++) {
 			Contract contract = new Contract();
 			contract.setStartDate(DateUtils.toDate("2020-02-13"));
-			contract.setEndDate(null);
+			contract.setEndDate((Date)null);
 			updater.update(contract);
 			actual.add(contract.getEndDate());
 		}

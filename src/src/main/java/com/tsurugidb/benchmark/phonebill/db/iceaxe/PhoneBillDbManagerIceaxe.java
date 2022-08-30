@@ -11,6 +11,7 @@ import com.tsurugidb.benchmark.phonebill.db.dao.ContractDao;
 import com.tsurugidb.benchmark.phonebill.db.dao.Ddl;
 import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.iceaxe.dao.DdlIceaxe;
+import com.tsurugidb.benchmark.phonebill.db.iceaxe.dao.HistoryDaoIceaxe;
 import com.tsurugidb.iceaxe.TsurugiConnector;
 import com.tsurugidb.iceaxe.session.TgSessionInfo;
 import com.tsurugidb.iceaxe.session.TsurugiSession;
@@ -58,10 +59,14 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
 		return null;
 	}
 
+	private HistoryDao historyDao;
+
 	@Override
 	public HistoryDao getHistoryDao() {
-		// TODO 自動生成されたメソッド・スタブ
-		return null;
+		if (historyDao == null) {
+			historyDao = new HistoryDaoIceaxe(this);
+		}
+		return historyDao;
 	}
 
 	@Override

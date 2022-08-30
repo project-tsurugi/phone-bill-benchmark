@@ -1,5 +1,6 @@
 package com.tsurugidb.benchmark.phonebill.db.dao;
 
+import java.util.Collection;
 import java.util.List;
 
 import com.tsurugidb.benchmark.phonebill.app.billing.CalculationTarget;
@@ -7,7 +8,7 @@ import com.tsurugidb.benchmark.phonebill.db.entity.Contract.Key;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
 
 public interface HistoryDao {
-	int[] batchInsert(List<History> histories);
+	int[] batchInsert(Collection<History> histories);
 
 	int insert(History history);
 

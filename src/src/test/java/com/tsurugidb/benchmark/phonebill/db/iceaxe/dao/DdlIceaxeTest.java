@@ -29,7 +29,7 @@ class DdlIceaxeTest {
 
 
 	@BeforeAll
-	static void beforeAllTests() throws IOException {
+	static void setUpBeforeClass() throws IOException {
 		Config config = Config.getConfig(ICEAXE_CONFIG_PATH);
 		testTools = new IceaxeTestTools(config);
 		manager = testTools.getManager();
@@ -37,30 +37,9 @@ class DdlIceaxeTest {
 	}
 
 	@AfterAll
-	static void afterAllTests() {
+	static void tearDownAfterClass() {
 		testTools.close();
 	}
-
-
-
-//	/**
-//	 * @throws java.lang.Exception
-//	 */
-//	@BeforeEach
-//	void setUp() throws Exception {
-//		Config config = Config.getConfig(ICEAXE_CONFIG_PATH);
-//		testTools = new IceaxeTestTools(config);
-//		manager = testTools.getManager();
-//		ddl = (DdlIceaxe) manager.getDdl();
-//	}
-//
-//	/**
-//	 * @throws java.lang.Exception
-//	 */
-//	@AfterEach
-//	void tearDown() throws Exception {
-//		testTools.close();
-//	}
 
 	/**
 	 * {@link com.tsurugidb.benchmark.phonebill.db.iceaxe.dao.DdlIceaxe#dropTable(java.lang.String)} のためのテスト・メソッド。
@@ -104,13 +83,13 @@ class DdlIceaxeTest {
 
 		// テストデータを入れる
 
-		testTools.insertToHistory("Phone-0001", "Phone-0008", "C", "2020-10-31 23:59:59.999", 30, 0);		// 計算対象年月外
-		testTools.insertToHistory("Phone-0001", "Phone-0008", "C", "2020-11-01 00:00:00.000", 30, 0);  	// 計算対象
-		testTools.insertToHistory("Phone-0001", "Phone-0008", "C", "2020-11-15 12:12:12.000", 90, 1); 	 	// 削除フラグ
-		testTools.insertToHistory("Phone-0001", "Phone-0008", "C", "2020-11-30 23:59:59.999", 90, 0);  	// 計算対象
-		testTools.insertToHistory("Phone-0001", "Phone-0008", "C", "2020-12-01 00:00:00.000", 30, 0);  	// 計算対象年月外
-		testTools.insertToHistory("Phone-0005", "Phone-0001", "C", "2020-11-10 00:00:00.000", 250, 0);  	// 計算対象
-		testTools.insertToHistory("Phone-0005", "Phone-0008", "R", "2020-11-30 00:00:00.000", 30, 0);  	// 計算対象(受信者負担)
+		testTools.insertToHistory("Phone-0001", "Phone-0008", "C", "2020-10-31 23:59:59.999", 30, null, 0);
+		testTools.insertToHistory("Phone-0001", "Phone-0008", "C", "2020-11-01 00:00:00.000", 30, null, 0);
+		testTools.insertToHistory("Phone-0001", "Phone-0008", "C", "2020-11-15 12:12:12.000", 90, null, 1);
+		testTools.insertToHistory("Phone-0001", "Phone-0008", "C", "2020-11-30 23:59:59.999", 90, null, 0);
+		testTools.insertToHistory("Phone-0001", "Phone-0008", "C", "2020-12-01 00:00:00.000", 30, null, 0);
+		testTools.insertToHistory("Phone-0005", "Phone-0001", "C", "2020-11-10 00:00:00.000", 25, null, 0);
+		testTools.insertToHistory("Phone-0005", "Phone-0008", "R", "2020-11-30 00:00:00.000", 30, null, 0);
 
 		assertEquals(7, testTools.countRecords("history"));
 

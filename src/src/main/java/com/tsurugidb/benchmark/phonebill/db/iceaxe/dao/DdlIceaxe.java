@@ -10,7 +10,7 @@ import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionException;
 import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionRuntimeException;
 
 /**
- * Tsurguiがまだcreate index, alter table...をサポートしていないため。createIndexes, updateStatistics,
+ * TODO Tsurguiがまだcreate index, alter table...をサポートしていないため。createIndexes, updateStatistics,
  * afterLoadData, prepareLoadDataは未実装。また、createIndexesで作成していたPKについては、create tableで
  * 作成するように変更
  *
@@ -42,7 +42,6 @@ public class DdlIceaxe implements Ddl {
 				+ "time_secs int not null," 					// 通話時間(秒)
 				+ "charge int," 								// 料金
 				+ "df int not null," 							// 論理削除フラグ
-				+ "primary key (df), "
 				+ "primary key (caller_phone_number, start_time)"
 				+ ")";
 		execute(create_table);

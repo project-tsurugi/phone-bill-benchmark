@@ -2,6 +2,8 @@ package com.tsurugidb.benchmark.phonebill.db.entity;
 
 import java.sql.Date;
 
+import com.tsurugidb.benchmark.phonebill.util.DateUtils;
+
 public class Contract implements Cloneable {
 	/**
 	 * 電話番号
@@ -176,18 +178,38 @@ public class Contract implements Cloneable {
 		return startDate;
 	}
 
+	public long getStartDateAsLong() {
+		return startDate.getTime();
+	}
+
 	public void setStartDate(Date startDate) {
 		this.startDate = startDate;
+	}
+
+	public void setStartDate(long startDate) {
+		this.startDate = new Date(startDate);
 	}
 
 	public Date getEndDate() {
 		return endDate;
 	}
 
-	public Date setEndDate(Date endDate) {
-		this.endDate = endDate;
-		return endDate;
+	// Iceaxe用のメソッド TsurguiがTime型を未サポートなので代わりにlongを使う。
+	// またTsurugiがis not nullを未サポートなので代わりにLong.MAX_VALUEを使う。
+	public Long getEndDateAsLong() {
+		return endDate == null ? Long.MAX_VALUE : endDate.getTime();
 	}
+
+	public void setEndDate(Date endDate) {
+		this.endDate = endDate;
+	}
+
+	// Iceaxe用のメソッド TsurguiがTime型を未サポートなので代わりにlongを使う。
+	// またTsurugiがis not nullを未サポートなので代わりにLong.MAX_VALUEを使う。
+	public void setEndDate(Long endDate) {
+		this.endDate = endDate == Long.MAX_VALUE  ? null : new Date(endDate);
+	}
+
 
 	public String getRule() {
 		return rule;
@@ -195,5 +217,14 @@ public class Contract implements Cloneable {
 
 	public void setRule(String rule) {
 		this.rule = rule;
+	}
+
+	public static Contract create(String phoneNumber, String startDate, String endDate, String rule) {
+		Contract c = new Contract();
+		c.phoneNumber = phoneNumber;
+		c.startDate = DateUtils.toDate(startDate);
+		c.endDate =  endDate == null ? null :  DateUtils.toDate(endDate);
+		c.rule = rule;
+		return c;
 	}
 }

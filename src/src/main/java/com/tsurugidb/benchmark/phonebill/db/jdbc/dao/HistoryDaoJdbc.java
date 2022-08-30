@@ -9,6 +9,7 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import com.tsurugidb.benchmark.phonebill.app.billing.CalculationTarget;
@@ -28,7 +29,7 @@ public class HistoryDaoJdbc implements HistoryDao {
 	}
 
 	@Override
-	public int[] batchInsert(List<History> histories) {
+	public int[] batchInsert(Collection<History> histories) {
 		try (PreparedStatement ps = createInsertPs()) {
 			for (History h : histories) {
 				setHistoryToInsertPs(ps, h);

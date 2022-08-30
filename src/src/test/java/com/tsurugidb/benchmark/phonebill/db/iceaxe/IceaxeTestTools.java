@@ -2,14 +2,23 @@ package com.tsurugidb.benchmark.phonebill.db.iceaxe;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.sql.Timestamp;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
+import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
+import com.tsurugidb.benchmark.phonebill.db.entity.History;
 import com.tsurugidb.benchmark.phonebill.util.DateUtils;
+import com.tsurugidb.iceaxe.result.TgResultMapping;
 import com.tsurugidb.iceaxe.result.TsurugiResultEntity;
 import com.tsurugidb.iceaxe.session.TsurugiSession;
+import com.tsurugidb.iceaxe.statement.TgDataType;
 import com.tsurugidb.iceaxe.statement.TgParameterList;
 import com.tsurugidb.iceaxe.statement.TgParameterMapping;
 import com.tsurugidb.iceaxe.statement.TgVariable;
@@ -106,7 +115,7 @@ public class IceaxeTestTools {
 	 * @param df 論理削除フラグ
 	 */
 	public void insertToHistory(String caller_phone_number, String recipient_phone_number, String payment_categorty,
-			String start_time, Integer time_secs, int _df) {
+			Timestamp start_time, int time_secs, Integer _charge, int _df) {
 		String sql = "insert into history(caller_phone_number, recipient_phone_number, payment_categorty, start_time, time_secs, charge, df) "
 				+ "values(:caller_phone_number, :recipient_phone_number, :payment_categorty, :start_time, :time_secs, :charge, :df)";
 
@@ -133,9 +142,9 @@ public class IceaxeTestTools {
 						callerPhoneNumber.bind(caller_phone_number),
 						recipientPhoneNumber.bind(recipient_phone_number),
 						paymentCategorty.bind(payment_categorty),
-						startTime.bind(DateUtils.toTimestamp(start_time).getTime()),
+						startTime.bind(start_time.getTime()),
 						timeSecs.bind(time_secs),
-						charge.bind(null),
+						charge.bind(_charge),
 						df.bind(_df));
 				ps.executeAndGetCount(manager.getCurrentTransaction(), param);
 			} catch (IOException e) {
@@ -144,6 +153,148 @@ public class IceaxeTestTools {
 				throw new TsurugiTransactionRuntimeException(e);
 			}
 		});
+	}
+
+	public void insertToHistory(String caller_phone_number, String recipient_phone_number, String payment_categorty,
+			String start_time, int time_secs, Integer _charge, int _df) {
+		insertToHistory(caller_phone_number, recipient_phone_number, payment_categorty,
+				DateUtils.toTimestamp(start_time), time_secs, _charge, _df);
+	}
+
+	/**
+	 * 履歴テーブルにレコードを追加する
+	 *
+	 * @param histories
+	 */
+	public void insertToHistory(History... histories) {
+		insertToHistory(Arrays.asList(histories));
+	}
+
+	/**
+	 * 履歴テーブルにレコードを追加する
+
+	 * @param histories
+	 */
+	public void insertToHistory(Collection<History> histories) {
+		for(History h: histories) {
+			System.out.println(h);
+			insertToHistory(h.getCallerPhoneNumber(), h.getRecipientPhoneNumber(), h.getPaymentCategorty(),
+					h.getStartTime(), h.getTimeSecs(), h.getCharge(), h.getDf());
+		}
+	}
+
+
+	/**
+	 * 契約テーブルにレコードを追加する
+	 *
+	 * @param contracts
+	 */
+	public void insertToContracts(Collection<Contract> contracts) {
+		String sql = "insert into contracts(" + "phone_number," + "start_date," + "end_date," + "charge_rule"
+				+ ") values(:phone_number, :start_date, :end_date, :charge_rule)";
+		TgParameterMapping<Contract> param = TgParameterMapping.of(Contract.class)
+				.add("phone_number", TgDataType.CHARACTER, Contract::getPhoneNumber)
+				.add("start_date", TgDataType.INT8, Contract::getStartDateAsLong)
+				.add("end_date", TgDataType.INT8, Contract::getEndDateAsLong)
+				.add("charge_rule", TgDataType.CHARACTER, Contract::getRule);
+		execute(() -> {
+			try (var ps = session.createPreparedStatement(sql, param)) {
+				for(Contract c: contracts) {
+					ps.executeAndGetCount(manager.getCurrentTransaction(), c);
+				}
+			} catch (IOException e) {
+				throw new UncheckedIOException(e);
+			} catch (TsurugiTransactionException e) {
+				throw new TsurugiTransactionRuntimeException(e);
+			}
+		});
+	}
+
+	/**
+	 * 契約テーブルにレコードを追加する
+	 *
+	 * @param contracts
+	 */
+	public void insertToContracts(Contract... contracts) {
+		insertToContracts(Arrays.asList(contracts));
+	}
+
+
+	/**
+	 * 履歴テーブルの全レコードのリストを取得する。
+	 *
+	 * @return
+	 */
+	public List<History> getHistryList() {
+		var resultMapping =
+				TgResultMapping.of(History::new)
+				.character("caller_phone_number", History::setCallerPhoneNumber)
+				.character("recipient_phone_number", History::setRecipientPhoneNumber)
+				.character("payment_categorty", History::setPaymentCategorty)
+				.int8("start_time", History::setStartTime)
+				.int4("time_secs", History::setTimeSecs)
+				.int4("charge", History::setCharge)
+				.int4("df", History::setDf);
+		return execute(() -> {
+			String sql = "select caller_phone_number, recipient_phone_number, payment_categorty, start_time, time_secs, charge, df from history ";
+			try (var ps = session.createPreparedQuery(sql, resultMapping)) {
+				try (var result = ps.execute(manager.getCurrentTransaction())) {
+					return result.getRecordList();
+				}
+			} catch (IOException e) {
+				throw new UncheckedIOException(e);
+			} catch (TsurugiTransactionException e) {
+				throw new TsurugiTransactionRuntimeException(e);
+			}
+		});
+	}
+
+
+	/**
+	 * 履歴テーブルの全レコードのセットのセットを取得する。
+
+	 * @return
+	 */
+	public Set<History> getHistorySet() {
+		return new HashSet<>(getHistryList());
+	}
+
+
+	/**
+	 * 契約マスタの全レコードのリストを取得する。
+	 *
+	 * @return
+	 */
+	public List<Contract> getContractList() {
+		String sql = "select phone_number, start_date, end_date, charge_rule"
+				+ " from contracts order by phone_number, start_date";
+
+		var resultMapping =
+				TgResultMapping.of(Contract::new)
+				.character("phone_number", Contract::setPhoneNumber)
+				.int8("start_date", Contract::setStartDate)
+				.int8("end_date", Contract::setEndDate)
+				.character("charge_rule", Contract::setRule);
+		return execute(() -> {
+			try (var ps = session.createPreparedQuery(sql, resultMapping)) {
+				try (var result = ps.execute(manager.getCurrentTransaction())) {
+					return result.getRecordList();
+				}
+			} catch (IOException e) {
+				throw new UncheckedIOException(e);
+			} catch (TsurugiTransactionException e) {
+				throw new TsurugiTransactionRuntimeException(e);
+			}
+		});
+	}
+
+	/**
+	 * 契約マスタの全レコードのセットを取得する。
+	 *
+	 * @return
+	 */
+	public Set<Contract> getContractSet() {
+		return new HashSet<Contract>(getContractList());
 	}
 
 

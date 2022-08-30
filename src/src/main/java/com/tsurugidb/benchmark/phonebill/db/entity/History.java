@@ -2,6 +2,8 @@ package com.tsurugidb.benchmark.phonebill.db.entity;
 
 import java.sql.Timestamp;
 
+import com.tsurugidb.benchmark.phonebill.util.DateUtils;
+
 public class History implements Cloneable{
 	/**
 	 * 発信者電話番号
@@ -163,10 +165,23 @@ public class History implements Cloneable{
 		return startTime;
 	}
 
+	public Long getStartTimeAsLong() {
+		if (startTime == null) {
+			return null;
+		}
+		return startTime.getTime();
+	}
+
 	public void setStartTime(Timestamp startTime) {
 		this.startTime = startTime;
 	}
 
+	public void setStartTime(Long startTime) {
+		if (startTime == null) {
+			this.startTime = null;
+		}
+		this.startTime = new Timestamp(startTime);
+	}
 
 	public int getTimeSecs() {
 		return timeSecs;
@@ -242,6 +257,25 @@ public class History implements Cloneable{
 		public void setStartTime(Timestamp startTime) {
 			this.startTime = startTime;
 		}
+	}
+
+
+	public static History create(String callerPhoneNumber,
+			String recipientPhoneNumber,
+			String paymentCategorty,
+			String startTime,
+			int timeSecs,
+			Integer charge,
+			int df) {
+		History h = new History();
+		h.callerPhoneNumber = callerPhoneNumber;
+		h.recipientPhoneNumber = recipientPhoneNumber;
+		h.paymentCategorty = paymentCategorty;
+		h.startTime = DateUtils.toTimestamp(startTime);
+		h.timeSecs = timeSecs;
+		h.charge = charge;
+		h.df = df;
+		return h;
 	}
 
 }
