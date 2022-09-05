@@ -12,6 +12,7 @@ import java.util.function.Supplier;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
+import com.tsurugidb.benchmark.phonebill.db.entity.Billing;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
 import com.tsurugidb.benchmark.phonebill.util.DateUtils;
@@ -211,6 +212,57 @@ public class IceaxeTestTools {
 	}
 
 	/**
+	 * 請求テーブルにレコードを追加する
+	 *
+	 * @param billings
+	 */
+	public void insertToBilling(Collection<Billing> billings) {
+		String sql = "insert into billing("
+				+ "phone_number, "
+				+ "target_month, "
+				+ "basic_charge, "
+				+ "metered_charge, "
+				+ "billing_amount, "
+				+ "batch_exec_id"
+				+ ") values("
+				+ ":phone_number, "
+				+ ":target_month, "
+				+ ":basic_charge, "
+				+ ":metered_charge, "
+				+ ":billing_amount, "
+				+ ":batch_exec_id)";
+		TgParameterMapping<Billing> param = TgParameterMapping.of(Billing.class)
+				.add("phone_number", TgDataType.CHARACTER, Billing::getPhoneNumber)
+				.add("target_month", TgDataType.INT8, Billing::getTargetMonthAsLong)
+				.add("basic_charge", TgDataType.INT4, Billing::getBasicCharge)
+				.add("metered_charge", TgDataType.INT4, Billing::getMeteredCharge)
+				.add("billing_amount", TgDataType.INT4, Billing::getBillingAmount)
+				.add("batch_exec_id", TgDataType.CHARACTER, Billing::getBatchExecId);
+
+		execute(() -> {
+			try (var ps = session.createPreparedStatement(sql, param)) {
+				for(Billing b: billings) {
+					ps.executeAndGetCount(manager.getCurrentTransaction(), b);
+				}
+			} catch (IOException e) {
+				throw new UncheckedIOException(e);
+			} catch (TsurugiTransactionException e) {
+				throw new TsurugiTransactionRuntimeException(e);
+			}
+		});
+	}
+
+	/**
+	 * 請求テーブルにレコードを追加する
+	 *
+	 * @param billings
+	 */
+	public void insertToBilling(Billing... billings) {
+		insertToBilling(Arrays.asList(billings));
+	}
+
+
+	/**
 	 * 契約テーブルにレコードを追加する
 	 *
 	 * @param contracts
@@ -249,7 +301,6 @@ public class IceaxeTestTools {
 		});
 	}
 
-
 	/**
 	 * 履歴テーブルの全レコードのセットのセットを取得する。
 
@@ -257,6 +308,44 @@ public class IceaxeTestTools {
 	 */
 	public Set<History> getHistorySet() {
 		return new HashSet<>(getHistryList());
+	}
+
+	/**
+	 * 請求テーブルの全レコードのリストを取得する
+	 *
+	 * @return
+	 */
+	public List<Billing> getBillingList() {
+		var resultMapping =
+				TgResultMapping.of(Billing::new)
+				.character("phone_number", Billing::setPhoneNumber)
+				.int8("target_month", Billing::setTargetMonth)
+				.int4("basic_charge", Billing::setBasicCharge)
+				.int4("metered_charge", Billing::setMeteredCharge)
+				.int4("billing_amount", Billing::setBillingAmount)
+				.character("batch_exec_id", Billing::setBatchExecId);
+		return execute(() -> {
+			String sql = "select phone_number, target_month, basic_charge, metered_charge, billing_amount, batch_exec_id from billing";
+			try (var ps = session.createPreparedQuery(sql, resultMapping)) {
+				try (var result = ps.execute(manager.getCurrentTransaction())) {
+					return result.getRecordList();
+				}
+			} catch (IOException e) {
+				throw new UncheckedIOException(e);
+			} catch (TsurugiTransactionException e) {
+				throw new TsurugiTransactionRuntimeException(e);
+			}
+		});
+	}
+
+
+	/**
+	 * 請求テーブルの全レコードのセットを取得する
+	 *
+	 * @return
+	 */
+	public Set<Billing> getBillingSet() {
+		return new HashSet<Billing>(getBillingList());
 	}
 
 

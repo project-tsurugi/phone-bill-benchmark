@@ -33,6 +33,7 @@ public class HistoryDaoJdbc implements HistoryDao {
 		try (PreparedStatement ps = createInsertPs()) {
 			for (History h : histories) {
 				setHistoryToInsertPs(ps, h);
+				ps.addBatch();
 			}
 			return ps.executeBatch();
 		} catch (SQLException e) {
@@ -83,7 +84,6 @@ public class HistoryDaoJdbc implements HistoryDao {
 			ps.setInt(6, h.getCharge());
 		}
 		ps.setInt(7, h.getDf());
-		ps.addBatch();
 	}
 
 

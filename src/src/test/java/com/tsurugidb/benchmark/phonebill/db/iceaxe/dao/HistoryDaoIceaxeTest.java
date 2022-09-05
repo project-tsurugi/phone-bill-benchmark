@@ -27,7 +27,7 @@ import com.tsurugidb.benchmark.phonebill.db.iceaxe.IceaxeTestTools;
 import com.tsurugidb.benchmark.phonebill.util.DateUtils;
 
 class HistoryDaoIceaxeTest {
-	private static String ICEAXE_CONFIG_PATH = "src/test/config/iceaxe.properties";
+	private static final String ICEAXE_CONFIG_PATH = "src/test/config/iceaxe.properties";
 	private static IceaxeTestTools testTools;
 	private static PhoneBillDbManager manager;
 	private static HistoryDaoIceaxe dao;

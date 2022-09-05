@@ -17,7 +17,7 @@ public class BillingDaoJdbc implements BillingDao {
 	}
 
 	@Override
-	public void insert(Billing billing) {
+	public int insert(Billing billing) {
 		Connection conn = manager.getConnection();
 		String sql = "insert into billing("
 				+ "phone_number, target_month, basic_charge, metered_charge, billing_amount, batch_exec_id)"
@@ -29,19 +29,19 @@ public class BillingDaoJdbc implements BillingDao {
 			ps.setInt(4, billing.getMeteredCharge());
 			ps.setInt(5, billing.getBillingAmount());
 			ps.setString(6, billing.getBatchExecId());
-			ps.executeUpdate();
+			return ps.executeUpdate();
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
 	@Override
-	public void delete(Date targetMonth) {
+	public int delete(Date targetMonth) {
 		Connection conn = manager.getConnection();
 		String sql = "delete from billing where target_month = ?";
 		try (PreparedStatement ps = conn.prepareStatement(sql)) {
 			ps.setDate(1, targetMonth);
-			ps.executeUpdate();
+			return ps.executeUpdate();
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}

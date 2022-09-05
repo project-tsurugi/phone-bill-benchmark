@@ -2,6 +2,8 @@ package com.tsurugidb.benchmark.phonebill.db.entity;
 
 import java.sql.Date;
 
+import com.tsurugidb.benchmark.phonebill.util.DateUtils;
+
 public class Billing {
 	/**
 	* 電話番号
@@ -110,8 +112,20 @@ public class Billing {
 		return targetMonth;
 	}
 
+	// Iceaxe用のメソッド TsurguiがTime型を未サポートなので代わりにlongを使う。
+	// またTsurugiがis not nullを未サポートなので代わりにLong.MAX_VALUEを使う。
+	public Long getTargetMonthAsLong() {
+		return targetMonth.getTime();
+	}
+
 	public void setTargetMonth(Date targetMonth) {
 		this.targetMonth = targetMonth;
+	}
+
+	// Iceaxe用のメソッド TsurguiがTime型を未サポートなので代わりにlongを使う。
+	// またTsurugiがis not nullを未サポートなので代わりにLong.MAX_VALUEを使う。
+	public void setTargetMonth(long targetMonth) {
+		this.targetMonth = new Date(targetMonth);
 	}
 
 	public int getBasicCharge() {
@@ -145,4 +159,17 @@ public class Billing {
 	public void setBatchExecId(String batchExecId) {
 		this.batchExecId = batchExecId;
 	}
+
+	public static Billing create(String phoneNumber, String targetMonth, int basicCharge, int meteredCharge, int billingAmount,
+			String batchExecId) {
+		Billing b = new Billing();
+		b.phoneNumber = phoneNumber;
+		b.targetMonth = DateUtils.toDate(targetMonth);
+		b.basicCharge = basicCharge;
+		b.meteredCharge = meteredCharge;
+		b.billingAmount = billingAmount;
+		b.batchExecId = batchExecId;
+		return b;
+	}
+
 }
