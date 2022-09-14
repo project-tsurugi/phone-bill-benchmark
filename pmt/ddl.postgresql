@@ -1,0 +1,15 @@
+create table history (
+    caller_phone_number varchar(15) not null,
+    recipient_phone_number varchar(15) not null,
+    payment_categorty char(1) not null,
+    start_time timestamp not null,
+    time_secs integer not null,
+    charge integer,
+    df integer not null
+);
+create table contracts (
+    phone_number varchar(15) not null,
+    start_date date not null,
+    end_date date,
+    charge_rule varchar(255) not null
+);
