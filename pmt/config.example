@@ -14,3 +14,7 @@ thread.count=64
 csv.dir=/tmp/csv
 max.number.of.lines.history.csv=1000000
 
+# DBMSに関するパラメータ
+url=tcp://localhost:12345
+dbms.type=ICEAXE
+
