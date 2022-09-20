@@ -1,9 +1,0 @@
-create table history (
-    caller_phone_number varchar(15) not null,
-    recipient_phone_number varchar(15) not null,
-    payment_categorty char(1) not null,
-    start_time timestamp not null,
-    time_secs integer not null,
-    charge integer,
-    df integer not null
-);

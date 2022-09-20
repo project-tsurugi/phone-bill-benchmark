@@ -43,8 +43,6 @@ public class CreateTestDataCsv extends ExecutableCommand {
 		String format = "%,d records generated to contracts.csv in %,.3f sec ";
 		LOG.info(String.format(format, config.numberOfContractsRecords, elapsedTime / 1000d));
 
-
-
 		// 通話履歴のテストデータを作成
 		startTime = System.currentTimeMillis();
 		generator.generateHistoryToCsv(dir);

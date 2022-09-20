@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
+import com.tsurugidb.benchmark.phonebill.app.Config.DbmsType;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.TgTmSettingDummy;
 import com.tsurugidb.benchmark.phonebill.db.dao.ContractDao;
@@ -273,10 +274,10 @@ public class TestDataGenerator {
 				sb.setLength(0);
 				sb.append(c.getPhoneNumber());
 				sb.append(',');
-				sb.append(c.getStartDate());
+				sb.append(config.dbmsType == DbmsType.ICEAXE ? c.getStartDateAsLong() : c.getStartDate());
 				sb.append(',');
 				if (c.getEndDate() != null) {
-					sb.append(c.getEndDate());
+					sb.append(config.dbmsType == DbmsType.ICEAXE ? c.getEndDateAsLong() : c.getEndDate());
 				}
 				sb.append(',');
 				sb.append(c.getRule());
@@ -512,7 +513,7 @@ public class TestDataGenerator {
 			sb.append(',');
 			sb.append(h.getPaymentCategorty());
 			sb.append(',');
-			sb.append(h.getStartTime());
+			sb.append(config.dbmsType == DbmsType.ICEAXE ? h.getStartTimeAsLong() : h.getStartTime());
 			sb.append(',');
 			sb.append(h.getTimeSecs());
 			sb.append(',');

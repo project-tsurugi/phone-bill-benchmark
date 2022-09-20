@@ -100,8 +100,10 @@ public class DdlIceaxe implements Ddl {
 
 	@Override
 	public void prepareLoadData() {
-		// TODO 自動生成されたメソッド・スタブ
-
+		dropTables();
+		createContractsTable();
+		createHistoryTable();
+		createBillingTable();
 	}
 
 	private void execute(String sql) {
