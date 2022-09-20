@@ -16,7 +16,8 @@ import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.dao.BillingDaoJdbc;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.dao.ContractDaoJdbc;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.dao.HistoryDaoJdbc;
-import com.tsurugidb.iceaxe.transaction.TgTmSetting;
+import com.tsurugidb.iceaxe.transaction.manager.TgTmSetting;
+
 
 public abstract class PhoneBillDbManagerJdbc extends PhoneBillDbManager {
     private static final Logger LOG = LoggerFactory.getLogger(PhoneBillDbManagerJdbc.class);
