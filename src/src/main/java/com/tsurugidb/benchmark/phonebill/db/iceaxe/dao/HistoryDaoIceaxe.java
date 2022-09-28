@@ -40,6 +40,13 @@ public class HistoryDaoIceaxe implements HistoryDao {
 			.int4("charge", History::setCharge)
 			.int4("df", History::setDf);
 
+	private static final TgParameterMapping<History> PARAMETER_MAPPING = TgParameterMapping.of(History.class)
+			.add("caller_phone_number", TgDataType.CHARACTER, History::getCallerPhoneNumber)
+			.add("recipient_phone_number", TgDataType.CHARACTER, History::getRecipientPhoneNumber)
+			.add("payment_categorty", TgDataType.CHARACTER, History::getPaymentCategorty)
+			.add("start_time", TgDataType.INT8, History::getStartTimeAsLong)
+			.add("time_secs", TgDataType.INT4, History::getTimeSecs)
+			.add("charge", TgDataType.INT4, History::getCharge).add("df", TgDataType.INT4, History::getDf);
 
 
 	public HistoryDaoIceaxe(PhoneBillDbManagerIceaxe manager) {
@@ -77,28 +84,14 @@ public class HistoryDaoIceaxe implements HistoryDao {
 	private TsurugiPreparedStatementUpdate1<History> createInsertPs() throws IOException {
 		String sql = "insert into history(caller_phone_number, recipient_phone_number, payment_categorty, start_time, time_secs, charge, df) "
 				+ "values(:caller_phone_number, :recipient_phone_number, :payment_categorty, :start_time, :time_secs, :charge, :df)";
-		TgParameterMapping<History> parameterMapping = TgParameterMapping.of(History.class)
-				.add("caller_phone_number", TgDataType.CHARACTER, History::getCallerPhoneNumber)
-				.add("recipient_phone_number", TgDataType.CHARACTER, History::getRecipientPhoneNumber)
-				.add("payment_categorty", TgDataType.CHARACTER, History::getPaymentCategorty)
-				.add("start_time", TgDataType.INT8, History::getStartTimeAsLong)
-				.add("time_secs", TgDataType.INT4, History::getTimeSecs)
-				.add("charge", TgDataType.INT4, History::getCharge).add("df", TgDataType.INT4, History::getDf);
-		return session.createPreparedStatement(sql, parameterMapping);
+		return session.createPreparedStatement(sql, PARAMETER_MAPPING);
 	}
 
 	private TsurugiPreparedStatementUpdate1<History> createUpdatePs() throws IOException {
 		String sql = "update history"
 				+ " set recipient_phone_number = :recipient_phone_number, payment_categorty = :payment_categorty, time_secs = :time_secs, charge = :charge, df = :df"
 				+ " where caller_phone_number = :caller_phone_number and start_time = :start_time";
-		TgParameterMapping<History> parameterMapping = TgParameterMapping.of(History.class)
-				.add("caller_phone_number", TgDataType.CHARACTER, History::getCallerPhoneNumber)
-				.add("recipient_phone_number", TgDataType.CHARACTER, History::getRecipientPhoneNumber)
-				.add("payment_categorty", TgDataType.CHARACTER, History::getPaymentCategorty)
-				.add("start_time", TgDataType.INT8, History::getStartTimeAsLong)
-				.add("time_secs", TgDataType.INT4, History::getTimeSecs)
-				.add("charge", TgDataType.INT4, History::getCharge).add("df", TgDataType.INT4, History::getDf);
-		return session.createPreparedStatement(sql, parameterMapping);
+		return session.createPreparedStatement(sql, PARAMETER_MAPPING);
 	}
 
 

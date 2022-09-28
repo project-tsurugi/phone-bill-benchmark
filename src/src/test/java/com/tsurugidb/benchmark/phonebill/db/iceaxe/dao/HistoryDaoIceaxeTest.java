@@ -184,7 +184,7 @@ class HistoryDaoIceaxeTest {
 
 		// テストデータを入れる
 		Set<History> testDataSet = new HashSet<>(Arrays.asList(h1, h2, h3));
-		testTools.insertToHistory(testDataSet);;
+		testTools.insertToHistory(testDataSet);
 		assertEquals(testDataSet, testTools.getHistorySet());
 
 		// 更新対象のレコードがないケース
@@ -226,7 +226,6 @@ class HistoryDaoIceaxeTest {
 
 		// アップデート実行
 		List<History> updateDataList = Arrays.asList(h2u, h4u, h3u);
-		int[] expected = { -1, -1, -1}; // TODO update件数が返るようになったら期待値を1,0,1にする
 		assertEquals(3, testTools.execute(() -> { // TODO update件数が返るようになったら期待値を変更する
 			return dao.batchUpdate(updateDataList);
 		}));

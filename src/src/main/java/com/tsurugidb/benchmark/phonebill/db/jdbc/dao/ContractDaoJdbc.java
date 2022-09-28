@@ -28,7 +28,7 @@ public class ContractDaoJdbc implements ContractDao {
 	}
 
 	@Override
-	public int batchInsert(Collection<Contract> contracts) {
+	public int[] batchInsert(Collection<Contract> contracts) {
 		Connection conn = manager.getConnection();
 		try (PreparedStatement ps = conn.prepareStatement(SQL_INSERT);) {
 			for (Contract c : contracts) {
@@ -41,14 +41,14 @@ public class ContractDaoJdbc implements ContractDao {
 					throw new RuntimeException("Fail to batch insert to contracts.");
 				}
 			}
-			return rets.length;
+			return rets;
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
 	@Override
-	public int inserf(Contract c) {
+	public int insert(Contract c) {
 		Connection conn = manager.getConnection();
 		try (PreparedStatement ps = conn.prepareStatement(SQL_INSERT);) {
 				setPsToContract(c, ps);

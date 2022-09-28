@@ -239,10 +239,7 @@ public class TestDataGenerator {
 	 */
 	private void insertContracts(PhoneBillDbManager manager, List<Contract> contracts) {
 		ContractDao dao = manager.getContractDao();
-		int ret = manager.execute(TgTmSettingDummy.getInstance(), () -> dao.batchInsert(contracts));
-		if (ret < 0) {
-			throw new RuntimeException("Fail to batch insert to table contracts.");
-		}
+		manager.execute(TgTmSettingDummy.getInstance(), () -> dao.batchInsert(contracts));
 		contracts.clear();
 	}
 
