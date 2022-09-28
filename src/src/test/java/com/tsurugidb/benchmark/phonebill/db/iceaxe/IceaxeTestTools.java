@@ -178,7 +178,6 @@ public class IceaxeTestTools {
 	 */
 	public void insertToHistory(Collection<History> histories) {
 		for(History h: histories) {
-			System.out.println(h);
 			insertToHistory(h.getCallerPhoneNumber(), h.getRecipientPhoneNumber(), h.getPaymentCategorty(),
 					h.getStartTime(), h.getTimeSecs(), h.getCharge(), h.getDf());
 		}

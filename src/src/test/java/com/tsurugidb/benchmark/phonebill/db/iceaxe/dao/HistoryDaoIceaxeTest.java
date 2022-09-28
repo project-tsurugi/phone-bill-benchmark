@@ -239,7 +239,7 @@ class HistoryDaoIceaxeTest {
 	}
 
 	@Test
-	@Disabled("Tsurugiのバグにより固ま")
+	@Disabled("Tsurugiのバグにより固まる")
 	final void testGetHistoriesKey() {
 		// TODO まだ実装途中 => 固まる問題の可決後に実装する。
 
@@ -258,15 +258,15 @@ class HistoryDaoIceaxeTest {
 		testTools.insertToHistory(h1, h2, h3);
 
 		// 契約c2の履歴データ
-		History h4 = History.create("002", "005", "C", "2022-03-05 12:10:01.999", 6, null, 0);
+		History h4 = History.create("002", "005", "C", "2022-03-05 12:10:01.999", 4, null, 0);
 		History h5 = History.create("002", "001", "C", "2022-05-05 12:10:01.999", 5, null, 0);
-		History h6 = History.create("002", "007", "C", "2022-09-15 12:10:01.999", 4, null, 0);
+		History h6 = History.create("002", "007", "C", "2022-09-15 12:10:01.999", 6, null, 0);
 		testTools.insertToHistory(h4, h5, h6);
 
-		// 契約c1, c2意外の履歴データ
-		History h7 = History.create("003", "005", "C", "2022-06-05 12:10:01.999", 6, null, 0);
-		History h8 = History.create("004", "001", "C", "2022-01-05 12:10:01.999", 5, null, 0);
-		History h9 = History.create("005", "007", "C", "2022-09-18 12:10:01.999", 4, null, 0);
+		// 契約c1, c2以外の履歴データ
+		History h7 = History.create("003", "005", "C", "2022-06-05 12:10:01.999", 7, null, 0);
+		History h8 = History.create("004", "001", "C", "2022-01-05 12:10:01.999", 8, null, 0);
+		History h9 = History.create("005", "007", "C", "2022-09-18 12:10:01.999", 9, null, 0);
 		testTools.insertToHistory(h7, h8, h9);
 
 
@@ -283,6 +283,9 @@ class HistoryDaoIceaxeTest {
 			return dao.getHistories(c1.getKey());
 		}));
 
+		for(History h: actualSet) {
+			System.err.println(h);
+		}
 		assertEquals(expectedSet, actualSet);
 
 		// c2 契約終了日が存在しない契約
