@@ -24,7 +24,6 @@ import com.tsurugidb.iceaxe.statement.TsurugiPreparedStatementUpdate1;
 
 public class HistoryDaoIceaxe implements HistoryDao {
 	private final IceaxeUtils utils;
-	private final ContractDaoIceaxe contractDaoIceaxe;
 
 	private static final TgEntityResultMapping<History> RESULT_MAPPING =
 			TgResultMapping.of(History::new)
@@ -47,7 +46,6 @@ public class HistoryDaoIceaxe implements HistoryDao {
 
 	public HistoryDaoIceaxe(PhoneBillDbManagerIceaxe manager) {
 		utils = new IceaxeUtils(manager);
-		contractDaoIceaxe = new ContractDaoIceaxe(manager);
 	}
 
 
@@ -117,9 +115,8 @@ public class HistoryDaoIceaxe implements HistoryDao {
 		if (list.isEmpty()) {
 			return Collections.emptyList();
 		}
-		long endDate = list.get(0).getInt8("end_date");
-		endDate = endDate == Long.MAX_VALUE ? Long.MAX_VALUE : endDate;
 
+		long endDate = list.get(0).getInt8("end_date");
 		String sql2 = "select caller_phone_number, recipient_phone_number, payment_categorty, start_time,"
 				+ " time_secs, charge, df from history where start_time >= :start_date and start_time < :end_date"
 				+ " and caller_phone_number = :phone_number";
@@ -128,12 +125,12 @@ public class HistoryDaoIceaxe implements HistoryDao {
 		var param2 = TgParameterList.of()
 				.add("phone_number", key.getPhoneNumber())
 				.add("start_date", key.getStartDate().getTime())
-				.add("end_date", endDate + DateUtils.A_DAY_IN_MILLISECONDS);
+				.add("end_date", endDate == Long.MAX_VALUE ? Long.MAX_VALUE: endDate + DateUtils.A_DAY_IN_MILLISECONDS);
 		return utils.execute(ps, param2);
 	}
 
 	/**
-	 * 指定の契約に紐付く通話履歴を取得する
+	 * getHistories(Key key)のオリジナルコード、今は想定通りの動作をしない。
 	 *
 	 */
 	public List<History> getHistoriesOrg(Key key) {

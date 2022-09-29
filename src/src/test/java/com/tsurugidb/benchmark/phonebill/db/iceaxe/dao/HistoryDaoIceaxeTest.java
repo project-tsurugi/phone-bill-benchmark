@@ -294,9 +294,6 @@ class HistoryDaoIceaxeTest {
 		actualSet.addAll(testTools.execute(() -> {
 			return dao.getHistories(c2.getKey());
 		}));
-		for(History h: actualSet) {
-			System.err.println(h);
-		}
 		assertEquals(expectedSet, actualSet);
 
 		// c3: 履歴を持たない契約を指定したケース
