@@ -16,6 +16,9 @@ import com.tsurugidb.iceaxe.statement.TsurugiPreparedStatementUpdate1;
 import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionException;
 import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionRuntimeException;
 
+/**
+ * IceaxeのAPI呼び出し時にチェック例外を非チェック例外でラッピングするutilクラス。
+ */
 public class IceaxeUtils {
 	private final PhoneBillDbManagerIceaxe manager;
 	private final TsurugiSession session;
