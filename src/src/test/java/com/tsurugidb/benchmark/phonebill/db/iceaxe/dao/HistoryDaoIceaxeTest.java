@@ -15,7 +15,6 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
@@ -50,12 +49,12 @@ class HistoryDaoIceaxeTest {
 	@BeforeEach
 	void setUp() throws Exception {
 		// 空のテーブルを作成する
-		if (testTools.tableExists("history")) {
+//		if (testTools.tableExists("history")) {
 			testTools.execute(() -> ddl.dropTable("history"));
-		}
-		if (testTools.tableExists("contracts")) {
+//		}
+//		if (testTools.tableExists("contracts")) {
 			testTools.execute(() -> ddl.dropTable("contracts"));
-		}
+//		}
 		testTools.execute(ddl::createHistoryTable);
 		testTools.execute(ddl::createContractsTable);
 	}
@@ -239,7 +238,6 @@ class HistoryDaoIceaxeTest {
 	}
 
 	@Test
-	@Disabled("Tsurugiのバグにより固まる")
 	final void testGetHistoriesKey() {
 		// TODO まだ実装途中 => 固まる問題の可決後に実装する。
 
@@ -252,16 +250,22 @@ class HistoryDaoIceaxeTest {
 		testTools.insertToContracts(c1, c2, c3);
 
 		// 契約c1の履歴データ
-		History h1 = History.create("001", "002", "C", "2022-03-05 12:10:01.999", 1, null, 0);
-		History h2 = History.create("001", "005", "C", "2022-03-05 12:10:11.999", 2, null, 0);
-		History h3 = History.create("001", "009", "C", "2022-03-06 12:10:01.999", 3, null, 0);
-		testTools.insertToHistory(h1, h2, h3);
+		History h11 = History.create("001", "002", "C", "2022-03-05 12:10:01.999", 11, null, 0);
+		History h12 = History.create("001", "005", "C", "2022-03-05 12:10:11.999", 12, null, 0);
+		History h13 = History.create("001", "009", "C", "2022-03-06 12:10:01.999", 13, null, 0);
+		History h14 = History.create("001", "002", "C", "2021-12-31 23:59:59.999", 14, null, 0); // 境界値
+		History h15 = History.create("001", "005", "C", "2022-01-01 00:00:00.000", 15, null, 0); // 境界値
+		History h16 = History.create("001", "005", "C", "2024-09-25 23:59:59.999", 16, null, 0); // 境界値
+		History h17 = History.create("001", "005", "C", "2024-09-26 00:00:00.000", 17, null, 0); // 境界値
+		testTools.insertToHistory(h11, h12, h13, h14, h15, h16, h17);
 
 		// 契約c2の履歴データ
-		History h4 = History.create("002", "005", "C", "2022-03-05 12:10:01.999", 4, null, 0);
-		History h5 = History.create("002", "001", "C", "2022-05-05 12:10:01.999", 5, null, 0);
-		History h6 = History.create("002", "007", "C", "2022-09-15 12:10:01.999", 6, null, 0);
-		testTools.insertToHistory(h4, h5, h6);
+		History h21 = History.create("002", "005", "C", "2022-03-05 12:10:01.999", 21, null, 0);
+		History h22 = History.create("002", "001", "C", "2022-05-05 12:10:01.999", 22, null, 0);
+		History h23 = History.create("002", "007", "C", "2022-09-15 12:10:01.999", 23, null, 0);
+		History h24 = History.create("002", "008", "C", "2021-12-31 23:59:59.999", 14, null, 0); // 境界値
+		History h25 = History.create("002", "009", "C", "2022-01-01 00:00:00.000", 15, null, 0); // 境界値
+		testTools.insertToHistory(h21, h22, h23, h24, h25);
 
 		// 契約c1, c2以外の履歴データ
 		History h7 = History.create("003", "005", "C", "2022-06-05 12:10:01.999", 7, null, 0);
@@ -275,28 +279,24 @@ class HistoryDaoIceaxeTest {
 
 		// c1: 契約終了日が存在する契約
 		expectedSet.clear();
-		expectedSet.add(h1);
-		expectedSet.add(h2);
-		expectedSet.add(h3);
+		expectedSet.addAll(Arrays.asList(h11, h12, h13, h15, h16));
 		actualSet.clear();
 		actualSet.addAll(testTools.execute(() -> {
 			return dao.getHistories(c1.getKey());
 		}));
 
-		for(History h: actualSet) {
-			System.err.println(h);
-		}
 		assertEquals(expectedSet, actualSet);
 
 		// c2 契約終了日が存在しない契約
 		expectedSet.clear();
-		expectedSet.add(h4);
-		expectedSet.add(h5);
-		expectedSet.add(h6);
+		expectedSet.addAll(Arrays.asList(h21, h22, h23, h25));
 		actualSet.clear();
 		actualSet.addAll(testTools.execute(() -> {
 			return dao.getHistories(c2.getKey());
 		}));
+		for(History h: actualSet) {
+			System.err.println(h);
+		}
 		assertEquals(expectedSet, actualSet);
 
 		// c3: 履歴を持たない契約を指定したケース

@@ -2,6 +2,7 @@ package com.tsurugidb.benchmark.phonebill.db.iceaxe.dao;
 
 import java.sql.Date;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import com.tsurugidb.benchmark.phonebill.app.billing.CalculationTarget;
@@ -23,7 +24,7 @@ import com.tsurugidb.iceaxe.statement.TsurugiPreparedStatementUpdate1;
 
 public class HistoryDaoIceaxe implements HistoryDao {
 	private final IceaxeUtils utils;
-
+	private final ContractDaoIceaxe contractDaoIceaxe;
 
 	private static final TgEntityResultMapping<History> RESULT_MAPPING =
 			TgResultMapping.of(History::new)
@@ -46,6 +47,7 @@ public class HistoryDaoIceaxe implements HistoryDao {
 
 	public HistoryDaoIceaxe(PhoneBillDbManagerIceaxe manager) {
 		utils = new IceaxeUtils(manager);
+		contractDaoIceaxe = new ContractDaoIceaxe(manager);
 	}
 
 
@@ -98,9 +100,43 @@ public class HistoryDaoIceaxe implements HistoryDao {
 
 	/**
 	 * 指定の契約に紐付く通話履歴を取得する
+	 *
+	 * TODO: 現状のTsurugiではwhere句付きのJoinが正しく動作しないので、Joinを使用せずに2回に話変えてQueryを実行している。
+	 * Tsurugiが想定通りに動作するようになったら、オリジナルのコードに戻す。
+	 *
 	 */
 	@Override
 	public List<History> getHistories(Key key) {
+		String sql1 = "select end_date from contracts where phone_number = :phone_number and start_date = :start_date";
+		var variable1 = TgVariableList.of().character("phone_number").int8("start_date");
+		var ps1 = utils.createPreparedQuery(sql1, TgParameterMapping.of(variable1));
+		var param1 = TgParameterList.of()
+				.add("phone_number", key.getPhoneNumber())
+				.add("start_date", key.getStartDate().getTime());
+		var list = utils.execute(ps1, param1);
+		if (list.isEmpty()) {
+			return Collections.emptyList();
+		}
+		long endDate = list.get(0).getInt8("end_date");
+		endDate = endDate == Long.MAX_VALUE ? Long.MAX_VALUE : endDate;
+
+		String sql2 = "select caller_phone_number, recipient_phone_number, payment_categorty, start_time,"
+				+ " time_secs, charge, df from history where start_time >= :start_date and start_time < :end_date"
+				+ " and caller_phone_number = :phone_number";
+		var variable2 = TgVariableList.of().character("phone_number").int8("start_date").int8("end_date");
+		var ps = utils.createPreparedQuery(sql2, TgParameterMapping.of(variable2), RESULT_MAPPING);
+		var param2 = TgParameterList.of()
+				.add("phone_number", key.getPhoneNumber())
+				.add("start_date", key.getStartDate().getTime())
+				.add("end_date", endDate + DateUtils.A_DAY_IN_MILLISECONDS);
+		return utils.execute(ps, param2);
+	}
+
+	/**
+	 * 指定の契約に紐付く通話履歴を取得する
+	 *
+	 */
+	public List<History> getHistoriesOrg(Key key) {
 		String sql = "select"
 				+ " h.caller_phone_number, h.recipient_phone_number, h.payment_categorty, h.start_time, h.time_secs,"
 				+ " h.charge, h.df" + " from history h"
@@ -116,6 +152,8 @@ public class HistoryDaoIceaxe implements HistoryDao {
 				.add("start_date", key.getStartDate().getTime());
 		return utils.execute(ps, param);
 	}
+
+
 
 	@Override
 	public List<History> getHistories(CalculationTarget target) {
