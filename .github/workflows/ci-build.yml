@@ -38,6 +38,12 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+      tsurugi:
+        image: ghcr.io/project-tsurugi/tsurugi:latest
+        credentials:
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GHCR_PAT }}
+
 
     steps:
       - id: Checkout
