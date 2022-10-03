@@ -1,25 +1,19 @@
 package com.tsurugidb.benchmark.phonebill.db.iceaxe.dao;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.sql.Date;
 
 import com.tsurugidb.benchmark.phonebill.db.dao.BillingDao;
 import com.tsurugidb.benchmark.phonebill.db.entity.Billing;
+import com.tsurugidb.benchmark.phonebill.db.iceaxe.IceaxeUtils;
 import com.tsurugidb.benchmark.phonebill.db.iceaxe.PhoneBillDbManagerIceaxe;
-import com.tsurugidb.iceaxe.session.TsurugiSession;
 import com.tsurugidb.iceaxe.statement.TgDataType;
 import com.tsurugidb.iceaxe.statement.TgParameterMapping;
-import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionException;
-import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionRuntimeException;
 
 public class BillingDaoIceaxe implements BillingDao {
-	private final PhoneBillDbManagerIceaxe manager;
-	private final TsurugiSession session;
+	private final IceaxeUtils utils;
 
 	public BillingDaoIceaxe(PhoneBillDbManagerIceaxe manager) {
-		this.manager = manager;
-		this.session = manager.getSession();
+		utils = new IceaxeUtils(manager);
 	}
 
 	@Override
@@ -45,15 +39,8 @@ public class BillingDaoIceaxe implements BillingDao {
 				.add("metered_charge", TgDataType.INT4, Billing::getMeteredCharge)
 				.add("billing_amount", TgDataType.INT4, Billing::getBillingAmount)
 				.add("batch_exec_id", TgDataType.CHARACTER, Billing::getBatchExecId);
-
-		try (var ps = session.createPreparedStatement(sql, param)) {
-			return ps.executeAndGetCount(manager.getCurrentTransaction(), billing);
-		} catch (IOException e) {
-			throw new UncheckedIOException(e);
-		} catch (TsurugiTransactionException e) {
-			throw new TsurugiTransactionRuntimeException(e);
-		}
-
+		var ps = utils.createPreparedStatement(sql, param);
+		return utils.executeAndGetCount(ps, billing);
 	}
 
 	@Override
@@ -61,14 +48,8 @@ public class BillingDaoIceaxe implements BillingDao {
 		String sql = "delete from billing where target_month = :target_month";
 		TgParameterMapping<Date> param = TgParameterMapping.of(Date.class)
 				.add("target_month", TgDataType.INT8, Date::getTime);
-
-		try (var ps = session.createPreparedStatement(sql, param)) {
-			return ps.executeAndGetCount(manager.getCurrentTransaction(), targetMonth);
-		} catch (IOException e) {
-			throw new UncheckedIOException(e);
-		} catch (TsurugiTransactionException e) {
-			throw new TsurugiTransactionRuntimeException(e);
-		}
+		var ps = utils.createPreparedStatement(sql, param);
+		return utils.executeAndGetCount(ps, targetMonth);
 	}
 
 }

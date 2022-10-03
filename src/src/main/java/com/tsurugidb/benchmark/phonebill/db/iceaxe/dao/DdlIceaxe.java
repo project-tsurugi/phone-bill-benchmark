@@ -2,9 +2,11 @@ package com.tsurugidb.benchmark.phonebill.db.iceaxe.dao;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.Optional;
 
 import com.tsurugidb.benchmark.phonebill.db.dao.Ddl;
 import com.tsurugidb.benchmark.phonebill.db.iceaxe.PhoneBillDbManagerIceaxe;
+import com.tsurugidb.iceaxe.metadata.TsurugiTableMetadata;
 import com.tsurugidb.iceaxe.session.TsurugiSession;
 import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionException;
 import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionRuntimeException;
@@ -24,7 +26,15 @@ public class DdlIceaxe implements Ddl {
 
 	@Override
 	public void dropTable(String tableName) {
-		execute("drop table " + tableName);
+		Optional<TsurugiTableMetadata> opt;
+		try {
+			opt = manager.getSession().findTableMetadata(tableName);
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
+		}
+		if (opt.isPresent()) {
+			execute("drop table " + tableName);
+		}
 	}
 
 	@Override

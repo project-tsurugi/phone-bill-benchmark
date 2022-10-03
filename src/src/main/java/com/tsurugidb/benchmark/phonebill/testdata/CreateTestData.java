@@ -37,7 +37,9 @@ public class CreateTestData extends ExecutableCommand {
 
 		// テーブルをTruncate
 		// インデックスの削除
-		ddl.prepareLoadData();
+		manager.execute(PhoneBillDbManager.OCC, () -> {
+			ddl.prepareLoadData();
+		});
 
 		// 契約マスタのテストデータ生成
 		long startTime = System.currentTimeMillis();
@@ -54,6 +56,10 @@ public class CreateTestData extends ExecutableCommand {
 		LOG.info(String.format(format, config.numberOfHistoryRecords, elapsedTime / 1000d));
 
 		// Indexの再生成とDBの統計情報を更新
-		ddl.afterLoadData();
+		manager.execute(PhoneBillDbManager.OCC, () -> {
+			ddl.afterLoadData();
+		});
+
+		manager.close();
 	}
 }

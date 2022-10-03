@@ -26,7 +26,6 @@ import org.slf4j.LoggerFactory;
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.Config.DbmsType;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
-import com.tsurugidb.benchmark.phonebill.db.TgTmSettingDummy;
 import com.tsurugidb.benchmark.phonebill.db.dao.ContractDao;
 import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
@@ -239,10 +238,7 @@ public class TestDataGenerator {
 	 */
 	private void insertContracts(PhoneBillDbManager manager, List<Contract> contracts) {
 		ContractDao dao = manager.getContractDao();
-		int ret = manager.execute(TgTmSettingDummy.getInstance(), () -> dao.batchInsert(contracts));
-		if (ret < 0) {
-			throw new RuntimeException("Fail to batch insert to table contracts.");
-		}
+		manager.execute(PhoneBillDbManager.OCC, () -> dao.batchInsert(contracts));
 		contracts.clear();
 	}
 
@@ -292,7 +288,7 @@ public class TestDataGenerator {
 	 *
 	 * @throws IOException
 	 */
-	public void generateHistoryToDb(PhoneBillDbManager manager) throws IOException {
+	public void generateHistoryToDb(PhoneBillDbManager manager) {
 		List<Params> paramsList = createParamsList();
 		for(Params params: paramsList) {
 			params.historyWriter = new DaoHistoryWriter(manager);
@@ -306,7 +302,7 @@ public class TestDataGenerator {
 	 *
 	 * @throws IOException
 	 */
-	public void generateHistoryToCsv(Path dir) throws IOException {
+	public void generateHistoryToCsv(Path dir)  {
 		List<Params> paramsList = createParamsList();
 		for(Params params: paramsList) {
 			Path outputPath = CsvUtils.getHistortyFilePath(dir, params.taskId);
@@ -354,7 +350,7 @@ public class TestDataGenerator {
 	 *
 	 * @throws IOException
 	 */
-	public void generateHistory(List<Params> paramsList) throws IOException {
+	public void generateHistory(List<Params> paramsList) {
 
 		// 通話履歴を生成するタスクとスレッドの生成
 		ExecutorService service = Executors.newFixedThreadPool(config.threadCount);
@@ -573,7 +569,7 @@ public class TestDataGenerator {
 		}
 
 		private void insertHistories() {
-			manager.execute(TgTmSettingDummy.getInstance(), () -> {
+			manager.execute(PhoneBillDbManager.OCC, () -> {
 				historyDao.batchInsert(histories);
 			});
 			histories.clear();

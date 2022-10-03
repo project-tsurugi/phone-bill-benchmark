@@ -1,6 +1,7 @@
 package com.tsurugidb.benchmark.phonebill.testdata;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.sql.Timestamp;
 import java.util.HashSet;
 import java.util.Random;
@@ -108,7 +109,7 @@ public class GenerateHistoryTask implements Callable<Result> {
 	 * @param n
 	 * @throws IOException
 	 */
-	public GenerateHistoryTask(Params params) throws IOException {
+	public GenerateHistoryTask(Params params)  {
 		random = params.random;
 		phoneNumberGenerator = params.phoneNumberGenerator;
 		start = params.start;
@@ -116,8 +117,12 @@ public class GenerateHistoryTask implements Callable<Result> {
 		numbeOfHistory = params.numberOfHistory;
 		historyWriter=params.historyWriter;
 		config = params.config;
-		contractInfoReader = ContractInfoReader.create(config, params.accessor, params.random);
-		contractInfoReader.loadActiveBlockNumberList();
+		try {
+			contractInfoReader = ContractInfoReader.create(config, params.accessor, params.random);
+			contractInfoReader.loadActiveBlockNumberList();
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
+		}
 		taskId = params.taskId;
 	}
 
