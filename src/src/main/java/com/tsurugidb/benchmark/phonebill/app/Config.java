@@ -313,6 +313,11 @@ public class Config implements Cloneable {
 	private static final String SYSPROP_PREFIX = "phone-bill.";
 
 	/**
+	 * システムプロパティでURLを置き換えるときののプロパティキー
+	 */
+	private static final String SYSPROP_URL_REPLACE = "url.replace";
+
+	/**
 	 * 複数ノード構成時のサーバのリッスンポート
 	 */
 	public int listenPort;
@@ -364,12 +369,26 @@ public class Config implements Cloneable {
 			.filter(k -> k.startsWith(SYSPROP_PREFIX))
 			.forEach(k -> prop.put(k.substring(SYSPROP_PREFIX.length()), System.getProperty(k)));
 		init();
+		replaceUrl();
 
 		Logger logger = LoggerFactory.getLogger(Config.class);
 		logger.info("Config initialized" +
 				System.lineSeparator() + "--- " + System.lineSeparator() + this.toString() + "---");
 	}
 
+
+
+	private void replaceUrl() {
+		String str = System.getProperty(SYSPROP_URL_REPLACE);
+		if (str == null) {
+			return;
+		}
+		for(String s1: str.split(",") ) {
+			String from = s1.replaceAll("\\|.*", "");
+			String to = s1.replaceAll(".*\\|", "");
+			url = url.replace(from, to);
+		}
+	}
 
 
 	/**

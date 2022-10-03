@@ -63,7 +63,6 @@ test {
     useJUnitPlatform() {
         excludeTags 'oracle'
         excludeTags 'copy-command'
-        excludeTags 'tsurugi'
     }
     testLogging {
         showStandardStreams true
@@ -72,6 +71,9 @@ test {
     }
     if (project.hasProperty("phone-bill.url")) {
         systemProperty "phone-bill.url", project.getProperty("phone-bill.url")
+    }
+    if (project.hasProperty("url.replace")) {
+        systemProperty "url.replace", project.getProperty("url.replace")
     }
 }
 

@@ -72,7 +72,7 @@ jobs:
         name: Test
         continue-on-error: false
         run: |
-          ./gradlew -i test -Pphone-bill.url="jdbc:postgresql://postgres/phonebill"
+          ./gradlew -i test -Purl.replace="jdbc:postgresql://127.0.0.1/phonebill|jdbc:postgresql://postgres/phonebill,tcp://localhost:12345|tcp://tsurugi:12345"
 
       - id: Static_Analysis
         name: Static_Analysis

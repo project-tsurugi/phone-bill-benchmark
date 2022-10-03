@@ -28,9 +28,11 @@ class ConfigTest {
 	private static String INCONSISTENT_CONFIG_PATH = "src/test/config/inconsistent.properties";
 	private static String UNKNOWN_DISTRIBUTION_FUNCTION_TYPE = "src/test/config/unknown_distribution_function_type.properties";
 	private static String UNSUPPORTED_TRANSACTION_SCOPE = "src/test/config/unsupported_transaction_scope.properties";
+	private static String ICEAXE_CONFIG = "src/test/config/iceaxe.properties";
 
 
 	private Map<String, String> sysPropBackup = new HashMap<String, String>();
+	private String urlReplaceBackup;
 
 	@AfterEach
 	void sysPropBackup() {
@@ -38,6 +40,11 @@ class ConfigTest {
 		sysPropBackup.keySet().stream().forEach(k -> {
 			System.setProperty(k, sysPropBackup.get(k));
 		});
+		if (urlReplaceBackup == null) {
+			System.clearProperty("url.replace");
+		} else {
+			System.setProperty("url.replace", urlReplaceBackup);
+		}
 	}
 
 	@BeforeEach
@@ -46,6 +53,29 @@ class ConfigTest {
 			sysPropBackup.put(k, System.getProperty(k));
 			System.clearProperty(k);
 		});
+		urlReplaceBackup = System.getProperty("url.replace");
+		System.clearProperty("url.replace");
+	}
+
+	@Test
+	void testUrlReplace() throws IOException {
+		System.clearProperty("url.replace");
+		Config config;
+
+		// URLの置き換えをしない場合
+		config = Config.getConfig(DEFALUT_CONFIG_PATH);
+		assertEquals("jdbc:postgresql://127.0.0.1/phonebill", config.url);
+		config = Config.getConfig(ICEAXE_CONFIG);
+		assertEquals("tcp://localhost:12345", config.url);
+
+		// URLの置き換えをした場合
+		System.setProperty("url.replace",
+				"jdbc:postgresql://127.0.0.1/phonebill|jdbc:postgresql://postgres/phonebill,tcp://localhost:12345|tcp://tsurugi:12345");
+		config = Config.getConfig(DEFALUT_CONFIG_PATH);
+		assertEquals("jdbc:postgresql://postgres/phonebill", config.url);
+		config = Config.getConfig(ICEAXE_CONFIG);
+		assertEquals("tcp://tsurugi:12345", config.url);
+
 	}
 
 	/**
