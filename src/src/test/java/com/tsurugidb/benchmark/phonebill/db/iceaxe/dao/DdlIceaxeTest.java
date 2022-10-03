@@ -64,6 +64,10 @@ class DdlIceaxeTest {
 		assertFalse(testTools.tableExists("contracts"));
 		assertFalse(testTools.tableExists("billing"));
 		assertFalse(testTools.tableExists("history"));
+
+
+		// 存在しないテーブルをdropしてもエラーにならない
+		testTools.execute(ddl::dropTables);
 	}
 
 
