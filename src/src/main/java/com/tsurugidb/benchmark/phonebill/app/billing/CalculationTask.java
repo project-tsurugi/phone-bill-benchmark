@@ -95,22 +95,25 @@ public class CalculationTask implements Callable<Exception> {
 	private void doCalc(CalculationTarget target) {
 		Contract contract = target.getContract();
 		LOG.debug("Start calcuration for  contract: {}.", contract);
-		List<History> histories = historyDao.getHistories(target);
+		manager.execute(PhoneBillDbManager.OCC, () -> { // TODO これだとバッチ全体を1トランザクションにできない。
+			List<History> histories = historyDao.getHistories(target);
 
-		CallChargeCalculator callChargeCalculator = target.getCallChargeCalculator();
-		BillingCalculator billingCalculator = target.getBillingCalculator();
-		for(History h: histories) {
-			if (h.getTimeSecs() < 0) {
-				throw new RuntimeException("Negative time: " + h.getTimeSecs());
+			CallChargeCalculator callChargeCalculator = target.getCallChargeCalculator();
+			BillingCalculator billingCalculator = target.getBillingCalculator();
+			for (History h : histories) {
+				if (h.getTimeSecs() < 0) {
+					throw new RuntimeException("Negative time: " + h.getTimeSecs());
+				}
+				h.setCharge(callChargeCalculator.calc(h.getTimeSecs()));
+				billingCalculator.addCallCharge(h.getCharge());
 			}
-			h.setCharge(callChargeCalculator.calc(h.getTimeSecs()));
-			billingCalculator.addCallCharge(h.getCharge());
-		}
-		historyDao.batchUpdate(histories);
-		updateBilling(contract, billingCalculator, target.getStart());
-		if (config.transactionScope == TransactionScope.CONTRACT) {
-			manager.commit();
-		}
+			historyDao.batchUpdate(histories);
+			updateBilling(contract, billingCalculator, target.getStart());
+			if (config.transactionScope == TransactionScope.CONTRACT) {
+				manager.commit();
+			}
+		});
+
 		LOG.debug("End calcuration for  contract: {}.", contract);
 	}
 

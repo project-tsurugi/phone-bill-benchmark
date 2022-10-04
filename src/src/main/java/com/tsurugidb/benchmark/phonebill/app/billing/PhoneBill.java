@@ -91,7 +91,6 @@ public class PhoneBill extends ExecutableCommand {
 	@SuppressFBWarnings(value={"DMI_RANDOM_USED_ONLY_ONCE"})
 	public static List<AbstractOnlineApp> createOnlineApps(Config config, ContractBlockInfoAccessor accessor)
 			throws IOException {
-		PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config);
 		Random random = new Random(config.randomSeed);
 		ActiveBlockNumberHolder blockHolder = accessor.getActiveBlockInfo();
 		if (blockHolder.getNumberOfActiveBlacks() < 1) {
@@ -184,10 +183,15 @@ public class PhoneBill extends ExecutableCommand {
 			}
 
 			// Billingテーブルの計算対象月のレコードを削除する
-			billingDao.delete(start);
+			manager.execute(PhoneBillDbManager.OCC, () -> {
+				billingDao.delete(start);
+			});
 
 			// 計算対象の契約を取りだし、キューに入れる
-			List<Contract> list = contractDao.getContracts(start, end);
+			List<Contract> list = manager.execute(PhoneBillDbManager.OCC, () -> {
+				return contractDao.getContracts(start, end);
+			});
+
 			for (Contract contract : list) {
 				LOG.debug(contract.toString());
 				// TODO 契約内容に合致した、CallChargeCalculator, BillingCalculatorを生成するようにする。
