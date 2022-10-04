@@ -405,12 +405,11 @@ public class IceaxeTestTools {
 
 	}
 
-
     public void execute(Runnable runnable) {
-    	manager.execute(PhoneBillDbManager.OCC_RTX, runnable);
+    	manager.execute(PhoneBillDbManager.OCC, runnable);
     }
 
     public <T> T execute(Supplier<T> supplier) {
-    	return manager.execute(PhoneBillDbManager.OCC_RTX, supplier);
+    	return manager.execute(PhoneBillDbManager.OCC, supplier);
     }
 }
