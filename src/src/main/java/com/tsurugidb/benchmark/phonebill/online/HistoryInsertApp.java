@@ -32,8 +32,6 @@ import com.tsurugidb.benchmark.phonebill.util.DateUtils;
 public class HistoryInsertApp extends AbstractOnlineApp {
     private static final Logger LOG = LoggerFactory.getLogger(HistoryInsertApp.class);
 	private final PhoneBillDbManager manager;
-
-
 	private int historyInsertRecordsPerTransaction;
 	private GenerateHistoryTask generateHistoryTask;
 	private long baseTime;
@@ -56,14 +54,14 @@ public class HistoryInsertApp extends AbstractOnlineApp {
 	 * @param duration
 	 * @throws IOException
 	 */
-	private HistoryInsertApp(PhoneBillDbManager manager,  ContractBlockInfoAccessor accessor, Config config, Random random, long baseTime,
+	private HistoryInsertApp(ContractBlockInfoAccessor accessor, Config config, Random random, long baseTime,
 			int duration) throws IOException {
 		super(config.historyInsertTransactionPerMin, config, random);
-		this.manager = manager;
 		this.historyInsertRecordsPerTransaction = config.historyInsertRecordsPerTransaction;
 		this.baseTime = baseTime;
 		this.duration = duration;
 		this.random = random;
+		manager = PhoneBillDbManager.createPhoneBillDbManager(config);
 		TestDataGenerator testDataGenerator = new TestDataGenerator(config, random, accessor);
 		generateHistoryTask = testDataGenerator.getGenerateHistoryTaskForOnlineApp();
 	}
@@ -80,17 +78,17 @@ public class HistoryInsertApp extends AbstractOnlineApp {
 	 * @return
 	 * @throws IOException
 	 */
-	public static List<AbstractOnlineApp> createHistoryInsertApps(PhoneBillDbManager manager, Config config,
-			Random random, ContractBlockInfoAccessor accessor, int num) throws IOException {
+	public static List<AbstractOnlineApp> createHistoryInsertApps(Config config, Random random,
+			ContractBlockInfoAccessor accessor, int num) throws IOException {
 		List<AbstractOnlineApp> list = new ArrayList<>();
 		if (num > 0) {
 			int duration = CREATE_SCHEDULE_INTERVAL_MILLS / num;
-			long baseTime = getBaseTime(manager, config);
+			long baseTime = getBaseTime(config);
 			for (int i = 0; i < num; i++) {
 				if (i != 0) {
 					random = new Random(random.nextInt());
 				}
-				AbstractOnlineApp app = new HistoryInsertApp(manager, accessor, config, random, baseTime, duration);
+				AbstractOnlineApp app = new HistoryInsertApp(accessor, config, random, baseTime, duration);
 				app.setName(i);
 				baseTime += duration;
 				list.add(app);
@@ -117,10 +115,12 @@ public class HistoryInsertApp extends AbstractOnlineApp {
 	 * @param config
 	 * @return
 	 */
-	static long getBaseTime(PhoneBillDbManager manager, Config config) {
-		HistoryDao dao = manager.getHistoryDao();
-		long maxStartTime = manager.execute(TgTmSettingDummy.getInstance(), () -> dao.getMaxStartTime());
-		return Math.max(maxStartTime, DateUtils.nextDate(config.historyMaxDate).getTime());
+	static long getBaseTime(Config config) {
+		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
+			HistoryDao dao = manager.getHistoryDao();
+			long maxStartTime = manager.execute(PhoneBillDbManager.OCC, () -> dao.getMaxStartTime());
+			return Math.max(maxStartTime, DateUtils.nextDate(config.historyMaxDate).getTime());
+		}
 	}
 
 

@@ -54,8 +54,8 @@ class HistoryInsertAppTest extends AbstractJdbcTestCase {
 		truncateTable("history");
 		config.historyInsertRecordsPerTransaction = 33;
 		HistoryInsertApp app = (HistoryInsertApp) HistoryInsertApp
-				.createHistoryInsertApps(manager, config, new Random(), accessor, 1).get(0);
-		long expectedBaseTime = HistoryInsertApp.getBaseTime(manager, config);
+				.createHistoryInsertApps(config, new Random(), accessor, 1).get(0);
+		long expectedBaseTime = HistoryInsertApp.getBaseTime(config);
 
 		// exec()呼び出し毎にhistoryのレコードが増えることを確認
 
@@ -96,19 +96,19 @@ class HistoryInsertAppTest extends AbstractJdbcTestCase {
 		truncateTable("history");
 		config.historyInsertRecordsPerTransaction = 1;
 		HistoryInsertApp app;
-		app = (HistoryInsertApp) HistoryInsertApp.createHistoryInsertApps(manager, config, new Random(0), accessor, 1).get(0);
+		app = (HistoryInsertApp) HistoryInsertApp.createHistoryInsertApps(config, new Random(0), accessor, 1).get(0);
 		app.exec();
 		List<History> expected = getHistories();
 
 		// 同じシードの乱数生成器を使うと、同じhistoryデータが生成されることを確認
 		truncateTable("history");
-		app = (HistoryInsertApp) HistoryInsertApp.createHistoryInsertApps(manager, config, new Random(0), accessor, 1).get(0);
+		app = (HistoryInsertApp) HistoryInsertApp.createHistoryInsertApps(config, new Random(0), accessor, 1).get(0);
 		app.exec();
 		assertEquals(expected, getHistories());
 
 		// app.exec()の実行前にkeySet()にキーを登録しておくと違うhistoryデータが生成されることを確認
 		truncateTable("history");
-		app = (HistoryInsertApp) HistoryInsertApp.createHistoryInsertApps(manager, config, new Random(0), accessor, 1).get(0);
+		app = (HistoryInsertApp) HistoryInsertApp.createHistoryInsertApps(config, new Random(0), accessor, 1).get(0);
 		HistoryKey key = new HistoryKey();
 		key.startTime = expected.get(0).getStartTime().getTime();
 		key.callerPhoneNumber = Integer.parseInt(expected.get(0).getCallerPhoneNumber());
@@ -129,7 +129,7 @@ class HistoryInsertAppTest extends AbstractJdbcTestCase {
 		testCreateHistoryInsertAppsSub(config, DateUtils.nextDate(config.historyMaxDate).getTime());
 
 		// historyInsertAppによるテストデータを投入
-		AbstractOnlineApp app = HistoryInsertApp.createHistoryInsertApps(manager, config, new Random(), accessor, 1).get(0);
+		AbstractOnlineApp app = HistoryInsertApp.createHistoryInsertApps(config, new Random(), accessor, 1).get(0);
 		app.exec();
 
 		// テストデータ投入後は、baseTimeが通話開始時刻の最大値になる
@@ -138,7 +138,7 @@ class HistoryInsertAppTest extends AbstractJdbcTestCase {
 
 		// numに0を指定したときのテスト
 		assertEquals(Collections.emptyList(),
-				HistoryInsertApp.createHistoryInsertApps(manager, config, new Random(), accessor, 0));
+				HistoryInsertApp.createHistoryInsertApps(config, new Random(), accessor, 0));
 	}
 
 
@@ -149,7 +149,7 @@ class HistoryInsertAppTest extends AbstractJdbcTestCase {
 	 * @throws IOException
 	 */
 	private void testCreateHistoryInsertAppsSub(Config config, long baseTime) throws SQLException, IOException {
-		List<AbstractOnlineApp> list = HistoryInsertApp.createHistoryInsertApps(manager, config, new Random(), accessor, 10);
+		List<AbstractOnlineApp> list = HistoryInsertApp.createHistoryInsertApps(config, new Random(), accessor, 10);
 		assertEquals(10, list.size());
 
 		List<HistoryInsertApp> historyInsertApps = new ArrayList<>();

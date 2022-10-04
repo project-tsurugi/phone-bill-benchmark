@@ -116,7 +116,7 @@ public class RunOnlineApp extends ExecutableCommand {
 
 		// historyInsertAppの初期化
 		historyInsertApps
-				.addAll(HistoryInsertApp.createHistoryInsertApps(manager, config, new Random(random.nextInt()), accessor,
+				.addAll(HistoryInsertApp.createHistoryInsertApps(config, new Random(random.nextInt()), accessor,
 						config.historyInsertThreadCount));
 
 		// HistoryUpdateAppの初期化

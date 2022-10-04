@@ -61,6 +61,7 @@ public class PhoneBill extends ExecutableCommand {
 		this.config = config.clone();
 		DbContractBlockInfoInitializer initializer = new DbContractBlockInfoInitializer(config);
 		ContractBlockInfoAccessor accessor = new SingleProcessContractBlockManager(initializer);
+		// TODO 一時的にオンラインアプリを無効化している。
 		List<AbstractOnlineApp> list = createOnlineApps(config, accessor);
 		final ExecutorService service = list.isEmpty() ? null : Executors.newFixedThreadPool(list.size());
 		try {
@@ -99,7 +100,7 @@ public class PhoneBill extends ExecutableCommand {
 
 		List<AbstractOnlineApp> list = new ArrayList<AbstractOnlineApp>();
 		if (config.historyInsertThreadCount > 0 && config.historyInsertTransactionPerMin != 0) {
-			list.addAll(HistoryInsertApp.createHistoryInsertApps(manager, config, new Random(random.nextInt()), accessor,
+			list.addAll(HistoryInsertApp.createHistoryInsertApps(config, new Random(random.nextInt()), accessor,
 					config.historyInsertThreadCount));
 		}
 		if (config.historyUpdateThreadCount > 0 && config.historyUpdateRecordsPerMin != 0) {

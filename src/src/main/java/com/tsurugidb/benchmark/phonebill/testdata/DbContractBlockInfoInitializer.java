@@ -5,7 +5,6 @@ import java.util.List;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
-import com.tsurugidb.benchmark.phonebill.db.TgTmSettingDummy;
 import com.tsurugidb.benchmark.phonebill.db.dao.ContractDao;
 
 /**
@@ -33,7 +32,7 @@ public class DbContractBlockInfoInitializer extends AbstractContractBlockInfoIni
 		// Contractsテーブルをフルスキャンしてブロック情報を作成する
 		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
 			ContractDao dao = manager.getContractDao();
-			List<String> phoneNumbers = manager.execute(TgTmSettingDummy.getInstance(), () -> dao.getAllPhoneNumbers());
+			List<String> phoneNumbers = manager.execute(PhoneBillDbManager.RTX, () -> dao.getAllPhoneNumbers());
 
 			int blockNumber = 0;
 			int recordsInBlock = 0;
