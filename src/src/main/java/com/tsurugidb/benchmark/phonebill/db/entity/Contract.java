@@ -13,12 +13,12 @@ public class Contract implements Cloneable {
 	/**
 	 * 契約開始日
 	 */
-	private Date startDate;
+	private long startDate;
 
 	/**
 	 * 契約終了日
 	 */
-	private Date endDate;
+	private Long endDate; // Null可のフィールドのためlongでなくLongを使用する。
 
 	/**
 	 * 料金計算ルール
@@ -31,9 +31,9 @@ public class Contract implements Cloneable {
 		builder.append("Contract [phone_number=");
 		builder.append(phoneNumber);
 		builder.append(", start_date=");
-		builder.append(startDate);
+		builder.append(new Date(startDate));
 		builder.append(", end_date=");
-		builder.append(endDate);
+		builder.append(endDate == null ? "(null)": new Date(endDate));
 		builder.append(", rule=");
 		builder.append(rule);
 		builder.append("]");
@@ -47,7 +47,7 @@ public class Contract implements Cloneable {
 		result = prime * result + ((endDate == null) ? 0 : endDate.hashCode());
 		result = prime * result + ((phoneNumber == null) ? 0 : phoneNumber.hashCode());
 		result = prime * result + ((rule == null) ? 0 : rule.hashCode());
-		result = prime * result + ((startDate == null) ? 0 : startDate.hashCode());
+		result = prime * result + (int) (startDate ^ (startDate >>> 32));
 		return result;
 	}
 
@@ -75,10 +75,7 @@ public class Contract implements Cloneable {
 				return false;
 		} else if (!rule.equals(other.rule))
 			return false;
-		if (startDate == null) {
-			if (other.startDate != null)
-				return false;
-		} else if (!startDate.equals(other.startDate))
+		if (startDate != other.startDate)
 			return false;
 		return true;
 	}
@@ -102,14 +99,14 @@ public class Contract implements Cloneable {
 	 */
 	public static class Key {
 		private String phoneNumber;
-		private Date startDate;
+		private long startDate;
 
 		@Override
 		public int hashCode() {
 			final int prime = 31;
 			int result = 1;
 			result = prime * result + ((phoneNumber == null) ? 0 : phoneNumber.hashCode());
-			result = prime * result + ((startDate == null) ? 0 : startDate.hashCode());
+			result = prime * result + (int) (startDate ^ (startDate >>> 32));
 			return result;
 		}
 
@@ -127,10 +124,7 @@ public class Contract implements Cloneable {
 					return false;
 			} else if (!phoneNumber.equals(other.phoneNumber))
 				return false;
-			if (startDate == null) {
-				if (other.startDate != null)
-					return false;
-			} else if (!startDate.equals(other.startDate))
+			if (startDate != other.startDate)
 				return false;
 			return true;
 		}
@@ -144,11 +138,11 @@ public class Contract implements Cloneable {
 		}
 
 		public Date getStartDate() {
-			return startDate;
+			return new Date(startDate);
 		}
 
 		public void setStartDate(Date startDate) {
-			this.startDate = startDate;
+			this.startDate = startDate.getTime();
 		}
 	}
 
@@ -159,10 +153,10 @@ public class Contract implements Cloneable {
 	 * @param startDate
 	 * @return
 	 */
-	public static Key createKey(String phoneNumber, Date startDate) {
+	private static Key createKey(String phoneNumber, long startDate) {
 		Key key = new Key();
-		key.setPhoneNumber(phoneNumber);
-		key.setStartDate(startDate);
+		key.phoneNumber = phoneNumber;
+		key.startDate = startDate;
 		return key;
 	}
 
@@ -175,39 +169,42 @@ public class Contract implements Cloneable {
 	}
 
 	public Date getStartDate() {
-		return startDate;
+		return new Date(startDate);
 	}
 
 	public long getStartDateAsLong() {
-		return startDate.getTime();
+		return startDate;
 	}
 
 	public void setStartDate(Date startDate) {
-		this.startDate = startDate;
+		this.startDate = startDate.getTime();
 	}
 
 	public void setStartDate(long startDate) {
-		this.startDate = new Date(startDate);
+		this.startDate = startDate;
 	}
 
 	public Date getEndDate() {
-		return endDate;
+		return endDate == null ? null : new Date(endDate);
 	}
 
 	// Iceaxe用のメソッド TsurguiがTime型を未サポートなので代わりにlongを使う。
 	// またTsurugiがis not nullを未サポートなので代わりにLong.MAX_VALUEを使う。
-	public Long getEndDateAsLong() {
-		return endDate == null ? Long.MAX_VALUE : endDate.getTime();
+	public long getEndDateAsLong() {
+		if (endDate == null) {
+			return Long.MAX_VALUE;
+		}
+		return endDate;
 	}
 
 	public void setEndDate(Date endDate) {
-		this.endDate = endDate;
+		this.endDate = endDate == null ? null : endDate.getTime();
 	}
 
 	// Iceaxe用のメソッド TsurguiがTime型を未サポートなので代わりにlongを使う。
 	// またTsurugiがis not nullを未サポートなので代わりにLong.MAX_VALUEを使う。
 	public void setEndDate(Long endDate) {
-		this.endDate = endDate == Long.MAX_VALUE  ? null : new Date(endDate);
+		this.endDate = endDate == Long.MAX_VALUE  ? null : endDate;
 	}
 
 
@@ -222,8 +219,8 @@ public class Contract implements Cloneable {
 	public static Contract create(String phoneNumber, String startDate, String endDate, String rule) {
 		Contract c = new Contract();
 		c.phoneNumber = phoneNumber;
-		c.startDate = DateUtils.toDate(startDate);
-		c.endDate =  endDate == null ? null :  DateUtils.toDate(endDate);
+		c.startDate = DateUtils.toDate(startDate).getTime();
+		c.endDate =  endDate == null ? null :  DateUtils.toDate(endDate).getTime();
 		c.rule = rule;
 		return c;
 	}

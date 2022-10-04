@@ -13,7 +13,7 @@ public class Billing {
 	/**
 	 * 対象年月
 	 */
-	private Date targetMonth;
+	private long targetMonth;
 
 	/**
 	 * 基本料金
@@ -41,7 +41,7 @@ public class Billing {
 		builder.append("Billing [phoneNumber=");
 		builder.append(phoneNumber);
 		builder.append(", targetMonth=");
-		builder.append(targetMonth);
+		builder.append(new Date(targetMonth));
 		builder.append(", basicCharge=");
 		builder.append(basicCharge);
 		builder.append(", meteredCharge=");
@@ -63,7 +63,7 @@ public class Billing {
 		result = prime * result + billingAmount;
 		result = prime * result + meteredCharge;
 		result = prime * result + ((phoneNumber == null) ? 0 : phoneNumber.hashCode());
-		result = prime * result + ((targetMonth == null) ? 0 : targetMonth.hashCode());
+		result = prime * result + (int) (targetMonth ^ (targetMonth >>> 32));
 		return result;
 	}
 
@@ -92,10 +92,7 @@ public class Billing {
 				return false;
 		} else if (!phoneNumber.equals(other.phoneNumber))
 			return false;
-		if (targetMonth == null) {
-			if (other.targetMonth != null)
-				return false;
-		} else if (!targetMonth.equals(other.targetMonth))
+		if (targetMonth != other.targetMonth)
 			return false;
 		return true;
 	}
@@ -109,23 +106,23 @@ public class Billing {
 	}
 
 	public Date getTargetMonth() {
-		return targetMonth;
+		return new Date(targetMonth);
 	}
 
 	// Iceaxe用のメソッド TsurguiがTime型を未サポートなので代わりにlongを使う。
 	// またTsurugiがis not nullを未サポートなので代わりにLong.MAX_VALUEを使う。
-	public Long getTargetMonthAsLong() {
-		return targetMonth.getTime();
+	public long getTargetMonthAsLong() {
+		return targetMonth;
 	}
 
 	public void setTargetMonth(Date targetMonth) {
-		this.targetMonth = targetMonth;
+		this.targetMonth = targetMonth.getTime();
 	}
 
 	// Iceaxe用のメソッド TsurguiがTime型を未サポートなので代わりにlongを使う。
 	// またTsurugiがis not nullを未サポートなので代わりにLong.MAX_VALUEを使う。
 	public void setTargetMonth(long targetMonth) {
-		this.targetMonth = new Date(targetMonth);
+		this.targetMonth = targetMonth;
 	}
 
 	public int getBasicCharge() {
@@ -164,7 +161,7 @@ public class Billing {
 			String batchExecId) {
 		Billing b = new Billing();
 		b.phoneNumber = phoneNumber;
-		b.targetMonth = DateUtils.toDate(targetMonth);
+		b.targetMonth = DateUtils.toDate(targetMonth).getTime();
 		b.basicCharge = basicCharge;
 		b.meteredCharge = meteredCharge;
 		b.billingAmount = billingAmount;

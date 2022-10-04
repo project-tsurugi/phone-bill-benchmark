@@ -29,6 +29,8 @@ import com.tsurugidb.iceaxe.result.TgResultMapping;
 import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionException;
 import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionRuntimeException;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 /**
  * PostgreSQLとIceaxeでJOINして検索の結果が同じことを確認する
  */
@@ -138,26 +140,28 @@ public class JoinTest extends AbstractJdbcTestCase {
 	}
 
 	@Test
+	@SuppressFBWarnings(value = "SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
 	public void testPostgreSQL() throws SQLException {
 		preparePostgresql();
 		assertEquals(histories, new HashSet<History>(getHistories()));
 		assertEquals(contracts, new HashSet<Contract>(getContracts()));
 
-		ResultSet rs = getStmt().executeQuery(SQL);
-		List<History> actual = new ArrayList<>();
-		while (rs.next()) {
-			History h = new History();
-			h.setCallerPhoneNumber(rs.getString(1));
-			h.setRecipientPhoneNumber(rs.getString(2));
-			h.setPaymentCategorty(rs.getString(3));
-			h.setStartTime(rs.getTimestamp(4));
-			h.setTimeSecs(rs.getInt(5));
-			int charge = rs.getInt(6);
-			h.setCharge(rs.wasNull() ? null : charge);
-			h.setDf(rs.getInt(7));
-			actual.add(h);
+		try (ResultSet rs = getStmt().executeQuery(SQL)) {
+			List<History> actual = new ArrayList<>();
+			while (rs.next()) {
+				History h = new History();
+				h.setCallerPhoneNumber(rs.getString(1));
+				h.setRecipientPhoneNumber(rs.getString(2));
+				h.setPaymentCategorty(rs.getString(3));
+				h.setStartTime(rs.getTimestamp(4));
+				h.setTimeSecs(rs.getInt(5));
+				int charge = rs.getInt(6);
+				h.setCharge(rs.wasNull() ? null : charge);
+				h.setDf(rs.getInt(7));
+				actual.add(h);
+			}
+			assertEquals(EXPECTED, actual);
 		}
-		assertEquals(EXPECTED, actual);
 	}
 
 	@Test

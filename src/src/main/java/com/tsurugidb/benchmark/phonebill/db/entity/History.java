@@ -1,5 +1,6 @@
 package com.tsurugidb.benchmark.phonebill.db.entity;
 
+import java.sql.Time;
 import java.sql.Timestamp;
 
 import com.tsurugidb.benchmark.phonebill.util.DateUtils;
@@ -23,7 +24,7 @@ public class History implements Cloneable{
 	/**
 	 * 通話開始時刻
 	 */
-	private Timestamp startTime;
+	private long startTime;
 
 	/**
 	 * 通話時間(秒)
@@ -50,7 +51,7 @@ public class History implements Cloneable{
 		builder.append(", paymentCategorty=");
 		builder.append(paymentCategorty);
 		builder.append(", startTime=");
-		builder.append(startTime);
+		builder.append(new Time(startTime));
 		builder.append(", timeSecs=");
 		builder.append(timeSecs);
 		builder.append(", charge=");
@@ -70,7 +71,7 @@ public class History implements Cloneable{
 		result = prime * result + df;
 		result = prime * result + ((paymentCategorty == null) ? 0 : paymentCategorty.hashCode());
 		result = prime * result + ((recipientPhoneNumber == null) ? 0 : recipientPhoneNumber.hashCode());
-		result = prime * result + ((startTime == null) ? 0 : startTime.hashCode());
+		result = prime * result + (int) (startTime ^ (startTime >>> 32));
 		result = prime * result + timeSecs;
 		return result;
 	}
@@ -106,10 +107,7 @@ public class History implements Cloneable{
 				return false;
 		} else if (!recipientPhoneNumber.equals(other.recipientPhoneNumber))
 			return false;
-		if (startTime == null) {
-			if (other.startTime != null)
-				return false;
-		} else if (!startTime.equals(other.startTime))
+		if (startTime != other.startTime)
 			return false;
 		if (timeSecs != other.timeSecs)
 			return false;
@@ -128,8 +126,8 @@ public class History implements Cloneable{
 
 	public Key getKey() {
 		Key key = new Key();
-		key.setCallerPhoneNumber(callerPhoneNumber);
-		key.setStartTime(startTime);
+		key.callerPhoneNumber = callerPhoneNumber;
+		key.startTime = startTime;
 		return key;
 	}
 
@@ -162,25 +160,19 @@ public class History implements Cloneable{
 
 
 	public Timestamp getStartTime() {
+		return new Timestamp(startTime);
+	}
+
+	public long getStartTimeAsLong() {
 		return startTime;
 	}
 
-	public Long getStartTimeAsLong() {
-		if (startTime == null) {
-			return null;
-		}
-		return startTime.getTime();
-	}
-
 	public void setStartTime(Timestamp startTime) {
-		this.startTime = startTime;
+		this.startTime = startTime.getTime();
 	}
 
-	public void setStartTime(Long startTime) {
-		if (startTime == null) {
-			this.startTime = null;
-		}
-		this.startTime = new Timestamp(startTime);
+	public void setStartTime(long startTime) {
+		this.startTime = startTime;
 	}
 
 	public int getTimeSecs() {
@@ -215,13 +207,13 @@ public class History implements Cloneable{
 	 */
 	public static class Key {
 		private String callerPhoneNumber;
-		private Timestamp startTime;
+		private long startTime;
 		@Override
 		public int hashCode() {
 			final int prime = 31;
 			int result = 1;
 			result = prime * result + ((callerPhoneNumber == null) ? 0 : callerPhoneNumber.hashCode());
-			result = prime * result + ((startTime == null) ? 0 : startTime.hashCode());
+			result = prime * result + (int) (startTime ^ (startTime >>> 32));
 			return result;
 		}
 		@Override
@@ -238,10 +230,7 @@ public class History implements Cloneable{
 					return false;
 			} else if (!callerPhoneNumber.equals(other.callerPhoneNumber))
 				return false;
-			if (startTime == null) {
-				if (other.startTime != null)
-					return false;
-			} else if (!startTime.equals(other.startTime))
+			if (startTime != other.startTime)
 				return false;
 			return true;
 		}
@@ -252,10 +241,10 @@ public class History implements Cloneable{
 			this.callerPhoneNumber = callerPhoneNumber;
 		}
 		public Timestamp getStartTime() {
-			return startTime;
+			return new Timestamp(startTime);
 		}
 		public void setStartTime(Timestamp startTime) {
-			this.startTime = startTime;
+			this.startTime = startTime.getTime();
 		}
 	}
 
@@ -271,7 +260,7 @@ public class History implements Cloneable{
 		h.callerPhoneNumber = callerPhoneNumber;
 		h.recipientPhoneNumber = recipientPhoneNumber;
 		h.paymentCategorty = paymentCategorty;
-		h.startTime = DateUtils.toTimestamp(startTime);
+		h.startTime = DateUtils.toTimestamp(startTime).getTime();
 		h.timeSecs = timeSecs;
 		h.charge = charge;
 		h.df = df;

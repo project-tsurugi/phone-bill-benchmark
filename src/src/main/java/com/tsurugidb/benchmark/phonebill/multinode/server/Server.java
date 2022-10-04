@@ -103,7 +103,7 @@ public class Server extends ExecutableCommand {
 	 */
 	@Override
 	public void execute(Config config) throws InterruptedException  {
-		this.config = config;
+		this.config = config.clone();
 		LOG.info("Starting server...");
 
 		DbContractBlockInfoInitializer initializer = new DbContractBlockInfoInitializer(config);

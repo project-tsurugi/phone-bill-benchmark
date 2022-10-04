@@ -181,37 +181,4 @@ class IceaxeUtilsTest {
 	        throw new IOException();
 	    }
 	}
-
-	private static class TestPs0IOExceptoin<T> extends TsurugiPreparedStatementQuery0<T> {
-
-		public TestPs0IOExceptoin() {
-			super(null, null, null);
-		}
-
-		@Override
-	    public TsurugiResultSet<T> execute(TsurugiTransaction transaction) throws IOException, TsurugiTransactionException {
-	        throw new IOException();
-	    }
-	}
-
-	private static class TestPs0TsurugiTransactionException<T> extends TsurugiPreparedStatementQuery0<T> {
-
-		public TestPs0TsurugiTransactionException() {
-			super(null, null, null);
-		}
-
-		@Override
-	    public TsurugiResultSet<T> execute(TsurugiTransaction transaction) throws IOException, TsurugiTransactionException {
-	        throw new IOException();
-	    }
-	}
-
-	private static class TestPs1IOExceptoin<P, R> extends TsurugiPreparedStatementQuery1<P, R> {
-		public TestPs1IOExceptoin() {
-			super(null, null, null, null);
-		}
-
-	}
-
-
 }

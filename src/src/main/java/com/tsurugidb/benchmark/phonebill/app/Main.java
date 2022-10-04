@@ -56,9 +56,13 @@ public class Main {
 			System.err.println("ERROR: Command '" + cmd + "' is not available.");
 			usage();
 			System.exit(1);
+			return;
 		}
 
 		ExecutableCommand executableCommand;
+		if (command.clazz == null) {
+			throw new AssertionError();
+		}
 		if (command.constructorArg == null) {
 			executableCommand = command.clazz.getConstructor().newInstance();
 		} else {
@@ -66,6 +70,9 @@ public class Main {
 		}
 
 
+		if (command.argType == null) {
+			throw new AssertionError();
+		}
 		switch(command.argType) {
 		case CONFIG:
 			Config config = Config.getConfig(args[1]);

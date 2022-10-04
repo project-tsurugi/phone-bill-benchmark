@@ -58,7 +58,7 @@ public class PhoneBill extends ExecutableCommand {
 
 	@Override
 	public void execute(Config config) throws Exception {
-		this.config = config;
+		this.config = config.clone();
 		DbContractBlockInfoInitializer initializer = new DbContractBlockInfoInitializer(config);
 		ContractBlockInfoAccessor accessor = new SingleProcessContractBlockManager(initializer);
 		List<AbstractOnlineApp> list = createOnlineApps(config, accessor);
