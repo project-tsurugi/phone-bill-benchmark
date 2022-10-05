@@ -86,13 +86,14 @@ public class DdlIceaxe implements Ddl {
 
 	@Override
 	public void createIndexes() {
-		execute("create index history(df)");
-		execute("create index idx_st on history(start_time)");
-		execute("create index idx_rp on history(recipient_phone_number, start_time)");
-		execute(
-				"alter table history add constraint history_pkey " + "primary key (caller_phone_number, start_time)");
-		execute(
-				"alter table contracts add constraint contracts_pkey " + "primary key (phone_number, start_date)");
+//      TODO 現在create indexに未対応
+//		execute("create index history(df)");
+//		execute("create index idx_st on history(start_time)");
+//		execute("create index idx_rp on history(recipient_phone_number, start_time)");
+//		execute(
+//				"alter table history add constraint history_pkey " + "primary key (caller_phone_number, start_time)");
+//		execute(
+//				"alter table contracts add constraint contracts_pkey " + "primary key (phone_number, start_date)");
 
 	}
 

@@ -155,11 +155,4 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
             throw new UncheckedIOException(e);
         }
     }
-
-	@Override
-	public boolean isRetriable(Throwable t) {
-		// TODO 自動生成されたメソッド・スタブ
-		return false;
-	}
-
 }

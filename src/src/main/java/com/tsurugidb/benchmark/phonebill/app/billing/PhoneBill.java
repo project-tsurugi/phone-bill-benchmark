@@ -61,7 +61,7 @@ public class PhoneBill extends ExecutableCommand {
 		this.config = config.clone();
 		DbContractBlockInfoInitializer initializer = new DbContractBlockInfoInitializer(config);
 		ContractBlockInfoAccessor accessor = new SingleProcessContractBlockManager(initializer);
-		// TODO 一時的にオンラインアプリを無効化している。
+
 		List<AbstractOnlineApp> list = createOnlineApps(config, accessor);
 		final ExecutorService service = list.isEmpty() ? null : Executors.newFixedThreadPool(list.size());
 		try {
@@ -183,12 +183,12 @@ public class PhoneBill extends ExecutableCommand {
 			}
 
 			// Billingテーブルの計算対象月のレコードを削除する
-			manager.execute(PhoneBillDbManager.OCC, () -> {
+			manager.execute(PhoneBillDbManager.LTX, () -> {
 				billingDao.delete(start);
 			});
 
 			// 計算対象の契約を取りだし、キューに入れる
-			List<Contract> list = manager.execute(PhoneBillDbManager.OCC, () -> {
+			List<Contract> list = manager.execute(PhoneBillDbManager.LTX, () -> {
 				return contractDao.getContracts(start, end);
 			});
 
@@ -271,11 +271,11 @@ public class PhoneBill extends ExecutableCommand {
 				}
 			}
 		}
-		if (needRollback) {
-			managers.stream().forEach(m->m.rollback());
-		} else {
-			managers.stream().forEach(m->m.commit());
-		}
+//		if (needRollback) {
+//			managers.stream().forEach(m->m.rollback());
+//		} else {
+//			managers.stream().forEach(m->m.commit());
+//		}
 		managers.stream().forEach(m->m.close());
 	}
 

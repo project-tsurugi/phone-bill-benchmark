@@ -16,11 +16,11 @@ public class CreateTable extends ExecutableCommand{
 	public void execute(Config config) throws Exception {
 		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
 			ddl = manager.getDdl();
-			ddl.dropTables();
-			ddl.createHistoryTable();
-			ddl.createContractsTable();
-			ddl.createBillingTable();
-			ddl.createIndexes();
+			manager.execute(PhoneBillDbManager.OCC, ddl::dropTables);
+			manager.execute(PhoneBillDbManager.OCC, ddl::createHistoryTable);
+			manager.execute(PhoneBillDbManager.OCC, ddl::createContractsTable);
+			manager.execute(PhoneBillDbManager.OCC, ddl::createBillingTable);
+			manager.execute(PhoneBillDbManager.OCC, ddl::createIndexes);
 		}
 	}
 }

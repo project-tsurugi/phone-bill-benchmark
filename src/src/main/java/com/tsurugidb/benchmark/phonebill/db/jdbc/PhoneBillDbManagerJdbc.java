@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
+import com.tsurugidb.benchmark.phonebill.db.RetryOverRuntimeException;
 import com.tsurugidb.benchmark.phonebill.db.dao.BillingDao;
 import com.tsurugidb.benchmark.phonebill.db.dao.ContractDao;
 import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
@@ -100,46 +101,53 @@ public abstract class PhoneBillDbManagerJdbc extends PhoneBillDbManager {
 
 	@Override
 	public void execute(TgTmSetting setting, Runnable runnable) {
-		for (;;) {
+		for (int tryCount = 0;; tryCount++) {
 			try {
 				runnable.run();
 				commit();
 				break;
-	        } catch (Throwable e) {
-	            try {
-	                rollback();
-					if (isRetriable(e)) {
+			} catch (Throwable e) {
+				try {
+					rollback();
+				} catch (Throwable t) {
+					e.addSuppressed(t);
+					throw e;
+				}
+				if (isRetriable(e)) {
+					if (tryCount <= getRetryCountLimit()) {
 						continue;
 					}
-	            } catch (Throwable t) {
-	                e.addSuppressed(t);
-	            }
-	            throw e;
-	        }
+					throw new RetryOverRuntimeException("trey count = " + tryCount, e);
+				}
+				throw e;
+			}
 		}
 	}
 
 	@Override
 	public <T> T execute(TgTmSetting setting, Supplier<T> supplier) {
-		for (;;) {
+		for (int tryCount = 0;; tryCount++) {
 			try {
 				T r = supplier.get();
 				commit();
 				return r;
 			} catch (Throwable e) {
-	            try {
-	                rollback();
-					if (isRetriable(e)) {
+				try {
+					rollback();
+				} catch (Throwable t) {
+					e.addSuppressed(t);
+					throw e;
+				}
+				if (isRetriable(e)) {
+					if (tryCount <= getRetryCountLimit()) {
 						continue;
 					}
-	            } catch (Throwable t) {
-	                e.addSuppressed(t);
-	            }
-	            throw e;
+					throw new RetryOverRuntimeException("trey count = " + tryCount, e);
+				}
+				throw e;
 			}
 		}
 	}
-
 
 	/**
 	 * Throwableがリトライ可能か調べる

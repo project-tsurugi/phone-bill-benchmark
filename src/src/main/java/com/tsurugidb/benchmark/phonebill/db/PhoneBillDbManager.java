@@ -17,24 +17,62 @@ import com.tsurugidb.benchmark.phonebill.db.postgresql.PhoneBillDbManagerPostgre
 import com.tsurugidb.iceaxe.transaction.TgTxOption;
 import com.tsurugidb.iceaxe.transaction.manager.TgTmSetting;
 
+/**
+ *
+ */
 public abstract class PhoneBillDbManager implements Closeable {
-	// 頻繁に使用されるTgTmSetting
+    private static final Logger LOG = LoggerFactory.getLogger(PhoneBillDbManager.class);
+
+    // 頻繁に使用されるTgTmSetting
 	public static final TgTmSetting OCC_RTX = TgTmSetting.of(TgTxOption.ofOCC(), TgTxOption.ofRTX());
 	public static final TgTmSetting OCC = TgTmSetting.of(TgTxOption.ofOCC());
 	public static final TgTmSetting RTX = TgTmSetting.of(TgTxOption.ofRTX());
 	public static final TgTmSetting LTX = TgTmSetting.of(TgTxOption.ofLTX());
 
 
-    private static final Logger LOG = LoggerFactory.getLogger(PhoneBillDbManager.class);
+	/**
+	 * リトライ回数 => デフォルト値はintの最大値
+	 */
+	private int retryCountLimit = Integer.MAX_VALUE;
 
+	/**
+	 * @return retryCountLimit
+	 */
+	public int getRetryCountLimit() {
+		return retryCountLimit;
+	}
+	/**
+	 * @param retryCountLimit セットする retryCountLimit
+	 */
+	public void setRetryCountLimit(int retryCountLimit) {
+		this.retryCountLimit = retryCountLimit;
+	}
+
+
+    // DAO取得用のメソッド
 	public abstract Ddl getDdl();
 	public abstract ContractDao getContractDao();
 	public abstract HistoryDao getHistoryDao();
 	public abstract BillingDao getBillingDao();
 
 
+    /**
+     * トランザクションを実行する
+     *
+     * @param setting
+     * @param runnable
+     */
     public abstract void execute(TgTmSetting setting, Runnable runnable);
 
+
+    /**
+     * トランザクションを実行する
+     *
+     * @param <T>
+     * @param setting
+     * @param supplier
+     * @return
+     */
     public abstract <T> T execute(TgTmSetting setting, Supplier<T> supplier);
 
     /**
@@ -77,14 +115,6 @@ public abstract class PhoneBillDbManager implements Closeable {
     @Override
     public abstract void close();
 
-	/**
-	 * 指定のThrowableを調べ、リトライにより回復可能な場合はtrueを返す
-	 *
-	 * @param e
-	 * @return
-	 */
-	public abstract boolean isRetriable(Throwable t);
-
 
 	/**
 	 * セッションの保持方法を示すenum
@@ -116,5 +146,4 @@ public abstract class PhoneBillDbManager implements Closeable {
 	public static PhoneBillDbManager createPhoneBillDbManager(Config config) {
 		return createPhoneBillDbManager(config, SessionHoldingType.THREAD_LOCAL);
 	}
-
 }

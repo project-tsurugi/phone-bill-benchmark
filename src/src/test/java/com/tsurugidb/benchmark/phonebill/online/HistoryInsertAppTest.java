@@ -15,7 +15,6 @@ import org.junit.jupiter.api.Test;
 import com.tsurugidb.benchmark.phonebill.AbstractJdbcTestCase;
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.CreateTable;
-import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
 import com.tsurugidb.benchmark.phonebill.testdata.AbstractContractBlockInfoInitializer;
 import com.tsurugidb.benchmark.phonebill.testdata.ContractBlockInfoAccessor;
@@ -27,7 +26,6 @@ import com.tsurugidb.benchmark.phonebill.util.DateUtils;
 
 class HistoryInsertAppTest extends AbstractJdbcTestCase {
 	private Config config = null;
-	private PhoneBillDbManager manager;
 	private ContractBlockInfoAccessor accessor = null;
 
 	@BeforeEach
@@ -39,7 +37,6 @@ class HistoryInsertAppTest extends AbstractJdbcTestCase {
 		config.noExpirationDateRate = 3;
 		config.duplicatePhoneNumberRate = 2;
 		config.numberOfHistoryRecords = 1000;
-		manager = PhoneBillDbManager.createPhoneBillDbManager(config);
 		new CreateTable().execute(config);
 		new CreateTestData().execute(config);
 

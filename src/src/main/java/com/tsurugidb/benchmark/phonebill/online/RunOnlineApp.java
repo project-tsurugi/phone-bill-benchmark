@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.ExecutableCommand;
-import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.testdata.ContractBlockInfoAccessor;
 import com.tsurugidb.benchmark.phonebill.testdata.CreateTestData;
 import com.tsurugidb.benchmark.phonebill.testdata.DbContractBlockInfoInitializer;
@@ -87,8 +86,6 @@ public class RunOnlineApp extends ExecutableCommand {
 
 	@SuppressFBWarnings(value={"DMI_RANDOM_USED_ONLY_ONCE"})
 	private Result executeOnlineApps(Config config) throws Exception {
-		PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config);
-
 		// テストデータの初期化
 		new CreateTestData().execute(config);
 		DbContractBlockInfoInitializer initializer = new DbContractBlockInfoInitializer(config);

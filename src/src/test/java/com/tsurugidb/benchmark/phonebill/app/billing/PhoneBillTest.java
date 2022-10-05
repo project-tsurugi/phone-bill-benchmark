@@ -2,6 +2,7 @@ package com.tsurugidb.benchmark.phonebill.app.billing;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -42,7 +43,7 @@ import com.tsurugidb.benchmark.phonebill.util.DateUtils;
 class PhoneBillTest extends AbstractJdbcTestCase {
     private static final Logger LOG = LoggerFactory.getLogger(PhoneBillTest.class);
 	private static String ORACLE_CONFIG_PATH = "src/test/config/oracle.properties";
-
+	private static String ICEAXE_CONFIG = "src/test/config/iceaxe.properties";
 	@Test
 	void test() throws Exception {
 		// 初期化
@@ -118,12 +119,9 @@ class PhoneBillTest extends AbstractJdbcTestCase {
 		insertToHistory("Phone-0005", "Phone-0001", "C", "2020-11-10 01:00:00.000", -1, 0);  	// 通話時間が負数なのでExceptionがスローされる
 		phoneBill.doCalc( DateUtils.toDate("2020-11-01"), DateUtils.toDate("2020-11-30"));
 		billings = getBillings();
-		assertEquals(5, billings.size());
-		assertEquals(toBilling("Phone-0001", "2020-11-01", 3000, 30, 3000), billings.get(0));
-		assertEquals(toBilling("Phone-0003", "2020-11-01", 3000, 0, 3000), billings.get(1));
-		assertEquals(toBilling("Phone-0004", "2020-11-01", 3000, 0, 3000), billings.get(2));
-		assertEquals(toBilling("Phone-0005", "2020-11-01", 3000, 50, 3000), billings.get(3));
-		assertEquals(toBilling("Phone-0008", "2020-11-01", 3000, 10, 3000), billings.get(4));
+		// 既存の請求データの削除処理は他の処理と別トランザクションのためロールバックされず削除された状態になる
+		assertEquals(0, billings.size());
+
 		// 通話履歴も更新されていないことを確認
 		histories = getHistories();
 		assertEquals(9, histories.size());
@@ -297,14 +295,8 @@ class PhoneBillTest extends AbstractJdbcTestCase {
 	@Test
 	void testConfigVariation() throws Exception {
 		// まず実行し、その結果を期待値とする
-		Config config = Config.getConfig();
-		config.duplicatePhoneNumberRate = 10;
-		config.expirationDateRate = 10;
-		config.noExpirationDateRate = 70;
-		config.numberOfContractsRecords = (int) 100;
-		config.numberOfHistoryRecords = (int) 1000;
-		config.threadCount = 1;
-		config.sharedConnection = false;
+		Config config = createConfigForTestConfigVariation();
+
 		new CreateTable().execute(config);
 		new CreateTestData().execute(config);
 		PhoneBill phoneBill = new PhoneBill();
@@ -337,14 +329,8 @@ class PhoneBillTest extends AbstractJdbcTestCase {
 	}
 
 
-	/*
-	 * Configに違いがあっても処理結果が変わらないことを確認(Oracle版)
-	 */
-	@Test
-	@Tag("oracle")
-	void testConfigVariationForOracle() throws Exception {
-		// まず実行し、その結果を期待値とする
-		Config config = Config.getConfig(ORACLE_CONFIG_PATH);
+	private Config createConfigForTestConfigVariation() throws IOException {
+		Config config = Config.getConfig();
 		config.duplicatePhoneNumberRate = 10;
 		config.expirationDateRate = 10;
 		config.noExpirationDateRate = 70;
@@ -352,11 +338,43 @@ class PhoneBillTest extends AbstractJdbcTestCase {
 		config.numberOfHistoryRecords = (int) 1000;
 		config.threadCount = 1;
 		config.sharedConnection = false;
+		config.historyInsertThreadCount = 0;
+		config.historyUpdateThreadCount = 0;
+		config.masterUpdateThreadCount = 0;
+		config.masterInsertThreadCount = 0;
+		return config;
+	}
+
+
+
+
+	/*
+	 * Configに違いがあっても処理結果が変わらないことを確認(Oracle版)
+	 */
+	@Test
+	@Tag("oracle")
+	void testConfigVariationForOracle() throws Exception {
+		// PostgreSQLで実行し、その結果を期待値とする
+		Config config = createConfigForTestConfigVariation();
 		new CreateTable().execute(config);
 		new CreateTestData().execute(config);
 		PhoneBill phoneBill = new PhoneBill();
 		phoneBill.execute(config);
 		List<Billing> expected = getBillings();
+
+
+		// Oracle用のconfigを作成
+
+		Config oracleConfig = Config.getConfig(ORACLE_CONFIG_PATH);
+		config = config.clone();
+		config.url = oracleConfig.url;
+		config.user = oracleConfig.user;
+		config.password = oracleConfig.password;;
+		config.dbmsType = oracleConfig.dbmsType;
+
+		// Iceaxe用のテストデータを生成
+		new CreateTable().execute(config);
+		new CreateTestData().execute(config);
 
 		// スレッド数 、コネクション共有の有無で結果が変わらないことを確認
 		boolean[] sharedConnections = { false, true };
@@ -382,6 +400,55 @@ class PhoneBillTest extends AbstractJdbcTestCase {
 	}
 
 
+	/*
+	 * Configに違いがあっても処理結果が変わらないことを確認(Iceaxe版)
+	 */
+	@Test
+	void testConfigVariationForIceaxe() throws Exception {
+		// PostgreSQLで実行し、その結果を期待値とする
+		Config config = createConfigForTestConfigVariation();
+		new CreateTable().execute(config);
+		new CreateTestData().execute(config);
+		PhoneBill phoneBill = new PhoneBill();
+		phoneBill.execute(config);
+		List<Billing> expected = getBillings();
+
+
+		// Iceaxe用のconfigを作成
+		Config iceaxeConfig = Config.getConfig(ICEAXE_CONFIG);
+		config = config.clone();
+		config.url = iceaxeConfig.url;
+		config.user = iceaxeConfig.user;
+		config.password = iceaxeConfig.password;;
+		config.dbmsType = iceaxeConfig.dbmsType;
+
+		// Iceaxe用のテストデータを生成
+		new CreateTable().execute(config);
+		new CreateTestData().execute(config);
+
+		// スレッド数 、コネクション共有の有無で結果が変わらないことを確認
+		boolean[] sharedConnections = { false };
+		int[] threadCounts = { 1 };
+		for (boolean sharedConnection : sharedConnections) {
+			for (int threadCount : threadCounts) {
+				Config newConfig = config.clone();
+				newConfig.threadCount = threadCount;
+				newConfig.sharedConnection = sharedConnection;
+				LOG.info("Executing phoneBill.exec() with threadCount =" + threadCount + ", sharedConnection = "
+						+ sharedConnection);
+				testNewConfig(phoneBill, expected, newConfig);
+			}
+		}
+
+		// トランザクションスコープの違いで結果が変わらないことの確認
+		for(TransactionScope ts: TransactionScope.values()) {
+			Config newConfig = config.clone();
+			newConfig.transactionScope= ts;
+			LOG.info("Executing phoneBill.exec() with transactionScope =" + ts);
+			testNewConfig(phoneBill, expected, newConfig);
+		}
+	}
+
 
 	/**
 	 * @param phoneBill
@@ -394,6 +461,9 @@ class PhoneBillTest extends AbstractJdbcTestCase {
 			throws Exception, SQLException {
 		phoneBill.execute(newConfig);
 		List<Billing> actual = getBillings();
+		if (expected.size() != 76) {
+			System.out.println(actual);
+		}
 		assertEquals(expected.size(), actual.size());
 		for (int i = 0; i < expected.size(); i++) {
 			assertEquals( expected.get(i), actual.get(i), Integer.toString(i));

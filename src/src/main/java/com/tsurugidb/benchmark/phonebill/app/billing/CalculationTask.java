@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.Config.TransactionScope;
+import com.tsurugidb.benchmark.phonebill.db.NoTransactionManagePhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.dao.BillingDao;
 import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
@@ -54,35 +55,45 @@ public class CalculationTask implements Callable<Exception> {
 	@Override
 	public Exception call() throws Exception {
 		try {
-			LOG.debug("Calculation task started.");
-			for (;;) {
-				CalculationTarget target;
-				try {
-					target = queue.take();
-					LOG.debug(queue.getStatus());
-				} catch (InterruptedException e) {
-					LOG.debug("InterruptedException caught and continue taking calculation_target", e);
-					continue;
-				}
-				if (target.isEndOfTask() || abortRequested.get() == true) {
-					LOG.debug("Calculation task finished normally.");
-					return null;
-				}
-				// TODO: リトライ回数を指定可能にする
-				for (;;) {
-					try {
-						doCalc(target);
-						break;
-					} catch (RuntimeException e) {
-						if (manager.isRetriable(e) && config.transactionScope == TransactionScope.CONTRACT) {
-							manager.rollback();
-						} else {
-							throw e;
-						}
-					}
-				}
+			NoTransactionManagePhoneBillDbManager noTransactionManageManager =
+					new NoTransactionManagePhoneBillDbManager(manager);
+			PhoneBillDbManager mainLoopManager;
+			PhoneBillDbManager contractManager;
+
+			if (config.transactionScope == TransactionScope.CONTRACT) {
+				mainLoopManager = noTransactionManageManager;
+				contractManager = manager;
+			} else {
+				mainLoopManager = manager;
+				contractManager = noTransactionManageManager;
 			}
+			mainLoopManager.setRetryCountLimit(0);
+
+			// TODO スレッド終了時にトランザクションが終了してしまうが、すべてのスレッドの処理終了を待って
+			// commit or rollbackするようにしたい。
+			LOG.info("Calculation task started.");
+			mainLoopManager.execute(PhoneBillDbManager.OCC, () -> {
+				for (;;) {
+					CalculationTarget target;
+					try {
+						target = queue.take();
+						LOG.debug(queue.getStatus());
+					} catch (InterruptedException e) {
+						LOG.debug("InterruptedException caught and continue taking calculation_target", e);
+						continue;
+					}
+					if (target.isEndOfTask() || abortRequested.get() == true) {
+						LOG.info("Calculation task finished normally.");
+						return null;
+					}
+					contractManager.execute(PhoneBillDbManager.OCC, () -> {
+						doCalc(target);
+					});
+				}
+			});
+			return null;
 		} catch (Exception e) {
+			LOG.error("Calculation task aborted by exeption.", e);
 			return e;
 		}
 	}
@@ -95,7 +106,7 @@ public class CalculationTask implements Callable<Exception> {
 	private void doCalc(CalculationTarget target) {
 		Contract contract = target.getContract();
 		LOG.debug("Start calcuration for  contract: {}.", contract);
-		manager.execute(PhoneBillDbManager.OCC, () -> { // TODO これだとバッチ全体を1トランザクションにできない。
+		try {
 			List<History> histories = historyDao.getHistories(target);
 
 			CallChargeCalculator callChargeCalculator = target.getCallChargeCalculator();
@@ -109,12 +120,11 @@ public class CalculationTask implements Callable<Exception> {
 			}
 			historyDao.batchUpdate(histories);
 			updateBilling(contract, billingCalculator, target.getStart());
-			if (config.transactionScope == TransactionScope.CONTRACT) {
-				manager.commit();
-			}
-		});
-
-		LOG.debug("End calcuration for  contract: {}.", contract);
+			LOG.debug("End calcuration for contract: {}.", contract);
+		} catch (RuntimeException e) {
+			LOG.debug("Abort calcuration for contract: " + contract + ".", e);
+			throw e;
+		}
 	}
 
 	/**

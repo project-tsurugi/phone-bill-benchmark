@@ -28,38 +28,37 @@ public class CreateTestData extends ExecutableCommand {
 		// テストデータの作成時は、configの指定にかかわらずTRANSACTION_READ_COMMITTEDを使用する。
 		Config config = c.clone();
 		config.isolationLevel = Config.IsolationLevel.READ_COMMITTED;
-		PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config);
-		Ddl ddl = manager.getDdl();
+		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
+			Ddl ddl = manager.getDdl();
 
-		int seed = config.randomSeed;
-		ContractBlockInfoAccessor accessor = new SingleProcessContractBlockManager();
-		TestDataGenerator generator = new TestDataGenerator(config, new Random(seed), accessor);
+			int seed = config.randomSeed;
+			ContractBlockInfoAccessor accessor = new SingleProcessContractBlockManager();
+			TestDataGenerator generator = new TestDataGenerator(config, new Random(seed), accessor);
 
-		// テーブルをTruncate
-		// インデックスの削除
-		manager.execute(PhoneBillDbManager.OCC, () -> {
-			ddl.prepareLoadData();
-		});
+			// テーブルをTruncate
+			// インデックスの削除
+			manager.execute(PhoneBillDbManager.OCC, () -> {
+				ddl.prepareLoadData();
+			});
 
-		// 契約マスタのテストデータ生成
-		long startTime = System.currentTimeMillis();
-		generator.generateContractsToDb(manager);
-		long elapsedTime = System.currentTimeMillis() - startTime;
-		String format = "%,d records generated to contracts table in %,.3f sec ";
-		LOG.info(String.format(format, config.numberOfContractsRecords, elapsedTime / 1000d));
+			// 契約マスタのテストデータ生成
+			long startTime = System.currentTimeMillis();
+			generator.generateContractsToDb(manager);
+			long elapsedTime = System.currentTimeMillis() - startTime;
+			String format = "%,d records generated to contracts table in %,.3f sec ";
+			LOG.info(String.format(format, config.numberOfContractsRecords, elapsedTime / 1000d));
 
-		// 通話履歴のテストデータを作成
-		startTime = System.currentTimeMillis();
-		generator.generateHistoryToDb(manager);
-		elapsedTime = System.currentTimeMillis() - startTime;
-		format = "%,d records generated to history table in %,.3f sec ";
-		LOG.info(String.format(format, config.numberOfHistoryRecords, elapsedTime / 1000d));
+			// 通話履歴のテストデータを作成
+			startTime = System.currentTimeMillis();
+			generator.generateHistoryToDb(manager);
+			elapsedTime = System.currentTimeMillis() - startTime;
+			format = "%,d records generated to history table in %,.3f sec ";
+			LOG.info(String.format(format, config.numberOfHistoryRecords, elapsedTime / 1000d));
 
-		// Indexの再生成とDBの統計情報を更新
-		manager.execute(PhoneBillDbManager.OCC, () -> {
-			ddl.afterLoadData();
-		});
-
-		manager.close();
+			// Indexの再生成とDBの統計情報を更新
+			manager.execute(PhoneBillDbManager.OCC, () -> {
+				ddl.afterLoadData();
+			});
+		}
 	}
 }
