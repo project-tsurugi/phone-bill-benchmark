@@ -14,12 +14,13 @@ public class CreateTable extends ExecutableCommand{
 
 	@Override
 	public void execute(Config config) throws Exception {
-		PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config);
-		ddl = manager.getDdl();
-		ddl.dropTables();
-		ddl.createHistoryTable();
-		ddl.createContractsTable();
-		ddl.createBillingTable();
-		ddl.createIndexes();
+		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
+			ddl = manager.getDdl();
+			ddl.dropTables();
+			ddl.createHistoryTable();
+			ddl.createContractsTable();
+			ddl.createBillingTable();
+			ddl.createIndexes();
+		}
 	}
 }
