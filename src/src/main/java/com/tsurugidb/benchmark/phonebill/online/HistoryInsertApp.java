@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
-import com.tsurugidb.benchmark.phonebill.db.TgTmSettingDummy;
 import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
 import com.tsurugidb.benchmark.phonebill.testdata.ContractBlockInfoAccessor;
@@ -143,7 +142,7 @@ public class HistoryInsertApp extends AbstractOnlineApp {
 	@Override
 	protected void updateDatabase() {
 		HistoryDao dao = manager.getHistoryDao();
-		manager.execute(TgTmSettingDummy.getInstance(), () -> dao.batchInsert(histories));
+		manager.execute(TgTmSetting.ofAlways(TgTxOption.ofOCC()), () -> dao.batchInsert(histories));
 		LOG.debug("ONLINE APP: Insert {} records to history.", historyInsertRecordsPerTransaction);
 	}
 

@@ -37,6 +37,7 @@ import com.tsurugidb.iceaxe.transaction.manager.TgTmSetting;
  *
  */
 public class IceaxeTestTools {
+	private static final TgTmSetting OCC = TgTmSetting.of(TgTxOption.ofOCC());
 	private  final PhoneBillDbManagerIceaxe manager;
 	private  final TsurugiSession session;
 
@@ -278,7 +279,7 @@ public class IceaxeTestTools {
 	 *
 	 * @return
 	 */
-	public List<History> getHistryList() {
+	public List<History> getHistoryList() {
 		var resultMapping =
 				TgResultMapping.of(History::new)
 				.character("caller_phone_number", History::setCallerPhoneNumber)
@@ -308,7 +309,7 @@ public class IceaxeTestTools {
 	 * @return
 	 */
 	public Set<History> getHistorySet() {
-		return new HashSet<>(getHistryList());
+		return new HashSet<>(getHistoryList());
 	}
 
 	/**
@@ -404,14 +405,23 @@ public class IceaxeTestTools {
 				throw new TsurugiTransactionRuntimeException(e);
 			}
 		});
+	}
 
+
+	/**
+	 * 指定のテーブルをトランケートする。
+	 */
+	public void truncateTable(String tableName) {
+		manager.execute(OCC, () -> {
+			manager.getDdl().truncateTable(tableName);
+		});
 	}
 
     public void execute(Runnable runnable) {
-    	manager.execute(TgTmSetting.of(TgTxOption.ofOCC()), runnable);
+    	manager.execute(OCC, runnable);
     }
 
     public <T> T execute(Supplier<T> supplier) {
-    	return manager.execute(TgTmSetting.of(TgTxOption.ofOCC()), supplier);
+    	return manager.execute(OCC, supplier);
     }
 }
