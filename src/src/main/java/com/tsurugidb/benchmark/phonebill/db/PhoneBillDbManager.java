@@ -14,7 +14,6 @@ import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.iceaxe.PhoneBillDbManagerIceaxe;
 import com.tsurugidb.benchmark.phonebill.db.oracle.PhoneBillDbManagerOracle;
 import com.tsurugidb.benchmark.phonebill.db.postgresql.PhoneBillDbManagerPostgresql;
-import com.tsurugidb.iceaxe.transaction.TgTxOption;
 import com.tsurugidb.iceaxe.transaction.manager.TgTmSetting;
 
 /**
@@ -23,14 +22,7 @@ import com.tsurugidb.iceaxe.transaction.manager.TgTmSetting;
 public abstract class PhoneBillDbManager implements Closeable {
     private static final Logger LOG = LoggerFactory.getLogger(PhoneBillDbManager.class);
 
-    // 頻繁に使用されるTgTmSetting
-	public static final TgTmSetting OCC_RTX = TgTmSetting.of(TgTxOption.ofOCC(), TgTxOption.ofRTX());
-	public static final TgTmSetting OCC = TgTmSetting.of(TgTxOption.ofOCC());
-	public static final TgTmSetting RTX = TgTmSetting.of(TgTxOption.ofRTX());
-	public static final TgTmSetting LTX = TgTmSetting.of(TgTxOption.ofLTX());
-
-
-	/**
+    /**
 	 * リトライ回数 => デフォルト値はintの最大値
 	 */
 	private int retryCountLimit = Integer.MAX_VALUE;

@@ -21,6 +21,8 @@ import com.tsurugidb.benchmark.phonebill.testdata.GenerateHistoryTask;
 import com.tsurugidb.benchmark.phonebill.testdata.HistoryKey;
 import com.tsurugidb.benchmark.phonebill.testdata.TestDataGenerator;
 import com.tsurugidb.benchmark.phonebill.util.DateUtils;
+import com.tsurugidb.iceaxe.transaction.TgTxOption;
+import com.tsurugidb.iceaxe.transaction.manager.TgTmSetting;
 
 /**
  * 通話履歴を追加するオンラインアプリケーション.
@@ -118,7 +120,7 @@ public class HistoryInsertApp extends AbstractOnlineApp {
 	static long getBaseTime(Config config) {
 		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
 			HistoryDao dao = manager.getHistoryDao();
-			long maxStartTime = manager.execute(PhoneBillDbManager.OCC, () -> dao.getMaxStartTime());
+			long maxStartTime = manager.execute(TgTmSetting.of(TgTxOption.ofRTX()), () -> dao.getMaxStartTime());
 			return Math.max(maxStartTime, DateUtils.nextDate(config.historyMaxDate).getTime());
 		}
 	}

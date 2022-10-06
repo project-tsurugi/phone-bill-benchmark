@@ -14,6 +14,8 @@ import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
 import com.tsurugidb.benchmark.phonebill.testdata.CreateTestData;
+import com.tsurugidb.iceaxe.transaction.TgTxOption;
+import com.tsurugidb.iceaxe.transaction.manager.TgTmSetting;
 
 /**
  * 以下の条件を変えて、バッチの処理時間がどう変化するのかを測定する
@@ -113,14 +115,14 @@ public class OnlineAppBench extends ExecutableCommand {
 
 	private void afterExec(Config config) {
 		List<History> histories = new ArrayList<>();
-		manager.execute(PhoneBillDbManager.OCC_RTX, () -> {
+		manager.execute(TgTmSetting.of(TgTxOption.ofOCC()), () -> {
 			histories.addAll(manager.getHistoryDao().getHistories());
 		});
 		int historyUpdated = countUpdated(histories, orgHistories, History::getKey);
 		int historyInserted = histories.size() - orgHistories.size();
 
 		List<Contract> contracts = new ArrayList<>();
-		manager.execute(PhoneBillDbManager.OCC_RTX, () -> {
+		manager.execute(TgTmSetting.of(TgTxOption.ofOCC()), () -> {
 			contracts.addAll(manager.getContractDao().getContracts());
 		});
 		int masterUpdated = countUpdated(contracts, orgContracts, Contract::getKey);
@@ -158,7 +160,7 @@ public class OnlineAppBench extends ExecutableCommand {
 	List<Contract> orgContracts;
 
 	private void beforeExec(Config config) {
-		manager.execute(PhoneBillDbManager.OCC_RTX, () -> {
+		manager.execute(TgTmSetting.of(TgTxOption.ofOCC()), () -> {
 			orgHistories = manager.getHistoryDao().getHistories();
 			orgContracts = manager.getContractDao().getContracts();
 		});

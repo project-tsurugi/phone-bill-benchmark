@@ -24,9 +24,11 @@ import com.tsurugidb.iceaxe.statement.TgParameterList;
 import com.tsurugidb.iceaxe.statement.TgParameterMapping;
 import com.tsurugidb.iceaxe.statement.TgVariable;
 import com.tsurugidb.iceaxe.statement.TgVariableList;
+import com.tsurugidb.iceaxe.transaction.TgTxOption;
 import com.tsurugidb.iceaxe.transaction.TsurugiTransaction;
 import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionException;
 import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionRuntimeException;
+import com.tsurugidb.iceaxe.transaction.manager.TgTmSetting;
 
 /**
  * IceaxeのUT用のツール.
@@ -406,10 +408,10 @@ public class IceaxeTestTools {
 	}
 
     public void execute(Runnable runnable) {
-    	manager.execute(PhoneBillDbManager.OCC, runnable);
+    	manager.execute(TgTmSetting.of(TgTxOption.ofOCC()), runnable);
     }
 
     public <T> T execute(Supplier<T> supplier) {
-    	return manager.execute(PhoneBillDbManager.OCC, supplier);
+    	return manager.execute(TgTmSetting.of(TgTxOption.ofOCC()), supplier);
     }
 }

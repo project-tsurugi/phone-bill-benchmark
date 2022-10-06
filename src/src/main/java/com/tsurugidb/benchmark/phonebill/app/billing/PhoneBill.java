@@ -38,6 +38,8 @@ import com.tsurugidb.benchmark.phonebill.testdata.ActiveBlockNumberHolder;
 import com.tsurugidb.benchmark.phonebill.testdata.ContractBlockInfoAccessor;
 import com.tsurugidb.benchmark.phonebill.testdata.DbContractBlockInfoInitializer;
 import com.tsurugidb.benchmark.phonebill.testdata.SingleProcessContractBlockManager;
+import com.tsurugidb.iceaxe.transaction.TgTxOption;
+import com.tsurugidb.iceaxe.transaction.manager.TgTmSetting;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -167,6 +169,26 @@ public class PhoneBill extends ExecutableCommand {
 		try {
 			BillingDao billingDao = manager.getBillingDao();
 			ContractDao contractDao = manager.getContractDao();
+
+			// Billingテーブルの計算対象月のレコードを削除する
+			manager.execute(TgTmSetting.of(TgTxOption.ofOCC()), () -> {
+				billingDao.delete(start);
+			});
+
+			// 計算対象の契約を取りだし、キューに入れる
+			List<Contract> list = manager.execute(TgTmSetting.ofAlways(TgTxOption.ofRTX()), () -> {
+				return contractDao.getContracts(start, end);
+			});
+			for (Contract contract : list) {
+				LOG.debug(contract.toString());
+				// TODO 契約内容に合致した、CallChargeCalculator, BillingCalculatorを生成するようにする。
+				CallChargeCalculator callChargeCalculator = new SimpleCallChargeCalculator();
+				BillingCalculator billingCalculator = new SimpleBillingCalculator();
+				CalculationTarget target = new CalculationTarget(contract, billingCalculator, callChargeCalculator,
+						start, end, false);
+				queue.put(target);
+			}
+
 			// 契約毎の計算を行うスレッドを生成する
 			service = Executors.newFixedThreadPool(threadCount);
 			for (int i = 0; i < threadCount; i++) {
@@ -182,25 +204,7 @@ public class PhoneBill extends ExecutableCommand {
 				futures.add(service.submit(task));
 			}
 
-			// Billingテーブルの計算対象月のレコードを削除する
-			manager.execute(PhoneBillDbManager.LTX, () -> {
-				billingDao.delete(start);
-			});
 
-			// 計算対象の契約を取りだし、キューに入れる
-			List<Contract> list = manager.execute(PhoneBillDbManager.LTX, () -> {
-				return contractDao.getContracts(start, end);
-			});
-
-			for (Contract contract : list) {
-				LOG.debug(contract.toString());
-				// TODO 契約内容に合致した、CallChargeCalculator, BillingCalculatorを生成するようにする。
-				CallChargeCalculator callChargeCalculator = new SimpleCallChargeCalculator();
-				BillingCalculator billingCalculator = new SimpleBillingCalculator();
-				CalculationTarget target = new CalculationTarget(contract, billingCalculator, callChargeCalculator,
-						start, end, false);
-				queue.put(target);
-			}
 		} finally {
 			// EndOfTaskをキューに入れる
 			queue.setInputClosed();
@@ -237,7 +241,6 @@ public class PhoneBill extends ExecutableCommand {
 	 */
 	private void cleanup(Set<Future<Exception>> futures, List<PhoneBillDbManager> managers,
 			AtomicBoolean abortRequested) {
-		boolean needRollback = false;
 		while (!futures.isEmpty()) {
 			try {
 				Thread.sleep(100);
@@ -266,16 +269,10 @@ public class PhoneBill extends ExecutableCommand {
 				}
 				if (e != null) {
 					LOG.error("Exception cought", e);
-					needRollback = true;
 					abortRequested.set(true);
 				}
 			}
 		}
-//		if (needRollback) {
-//			managers.stream().forEach(m->m.rollback());
-//		} else {
-//			managers.stream().forEach(m->m.commit());
-//		}
 		managers.stream().forEach(m->m.close());
 	}
 

@@ -6,6 +6,8 @@ import java.util.List;
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.dao.ContractDao;
+import com.tsurugidb.iceaxe.transaction.TgTxOption;
+import com.tsurugidb.iceaxe.transaction.manager.TgTmSetting;
 
 /**
  * データベースを読み取り、契約マスタのブロック情報を初期化する
@@ -32,7 +34,7 @@ public class DbContractBlockInfoInitializer extends AbstractContractBlockInfoIni
 		// Contractsテーブルをフルスキャンしてブロック情報を作成する
 		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
 			ContractDao dao = manager.getContractDao();
-			List<String> phoneNumbers = manager.execute(PhoneBillDbManager.OCC, () -> dao.getAllPhoneNumbers());
+			List<String> phoneNumbers = manager.execute(TgTmSetting.of(TgTxOption.ofRTX()), () -> dao.getAllPhoneNumbers());
 
 			int blockNumber = 0;
 			int recordsInBlock = 0;

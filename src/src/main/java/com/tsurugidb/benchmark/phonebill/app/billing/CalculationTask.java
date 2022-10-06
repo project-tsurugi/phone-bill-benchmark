@@ -17,6 +17,8 @@ import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.entity.Billing;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
+import com.tsurugidb.iceaxe.transaction.TgTxOption;
+import com.tsurugidb.iceaxe.transaction.manager.TgTmSetting;
 
 public class CalculationTask implements Callable<Exception> {
     private static final Logger LOG = LoggerFactory.getLogger(CalculationTask.class);
@@ -72,25 +74,27 @@ public class CalculationTask implements Callable<Exception> {
 			// TODO スレッド終了時にトランザクションが終了してしまうが、すべてのスレッドの処理終了を待って
 			// commit or rollbackするようにしたい。
 			LOG.info("Calculation task started.");
-			mainLoopManager.execute(PhoneBillDbManager.OCC, () -> {
-				for (;;) {
-					CalculationTarget target;
-					try {
-						target = queue.take();
-						LOG.debug(queue.getStatus());
-					} catch (InterruptedException e) {
-						LOG.debug("InterruptedException caught and continue taking calculation_target", e);
-						continue;
+			try (noTransactionManageManager) {
+				mainLoopManager.execute(TgTmSetting.of(TgTxOption.ofLTX()), () -> {
+					for (;;) {
+						CalculationTarget target;
+						try {
+							target = queue.take();
+							LOG.debug(queue.getStatus());
+						} catch (InterruptedException e) {
+							LOG.debug("InterruptedException caught and continue taking calculation_target", e);
+							continue;
+						}
+						if (target.isEndOfTask() || abortRequested.get() == true) {
+							LOG.info("Calculation task finished normally.");
+							return null;
+						}
+						contractManager.execute(TgTmSetting.ofAlways(TgTxOption.ofOCC()), () -> {
+							doCalc(target);
+						});
 					}
-					if (target.isEndOfTask() || abortRequested.get() == true) {
-						LOG.info("Calculation task finished normally.");
-						return null;
-					}
-					contractManager.execute(PhoneBillDbManager.OCC, () -> {
-						doCalc(target);
-					});
-				}
-			});
+				});
+			}
 			return null;
 		} catch (Exception e) {
 			LOG.error("Calculation task aborted by exeption.", e);

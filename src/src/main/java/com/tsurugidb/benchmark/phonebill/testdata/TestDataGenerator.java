@@ -34,6 +34,8 @@ import com.tsurugidb.benchmark.phonebill.db.jdbc.Duration;
 import com.tsurugidb.benchmark.phonebill.testdata.GenerateHistoryTask.Params;
 import com.tsurugidb.benchmark.phonebill.testdata.GenerateHistoryTask.Result;
 import com.tsurugidb.benchmark.phonebill.util.DateUtils;
+import com.tsurugidb.iceaxe.transaction.TgTxOption;
+import com.tsurugidb.iceaxe.transaction.manager.TgTmSetting;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -238,7 +240,7 @@ public class TestDataGenerator {
 	 */
 	private void insertContracts(PhoneBillDbManager manager, List<Contract> contracts) {
 		ContractDao dao = manager.getContractDao();
-		manager.execute(PhoneBillDbManager.OCC, () -> dao.batchInsert(contracts));
+		manager.execute(TgTmSetting.of(TgTxOption.ofOCC()), () -> dao.batchInsert(contracts));
 		contracts.clear();
 	}
 
@@ -569,7 +571,7 @@ public class TestDataGenerator {
 		}
 
 		private void insertHistories() {
-			manager.execute(PhoneBillDbManager.OCC, () -> {
+			manager.execute(TgTmSetting.of(TgTxOption.ofOCC()), () -> {
 				historyDao.batchInsert(histories);
 			});
 			histories.clear();

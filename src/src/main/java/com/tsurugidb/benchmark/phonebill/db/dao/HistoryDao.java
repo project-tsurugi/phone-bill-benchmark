@@ -8,6 +8,8 @@ import com.tsurugidb.benchmark.phonebill.db.entity.Contract.Key;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
 
 public interface HistoryDao {
+	static final String TABLE_NAME = "history";
+
 	int[] batchInsert(Collection<History> histories);
 
 	int insert(History history);
