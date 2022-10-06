@@ -10,13 +10,14 @@ import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
-import com.tsurugidb.benchmark.phonebill.db.TgTmSettingDummy;
 import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract.Key;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
 import com.tsurugidb.benchmark.phonebill.testdata.CallTimeGenerator;
 import com.tsurugidb.benchmark.phonebill.testdata.ContractBlockInfoAccessor;
 import com.tsurugidb.benchmark.phonebill.testdata.ContractInfoReader;
+import com.tsurugidb.iceaxe.transaction.TgTxOption;
+import com.tsurugidb.iceaxe.transaction.manager.TgTmSetting;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -41,7 +42,7 @@ public class HistoryUpdateApp extends AbstractOnlineApp {
 	}
 
 	void updateDatabase(History history) {
-		manager.execute(TgTmSettingDummy.getInstance(), () -> historyDao.update(history));
+		manager.execute(TgTmSetting.ofAlways(TgTxOption.ofOCC()), () -> historyDao.update(history));
 	}
 
 	/**
@@ -51,7 +52,7 @@ public class HistoryUpdateApp extends AbstractOnlineApp {
 	 * @return
 	 */
 	List<History> getHistories(Key key) {
-		return manager.execute(TgTmSettingDummy.getInstance(), () -> historyDao.getHistories(key));
+		return manager.execute(TgTmSetting.ofAlways(TgTxOption.ofOCC()), () -> historyDao.getHistories(key));
 	}
 
 	@Override

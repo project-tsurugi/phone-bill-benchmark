@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -49,6 +50,13 @@ public class HistoryInsertAppIceaxeTest  {
 		// 契約ブロック情報の初期化
 		AbstractContractBlockInfoInitializer initializer = new DefaultContractBlockInfoInitializer(config);
 		accessor = new SingleProcessContractBlockManager(initializer);
+	}
+
+	@AfterEach
+	void after() {
+		if (testTools != null) {
+			testTools.close();
+		}
 	}
 
 

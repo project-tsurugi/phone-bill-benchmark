@@ -9,20 +9,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Random;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.tsurugidb.benchmark.phonebill.AbstractJdbcTestCase;
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.CreateTable;
-import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract.Key;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
-import com.tsurugidb.benchmark.phonebill.online.HistoryUpdateApp.Updater;
+import com.tsurugidb.benchmark.phonebill.db.iceaxe.IceaxeTestTools;
 import com.tsurugidb.benchmark.phonebill.testdata.AbstractContractBlockInfoInitializer;
 import com.tsurugidb.benchmark.phonebill.testdata.ContractBlockInfoAccessor;
 import com.tsurugidb.benchmark.phonebill.testdata.CreateTestData;
@@ -31,23 +28,26 @@ import com.tsurugidb.benchmark.phonebill.testdata.SingleProcessContractBlockMana
 import com.tsurugidb.benchmark.phonebill.util.DateUtils;
 import com.tsurugidb.benchmark.phonebill.util.RandomStub;
 
-class HistoryUpdateAppTest extends AbstractJdbcTestCase {
+class HistoryUpdateAppIceaxeTest {
+	private static String ICEAXE_CONFIG = "src/test/config/iceaxe.properties";
+
 	private Config config;
 	private HistoryUpdateApp app;
 	private RandomStub random;
 	private ContractBlockInfoAccessor accessor;
-	private PhoneBillDbManager manager;
+	private IceaxeTestTools testTools;
 
 	@BeforeEach
 	void before() throws Exception {
-		// テストデータを入れる
-		config = Config.getConfig();
+		config = Config.getConfig(ICEAXE_CONFIG);
 		config.numberOfContractsRecords = 10;
 		config.expirationDateRate =3;
 		config.noExpirationDateRate = 3;
 		config.duplicatePhoneNumberRate = 2;
-		config.numberOfHistoryRecords = 1000;
+		config.numberOfHistoryRecords = 30;
+		testTools = new IceaxeTestTools(config);
 
+		// テストデータを入れる
 		new CreateTable().execute(config);
 		new CreateTestData().execute(config);
 
@@ -56,24 +56,24 @@ class HistoryUpdateAppTest extends AbstractJdbcTestCase {
 		accessor = new SingleProcessContractBlockManager(initializer);
 		random = new RandomStub();
 		app = new HistoryUpdateApp(config, random, accessor);
-		manager = PhoneBillDbManager.createPhoneBillDbManager(config);
 	}
 
 	@AfterEach
 	void after() throws SQLException {
-		manager.rollback();
+		if (testTools != null) {
+			testTools.close();
+		}
 	}
-
 
 	@Test
 	void testExec() throws Exception {
-		 List<History> histories = getHistories();
-		 List<Contract> contracts = getContracts();
+		 List<History> histories = testTools.getHistoryList();
+		 List<Contract> contracts = testTools.getContractList();
 		Map<Key, List<History>> map = getContractHistoryMap(contracts, histories);
 
 		// 削除フラグを立てるケース
 		History target;
-		target = histories.get(48);
+		target = histories.get(18);
 		setRandom(contracts, map, target, true, 0);
 		app.exec();
 		target.setDf(1);
@@ -81,7 +81,7 @@ class HistoryUpdateAppTest extends AbstractJdbcTestCase {
 		testExecSub(histories);
 
 		// 通話時間を更新するケース
-		target = histories.get(48);
+		target = histories.get(23);
 		setRandom(contracts, map, target, false, 3185);
 		app.exec();
 		target.setTimeSecs(3185 +1); // 通話時間は random.next() + 1 なので、
@@ -128,7 +128,7 @@ class HistoryUpdateAppTest extends AbstractJdbcTestCase {
 
 
 	private void testExecSub(List<History> expected) throws SQLException, IOException {
-		List<History> actual = getHistories();
+		List<History> actual = testTools.getHistoryList();
 		assertEquals(expected.size(), actual.size());
 		for (int i = 0; i < expected.size(); i++) {
 			assertEquals(expected.get(i), actual.get(i), "i = " + i);
@@ -144,11 +144,11 @@ class HistoryUpdateAppTest extends AbstractJdbcTestCase {
 	@Test
 	void testGetHistories() throws Exception {
 		// chargeがnullでない履歴を作る
-		History h = getHistories().get(0);
+		History h = testTools.getHistoryList().get(0);
 		h.setCharge(200);
 		app.updateDatabase(h);
-		List<History> histories = getHistories();
-		List<Contract> contracts = getContracts();
+		 List<History> histories = testTools.getHistoryList();
+		 List<Contract> contracts = testTools.getContractList();
 
 		Map<Key, List<History>> map = getContractHistoryMap(contracts, histories);
 
@@ -191,7 +191,7 @@ class HistoryUpdateAppTest extends AbstractJdbcTestCase {
 	 */
 	@Test
 	void testUpdateDatabase() throws Exception {
-		List<History> expected = getHistories();
+		List<History> expected = testTools.getHistoryList();
 
 		// 最初のレコードを書き換える
 		{
@@ -206,7 +206,7 @@ class HistoryUpdateAppTest extends AbstractJdbcTestCase {
 
 		// 52番目のレコードを書き換える
 		{
-			History history = expected.get(52);
+			History history = expected.get(12);
 			history.setRecipientPhoneNumber("TEST_NUMBER");
 			history.setCharge(55899988);
 			history.setDf(0);
@@ -216,64 +216,10 @@ class HistoryUpdateAppTest extends AbstractJdbcTestCase {
 		}
 
 		// アプリによる更新後の値が期待した値であることの確認
-		List<History> actual = getHistories();
+		List<History> actual = testTools.getHistoryList();
 		assertEquals(expected.size(), actual.size());
 		for(int i = 0; i < expected.size(); i++) {
 			assertEquals(expected.get(i), actual.get(i), " i = " + i);
 		}
-	}
-
-
-	/**
-	 * Updater1のテスト
-	 *
-	 * @throws SQLException
-	 * @throws IOException
-	 */
-	@Test
-	void testUpdater1() throws SQLException, IOException {
-		Config config = Config.getConfig();
-		ContractBlockInfoAccessor accessor = new SingleProcessContractBlockManager();
-		Updater updater = new HistoryUpdateApp(config, new Random(), accessor).new Updater1();
-
-		History history = toHistory("00000000391", "00000000105", "R", "2020-11-02 06:25:57.430", 1688, null, 0);
-		History expected = history.clone();
-		updater.update(history);
-
-		// 削除フラグが立っていることを確認
-		expected.setDf(1);
-		assertEquals(expected, history);
-		// 2回呼び出しても変化ないことを確認
-		updater.update(history);
-		assertEquals(expected, history);
-	}
-
-
-	/**
-	 * Updater2のテスト
-	 *
-	 * @throws SQLException
-	 * @throws IOException
-	 */
-	@Test
-	void testUpdater2() throws SQLException, IOException {
-		Config config = Config.getConfig();
-		ContractBlockInfoAccessor accessor = new SingleProcessContractBlockManager();
-		Updater updater = new HistoryUpdateApp(config, random, accessor).new Updater2();
-
-		History history = toHistory("00000000391", "00000000105", "R", "2020-11-02 06:25:57.430", 1688, null, 0);
-		History expected = history.clone();
-
-		// 通話時間が変わっていることを確認
-		random.setValues(960);
-		updater.update(history);
-		expected.setTimeSecs(961);
-		assertEquals(expected, history);
-
-		// 通話時間が変わっていることを確認
-		random.setValues(3148);
-		updater.update(history);
-		expected.setTimeSecs(3149);
-		assertEquals(expected, history);
 	}
 }
