@@ -120,7 +120,6 @@ class HistoryUpdateAppIceaxeTest {
 		if (delete) {
 			random.setValues(0, nContract, nHistory, 0);
 		} else {
-//			random.setValues(0, nContract, nHistory, 1);
 			random.setValues(0, nContract, nHistory, 1, timeSec);
 		}
 	}
