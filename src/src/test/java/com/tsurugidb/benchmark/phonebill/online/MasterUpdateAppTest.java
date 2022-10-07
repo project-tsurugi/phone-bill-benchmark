@@ -114,11 +114,7 @@ class MasterUpdateAppTest extends AbstractJdbcTestCase {
 		}
 		random.setValues(list.toArray(new Integer[0]));
 		app.exec(); // LOGに警告がでるがエラーにはならない
-		testContracts(expected);  // 値が変化していないことを核にする
-
-		// DBに存在しない
-
-
+		testContracts(expected);  // 値が変化していないことを確認する
 	}
 
 

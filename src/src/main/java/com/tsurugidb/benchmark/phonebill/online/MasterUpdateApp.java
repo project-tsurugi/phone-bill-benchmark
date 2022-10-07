@@ -12,13 +12,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
+import com.tsurugidb.benchmark.phonebill.app.Config.DbmsType;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
-import com.tsurugidb.benchmark.phonebill.db.TgTmSettingDummy;
 import com.tsurugidb.benchmark.phonebill.db.dao.ContractDao;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract.Key;
 import com.tsurugidb.benchmark.phonebill.testdata.ContractBlockInfoAccessor;
 import com.tsurugidb.benchmark.phonebill.testdata.ContractInfoReader;
+import com.tsurugidb.iceaxe.transaction.TgTxOption;
+import com.tsurugidb.iceaxe.transaction.manager.TgTmSetting;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -112,7 +114,7 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 	 * @return
 	 */
 	List<Contract> getContracts(String phoneNumber) {
-		return manager.execute(TgTmSettingDummy.getInstance(), ()->dao.getContracts(phoneNumber));
+		return manager.execute(TgTmSetting.of(TgTxOption.ofOCC()), ()->dao.getContracts(phoneNumber));
 	}
 
 	@Override
@@ -151,8 +153,9 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 
 		// 契約を更新
 
-		int ret = manager.execute(TgTmSettingDummy.getInstance(), () -> dao.update(updatingContract));
-		if (ret != 1) {
+		int ret = manager.execute(TgTmSetting.ofAlways(TgTxOption.ofOCC()), () -> dao.update(updatingContract));
+		// TODO 現バージョンのIceaxeはupdate件数を返さないので下のチェックの対象外にしている
+		if (ret != 1 && config.dbmsType != DbmsType.ICEAXE ) {
 			// select ～ updateの間に対象レコードが削除されたケース -> 基本的にありえない
 			throw new RuntimeException("Fail to update contracts: " + updatingContract);
 		}
