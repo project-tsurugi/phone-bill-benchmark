@@ -1,6 +1,8 @@
 package com.tsurugidb.benchmark.phonebill.app.billing;
 
 import java.sql.Date;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -10,8 +12,8 @@ import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.Config.TransactionScope;
-import com.tsurugidb.benchmark.phonebill.db.NoTransactionManagePhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
+import com.tsurugidb.benchmark.phonebill.db.RetryOverRuntimeException;
 import com.tsurugidb.benchmark.phonebill.db.dao.BillingDao;
 import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.entity.Billing;
@@ -25,6 +27,7 @@ public class CalculationTask implements Callable<Exception> {
     private Config config;
     private String batchExecId;
     private AtomicBoolean abortRequested;
+    private Calculator calculator;
 
 
 	/**
@@ -52,82 +55,61 @@ public class CalculationTask implements Callable<Exception> {
 		this.manager = manager;
 		billingDao = manager.getBillingDao();
 		historyDao = manager.getHistoryDao();
+		calculator = new CalculatorImpl();
 	}
 
 	@Override
 	public Exception call() throws Exception {
-		try {
-			NoTransactionManagePhoneBillDbManager noTransactionManageManager =
-					new NoTransactionManagePhoneBillDbManager(manager);
-			PhoneBillDbManager mainLoopManager;
-			PhoneBillDbManager contractManager;
-
-			if (config.transactionScope == TransactionScope.CONTRACT) {
-				mainLoopManager = noTransactionManageManager;
-				contractManager = manager;
-			} else {
-				mainLoopManager = manager;
-				contractManager = noTransactionManageManager;
-			}
-			mainLoopManager.setRetryCountLimit(0);
-
-			// TODO スレッド終了時にトランザクションが終了してしまうが、すべてのスレッドの処理終了を待って
-			// commit or rollbackするようにしたい。
-			LOG.info("Calculation task started.");
-			try (noTransactionManageManager) {
-				mainLoopManager.execute(TgTmSetting.of(TgTxOption.ofLTX()), () -> {
-					for (;;) {
-						CalculationTarget target;
-						try {
-							target = queue.take();
-							LOG.debug(queue.getStatus());
-						} catch (InterruptedException e) {
-							LOG.debug("InterruptedException caught and continue taking calculation_target", e);
-							continue;
-						}
-						if (target.isEndOfTask() || abortRequested.get() == true) {
-							LOG.info("Calculation task finished normally.");
-							return null;
-						}
-						contractManager.execute(TgTmSetting.ofAlways(TgTxOption.ofOCC()), () -> {
-							doCalc(target);
-						});
-					}
-				});
-			}
-			return null;
-		} catch (Exception e) {
-			LOG.error("Calculation task aborted by exeption.", e);
-			return e;
-		}
-	}
-
-	/**
-	 * 料金計算のメインロジック
-	 *
-	 * @param target
-	 */
-	private void doCalc(CalculationTarget target) {
-		Contract contract = target.getContract();
-		LOG.debug("Start calcuration for  contract: {}.", contract);
-		try {
-			List<History> histories = historyDao.getHistories(target);
-
-			CallChargeCalculator callChargeCalculator = target.getCallChargeCalculator();
-			BillingCalculator billingCalculator = target.getBillingCalculator();
-			for (History h : histories) {
-				if (h.getTimeSecs() < 0) {
-					throw new RuntimeException("Negative time: " + h.getTimeSecs());
+		// TODO スレッド終了時にトランザクションが終了してしまうが、すべてのスレッドの処理終了を待って
+		// commit or rollbackするようにしたい。
+		LOG.info("Calculation task started.");
+		if (config.transactionScope == TransactionScope.CONTRACT) {
+			for (;;) {
+				CalculationTarget target = queue.take();
+				LOG.debug(queue.getStatus());
+				if (target.isEndOfTask() || abortRequested.get() == true) {
+					LOG.info("Calculation task finished normally.");
+					return null;
 				}
-				h.setCharge(callChargeCalculator.calc(h.getTimeSecs()));
-				billingCalculator.addCallCharge(h.getCharge());
+				try {
+					manager.execute(TgTmSetting.ofAlways(TgTxOption.ofOCC()), () -> {
+						calculator.doCalc(target);
+					});
+				} catch (RuntimeException e) {
+					queue.putFirst(Collections.singletonList(target));
+					LOG.error("Calculation target returned to queue and the task will be aborted.", e);
+					return e;
+				}
 			}
-			historyDao.batchUpdate(histories);
-			updateBilling(contract, billingCalculator, target.getStart());
-			LOG.debug("End calcuration for contract: {}.", contract);
-		} catch (RuntimeException e) {
-			LOG.debug("Abort calcuration for contract: " + contract + ".", e);
-			throw e;
+		} else {
+			for (;;) {
+				List<CalculationTarget> list = new ArrayList<>();
+				try {
+					manager.execute(TgTmSetting.of(TgTxOption.ofOCC()), () -> {
+						for (;;) {
+							CalculationTarget target = queue.take();
+							list.add(target);
+							LOG.debug(queue.getStatus());
+							if (target.isEndOfTask() || abortRequested.get() == true) {
+								LOG.info("Calculation task finished normally.");
+								break;
+							}
+							calculator.doCalc(target);
+						}
+					});
+					return null;
+				} catch (RuntimeException e) {
+					// 処理対象をキューに戻す
+					queue.putFirst(list);
+					if (e instanceof RetryOverRuntimeException) {
+						LOG.error("Transaction aborted with retriable exception and calculation targets returned to queue.", e);
+						continue;
+					} else {
+						LOG.error("Calculation targets returned to queue and the task will be aborted.", e);
+						return e;
+					}
+				}
+			}
 		}
 	}
 
@@ -153,4 +135,49 @@ public class CalculationTask implements Callable<Exception> {
 		billing.setBatchExecId(batchExecId);
 		billingDao.insert(billing);
 	}
+
+
+	// call()のUTのために、doCalcメソッドを置き換え可能にする。
+
+	protected void setCalculator(Calculator calculator) {
+		this.calculator = calculator;
+	}
+
+
+	protected static interface Calculator {
+		/**
+		 * 料金計算のメインロジック
+		 *
+		 * @param target
+		 */
+		void doCalc(CalculationTarget target);
+	}
+
+	protected class CalculatorImpl implements Calculator {
+		@Override
+		public void doCalc(CalculationTarget target) {
+			Contract contract = target.getContract();
+			LOG.debug("Start calcuration for  contract: {}.", contract);
+			try {
+				List<History> histories = historyDao.getHistories(target);
+
+				CallChargeCalculator callChargeCalculator = target.getCallChargeCalculator();
+				BillingCalculator billingCalculator = target.getBillingCalculator();
+				for (History h : histories) {
+					if (h.getTimeSecs() < 0) {
+						throw new RuntimeException("Negative time: " + h.getTimeSecs());
+					}
+					h.setCharge(callChargeCalculator.calc(h.getTimeSecs()));
+					billingCalculator.addCallCharge(h.getCharge());
+				}
+				historyDao.batchUpdate(histories);
+				updateBilling(contract, billingCalculator, target.getStart());
+				LOG.debug("End calcuration for contract: {}.", contract);
+			} catch (RuntimeException e) {
+				LOG.debug("Abort calcuration for contract: " + contract + ".", e);
+				throw e;
+			}
+		}
+	}
+
 }

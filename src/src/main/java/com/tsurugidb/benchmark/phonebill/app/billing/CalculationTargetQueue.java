@@ -1,7 +1,8 @@
 package com.tsurugidb.benchmark.phonebill.app.billing;
 
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.Collection;
+import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
@@ -10,26 +11,25 @@ import org.slf4j.LoggerFactory;
 /**
  * CalculationTargetを格納するQueue
  */
+/**
+ *
+ */
+/**
+ *
+ */
 public class CalculationTargetQueue {
     private static final Logger LOG = LoggerFactory.getLogger(CalculationTargetQueue.class);
 
 	/**
 	 * キュー本体
 	 */
-	private BlockingQueue<CalculationTarget> queue;
+	private BlockingDeque<CalculationTarget> queue;
 
 
 	/**
 	 * キューに入れたタスクの総数
 	 */
 	private AtomicInteger totalQueuedTaasks = new AtomicInteger(0);
-
-
-	/**
-	 * 入力が終了したことを示すフラグ
-	 */
-	private boolean inputClosed = false;
-
 
 	/**
 	 * キューの状態を表す文字列
@@ -48,7 +48,7 @@ public class CalculationTargetQueue {
 	 */
 	public CalculationTargetQueue(int threadCount) {
 		this.threadCount = threadCount;
-		queue = new LinkedBlockingQueue<CalculationTarget>();
+		queue = new LinkedBlockingDeque<>();
 		updateStatus();
 	}
 
@@ -72,12 +72,17 @@ public class CalculationTargetQueue {
 	 * @return
 	 * @throws InterruptedException
 	 */
-	public CalculationTarget take() throws InterruptedException {
-		CalculationTarget t = queue.take();
-		updateStatus();
-		return t;
+	public CalculationTarget take() {
+		for (;;) {
+			try {
+				CalculationTarget t = queue.take();
+				updateStatus();
+				return t;
+			} catch (InterruptedException e) {
+				LOG.debug("InterruptedException caught and continue taking a calculation target", e);
+			}
+		}
 	}
-
 
 	/**
 	 * queueにtargetを追加する。InterruptedException発生時は成功するまでリトライする。
@@ -85,19 +90,35 @@ public class CalculationTargetQueue {
 	 * @param target
 	 */
 	public void put(CalculationTarget target) {
-		if (inputClosed) {
-			throw new IllegalStateException("Input was closed.");
-		}
 		for(;;) {
 			try {
 				queue.put(target);
 				break;
 			} catch (InterruptedException e) {
-				LOG.debug("InterruptedException caught and continue puting calculation_target", e);
+				LOG.debug("InterruptedException caught and continue puting a calculation target", e);
 			}
 		}
 		totalQueuedTaasks.incrementAndGet();
 		updateStatus();
+	}
+
+
+	/**
+	 * 指定のコレクションの全要素をqueueの先頭に追加する。
+	 *
+	 * @param c
+	 */
+	public void putFirst(Collection<CalculationTarget> c) {
+		for(CalculationTarget target: c) {
+			for(;;) {
+				try {
+					queue.putFirst(target);
+					break;
+				} catch (InterruptedException e) {
+					LOG.debug("InterruptedException caught and continue puting a calculation target", e);
+				}
+			}
+		}
 	}
 
 
@@ -107,22 +128,12 @@ public class CalculationTargetQueue {
 	 * inputClosedフラグを立て、Queueを読むスレッドの数だけ、
 	 * EndOfTaskをキューに入れる。
 	 */
-	public void setInputClosed (){
+	public void setEndOfTask (){
 		// EndOfTaskをキューに入れる
 		for (int i =0; i < threadCount; i++) {
 			put(CalculationTarget.getEndOfTask());
 		}
-		inputClosed = true;
 		updateStatus();
-	}
-
-
-	/**
-	 * Queueを空にして、setInputClosed()を呼び出す
-	 */
-	public void abort() {
-		queue.clear();
-		setInputClosed();
 	}
 
 	/**
@@ -130,5 +141,15 @@ public class CalculationTargetQueue {
 	 */
 	public void clear() {
 		queue.clear();
+	}
+
+
+	/**
+	 * Queueに残っている要素数を返す(UT用)
+	 *
+	 * @return
+	 */
+	public int size() {
+		return queue.size();
 	}
 }

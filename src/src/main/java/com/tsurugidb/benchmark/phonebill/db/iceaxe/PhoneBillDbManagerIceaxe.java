@@ -6,6 +6,7 @@ import java.util.function.Supplier;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
+import com.tsurugidb.benchmark.phonebill.db.RetryOverRuntimeException;
 import com.tsurugidb.benchmark.phonebill.db.dao.BillingDao;
 import com.tsurugidb.benchmark.phonebill.db.dao.ContractDao;
 import com.tsurugidb.benchmark.phonebill.db.dao.Ddl;
@@ -19,6 +20,7 @@ import com.tsurugidb.iceaxe.session.TgSessionInfo;
 import com.tsurugidb.iceaxe.session.TsurugiSession;
 import com.tsurugidb.iceaxe.transaction.TsurugiTransaction;
 import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionException;
+import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionRetryOverIOException;
 import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionRuntimeException;
 import com.tsurugidb.iceaxe.transaction.manager.TgTmSetting;
 import com.tsurugidb.iceaxe.transaction.manager.TsurugiTransactionManager;
@@ -98,6 +100,8 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
                     transactionThreadLocal.remove();
                 }
             });
+        } catch (TsurugiTransactionRetryOverIOException e) {
+        	throw new RetryOverRuntimeException(e);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -114,6 +118,8 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
                     transactionThreadLocal.remove();
                 }
             });
+        } catch (TsurugiTransactionRetryOverIOException e) {
+        	throw new RetryOverRuntimeException(e);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

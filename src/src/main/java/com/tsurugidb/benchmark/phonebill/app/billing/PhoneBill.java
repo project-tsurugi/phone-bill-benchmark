@@ -207,7 +207,7 @@ public class PhoneBill extends ExecutableCommand {
 
 		} finally {
 			// EndOfTaskをキューに入れる
-			queue.setInputClosed();
+			queue.setEndOfTask();
 			if (service != null && !service.isTerminated()) {
 				service.shutdown();
 			}
