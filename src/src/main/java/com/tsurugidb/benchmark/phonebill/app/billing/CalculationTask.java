@@ -63,18 +63,31 @@ public class CalculationTask implements Callable<Exception> {
 		// TODO スレッド終了時にトランザクションが終了してしまうが、すべてのスレッドの処理終了を待って
 		// commit or rollbackするようにしたい。
 		LOG.info("Calculation task started.");
+
+		TgTxOption txOption = null;
+		switch (config.transactionOption) {
+		case OCC:
+			txOption = TgTxOption.ofOCC();
+			break;
+		case LTX:
+			txOption = TgTxOption.ofLTX();
+			break;
+		}
+
 		if (config.transactionScope == TransactionScope.CONTRACT) {
+			int n = 0;
 			for (;;) {
 				CalculationTarget target = queue.take();
 				LOG.debug(queue.getStatus());
 				if (target.isEndOfTask() || abortRequested.get() == true) {
-					LOG.info("Calculation task finished normally.");
+					LOG.info("Calculation task finished normally, number of calculated contracts = {}).", n);
 					return null;
 				}
 				try {
-					manager.execute(TgTmSetting.ofAlways(TgTxOption.ofOCC()), () -> {
+					manager.execute(TgTmSetting.ofAlways(txOption), () -> {
 						calculator.doCalc(target);
 					});
+					n++;
 				} catch (RuntimeException e) {
 					queue.putFirst(Collections.singletonList(target));
 					LOG.error("Calculation target returned to queue and the task will be aborted.", e);
@@ -85,13 +98,14 @@ public class CalculationTask implements Callable<Exception> {
 			for (;;) {
 				List<CalculationTarget> list = new ArrayList<>();
 				try {
-					manager.execute(TgTmSetting.of(TgTxOption.ofOCC()), () -> {
+					manager.execute(TgTmSetting.of(txOption), () -> {
 						for (;;) {
 							CalculationTarget target = queue.take();
 							list.add(target);
 							LOG.debug(queue.getStatus());
 							if (target.isEndOfTask() || abortRequested.get() == true) {
-								LOG.info("Calculation task finished normally.");
+								LOG.info("Calculation task finished normally, number of calculated contracts = {}).",
+										list.size());
 								break;
 							}
 							calculator.doCalc(target);

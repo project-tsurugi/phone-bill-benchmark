@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Test;
 
 import com.tsurugidb.benchmark.phonebill.app.Config.DbmsType;
 import com.tsurugidb.benchmark.phonebill.app.Config.DistributionFunction;
+import com.tsurugidb.benchmark.phonebill.app.Config.TransactionOption;
 import com.tsurugidb.benchmark.phonebill.app.Config.TransactionScope;
 import com.tsurugidb.benchmark.phonebill.util.DateUtils;
 
@@ -98,7 +99,6 @@ class ConfigTest {
 		String[] args = {NOT_DEFALUT_CONFIG_PATH};
 		Config config2 = Config.getConfig(args);
 		checkConfig(config2);
-
 
 		// 引数なしのgetConfig()と空配列を引数に持つgetConfig(String[])は同じ結果を返す
 		assertEqualsIgnoreLineSeparator(defaultConfig.toString(), Config.getConfig(new String[0]).toString());
@@ -256,6 +256,9 @@ class ConfigTest {
 		assertEquals("", config.oracleSqlLoaderSid);
 		assertEquals("nologging parallel 32", config.oracleCreateIndexOption);
 
+		/* Iceaxe固有のパラメータ */
+		assertEquals(TransactionOption.OCC	, config.transactionOption);
+
 		/* オンラインアプリケーションに関するパラメータ */
 		assertEquals(0, config.masterUpdateRecordsPerMin);
 		assertEquals(0, config.masterInsertReccrdsPerMin);
@@ -318,6 +321,9 @@ class ConfigTest {
 		assertEquals("/usr/local/bin/sqlldr", config.oracleSqlLoaderPath);
 		assertEquals("orcl", config.oracleSqlLoaderSid);
 		assertEquals("nologging", config.oracleCreateIndexOption);
+
+		/* Iceaxe固有のパラメータ */
+		assertEquals(TransactionOption.LTX	, config.transactionOption);
 
 		/* CSVに関するパラメータ */
 		assertEquals("/tmp/csv", config.csvDir);

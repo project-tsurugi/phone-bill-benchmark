@@ -273,6 +273,14 @@ public class Config implements Cloneable {
 	private static final String ORACLE_INITRAN = "oracle.initrans";
 
 
+
+	/* Iceaxe固有のパラメータ */
+
+
+	public  TransactionOption transactionOption;
+	private static final String TRANSACTION_OPTION = "transaction.option";
+
+
 	/**
 	 * SQL*Loaderのパス
 	 */
@@ -462,6 +470,9 @@ public class Config implements Cloneable {
 		oracleSqlLoaderSid = getString(ORACLE_SQL_LOADER_SID, "");
 		oracleCreateIndexOption = getString(ORACLE_CREATE_INDEX_OPTION, "nologging parallel 32");
 
+		// Iceaxe固有のパラメータ
+		transactionOption = getTransactionOption(TRANSACTION_OPTION, TransactionOption.OCC);
+
 		// その他のパラメータ
 		randomSeed = getInt(RANDOM_SEED, 0);
 		transactionScope = getTransactionScope(TRANSACTION_SCOPE, TransactionScope.WHOLE);
@@ -532,6 +543,15 @@ public class Config implements Cloneable {
 		}
 		return IsolationLevel.valueOf(prop.getProperty(key));
 	}
+
+
+	private TransactionOption getTransactionOption(String key, TransactionOption defaultValue) {
+		if (!prop.containsKey(key)) {
+			return defaultValue;
+		}
+		return TransactionOption.valueOf(prop.getProperty(key));
+	}
+
 
 
 	/**
@@ -815,6 +835,8 @@ public class Config implements Cloneable {
 		sb.append(String.format(format, ORACLE_SQL_LOADER_PATH, oracleSqlLoaderPath));
 		sb.append(String.format(format, ORACLE_SQL_LOADER_SID, oracleSqlLoaderSid));
 		sb.append(String.format(format, ORACLE_CREATE_INDEX_OPTION, oracleCreateIndexOption));
+		sb.append(String.format(commentFormat, "Iceaxe固有のパラメータ"));
+		sb.append(String.format(format, TRANSACTION_OPTION, transactionOption));
 		sb.append(String.format(commentFormat, "その他のパラメータ"));
 		sb.append(String.format(format, RANDOM_SEED, randomSeed));
 		sb.append(String.format(format, TRANSACTION_SCOPE, transactionScope));
@@ -874,4 +896,14 @@ public class Config implements Cloneable {
 		SERIALIZABLE,
 		READ_COMMITTED;
 	}
+
+	/**
+	 * Iceaxeのトランザクションオプション
+	 */
+	public static enum TransactionOption {
+		OCC,
+		LTX
+	}
+
+
 }
