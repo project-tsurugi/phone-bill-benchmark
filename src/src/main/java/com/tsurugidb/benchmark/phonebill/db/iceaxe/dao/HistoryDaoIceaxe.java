@@ -169,7 +169,7 @@ public class HistoryDaoIceaxe implements HistoryDao {
 		var ps = utils.createPreparedQuery(sql, TgParameterMapping.of(variable), RESULT_MAPPING);
 		var param = TgParameterList.of()
 				.add("start", start.getTime())
-				.add("end", end.getTime())
+				.add("end", end.getTime() + DateUtils.A_DAY_IN_MILLISECONDS)
 				.add("caller_phone_number", contract.getPhoneNumber())
 				.add("recipient_phone_number",contract.getPhoneNumber());
 		return  utils.execute(ps, param);
