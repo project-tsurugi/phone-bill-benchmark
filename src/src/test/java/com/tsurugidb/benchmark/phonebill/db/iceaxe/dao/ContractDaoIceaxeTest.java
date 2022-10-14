@@ -2,6 +2,7 @@ package com.tsurugidb.benchmark.phonebill.db.iceaxe.dao;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.io.IOException;
 import java.sql.Date;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -15,13 +16,20 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
+import com.tsurugidb.benchmark.phonebill.app.CreateTable;
+import com.tsurugidb.benchmark.phonebill.app.billing.PhoneBill;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.db.iceaxe.IceaxeTestTools;
+import com.tsurugidb.benchmark.phonebill.db.jdbc.Duration;
+import com.tsurugidb.benchmark.phonebill.testdata.CreateTestData;
 import com.tsurugidb.benchmark.phonebill.util.DateUtils;
+import com.tsurugidb.iceaxe.transaction.TgTxOption;
+import com.tsurugidb.iceaxe.transaction.manager.TgTmSetting;
 
 class ContractDaoIceaxeTest {
 	private static final String ICEAXE_CONFIG_PATH = "src/test/config/iceaxe.properties";
@@ -223,7 +231,7 @@ class ContractDaoIceaxeTest {
 	final void testGetContractsDateDate() {
 		// テーブルが空の時
 		assertEquals(Collections.EMPTY_LIST, testTools.execute(() -> {
-			return dao.getContracts("2");
+			return dao.getContracts(DateUtils.toDate("1918-01-01"), DateUtils.toDate("1978-05-01"));
 		}));
 
 		// テーブルにレコード追加
@@ -246,37 +254,40 @@ class ContractDaoIceaxeTest {
 		assertEquals(Arrays.asList(C20, C41), actual);
 
 
-		// startDateの境界値
-		actual= testTools.execute(() -> {
-			return dao.getContracts(DateUtils.toDate("2000-01-01"), DateUtils.toDate("2001-03-10"));
-		});
-		assertEquals(Arrays.asList(C40), actual);
-
-		actual= testTools.execute(() -> {
-			return dao.getContracts(DateUtils.toDate("2000-01-02"), DateUtils.toDate("2001-03-10"));
-		});
-		assertEquals(Arrays.asList(C40), actual);
-
-		actual= testTools.execute(() -> {
-			return dao.getContracts(DateUtils.toDate("1999-12-31"), DateUtils.toDate("2001-03-10"));
-		});
-		assertEquals(Collections.EMPTY_LIST, actual);
-
 		// endDateの境界値
 		actual= testTools.execute(() -> {
-			return dao.getContracts(DateUtils.toDate("2000-01-02"), DateUtils.toDate("2001-03-11"));
+			return dao.getContracts(DateUtils.toDate("1901-03-10"), DateUtils.toDate("2000-01-01"));
 		});
 		assertEquals(Arrays.asList(C40), actual);
 
 		actual= testTools.execute(() -> {
-			return dao.getContracts(DateUtils.toDate("2000-01-02"), DateUtils.toDate("2001-03-12"));
+			return dao.getContracts(DateUtils.toDate("1901-03-10"), DateUtils.toDate("2000-01-02"));
 		});
 		assertEquals(Arrays.asList(C40), actual);
 
 		actual= testTools.execute(() -> {
-			return dao.getContracts(DateUtils.toDate("2000-01-02"), DateUtils.toDate("2001-03-13"));
+			return dao.getContracts(DateUtils.toDate("1901-03-10"), DateUtils.toDate("1999-12-31"));
 		});
 		assertEquals(Collections.EMPTY_LIST, actual);
+
+		// startDateの境界値
+		actual= testTools.execute(() -> {
+			return dao.getContracts(DateUtils.toDate("2001-03-11"), DateUtils.toDate("2001-03-15"));
+		});
+		assertEquals(Arrays.asList(C40), actual);
+
+		actual= testTools.execute(() -> {
+			return dao.getContracts(DateUtils.toDate("2001-03-12"), DateUtils.toDate("2001-03-15"));
+		});
+		assertEquals(Arrays.asList(C40), actual);
+
+		actual= testTools.execute(() -> {
+			return dao.getContracts(DateUtils.toDate("2001-03-13"), DateUtils.toDate("2001-03-15"));
+		});
+		assertEquals(Collections.EMPTY_LIST, actual);
+
+
+
 	}
 
 	@Test
@@ -295,6 +306,61 @@ class ContractDaoIceaxeTest {
 		}).stream().collect(Collectors.toSet());
 		Set<Contract> expectedSet = new HashSet<>(Arrays.asList(C10, C20, C30, C31, C40, C41));
 		assertEquals(expectedSet , actualSet);
+	}
+
+	/**
+	 * PostgreSQL版と同じ結果を返すことを確認する。
+	 * @throws IOException
+	 */
+	@Test
+	@Disabled("This test case was created to reproduce a bug and disabled because takes a long time to execute.")
+	final void testGetContractsSameToPostgreSQL() throws Exception {
+		// PostgreSQL版の結果を取得する
+		Config configPostgres = Config.getConfig();
+		configPostgres.numberOfContractsRecords = 1000;
+		configPostgres.duplicatePhoneNumberRate=100;
+		configPostgres.expirationDateRate = 400;
+		configPostgres.noExpirationDateRate = 400;
+		configPostgres.numberOfHistoryRecords = 0;
+		new CreateTable().execute(configPostgres);
+		new CreateTestData().execute(configPostgres);
+
+		Duration d = PhoneBill.toDuration(configPostgres.targetMonth);
+
+		PhoneBillDbManager managerPostgres = PhoneBillDbManager.createPhoneBillDbManager(configPostgres);
+		Set<Contract> postgreSet = managerPostgres.execute(null, () -> {
+			return managerPostgres.getContractDao().getContracts(d.getStatDate(), d.getEndDate());
+		}).stream().collect(Collectors.toSet());
+
+		// Iceaxe版の結果を取得する
+		Config configIceaxe = Config.getConfig(ICEAXE_CONFIG_PATH);
+		Config config = configPostgres.clone();
+		config.url = configIceaxe.url;
+		config.user = configIceaxe.user;
+		config.password = configIceaxe.password;
+		config.dbmsType = configIceaxe.dbmsType;
+		new CreateTable().execute(config);
+		new CreateTestData().execute(config);
+		PhoneBillDbManager managerIceaxe = PhoneBillDbManager.createPhoneBillDbManager(config);
+		Set<Contract> iceaxeSet = managerIceaxe.execute(TgTmSetting.of(TgTxOption.ofOCC()), () -> {
+			return managerIceaxe.getContractDao().getContracts(d.getStatDate(), d.getEndDate());
+		}).stream().collect(Collectors.toSet());
+
+		// 比較
+		for(Contract c: iceaxeSet) {
+			if (postgreSet.contains(c)) {
+				continue;
+			}
+			System.out.println("only in iceaxe; " + c);
+		}
+		for(Contract c: postgreSet) {
+			if (iceaxeSet.contains(c)) {
+				continue;
+			}
+			System.out.println("only in postgres; " + c);
+		}
+		assertEquals(postgreSet, iceaxeSet);
+
 	}
 
 

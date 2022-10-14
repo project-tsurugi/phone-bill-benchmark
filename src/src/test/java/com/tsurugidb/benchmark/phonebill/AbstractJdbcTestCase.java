@@ -5,7 +5,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
@@ -150,6 +152,10 @@ public abstract class AbstractJdbcTestCase {
 		return contracts;
 	}
 
+	protected Set<Contract> getContractSet() throws SQLException {
+		return new HashSet<>(getContracts());
+	}
+
 
 	protected void executeSql(String sql) throws SQLException {
 		stmt.execute(sql);
@@ -167,5 +173,12 @@ public abstract class AbstractJdbcTestCase {
 	 */
 	protected static Statement getStmt() {
 		return stmt;
+	}
+
+	/**
+	 * @return manager
+	 */
+	protected static PhoneBillDbManager getManager() {
+		return manager;
 	}
 }

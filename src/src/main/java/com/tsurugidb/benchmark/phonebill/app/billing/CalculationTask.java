@@ -70,7 +70,7 @@ public class CalculationTask implements Callable<Exception> {
 			txOption = TgTxOption.ofOCC();
 			break;
 		case LTX:
-			txOption = TgTxOption.ofLTX();
+			txOption = TgTxOption.ofLTX("history", "billing");
 			break;
 		}
 

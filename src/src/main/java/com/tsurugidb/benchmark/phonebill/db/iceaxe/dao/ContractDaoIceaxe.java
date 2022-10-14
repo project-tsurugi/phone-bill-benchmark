@@ -104,7 +104,7 @@ public class ContractDaoIceaxe implements ContractDao {
 				+ " order by phone_number";
 		var variable = TgVariableList.of().int8("start_date").int8("end_date");
 		var ps = utils.createPreparedQuery(sql, TgParameterMapping.of(variable), RESULT_MAPPING);
-		var param = TgParameterList.of().add("start_date", start.getTime()).add("end_date", end.getTime());
+		var param = TgParameterList.of().add("end_date", start.getTime()).add("start_date", end.getTime());
 		return utils.execute(ps, param);
 	}
 

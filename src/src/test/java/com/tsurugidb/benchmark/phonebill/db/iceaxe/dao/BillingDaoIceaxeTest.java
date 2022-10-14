@@ -106,4 +106,14 @@ class BillingDaoIceaxeTest {
 		assertEquals(Collections.emptySet(), testTools.getBillingSet());
 	}
 
+	@Test
+	final void testGetBillings() {
+		testTools.insertToBilling(B1, B2, B3, B4);
+		HashSet<Billing> actual =
+		testTools.execute(() -> {
+			return new HashSet<>(dao.getBillings());
+		});
+		assertEquals(new HashSet<>(Arrays.asList(B1, B2, B3, B4)), actual);
+	}
+
 }

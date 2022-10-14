@@ -1,6 +1,7 @@
 package com.tsurugidb.benchmark.phonebill.db.dao;
 
 import java.sql.Date;
+import java.util.List;
 
 import com.tsurugidb.benchmark.phonebill.db.entity.Billing;
 
@@ -9,5 +10,6 @@ public interface BillingDao {
 
 	public int insert(Billing billing);
 	public int delete(Date targetMonth);
+	public List<Billing> getBillings();
 
 }

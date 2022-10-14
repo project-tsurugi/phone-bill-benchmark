@@ -34,7 +34,7 @@ public class DbContractBlockInfoInitializer extends AbstractContractBlockInfoIni
 		// Contractsテーブルをフルスキャンしてブロック情報を作成する
 		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
 			ContractDao dao = manager.getContractDao();
-			List<String> phoneNumbers = manager.execute(TgTmSetting.of(TgTxOption.ofRTX()), () -> dao.getAllPhoneNumbers());
+			List<String> phoneNumbers = manager.execute(TgTmSetting.of(TgTxOption.ofLTX()), () -> dao.getAllPhoneNumbers());
 
 			int blockNumber = 0;
 			int recordsInBlock = 0;

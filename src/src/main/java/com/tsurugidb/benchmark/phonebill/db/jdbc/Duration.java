@@ -64,9 +64,9 @@ public class Duration {
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("Duration [start=");
-		builder.append(start);
+		builder.append(new Date(start));
 		builder.append(", end=");
-		builder.append(end);
+		builder.append(new Date(end));
 		builder.append("]");
 		return builder.toString();
 	}

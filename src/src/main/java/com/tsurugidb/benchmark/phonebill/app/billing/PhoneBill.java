@@ -135,7 +135,7 @@ public class PhoneBill extends ExecutableCommand {
 	 * @param date
 	 * @return
 	 */
-	static Duration toDuration(Date date) {
+	public static Duration toDuration(Date date) {
 		LocalDate localDate = date.toLocalDate();
 		Date start = Date.valueOf(localDate.withDayOfMonth(1));
 		Date end = Date.valueOf(localDate.withDayOfMonth(1).plusMonths(1).minusDays(1));
