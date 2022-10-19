@@ -111,7 +111,7 @@ public class HistoryInsertApp extends AbstractOnlineApp {
 
 	/**
 	 * baseTimeをセットする。履歴データの通話開始時刻は初期データの通話開始時刻の最後の日の翌日0時にする。
-	 * ただし、既にhistoryInsertAppによるデータが存在する場合は、津和解し時刻の最大値を指定する。
+	 * ただし、既にhistoryInsertAppによるデータが存在する場合は、存在する時刻の最大値を指定する。
 	 *
 	 * @param config
 	 * @return
@@ -119,7 +119,7 @@ public class HistoryInsertApp extends AbstractOnlineApp {
 	static long getBaseTime(Config config) {
 		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
 			HistoryDao dao = manager.getHistoryDao();
-			long maxStartTime = manager.execute(TgTmSetting.of(TgTxOption.ofRTX()), () -> dao.getMaxStartTime());
+			long maxStartTime = manager.execute(TgTmSetting.of(TgTxOption.ofOCC()), () -> dao.getMaxStartTime());
 			return Math.max(maxStartTime, DateUtils.nextDate(config.historyMaxDate).getTime());
 		}
 	}
