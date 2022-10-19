@@ -25,7 +25,7 @@ import com.tsurugidb.benchmark.phonebill.util.RandomStub;
 
 class MasterUpdateAppIceaxeTest {
 	private static String ICEAXE_CONFIG = "src/test/config/iceaxe.properties";
-	private IceaxeTestTools testTools;
+	private IceaxeTestTools testTools = null;
 
 	@Test
 	void testExec() throws IOException, Exception {

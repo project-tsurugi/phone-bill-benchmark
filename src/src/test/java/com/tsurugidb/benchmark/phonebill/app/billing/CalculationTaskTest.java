@@ -154,7 +154,7 @@ class CalculationTaskTest {
 	}
 
 
-	private class  TestCalculator implements Calculator {
+	private static class  TestCalculator implements Calculator {
 		int callCount = 0;
 		int countThrowsException = -1;
 		int countThrowsRetriableException = -1;

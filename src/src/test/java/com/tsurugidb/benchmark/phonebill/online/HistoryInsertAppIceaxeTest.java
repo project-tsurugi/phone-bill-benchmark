@@ -30,7 +30,7 @@ public class HistoryInsertAppIceaxeTest  {
 
 	private Config config = null;
 	private ContractBlockInfoAccessor accessor = null;
-	private  IceaxeTestTools testTools;
+	private  IceaxeTestTools testTools = null;
 
 
 	@BeforeEach
