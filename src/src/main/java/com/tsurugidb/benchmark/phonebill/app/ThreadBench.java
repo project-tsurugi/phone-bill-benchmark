@@ -1,8 +1,13 @@
 package com.tsurugidb.benchmark.phonebill.app;
 
+import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -46,20 +51,42 @@ public class ThreadBench extends ExecutableCommand {
 
 	@Override
 	public void execute(Config config) throws Exception {
-		TransactionOption[] options = { TransactionOption.LTX, TransactionOption.OCC };
-		TransactionScope[] scopes = { TransactionScope.CONTRACT, TransactionScope.WHOLE };
-		int[] threadCounts = { 1, 2, 3, 4, 6, 8, 10, 15, 20 };
+		List<TransactionOption> options;
+		List<TransactionScope> scopes;
+		List<Integer> threadCounts;
 
+		if (config.dbmsType == DbmsType.ICEAXE) {
+//			options = Arrays.asList(TransactionOption.LTX, TransactionOption.OCC);
+//			scopes = Arrays.asList(TransactionScope.CONTRACT, TransactionScope.WHOLE);
+//			threadCounts = Arrays.asList(1, 2, 3, 4, 6, 8, 10, 15, 20);
+			options = Arrays.asList(TransactionOption.LTX);
+			scopes = Arrays.asList(TransactionScope.CONTRACT);
+			threadCounts = Arrays.asList(1, 2);
+		} else {
+//			options = Arrays.asList(TransactionOption.LTX);
+//			scopes = Arrays.asList(TransactionScope.CONTRACT, TransactionScope.WHOLE);
+//			threadCounts = Arrays.asList(1, 2, 3, 4, 6, 8, 10, 15, 20);
+			options = Arrays.asList(TransactionOption.LTX);
+			scopes = Arrays.asList(TransactionScope.CONTRACT, TransactionScope.WHOLE);
+			threadCounts = Arrays.asList(1);
+
+		}
 		execute(config, options, scopes, threadCounts);
 
 		// 結果の出力
-		LOG.info(Record.header());
-		records.stream().forEach(r -> LOG.info(r.toString()));
+		Path outputPath = Paths.get(config.csvDir).resolve("result.csv");
+		try (PrintWriter pw = new PrintWriter(
+				Files.newBufferedWriter(outputPath))
+
+		) {
+			pw.println(Record.header());;
+			records.stream().forEach(r -> pw.println(r.toString()));
+		}
 	}
 
 
-	private void execute(Config config, TransactionOption[] options, TransactionScope[] scopes, int[] threadCounts)
-			throws Exception {
+	private void execute(Config config, List<TransactionOption> options, List<TransactionScope> scopes,
+			List<Integer> threadCounts) throws Exception {
 		new CreateTable().execute(config);
 		new CreateTestData().execute(config);
 		PhoneBill phoneBill = new PhoneBill();
@@ -80,7 +107,6 @@ public class ThreadBench extends ExecutableCommand {
 			}
 		}
 	}
-
 
 
 
@@ -123,7 +149,7 @@ public class ThreadBench extends ExecutableCommand {
 			ok = false;
 		}
 		if (!ok) {
-			throw new RuntimeException("Did not get the same results.");
+			LOG.error("Did not get the same results.");
 		}
 	}
 
@@ -182,7 +208,7 @@ public class ThreadBench extends ExecutableCommand {
 		}
 
 		public static String header() {
-			return "option, scope, threadCount, elapsedSec";
+			return "dbmsType, option, scope, threadCount, elapsedMills";
 		}
 
 	}
