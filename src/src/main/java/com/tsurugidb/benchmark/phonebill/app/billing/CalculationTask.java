@@ -171,7 +171,7 @@ public class CalculationTask implements Callable<Exception> {
 		@Override
 		public void doCalc(CalculationTarget target) {
 			Contract contract = target.getContract();
-			LOG.debug("Start calcuration for  contract: {}.", contract);
+			LOG.debug("Start calculation for  contract: {}.", contract);
 			try {
 				List<History> histories = historyDao.getHistories(target);
 
@@ -186,9 +186,9 @@ public class CalculationTask implements Callable<Exception> {
 				}
 				historyDao.batchUpdate(histories);
 				updateBilling(contract, billingCalculator, target.getStart());
-				LOG.debug("End calcuration for contract: {}.", contract);
+				LOG.debug("End calculation for contract: {}.", contract);
 			} catch (RuntimeException e) {
-				LOG.debug("Abort calcuration for contract: " + contract + ".", e);
+				LOG.debug("Abort calculation for contract: " + contract + ".", e);
 				throw e;
 			}
 		}
