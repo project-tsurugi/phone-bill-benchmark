@@ -111,28 +111,29 @@ public class ThreadBench extends ExecutableCommand {
 
 
 	private void checkResult(Config config) {
-		PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config);
-		Set<History> histories = manager.execute(TgTmSetting.of(TgTxOption.ofOCC()), () -> {
-			return new HashSet<>(manager.getHistoryDao().getHistories());
-		});
-		Set<Billing> billings = manager.execute(TgTmSetting.of(TgTxOption.ofOCC()), () -> {
-			List<Billing> list = manager.getBillingDao().getBillings();
-			list.stream().forEachOrdered(b -> b.setBatchExecId(null)); // batchExecIdは比較対象でないのでnullをセット
-			return new HashSet<>(list);
-		});
-		if (expectedHistories == null) {
-			expectedHistories = histories;
-		} else {
-			checkSameSet(expectedHistories, histories);
-		}
-		if (expectedBillings == null) {
-			expectedBillings = billings;
-		} else {
-			checkSameSet(expectedBillings, billings);
+		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
+			Set<History> histories = manager.execute(TgTmSetting.of(TgTxOption.ofOCC()), () -> {
+				return new HashSet<>(manager.getHistoryDao().getHistories());
+			});
+			Set<Billing> billings = manager.execute(TgTmSetting.of(TgTxOption.ofOCC()), () -> {
+				List<Billing> list = manager.getBillingDao().getBillings();
+				list.stream().forEachOrdered(b -> b.setBatchExecId(null)); // batchExecIdは比較対象でないのでnullをセット
+				return new HashSet<>(list);
+			});
+			if (expectedHistories == null) {
+				expectedHistories = histories;
+			} else {
+				checkSameSet(expectedHistories, histories);
+			}
+			if (expectedBillings == null) {
+				expectedBillings = billings;
+			} else {
+				checkSameSet(expectedBillings, billings);
+			}
 		}
 	}
 
-	private <T> void checkSameSet(Set<T> expect, Set<T> actual) {
+	public static  <T> boolean checkSameSet(Set<T> expect, Set<T> actual) {
 		boolean ok = true;
 		for(T t: expect) {
 			if (actual.contains(t)) {
@@ -151,6 +152,7 @@ public class ThreadBench extends ExecutableCommand {
 		if (!ok) {
 			LOG.error("Did not get the same results.");
 		}
+		return ok;
 	}
 
 	private static class Record {
