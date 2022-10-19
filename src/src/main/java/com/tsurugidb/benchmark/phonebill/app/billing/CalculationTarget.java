@@ -108,4 +108,56 @@ public class CalculationTarget {
 	public Date getEnd() {
 		return end == null ? null : new Date(end);
 	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((billingCalculator == null) ? 0 : billingCalculator.hashCode());
+		result = prime * result + ((callChargeCalculator == null) ? 0 : callChargeCalculator.hashCode());
+		result = prime * result + ((contract == null) ? 0 : contract.hashCode());
+		result = prime * result + ((end == null) ? 0 : end.hashCode());
+		result = prime * result + (endOfTask ? 1231 : 1237);
+		result = prime * result + ((start == null) ? 0 : start.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		CalculationTarget other = (CalculationTarget) obj;
+		if (billingCalculator == null) {
+			if (other.billingCalculator != null)
+				return false;
+		} else if (!billingCalculator.equals(other.billingCalculator))
+			return false;
+		if (callChargeCalculator == null) {
+			if (other.callChargeCalculator != null)
+				return false;
+		} else if (!callChargeCalculator.equals(other.callChargeCalculator))
+			return false;
+		if (contract == null) {
+			if (other.contract != null)
+				return false;
+		} else if (!contract.equals(other.contract))
+			return false;
+		if (end == null) {
+			if (other.end != null)
+				return false;
+		} else if (!end.equals(other.end))
+			return false;
+		if (endOfTask != other.endOfTask)
+			return false;
+		if (start == null) {
+			if (other.start != null)
+				return false;
+		} else if (!start.equals(other.start))
+			return false;
+		return true;
+	}
 }
