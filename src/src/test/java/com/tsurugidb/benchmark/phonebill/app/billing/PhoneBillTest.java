@@ -3,10 +3,7 @@ package com.tsurugidb.benchmark.phonebill.app.billing;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -72,11 +69,11 @@ class PhoneBillTest extends AbstractJdbcTestCase {
 		phoneBill.doCalc(DateUtils.toDate("2020-11-01"), DateUtils.toDate("2020-11-30"));
 		List<Billing> billings = getBillings();
 		assertEquals(5, billings.size());
-		assertEquals(toBilling("Phone-0001", "2020-11-01", 3000, 0, 3000), billings.get(0));
-		assertEquals(toBilling("Phone-0003", "2020-11-01", 3000, 0, 3000), billings.get(1));
-		assertEquals(toBilling("Phone-0004", "2020-11-01", 3000, 0, 3000), billings.get(2));
-		assertEquals(toBilling("Phone-0005", "2020-11-01", 3000, 0, 3000), billings.get(3));
-		assertEquals(toBilling("Phone-0008", "2020-11-01", 3000, 0, 3000), billings.get(4));
+		assertEquals(Billing.create("Phone-0001", "2020-11-01", 3000, 0, 3000, null), billings.get(0));
+		assertEquals(Billing.create("Phone-0003", "2020-11-01", 3000, 0, 3000, null), billings.get(1));
+		assertEquals(Billing.create("Phone-0004", "2020-11-01", 3000, 0, 3000, null), billings.get(2));
+		assertEquals(Billing.create("Phone-0005", "2020-11-01", 3000, 0, 3000, null), billings.get(3));
+		assertEquals(Billing.create("Phone-0008", "2020-11-01", 3000, 0, 3000, null), billings.get(4));
 		List<History> histories = getHistories();
 		assertEquals(0, histories.size());
 
@@ -93,11 +90,11 @@ class PhoneBillTest extends AbstractJdbcTestCase {
 		phoneBill.doCalc(DateUtils.toDate("2020-11-01"), DateUtils.toDate("2020-11-30"));
 		billings = getBillings();
 		assertEquals(5, billings.size());
-		assertEquals(toBilling("Phone-0001", "2020-11-01", 3000, 30, 3000), billings.get(0));
-		assertEquals(toBilling("Phone-0003", "2020-11-01", 3000, 0, 3000), billings.get(1));
-		assertEquals(toBilling("Phone-0004", "2020-11-01", 3000, 0, 3000), billings.get(2));
-		assertEquals(toBilling("Phone-0005", "2020-11-01", 3000, 50, 3000), billings.get(3));
-		assertEquals(toBilling("Phone-0008", "2020-11-01", 3000, 10, 3000), billings.get(4));
+		assertEquals(Billing.create("Phone-0001", "2020-11-01", 3000, 30, 3000, null), billings.get(0));
+		assertEquals(Billing.create("Phone-0003", "2020-11-01", 3000, 0, 3000, null), billings.get(1));
+		assertEquals(Billing.create("Phone-0004", "2020-11-01", 3000, 0, 3000, null), billings.get(2));
+		assertEquals(Billing.create("Phone-0005", "2020-11-01", 3000, 50, 3000, null), billings.get(3));
+		assertEquals(Billing.create("Phone-0008", "2020-11-01", 3000, 10, 3000, null), billings.get(4));
 		histories = getHistories();
 		assertEquals(7, histories.size());
 		assertEquals(toHistory("Phone-0001", "Phone-0008", "C", "2020-10-31 23:59:59.999", 30, null, 0), histories.get(0));
@@ -142,11 +139,11 @@ class PhoneBillTest extends AbstractJdbcTestCase {
 		phoneBill.doCalc( DateUtils.toDate("2020-11-01"), DateUtils.toDate("2020-11-30"));
 		billings = getBillings();
 		assertEquals(5, billings.size());
-		assertEquals(toBilling("Phone-0001", "2020-11-01", 3000, 40, 3000), billings.get(0));
-		assertEquals(toBilling("Phone-0003", "2020-11-01", 3000, 0, 3000), billings.get(1));
-		assertEquals(toBilling("Phone-0004", "2020-11-01", 3000, 0, 3000), billings.get(2));
-		assertEquals(toBilling("Phone-0005", "2020-11-01", 3000, 50, 3000), billings.get(3));
-		assertEquals(toBilling("Phone-0008", "2020-11-01", 3000, 10, 3000), billings.get(4));
+		assertEquals(Billing.create("Phone-0001", "2020-11-01", 3000, 40, 3000, null), billings.get(0));
+		assertEquals(Billing.create("Phone-0003", "2020-11-01", 3000, 0, 3000, null), billings.get(1));
+		assertEquals(Billing.create("Phone-0004", "2020-11-01", 3000, 0, 3000, null), billings.get(2));
+		assertEquals(Billing.create("Phone-0005", "2020-11-01", 3000, 50, 3000, null), billings.get(3));
+		assertEquals(Billing.create("Phone-0008", "2020-11-01", 3000, 10, 3000, null), billings.get(4));
 		histories = getHistories();
 		assertEquals(8, histories.size());
 		assertEquals(toHistory("Phone-0001", "Phone-0008", "C", "2020-10-31 23:59:59.999", 30, null, 0), histories.get(0));
@@ -166,11 +163,11 @@ class PhoneBillTest extends AbstractJdbcTestCase {
 		phoneBill.doCalc( DateUtils.toDate("2020-11-01"), DateUtils.toDate("2020-11-30"));
 		billings = getBillings();
 		assertEquals(5, billings.size());
-		assertEquals(toBilling("Phone-0001", "2020-11-01", 3000, 20, 3000), billings.get(0));
-		assertEquals(toBilling("Phone-0003", "2020-11-01", 3000, 0, 3000), billings.get(1));
-		assertEquals(toBilling("Phone-0004", "2020-11-01", 3000, 0, 3000), billings.get(2));
-		assertEquals(toBilling("Phone-0005", "2020-11-01", 3000, 50, 3000), billings.get(3));
-		assertEquals(toBilling("Phone-0008", "2020-11-01", 3000, 10, 3000), billings.get(4));
+		assertEquals(Billing.create("Phone-0001", "2020-11-01", 3000, 20, 3000, null), billings.get(0));
+		assertEquals(Billing.create("Phone-0003", "2020-11-01", 3000, 0, 3000, null), billings.get(1));
+		assertEquals(Billing.create("Phone-0004", "2020-11-01", 3000, 0, 3000, null), billings.get(2));
+		assertEquals(Billing.create("Phone-0005", "2020-11-01", 3000, 50, 3000, null), billings.get(3));
+		assertEquals(Billing.create("Phone-0008", "2020-11-01", 3000, 10, 3000, null), billings.get(4));
 		histories = getHistories();
 		assertEquals(8, histories.size());
 		assertEquals(toHistory("Phone-0001", "Phone-0008", "C", "2020-10-31 23:59:59.999", 30, null, 0), histories.get(0));
@@ -183,89 +180,6 @@ class PhoneBillTest extends AbstractJdbcTestCase {
 		assertEquals(toHistory("Phone-0005", "Phone-0008", "R", "2020-11-30 00:00:00.000", 30, 10, 0), histories.get(7));
 	}
 
-
-	private List<Billing> getBillings() throws SQLException {
-		List<Billing> list = new ArrayList<Billing>();
-		String sql = "select phone_number, target_month, basic_charge, metered_charge, billing_amount"
-				+ " from billing order by phone_number, target_month";
-		try (ResultSet rs = getStmt().executeQuery(sql)) {
-			while (rs.next()) {
-				Billing billing = new Billing();
-				billing.setPhoneNumber(rs.getString(1));
-				billing.setTargetMonth(rs.getDate(2));
-				billing.setBasicCharge(rs.getInt(3));
-				billing.setMeteredCharge(rs.getInt(4));
-				billing.setBillingAmount(rs.getInt(5));
-				list.add(billing);
-			}
-		}
-		return list;
-	}
-
-
-	private Billing toBilling(String phoneNumber, String targetMonth, int basicCharge, int meteredCharge,
-			int billingAmount) {
-		Billing billing = new Billing();
-		billing.setPhoneNumber(phoneNumber);
-		billing.setTargetMonth(DateUtils.toDate(targetMonth));
-		billing.setBasicCharge(basicCharge);
-		billing.setMeteredCharge(meteredCharge);
-		billing.setBillingAmount(billingAmount);
-		return billing;
-	}
-
-	/**
-	 * 契約マスタにレコードを追加する
-	 *
-	 * @param phoneNumber
-	 * @param startDate
-	 * @param endDate
-	 * @param chargeRule
-	 * @throws SQLException
-	 */
-	private void insertToContracts(String phoneNumber, String startDate, String endDate, String chargeRule)
-			throws SQLException {
-		String sql = "insert into contracts(phone_number, start_date, end_date, charge_rule) values(?, ?, ?, ?)";
-		try (PreparedStatement ps = getConn().prepareStatement(sql)) {
-			ps.setString(1, phoneNumber);
-			ps.setDate(2, DateUtils.toDate(startDate));
-			if (endDate == null) {
-				ps.setNull(3, Types.DATE);
-			} else {
-				ps.setDate(3, DateUtils.toDate(endDate));
-			}
-			ps.setString(4, chargeRule);
-			int c = ps.executeUpdate();
-			assertEquals(1, c);
-		}
-	}
-
-	/**
-	 * 履歴テーブルにレコードを追加する
-	 *
-	 * @param caller_phone_number 発信者電話番号
-	 * @param recipient_phone_number 受信者電話番号
-	 * @param payment_categorty	料金区分
-	 * @param start_time 通話開始時刻
-	 * @param time_secs 通話時間
-	 * @param df 論理削除フラグ
-	 * @throws SQLException
-	 */
-	private void insertToHistory(String caller_phone_number, String recipient_phone_number, String payment_categorty, String start_time, Integer time_secs, int df)
-			throws SQLException {
-		String sql = "insert into history(caller_phone_number, recipient_phone_number, payment_categorty, start_time, time_secs, charge, df) values(?, ?, ?, ?, ?, ?, ?)";
-		try (PreparedStatement ps = getConn().prepareStatement(sql)) {
-			ps.setString(1, caller_phone_number);
-			ps.setString(2, recipient_phone_number);
-			ps.setString(3, payment_categorty);
-			ps.setTimestamp(4, DateUtils.toTimestamp(start_time));
-			ps.setInt(5, time_secs);
-			ps.setNull(6, Types.INTEGER);
-			ps.setInt(7, df);
-			int c = ps.executeUpdate();
-			assertEquals(1, c);
-		}
-	}
 
 
 	/**
@@ -323,7 +237,7 @@ class PhoneBillTest extends AbstractJdbcTestCase {
 		for(TransactionScope ts: TransactionScope.values()) {
 			Config newConfig = config.clone();
 			newConfig.transactionScope= ts;
-			LOG.info("Executing phoneBill.exec() with transactionScope =" + ts);
+			LOG.info("Executing phoneBill.exec() with transactionScope = " + ts);
 			testNewConfig(phoneBill, expected, newConfig);
 		}
 	}
@@ -394,7 +308,7 @@ class PhoneBillTest extends AbstractJdbcTestCase {
 		for(TransactionScope ts: TransactionScope.values()) {
 			Config newConfig = config.clone();
 			newConfig.transactionScope= ts;
-			LOG.info("Executing phoneBill.exec() with transactionScope =" + ts);
+			LOG.info("Executing phoneBill.exec() with transactionScope = " + ts);
 			testNewConfig(phoneBill, expected, newConfig);
 		}
 	}
@@ -444,7 +358,7 @@ class PhoneBillTest extends AbstractJdbcTestCase {
 		for(TransactionScope ts: TransactionScope.values()) {
 			Config newConfig = config.clone();
 			newConfig.transactionScope= ts;
-			LOG.info("Executing phoneBill.exec() with transactionScope =" + ts);
+			LOG.info("Executing phoneBill.exec() with transactionScope = " + ts);
 			testNewConfig(phoneBill, expected, newConfig);
 		}
 	}

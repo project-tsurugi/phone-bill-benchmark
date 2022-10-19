@@ -27,7 +27,7 @@ public class CalculationTask implements Callable<Exception> {
     private Config config;
     private String batchExecId;
     private AtomicBoolean abortRequested;
-    private Calculator calculator;
+    Calculator calculator;
 
 
 	/**
@@ -177,6 +177,7 @@ public class CalculationTask implements Callable<Exception> {
 
 				CallChargeCalculator callChargeCalculator = target.getCallChargeCalculator();
 				BillingCalculator billingCalculator = target.getBillingCalculator();
+				billingCalculator.init();
 				for (History h : histories) {
 					if (h.getTimeSecs() < 0) {
 						throw new RuntimeException("Negative time: " + h.getTimeSecs());

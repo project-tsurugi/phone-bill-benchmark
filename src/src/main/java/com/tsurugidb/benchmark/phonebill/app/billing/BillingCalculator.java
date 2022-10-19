@@ -24,4 +24,9 @@ public interface BillingCalculator {
 	 * 請求金額を返す
 	 */
 	public int getBillingAmount();
+
+	/**
+	 * 初期化する
+	 */
+	public void init();
 }

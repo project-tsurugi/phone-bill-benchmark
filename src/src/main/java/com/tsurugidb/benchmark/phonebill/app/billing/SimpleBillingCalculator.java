@@ -31,4 +31,9 @@ public class SimpleBillingCalculator implements BillingCalculator {
 		}
 		return totalCallCharge + 1000;
 	}
+
+	@Override
+	public void init() {
+		totalCallCharge = 0;
+	}
 }

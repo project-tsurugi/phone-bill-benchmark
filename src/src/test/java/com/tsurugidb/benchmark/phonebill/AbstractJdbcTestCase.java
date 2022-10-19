@@ -1,9 +1,13 @@
 package com.tsurugidb.benchmark.phonebill;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -17,6 +21,7 @@ import org.junit.jupiter.api.BeforeEach;
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager.SessionHoldingType;
+import com.tsurugidb.benchmark.phonebill.db.entity.Billing;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.PhoneBillDbManagerJdbc;
@@ -180,5 +185,77 @@ public abstract class AbstractJdbcTestCase {
 	 */
 	protected static PhoneBillDbManager getManager() {
 		return manager;
+	}
+
+	/**
+	 * 契約マスタにレコードを追加する
+	 *
+	 * @param phoneNumber
+	 * @param startDate
+	 * @param endDate
+	 * @param chargeRule
+	 * @throws SQLException
+	 */
+	protected void insertToContracts(String phoneNumber, String startDate, String endDate, String chargeRule)
+			throws SQLException {
+		String sql = "insert into contracts(phone_number, start_date, end_date, charge_rule) values(?, ?, ?, ?)";
+		try (PreparedStatement ps = getConn().prepareStatement(sql)) {
+			ps.setString(1, phoneNumber);
+			ps.setDate(2, DateUtils.toDate(startDate));
+			if (endDate == null) {
+				ps.setNull(3, Types.DATE);
+			} else {
+				ps.setDate(3, DateUtils.toDate(endDate));
+			}
+			ps.setString(4, chargeRule);
+			int c = ps.executeUpdate();
+			assertEquals(1, c);
+		}
+	}
+
+	protected List<Billing> getBillings() throws SQLException {
+		List<Billing> list = new ArrayList<Billing>();
+		String sql = "select phone_number, target_month, basic_charge, metered_charge, billing_amount"
+				+ " from billing order by phone_number, target_month";
+		try (ResultSet rs = getStmt().executeQuery(sql)) {
+			while (rs.next()) {
+				Billing billing = new Billing();
+				billing.setPhoneNumber(rs.getString(1));
+				billing.setTargetMonth(rs.getDate(2));
+				billing.setBasicCharge(rs.getInt(3));
+				billing.setMeteredCharge(rs.getInt(4));
+				billing.setBillingAmount(rs.getInt(5));
+				list.add(billing);
+			}
+		}
+		return list;
+	}
+
+
+	/**
+	 * 履歴テーブルにレコードを追加する
+	 *
+	 * @param caller_phone_number 発信者電話番号
+	 * @param recipient_phone_number 受信者電話番号
+	 * @param payment_categorty	料金区分
+	 * @param start_time 通話開始時刻
+	 * @param time_secs 通話時間
+	 * @param df 論理削除フラグ
+	 * @throws SQLException
+	 */
+	protected void insertToHistory(String caller_phone_number, String recipient_phone_number, String payment_categorty, String start_time, Integer time_secs, int df)
+			throws SQLException {
+		String sql = "insert into history(caller_phone_number, recipient_phone_number, payment_categorty, start_time, time_secs, charge, df) values(?, ?, ?, ?, ?, ?, ?)";
+		try (PreparedStatement ps = getConn().prepareStatement(sql)) {
+			ps.setString(1, caller_phone_number);
+			ps.setString(2, recipient_phone_number);
+			ps.setString(3, payment_categorty);
+			ps.setTimestamp(4, DateUtils.toTimestamp(start_time));
+			ps.setInt(5, time_secs);
+			ps.setNull(6, Types.INTEGER);
+			ps.setInt(7, df);
+			int c = ps.executeUpdate();
+			assertEquals(1, c);
+		}
 	}
 }

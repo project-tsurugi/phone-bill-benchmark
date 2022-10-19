@@ -56,12 +56,12 @@ public class ThreadBench extends ExecutableCommand {
 		List<Integer> threadCounts;
 
 		if (config.dbmsType == DbmsType.ICEAXE) {
-//			options = Arrays.asList(TransactionOption.LTX, TransactionOption.OCC);
-//			scopes = Arrays.asList(TransactionScope.CONTRACT, TransactionScope.WHOLE);
-//			threadCounts = Arrays.asList(1, 2, 3, 4, 6, 8, 10, 15, 20);
-			options = Arrays.asList(TransactionOption.LTX);
-			scopes = Arrays.asList(TransactionScope.CONTRACT);
-			threadCounts = Arrays.asList(1, 2);
+			options = Arrays.asList(TransactionOption.LTX, TransactionOption.OCC);
+			scopes = Arrays.asList(TransactionScope.CONTRACT, TransactionScope.WHOLE);
+			threadCounts = Arrays.asList(1, 2, 3, 4, 6, 8, 10, 15, 20);
+//			options = Arrays.asList(TransactionOption.LTX);
+//			scopes = Arrays.asList(TransactionScope.CONTRACT);
+//			threadCounts = Arrays.asList(1, 2);
 		} else {
 //			options = Arrays.asList(TransactionOption.LTX);
 //			scopes = Arrays.asList(TransactionScope.CONTRACT, TransactionScope.WHOLE);
