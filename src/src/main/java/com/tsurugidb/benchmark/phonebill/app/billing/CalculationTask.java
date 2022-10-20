@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +22,7 @@ import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
 import com.tsurugidb.iceaxe.transaction.TgTxOption;
 import com.tsurugidb.iceaxe.transaction.manager.TgTmSetting;
+import com.tsurugidb.sql.proto.SqlRequest.TransactionPriority;
 
 public class CalculationTask implements Callable<Exception> {
     private static final Logger LOG = LoggerFactory.getLogger(CalculationTask.class);
@@ -70,7 +72,7 @@ public class CalculationTask implements Callable<Exception> {
 			txOption = TgTxOption.ofOCC();
 			break;
 		case LTX:
-			txOption = TgTxOption.ofLTX("history", "billing");
+			txOption = TgTxOption.ofLTX("history", "billing").priority(TransactionPriority.INTERRUPT_EXCLUDE);
 			break;
 		}
 
@@ -84,7 +86,11 @@ public class CalculationTask implements Callable<Exception> {
 					return null;
 				}
 				try {
+					AtomicInteger tryCount = new AtomicInteger(0);
+					String str = txOption.toString();
 					manager.execute(TgTmSetting.ofAlways(txOption), () -> {
+						LOG.debug("start tansaction with txOption = {}, key = {}, tryCount = {}", str,  target.getContract().getPhoneNumber(),  tryCount);
+						tryCount.incrementAndGet();
 						calculator.doCalc(target);
 					});
 					n++;
