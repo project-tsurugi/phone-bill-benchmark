@@ -176,7 +176,7 @@ public class PhoneBill extends ExecutableCommand {
 			});
 
 			// 計算対象の契約を取りだし、キューに入れる
-			List<Contract> list = manager.execute(TgTmSetting.ofAlways(TgTxOption.ofOCC()), () -> {
+			List<Contract> list = manager.execute(TgTmSetting.ofAlways(TgTxOption.ofRTX()), () -> {
 				return contractDao.getContracts(start, end);
 			});
 			for (Contract contract : list) {
