@@ -96,8 +96,8 @@ class IceaxeUtilsTest {
 					}
 				}));
 
-		assertThrows(UncheckedIOException.class,
-				() -> utils.execute(new TsurugiPreparedStatementQuery1<TgParameterList, History>(session, null, null, null) {
+		assertThrows(UncheckedIOException.class, () -> utils
+				.execute(new TsurugiPreparedStatementQuery1<TgParameterList, History>(session, null, null, null, null) {
 
 					@Override
 					public TsurugiResultSet<History> execute(TsurugiTransaction transaction, TgParameterList parameter)
@@ -106,8 +106,8 @@ class IceaxeUtilsTest {
 					}
 				}, null));
 
-		assertThrows(TsurugiTransactionRuntimeException.class,
-				() -> utils.execute(new TsurugiPreparedStatementQuery1<TgParameterList, History>(session, null, null, null) {
+		assertThrows(TsurugiTransactionRuntimeException.class, () -> utils
+				.execute(new TsurugiPreparedStatementQuery1<TgParameterList, History>(session, null, null, null, null) {
 
 					@Override
 					public TsurugiResultSet<History> execute(TsurugiTransaction transaction, TgParameterList parameter)
@@ -119,26 +119,32 @@ class IceaxeUtilsTest {
 
 	@Test
 	final void testExecuteAndGetCount() {
-
-		TsurugiPreparedStatementUpdate1<History> psThrowIOException = new TsurugiPreparedStatementUpdate1<>(session, null, null) {
+		TsurugiPreparedStatementUpdate1<History> psThrowIOException = new TsurugiPreparedStatementUpdate1<History>(
+				session, null, null, null) {
 			@Override
-		    public int executeAndGetCount(TsurugiTransaction transaction, History h) throws IOException, TsurugiTransactionException {
+			public int executeAndGetCount(TsurugiTransaction transaction, History h)
+					throws IOException, TsurugiTransactionException {
 				throw IO_EXCEPTION;
-		    }
+			}
 		};
 
-		TsurugiPreparedStatementUpdate1<History> psThrowTsurugiTransactionException = new TsurugiPreparedStatementUpdate1<>(session, null, null) {
+		TsurugiPreparedStatementUpdate1<History> psThrowTsurugiTransactionException = new TsurugiPreparedStatementUpdate1<>(
+				session, null, null, null) {
 			@Override
-		    public int executeAndGetCount(TsurugiTransaction transaction, History h) throws IOException, TsurugiTransactionException {
+			public int executeAndGetCount(TsurugiTransaction transaction, History h)
+					throws IOException, TsurugiTransactionException {
 				throw TSURUGI_TRANSACTION_EXCEPTION;
-		    }
+			}
 		};
 
-		assertThrows(UncheckedIOException.class, () -> utils.executeAndGetCount(psThrowIOException, (History)null));
-		assertThrows(TsurugiTransactionRuntimeException.class, () -> utils.executeAndGetCount(psThrowTsurugiTransactionException, (History)null));
-		List<History> list = Collections.singletonList(History.create("1", "2", "C", "2022-01-01 00:00:00.000", 10, null, 0));
+		assertThrows(UncheckedIOException.class, () -> utils.executeAndGetCount(psThrowIOException, (History) null));
+		assertThrows(TsurugiTransactionRuntimeException.class,
+				() -> utils.executeAndGetCount(psThrowTsurugiTransactionException, (History) null));
+		List<History> list = Collections
+				.singletonList(History.create("1", "2", "C", "2022-01-01 00:00:00.000", 10, null, 0));
 		assertThrows(UncheckedIOException.class, () -> utils.executeAndGetCount(psThrowIOException, list));
-		assertThrows(TsurugiTransactionRuntimeException.class, () -> utils.executeAndGetCount(psThrowTsurugiTransactionException, list));
+		assertThrows(TsurugiTransactionRuntimeException.class,
+				() -> utils.executeAndGetCount(psThrowTsurugiTransactionException, list));
 	}
 
 	private static class TestManager extends PhoneBillDbManagerIceaxe {

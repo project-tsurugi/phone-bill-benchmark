@@ -6,7 +6,7 @@ import java.util.Optional;
 
 import com.tsurugidb.benchmark.phonebill.db.dao.Ddl;
 import com.tsurugidb.benchmark.phonebill.db.iceaxe.PhoneBillDbManagerIceaxe;
-import com.tsurugidb.iceaxe.metadata.TsurugiTableMetadata;
+import com.tsurugidb.iceaxe.metadata.TgTableMetadata;
 import com.tsurugidb.iceaxe.session.TsurugiSession;
 import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionException;
 import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionRuntimeException;
@@ -26,7 +26,7 @@ public class DdlIceaxe implements Ddl {
 
 	@Override
 	public void dropTable(String tableName) {
-		Optional<TsurugiTableMetadata> opt;
+		Optional<TgTableMetadata> opt;
 		try {
 			opt = manager.getSession().findTableMetadata(tableName);
 		} catch (IOException e) {
