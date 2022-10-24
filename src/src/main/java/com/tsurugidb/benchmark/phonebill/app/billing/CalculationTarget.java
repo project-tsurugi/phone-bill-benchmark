@@ -34,12 +34,6 @@ public class CalculationTarget {
 	private Long end;
 
 	/**
-	 * 計算対象がないことを示すフラグ
-	 */
-	private boolean endOfTask = false;
-
-
-	/**
 	 * @param contract
 	 * @param billingCalculator
 	 * @param callChargeCalculator
@@ -54,7 +48,6 @@ public class CalculationTarget {
 		this.callChargeCalculator = callChargeCalculator;
 		this.start = start == null ? null : start.getTime();
 		this.end = end == null ? null : end.getTime();
-		this.endOfTask = endOfTask;
 	}
 
 	public static CalculationTarget getEndOfTask() {
@@ -88,14 +81,6 @@ public class CalculationTarget {
 
 
 	/**
-	 * @return endOfTask
-	 */
-	public boolean isEndOfTask() {
-		return endOfTask;
-	}
-
-
-	/**
 	 * @return start
 	 */
 	public Date getStart() {
@@ -117,7 +102,6 @@ public class CalculationTarget {
 		result = prime * result + ((callChargeCalculator == null) ? 0 : callChargeCalculator.hashCode());
 		result = prime * result + ((contract == null) ? 0 : contract.hashCode());
 		result = prime * result + ((end == null) ? 0 : end.hashCode());
-		result = prime * result + (endOfTask ? 1231 : 1237);
 		result = prime * result + ((start == null) ? 0 : start.hashCode());
 		return result;
 	}
@@ -150,8 +134,6 @@ public class CalculationTarget {
 			if (other.end != null)
 				return false;
 		} else if (!end.equals(other.end))
-			return false;
-		if (endOfTask != other.endOfTask)
 			return false;
 		if (start == null) {
 			if (other.start != null)

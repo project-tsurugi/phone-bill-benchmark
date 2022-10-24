@@ -2,7 +2,6 @@ package com.tsurugidb.benchmark.phonebill.app.billing;
 
 import java.sql.Date;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -81,7 +80,7 @@ public class CalculationTask implements Callable<Exception> {
 			for (;;) {
 				CalculationTarget target = queue.take();
 				LOG.debug(queue.getStatus());
-				if (target.isEndOfTask() || abortRequested.get() == true) {
+				if (target == null || abortRequested.get() == true) {
 					LOG.info("Calculation task finished normally, number of calculated contracts = {}).", n);
 					return null;
 				}
@@ -93,9 +92,10 @@ public class CalculationTask implements Callable<Exception> {
 						tryCount.incrementAndGet();
 						calculator.doCalc(target);
 					});
+					queue.success(target);
 					n++;
 				} catch (RuntimeException e) {
-					queue.putFirst(Collections.singletonList(target));
+					queue.revert(target);
 					LOG.error("Calculation target returned to queue and the task will be aborted.", e);
 					return e;
 				}
@@ -106,21 +106,29 @@ public class CalculationTask implements Callable<Exception> {
 				try {
 					manager.execute(TgTmSetting.of(txOption), () -> {
 						for (;;) {
-							CalculationTarget target = queue.take();
-							list.add(target);
+							CalculationTarget target;
+							target = queue.poll();
+							if (target != null) {
+								list.add(target);
+							}
 							LOG.debug(queue.getStatus());
-							if (target.isEndOfTask() || abortRequested.get() == true) {
-								LOG.info("Calculation task finished normally, number of calculated contracts = {}).",
-										list.size());
+							if (target == null || abortRequested.get() == true) {
 								break;
 							}
 							calculator.doCalc(target);
 						}
 					});
+					queue.success(list);
+					if (abortRequested.get() == false && !queue.finished()) {
+						Thread.sleep(10);
+						continue;
+					}
+					LOG.info("Calculation task finished normally, number of calculated contracts = {}).",
+							list.size());
 					return null;
 				} catch (RuntimeException e) {
 					// 処理対象をキューに戻す
-					queue.putFirst(list);
+					queue.revert(list);
 					if (e instanceof RetryOverRuntimeException) {
 						LOG.error("Transaction aborted with retriable exception and calculation targets returned to queue.", e);
 						continue;

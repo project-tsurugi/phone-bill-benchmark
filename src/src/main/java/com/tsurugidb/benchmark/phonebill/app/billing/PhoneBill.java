@@ -159,7 +159,6 @@ public class PhoneBill extends ExecutableCommand {
 
 		ExecutorService service = null;
 		Set<Future<Exception>> futures = new HashSet<>(threadCount);
-		initQueue(threadCount);
 
 		long startTime = System.currentTimeMillis();
 		PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config,
@@ -179,6 +178,7 @@ public class PhoneBill extends ExecutableCommand {
 			List<Contract> list = manager.execute(TgTmSetting.ofAlways(TgTxOption.ofRTX()), () -> {
 				return contractDao.getContracts(start, end);
 			});
+			ArrayList<CalculationTarget> targets = new ArrayList<>(list.size());
 			for (Contract contract : list) {
 				LOG.debug(contract.toString());
 				// TODO 契約内容に合致した、CallChargeCalculator, BillingCalculatorを生成するようにする。
@@ -186,8 +186,9 @@ public class PhoneBill extends ExecutableCommand {
 				BillingCalculator billingCalculator = new SimpleBillingCalculator();
 				CalculationTarget target = new CalculationTarget(contract, billingCalculator, callChargeCalculator,
 						start, end, false);
-				queue.put(target);
+				targets.add(target);
 			}
+			queue = new CalculationTargetQueue(targets);
 
 			// 契約毎の計算を行うスレッドを生成する
 			service = Executors.newFixedThreadPool(threadCount);
@@ -206,25 +207,15 @@ public class PhoneBill extends ExecutableCommand {
 
 
 		} finally {
-			// EndOfTaskをキューに入れる
-			queue.setEndOfTask();
 			if (service != null && !service.isTerminated()) {
 				service.shutdown();
 			}
 			cleanup(futures, managers, abortRequested);
-			queue.clear();
 		}
 		elapsedTime = System.currentTimeMillis() - startTime;
 		String format = "Billings calculated in %,.3f sec ";
 		finalMessage = String.format(format, elapsedTime / 1000d);
 		LOG.info(finalMessage);
-	}
-
-	/**
-	 * @param threadCount
-	 */
-	private synchronized void initQueue(int threadCount) {
-		queue = new CalculationTargetQueue(threadCount);
 	}
 
 	public synchronized String getStatus() {

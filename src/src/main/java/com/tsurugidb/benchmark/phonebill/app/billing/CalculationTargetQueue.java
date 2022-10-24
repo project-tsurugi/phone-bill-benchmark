@@ -1,148 +1,156 @@
 package com.tsurugidb.benchmark.phonebill.app.billing;
 
+import java.util.ArrayDeque;
 import java.util.Collection;
-import java.util.concurrent.BlockingDeque;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Queue;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * CalculationTargetを格納するQueue
- */
-/**
- *
- */
-/**
+ * CalculationTargetを格納するクラス。コンストラクタでTargetのコレクションを受け取り、
+ * 各CalcurationTaskのCalculationTargetを配布、すべてのCalculationTargetの処理終了後に
+ * 処理の終了を伝える役割を持つ。
  *
  */
 public class CalculationTargetQueue {
     private static final Logger LOG = LoggerFactory.getLogger(CalculationTargetQueue.class);
 
 	/**
-	 * キュー本体
+	 * CalculationTargetを保持するQueue
 	 */
-	private BlockingDeque<CalculationTarget> queue;
+	private Queue<CalculationTarget> queue;
+
+	/**
+	 * 処理中の数
+	 */
+	private volatile int numberOfRunningTargets;
+
+	/**
+	 * 処理対象の数
+	 */
+	private int numberOfTargts;
 
 
 	/**
-	 * キューに入れたタスクの総数
+	 * 処理終了を表すフラグ
 	 */
-	private AtomicInteger totalQueuedTaasks = new AtomicInteger(0);
+	private volatile boolean finished;
+
 
 	/**
-	 * キューの状態を表す文字列
+	 * Queueのステータスを表す文字列
 	 */
-	private volatile String status;
-
-	/**
-	 * このキューからタスクを取り出すスレッドの数
-	 */
-	private int threadCount;
-
+	String status;
 
 
 	/**
 	 * コンストラクタ
 	 */
-	public CalculationTargetQueue(int threadCount) {
-		this.threadCount = threadCount;
-		queue = new LinkedBlockingDeque<>();
-		updateStatus();
+	public CalculationTargetQueue(Collection<CalculationTarget> targets) {
+		queue = new ArrayDeque<>(targets);
+		numberOfTargts = queue.size();
+		numberOfRunningTargets = 0;
+		finished = false;
+		updateSatus();
 	}
 
 
-	private synchronized void updateStatus() {
-		status = "Contracts queue status: total queued taasks = " + totalQueuedTaasks + ", tasks in queue = "
-				+ queue.size();
+
+	private void updateSatus() {
+		status = "Contracts queue status: total size = " + numberOfTargts + ", in queue = "
+				+ queue.size() + ", running = " + numberOfRunningTargets;
 	}
+
 
 	/**
 	 * キューの状態を表す文字列を返す
 	 */
-	public synchronized String getStatus() {
+	public String getStatus() {
 		return status;
 	}
 
 
 	/**
-	 * queue.take()の結果を返す
+	 * Queueから処理対象を取り出す。queueが空で処理中が0の場合はnullを返す。
+	 * 処理対象を取得できるかnullを返す状況になるまでこのメソッドはブロックする。
 	 *
 	 * @return
 	 * @throws InterruptedException
 	 */
-	public CalculationTarget take() {
+	public CalculationTarget take() throws InterruptedException {
 		for (;;) {
-			try {
-				CalculationTarget t = queue.take();
-				updateStatus();
-				return t;
-			} catch (InterruptedException e) {
-				LOG.debug("InterruptedException caught and continue taking a calculation target", e);
+			CalculationTarget target = poll();
+			if (target != null || finished) {
+				return target;
 			}
+			Thread.sleep(10);
 		}
 	}
 
 	/**
-	 * queueにtargetを追加する。InterruptedException発生時は成功するまでリトライする。
+	 * queueから計算対象を取り出し、カウンタとフラグを更新する。
 	 *
-	 * @param target
+	 * @return
 	 */
-	public void put(CalculationTarget target) {
-		for(;;) {
-			try {
-				queue.put(target);
-				break;
-			} catch (InterruptedException e) {
-				LOG.debug("InterruptedException caught and continue puting a calculation target", e);
-			}
+	public synchronized CalculationTarget poll() {
+		CalculationTarget target = queue.poll();
+		if (target != null) {
+			numberOfRunningTargets++;
+			updateSatus();
 		}
-		totalQueuedTaasks.incrementAndGet();
-		updateStatus();
+		if (numberOfRunningTargets <= 0) {
+			finished = true;
+		}
+		return target;
 	}
 
 
 	/**
-	 * 指定のコレクションの全要素をqueueの先頭に追加する。
+	 * 処理に失敗したCalcurationTargetをqueuenに戻す
+	 */
+	public synchronized void revert(Collection<CalculationTarget> targets) {
+		queue.addAll(targets);
+		numberOfRunningTargets -= targets.size();
+		updateSatus();
+	}
+
+
+	/**
+	 * 処理に失敗したCalcurationTargetをqueuenに戻す
+	 */
+	public synchronized void revert(CalculationTarget target) {
+		queue.add(target);
+		numberOfRunningTargets--;
+		updateSatus();
+	}
+
+
+	/**
+	 * 処理に成功したCalclationTargetをセットする
+	 */
+	public synchronized void success(Collection<CalculationTarget> targets) {
+		numberOfRunningTargets -= targets.size();
+		updateSatus();
+	}
+
+	/**
+	 * 処理に成功したCalclationTargetをセットする
+	 */
+	public synchronized void success(CalculationTarget target) {
+		numberOfRunningTargets --;
+		updateSatus();
+	}
+
+
+	/**
+	 * これ以上queueに処理対象が残っていないかを調べる
 	 *
-	 * @param c
+	 * @return 処理対象が残っていないときtrue
 	 */
-	public void putFirst(Collection<CalculationTarget> c) {
-		for(CalculationTarget target: c) {
-			for(;;) {
-				try {
-					queue.putFirst(target);
-					break;
-				} catch (InterruptedException e) {
-					LOG.debug("InterruptedException caught and continue puting a calculation target", e);
-				}
-			}
-		}
+	public boolean finished() {
+		return finished;
 	}
-
-
-	/**
-	 * これ以上Queueに入れるタスクがないことを宣言する。
-	 *
-	 * inputClosedフラグを立て、Queueを読むスレッドの数だけ、
-	 * EndOfTaskをキューに入れる。
-	 */
-	public void setEndOfTask (){
-		// EndOfTaskをキューに入れる
-		for (int i =0; i < threadCount; i++) {
-			put(CalculationTarget.getEndOfTask());
-		}
-		updateStatus();
-	}
-
-	/**
-	 * キューに残っているタスクをクリアする
-	 */
-	public void clear() {
-		queue.clear();
-	}
-
 
 	/**
 	 * Queueに残っている要素数を返す(UT用)

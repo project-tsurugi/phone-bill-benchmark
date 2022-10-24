@@ -14,12 +14,6 @@ class CalculationTargetTest {
 
 
 	@Test
-	final void testGetEndOfTask() {
-		CalculationTarget target = CalculationTarget.getEndOfTask();
-		assertTrue(target.isEndOfTask());
-	}
-
-	@Test
 	final void testGetContract() {
 		Contract c = new Contract();
 		CalculationTarget target = new CalculationTarget(c, null, null, null, null, false);
@@ -38,12 +32,6 @@ class CalculationTargetTest {
 		CallChargeCalculator c = new SimpleCallChargeCalculator();
 		CalculationTarget target = new CalculationTarget(null, null, c, null, null, false);
 		assertEquals(c, target.getCallChargeCalculator());
-	}
-
-	@Test
-	final void testIsEndOfTask() {
-		assertTrue(new CalculationTarget(null, null, null, null, null, true).isEndOfTask());
-		assertFalse(new CalculationTarget(null, null, null, null, null, false).isEndOfTask());
 	}
 
 	@Test
