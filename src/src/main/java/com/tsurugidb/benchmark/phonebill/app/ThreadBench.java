@@ -61,7 +61,7 @@ public class ThreadBench extends ExecutableCommand {
 //			threadCounts = Arrays.asList(1, 2, 3, 4, 6, 8, 10, 15, 20);
 			options = Arrays.asList(TransactionOption.LTX);
 			scopes = Arrays.asList(TransactionScope.CONTRACT);
-			threadCounts = Arrays.asList(8);
+			threadCounts = Arrays.asList(1,8);
 		} else {
 //			options = Arrays.asList(TransactionOption.LTX);
 //			scopes = Arrays.asList(TransactionScope.CONTRACT, TransactionScope.WHOLE);
