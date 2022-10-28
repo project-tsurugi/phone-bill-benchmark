@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
 
@@ -36,8 +37,8 @@ class CalculationTaskTest extends AbstractJdbcTestCase {
 		CallChargeCalculator callChargeCalculator = new SimpleCallChargeCalculator();
 		BillingCalculator billingCalculator = new SimpleBillingCalculator();
 
-		CalculationTask task = new CalculationTask(null, getManager(), config, "",  new AtomicBoolean(false));
-
+		CalculationTask task = new CalculationTask(null, getManager(), config, "", new AtomicBoolean(false),
+				new AtomicInteger(0));
 
 
 		// 契約マスタにテストデータをセット
@@ -120,47 +121,53 @@ class CalculationTaskTest extends AbstractJdbcTestCase {
 		CalculationTargetQueue queue;
 		CalculationTask task;
 		TestCalculator calculator;
-		AtomicBoolean abortRequested = new AtomicBoolean(false);;
+		AtomicBoolean abortRequested = new AtomicBoolean(false);
+		AtomicInteger tryCounter = new AtomicInteger(0);
+
 
 		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
 
 
 		// Queueが処理対象の契約が含まれていない場合
 		queue= new CalculationTargetQueue(Collections.emptyList());
-		task = new CalculationTask(queue, manager, config, "BID", abortRequested);
+		task = new CalculationTask(queue, manager, config, "BID", abortRequested, tryCounter);
 		calculator = new TestCalculator();
 		task.setCalculator(calculator);
 		assertNull(task.call());
 		assertEquals(0, calculator.callCount);
+		assertEquals(0, tryCounter.get());
 
 		// Queueに処理対象の契約が1つだけ含まれているケース
 
 		queue= new CalculationTargetQueue(Collections.singletonList(T1));
-		task = new CalculationTask(queue, manager, config, "BID", abortRequested);
+		task = new CalculationTask(queue, manager, config, "BID", abortRequested, tryCounter);
 		calculator = new TestCalculator();
 		task.setCalculator(calculator);
 		assertNull(task.call());
 		assertEquals(1, calculator.callCount);
+		assertEquals(1, tryCounter.get());
 
 
 		// Queueに処理対象の契約が複数含まれているケース
 		queue= new CalculationTargetQueue(Arrays.asList(T1, T2, T3));
-		task = new CalculationTask(queue, manager, config, "BID", abortRequested);
+		task = new CalculationTask(queue, manager, config, "BID", abortRequested, tryCounter);
 		calculator = new TestCalculator();
 		task.setCalculator(calculator);
 		assertNull(task.call());
 		assertEquals(3, calculator.callCount);
+		assertEquals(3, tryCounter.get());
 
 
 		// リトライ可能ではないExceptionがスローされるケース
 		queue= new CalculationTargetQueue(Arrays.asList(T1, T2, T3));
 		assertEquals(3, queue.size());
-		task = new CalculationTask(queue, manager, config, "BID", abortRequested);
+		task = new CalculationTask(queue, manager, config, "BID", abortRequested, tryCounter);
 		calculator = new TestCalculator();
 		calculator.countThrowsException = 2;
 		task.setCalculator(calculator);
 		assertEquals(calculator.runtimeException,  task.call());
 		assertEquals(2, calculator.callCount);
+		assertEquals(2, tryCounter.get());
 
 		assertEquals(config.transactionScope == TransactionScope.CONTRACT ? 2: 3, queue.size());
 
@@ -172,7 +179,7 @@ class CalculationTaskTest extends AbstractJdbcTestCase {
 		// リトライ可能なExceptionがスローされるケース
 		queue= new CalculationTargetQueue(Arrays.asList(T1, T2, T3));
 		assertEquals(3, queue.size());
-		task = new CalculationTask(queue, manager, config, "BID", abortRequested);
+		task = new CalculationTask(queue, manager, config, "BID", abortRequested, tryCounter);
 		calculator = new TestCalculator();
 		calculator.countThrowsRetriableException = 2;
 		task.setCalculator(calculator);
@@ -184,7 +191,8 @@ class CalculationTaskTest extends AbstractJdbcTestCase {
 		// Abortが要求されたケース
 		queue= new CalculationTargetQueue(Arrays.asList(T1, T2, T3));
 		assertEquals(3, queue.size());
-		task = new CalculationTask(queue, manager, config, "BID", abortRequested);
+		assertEquals(3, tryCounter.get());
+		task = new CalculationTask(queue, manager, config, "BID", abortRequested, tryCounter);
 		calculator = new TestCalculator();
 		calculator.countThrowsRetriableException = 2;
 		task.setCalculator(calculator);
@@ -197,7 +205,7 @@ class CalculationTaskTest extends AbstractJdbcTestCase {
 		// 他のタスクが処理中のTargetの処理が終了するまで待たされるケース
 
 		queue= new CalculationTargetQueue(Arrays.asList(T1, T2, T3));
-		task = new CalculationTask(queue, manager, config, "BID", abortRequested);
+		task = new CalculationTask(queue, manager, config, "BID", abortRequested, tryCounter);
 		calculator = new TestCalculator();
 		task.setCalculator(calculator);
 
@@ -208,6 +216,7 @@ class CalculationTaskTest extends AbstractJdbcTestCase {
 		long start = System.currentTimeMillis();
 		assertNull(task.call());
 		assertEquals(3, calculator.callCount);
+		assertEquals(3, tryCounter.get());
 		long elapsed = System.currentTimeMillis() - start;
 		assertTrue(elapsed > sleepTime, "elapsed time = " + elapsed + ", sleep time =" + sleepTime);
 		service.shutdown();

@@ -48,7 +48,6 @@ public class ThreadBench extends ExecutableCommand {
 		}
 	}
 
-
 	@Override
 	public void execute(Config config) throws Exception {
 		List<TransactionOption> options;
@@ -56,16 +55,10 @@ public class ThreadBench extends ExecutableCommand {
 		List<Integer> threadCounts;
 
 		if (config.dbmsType == DbmsType.ICEAXE) {
-//			options = Arrays.asList(TransactionOption.LTX, TransactionOption.OCC);
-//			scopes = Arrays.asList(TransactionScope.CONTRACT, TransactionScope.WHOLE);
-//			threadCounts = Arrays.asList(1, 2, 3, 4, 6, 8, 10, 15, 20);
-			options = Arrays.asList(TransactionOption.LTX);
-			scopes = Arrays.asList(TransactionScope.CONTRACT);
-			threadCounts = Arrays.asList(1,8);
+			options = Arrays.asList(TransactionOption.LTX, TransactionOption.OCC);
+			scopes = Arrays.asList(TransactionScope.CONTRACT, TransactionScope.WHOLE);
+			threadCounts = Arrays.asList(1, 2, 4, 6);
 		} else {
-//			options = Arrays.asList(TransactionOption.LTX);
-//			scopes = Arrays.asList(TransactionScope.CONTRACT, TransactionScope.WHOLE);
-//			threadCounts = Arrays.asList(1, 2, 3, 4, 6, 8, 10, 15, 20);
 			options = Arrays.asList(TransactionOption.OCC);
 			scopes = Arrays.asList(TransactionScope.CONTRACT);
 			threadCounts = Arrays.asList(1);
@@ -75,21 +68,16 @@ public class ThreadBench extends ExecutableCommand {
 
 		// 結果の出力
 		Path outputPath = Paths.get(config.csvDir).resolve("result.csv");
-		try (PrintWriter pw = new PrintWriter(
-				Files.newBufferedWriter(outputPath))
-
-		) {
-			pw.println(Record.header());;
+		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
+			pw.println(Record.header());
 			records.stream().forEach(r -> pw.println(r.toString()));
 		}
 	}
-
 
 	private void execute(Config config, List<TransactionOption> options, List<TransactionScope> scopes,
 			List<Integer> threadCounts) throws Exception {
 		new CreateTable().execute(config);
 		new CreateTestData().execute(config);
-		PhoneBill phoneBill = new PhoneBill();
 		for (int threadCount : threadCounts) {
 			for (TransactionOption option : options) {
 				for (TransactionScope scope : scopes) {
@@ -100,17 +88,18 @@ public class ThreadBench extends ExecutableCommand {
 					Record record = new Record(config);
 					records.add(record);
 					record.start();
+					PhoneBill phoneBill = new PhoneBill();
 					phoneBill.execute(config);
-					record.finish();
-					checkResult(config);
+					record.finish(phoneBill.getTryCount());
+					record.setNumberOfDiffrence(checkResult(config));
 				}
 			}
 		}
 	}
 
 
-
-	private void checkResult(Config config) {
+	private int checkResult(Config config) {
+		int n = 0;
 		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
 			Set<History> histories = manager.execute(TgTmSetting.of(TgTxOption.ofOCC()), () -> {
 				return new HashSet<>(manager.getHistoryDao().getHistories());
@@ -123,36 +112,45 @@ public class ThreadBench extends ExecutableCommand {
 			if (expectedHistories == null) {
 				expectedHistories = histories;
 			} else {
-				checkSameSet(expectedHistories, histories);
+				n += checkSameSet(expectedHistories, histories);
 			}
 			if (expectedBillings == null) {
 				expectedBillings = billings;
 			} else {
-				checkSameSet(expectedBillings, billings);
+				n += checkSameSet(expectedBillings, billings);
 			}
 		}
+		return n;
 	}
 
-	public static  <T> boolean checkSameSet(Set<T> expect, Set<T> actual) {
-		boolean ok = true;
+	/**
+	 * 二つのレコードを比較し差異のあるレコード数を返す
+	 *
+	 * @param <T>
+	 * @param expect
+	 * @param actual
+	 * @return
+	 */
+	public static  <T> int checkSameSet(Set<T> expect, Set<T> actual) {
+		int n = 0;
 		for(T t: expect) {
 			if (actual.contains(t)) {
 				continue;
 			}
-			LOG.info("only in expect; " + t.hashCode() + ":"  + t);
-			ok = false;
+			LOG.info("only in expect:"  + t);
+			n++;
 		}
 		for(T t: actual) {
 			if (expect.contains(t)) {
 				continue;
 			}
-			LOG.info("only in actual; " + t.hashCode() + ":" + t);
-			ok = false;
+			LOG.info("only in actual:" + t);
+			n++;
 		}
-		if (!ok) {
+		if (n != 0) {
 			LOG.error("Did not get the same results.");
 		}
-		return ok;
+		return n;
 	}
 
 	private static class Record {
@@ -162,6 +160,8 @@ public class ThreadBench extends ExecutableCommand {
 		private Instant start;
 		private DbmsType dbmsType;
 		private long elapsedMillis;
+		private int tryCount = 0;
+		private int numberOfDiffrence = 0;
 
 		public Record(Config config) {
 			this.option = config.transactionOption;
@@ -175,11 +175,15 @@ public class ThreadBench extends ExecutableCommand {
 			start = Instant.now();
 		}
 
-		public void finish() {
+		public void finish(int tryCount) {
 			elapsedMillis = Duration.between(start, Instant.now()).toMillis();
 			LOG.info("Finished phoneBill.exec(), elapsed secs = {}.", elapsedMillis / 1000.0);
+			this.tryCount = tryCount;
 		}
 
+		public void setNumberOfDiffrence(int num) {
+			numberOfDiffrence = num;
+		}
 
 		private String getParamString() {
 			StringBuilder builder = new StringBuilder();
@@ -206,11 +210,15 @@ public class ThreadBench extends ExecutableCommand {
 			builder.append(threadCount);
 			builder.append(",");
 			builder.append(elapsedMillis);
+			builder.append(",");
+			builder.append(tryCount);
+			builder.append(",");
+			builder.append(numberOfDiffrence);
 			return builder.toString();
 		}
 
 		public static String header() {
-			return "dbmsType, option, scope, threadCount, elapsedMills";
+			return "dbmsType, option, scope, threadCount, elapsedMills, tryCount, diffrence";
 		}
 
 	}

@@ -17,6 +17,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +51,8 @@ public class PhoneBill extends ExecutableCommand {
 	private CalculationTargetQueue queue;
 	private String finalMessage;
 	private AtomicBoolean abortRequested = new AtomicBoolean(false);
+	private AtomicInteger tryCounter = new AtomicInteger(0);;
+
 	Config config; // UTからConfigを書き換え可能にするためにパッケージプライベートにしている
 
 	public static void main(String[] args) throws Exception {
@@ -201,7 +204,7 @@ public class PhoneBill extends ExecutableCommand {
 							SessionHoldingType.INSTANCE_FIELD);
 					managers.add(managerForTask);
 				}
-				CalculationTask task = new CalculationTask(queue, managerForTask, config, batchExecId, abortRequested);
+				CalculationTask task = new CalculationTask(queue, managerForTask, config, batchExecId, abortRequested, tryCounter);
 				futures.add(service.submit(task));
 			}
 
@@ -290,5 +293,17 @@ public class PhoneBill extends ExecutableCommand {
 	 */
 	public void abort() {
 		abortRequested.set(true);
+	}
+
+	/**
+	 * 電話料金計算の試行回数を返す。
+	 * <p>
+	 * 1電話番号の処理を1回とカウントします。トランザクションがリトライ可能な例外でabortすると、リトライが行われ試行回数がインクリメントされます。
+	 * 特定の電話番号の処理がn回リトライされると、試行回数はn+1としてカウントされます。
+	 *
+	 * @return 試行回数。
+	 */
+	public int getTryCount() {
+		return tryCounter.get();
 	}
 }

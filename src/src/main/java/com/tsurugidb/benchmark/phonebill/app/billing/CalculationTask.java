@@ -28,6 +28,7 @@ public class CalculationTask implements Callable<Exception> {
     private Config config;
     private String batchExecId;
     private AtomicBoolean abortRequested;
+    private AtomicInteger tryCounter;
     Calculator calculator;
 
 
@@ -48,11 +49,12 @@ public class CalculationTask implements Callable<Exception> {
 	 * @param conn
 	 */
 	public CalculationTask(CalculationTargetQueue queue, PhoneBillDbManager manager,  Config config, String batchExecId,
-			AtomicBoolean abortRequested) {
+			AtomicBoolean abortRequested, AtomicInteger tryCounter) {
 		this.queue = queue;
 		this.config = config;
 		this.batchExecId = batchExecId;
 		this.abortRequested = abortRequested;
+		this.tryCounter = tryCounter;
 		this.manager = manager;
 		billingDao = manager.getBillingDao();
 		historyDao = manager.getHistoryDao();
@@ -85,11 +87,12 @@ public class CalculationTask implements Callable<Exception> {
 					return null;
 				}
 				try {
-					AtomicInteger tryCount = new AtomicInteger(0);
+					AtomicInteger tryeInThisTx = new AtomicInteger(0);
 					String str = txOption.toString();
 					manager.execute(TgTmSetting.ofAlways(txOption), () -> {
-						LOG.debug("start tansaction with txOption = {}, key = {}, tryCount = {}", str,  target.getContract().getPhoneNumber(),  tryCount);
-						tryCount.incrementAndGet();
+						tryeInThisTx.incrementAndGet();
+						LOG.debug("start tansaction with txOption = {}, key = {}, tryCount = {}", str,  target.getContract().getPhoneNumber(),  tryeInThisTx);
+						tryCounter.incrementAndGet();
 						calculator.doCalc(target);
 					});
 					queue.success(target);
@@ -115,6 +118,7 @@ public class CalculationTask implements Callable<Exception> {
 							if (target == null || abortRequested.get() == true) {
 								break;
 							}
+							tryCounter.incrementAndGet();
 							calculator.doCalc(target);
 						}
 					});
