@@ -147,7 +147,6 @@ class CalculationTaskTest extends AbstractJdbcTestCase {
 		assertEquals(1, calculator.callCount);
 		assertEquals(1, tryCounter.get());
 
-
 		// Queueに処理対象の契約が複数含まれているケース
 		queue= new CalculationTargetQueue(Arrays.asList(T1, T2, T3));
 		task = new CalculationTask(queue, manager, config, "BID", abortRequested, tryCounter);
@@ -155,7 +154,7 @@ class CalculationTaskTest extends AbstractJdbcTestCase {
 		task.setCalculator(calculator);
 		assertNull(task.call());
 		assertEquals(3, calculator.callCount);
-		assertEquals(3, tryCounter.get());
+		assertEquals(4, tryCounter.get());
 
 
 		// リトライ可能ではないExceptionがスローされるケース
@@ -167,13 +166,14 @@ class CalculationTaskTest extends AbstractJdbcTestCase {
 		task.setCalculator(calculator);
 		assertEquals(calculator.runtimeException,  task.call());
 		assertEquals(2, calculator.callCount);
-		assertEquals(2, tryCounter.get());
+		assertEquals(6, tryCounter.get());
 
 		assertEquals(config.transactionScope == TransactionScope.CONTRACT ? 2: 3, queue.size());
 
 		// Exception発生後に再度実行する
 		assertNull(task.call());
 		assertEquals(config.transactionScope == TransactionScope.CONTRACT ? 4: 5, calculator.callCount);
+		assertEquals(config.transactionScope == TransactionScope.CONTRACT ? 8: 9, tryCounter.get());
 
 
 		// リトライ可能なExceptionがスローされるケース
@@ -186,12 +186,12 @@ class CalculationTaskTest extends AbstractJdbcTestCase {
 		assertEquals(config.transactionScope == TransactionScope.CONTRACT ? calculator.retriableException : null,
 				task.call());
 		assertEquals(config.transactionScope == TransactionScope.CONTRACT ? 2: 5, calculator.callCount);
+		assertEquals(config.transactionScope == TransactionScope.CONTRACT ? 10: 14, tryCounter.get());
 		assertEquals(config.transactionScope == TransactionScope.CONTRACT ? 2: 0, queue.size());
 
 		// Abortが要求されたケース
 		queue= new CalculationTargetQueue(Arrays.asList(T1, T2, T3));
 		assertEquals(3, queue.size());
-		assertEquals(3, tryCounter.get());
 		task = new CalculationTask(queue, manager, config, "BID", abortRequested, tryCounter);
 		calculator = new TestCalculator();
 		calculator.countThrowsRetriableException = 2;
@@ -216,7 +216,7 @@ class CalculationTaskTest extends AbstractJdbcTestCase {
 		long start = System.currentTimeMillis();
 		assertNull(task.call());
 		assertEquals(3, calculator.callCount);
-		assertEquals(3, tryCounter.get());
+		assertEquals(config.transactionScope == TransactionScope.CONTRACT ? 13: 17, tryCounter.get());
 		long elapsed = System.currentTimeMillis() - start;
 		assertTrue(elapsed > sleepTime, "elapsed time = " + elapsed + ", sleep time =" + sleepTime);
 		service.shutdown();

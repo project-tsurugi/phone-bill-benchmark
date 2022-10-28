@@ -110,6 +110,17 @@ public class HistoryDaoJdbc implements HistoryDao {
 		}
 	}
 
+
+	@Override
+	public int updateChargeNull() {
+		try (Statement stmt = manager.getConnection().createStatement()) {
+			return stmt.executeUpdate("update history set charge = null");
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+
 	@Override
 	public int batchUpdate(List<History> list) {
 		try (PreparedStatement ps = createUpdatePs()) {
@@ -165,7 +176,7 @@ public class HistoryDaoJdbc implements HistoryDao {
 		String sql = "select" + " h.caller_phone_number, h.recipient_phone_number, h.payment_categorty, h.start_time, h.time_secs,"
 				+ " h.charge, h.df" + " from history h"
 				+ " inner join contracts c on c.phone_number = h.caller_phone_number"
-				+ " where c.start_date < h.start_time and" + " (h.start_time < c.end_date + 1"
+				+ " where c.start_date <= h.start_time and" + " (h.start_time < c.end_date + 1"
 				+ " or c.end_date is null)" + " and c.phone_number = ? and c.start_date = ?" + " order by h.start_time";
 		try (PreparedStatement ps = conn.prepareStatement(sql)) {
 			ps.setString(1, key.getPhoneNumber());

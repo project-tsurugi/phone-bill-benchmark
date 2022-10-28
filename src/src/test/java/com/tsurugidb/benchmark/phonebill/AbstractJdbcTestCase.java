@@ -54,6 +54,11 @@ public abstract class AbstractJdbcTestCase {
 
 	@BeforeEach
 	void beforeTest() throws SQLException {
+		conn.setAutoCommit(false);
+		manager.getDdl().dropTables();
+		manager.getDdl().createBillingTable();
+		manager.getDdl().createContractsTable();
+		manager.getDdl().createHistoryTable();
 		conn.setAutoCommit(true);
 	}
 
@@ -88,6 +93,10 @@ public abstract class AbstractJdbcTestCase {
 		try  (Statement  stmt = ((PhoneBillDbManagerJdbc) manager).getConnection().createStatement()) {
 			return getHistories(stmt);
 		}
+	}
+
+	protected Set<History> getHistorySet() throws SQLException {
+		return new HashSet(getHistories());
 	}
 
 
@@ -258,4 +267,5 @@ public abstract class AbstractJdbcTestCase {
 			assertEquals(1, c);
 		}
 	}
+
 }

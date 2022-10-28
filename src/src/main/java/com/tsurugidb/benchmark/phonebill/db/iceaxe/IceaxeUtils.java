@@ -12,6 +12,7 @@ import com.tsurugidb.iceaxe.statement.TgParameterList;
 import com.tsurugidb.iceaxe.statement.TgParameterMapping;
 import com.tsurugidb.iceaxe.statement.TsurugiPreparedStatementQuery0;
 import com.tsurugidb.iceaxe.statement.TsurugiPreparedStatementQuery1;
+import com.tsurugidb.iceaxe.statement.TsurugiPreparedStatementUpdate0;
 import com.tsurugidb.iceaxe.statement.TsurugiPreparedStatementUpdate1;
 import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionException;
 import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionRuntimeException;
@@ -36,6 +37,15 @@ public class IceaxeUtils {
 			throw new UncheckedIOException(e);
 		}
 	}
+
+	public TsurugiPreparedStatementUpdate0 createPreparedStatement(String sql) {
+		try {
+			return session.createPreparedStatement(sql);
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
+		}
+	}
+
 
 	public TsurugiPreparedStatementQuery0<TsurugiResultEntity> createPreparedQuery(String sql) {
 		try {
@@ -68,6 +78,16 @@ public class IceaxeUtils {
 			return session.createPreparedQuery(sql, parameterMapping);
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
+		}
+	}
+
+	public int executeAndGetCount(TsurugiPreparedStatementUpdate0 ps) {
+		try (ps){
+			return ps.executeAndGetCount(manager.getCurrentTransaction());
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
+		} catch (TsurugiTransactionException e) {
+			throw new TsurugiTransactionRuntimeException(e);
 		}
 	}
 

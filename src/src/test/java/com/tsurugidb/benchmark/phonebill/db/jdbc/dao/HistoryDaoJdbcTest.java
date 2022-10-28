@@ -1,73 +1,37 @@
-package com.tsurugidb.benchmark.phonebill.db.iceaxe.dao;
+package com.tsurugidb.benchmark.phonebill.db.jdbc.dao;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.sql.Date;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.tsurugidb.benchmark.phonebill.app.Config;
+import com.tsurugidb.benchmark.phonebill.AbstractJdbcTestCase;
 import com.tsurugidb.benchmark.phonebill.app.billing.CalculationTarget;
-import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
+import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
-import com.tsurugidb.benchmark.phonebill.db.iceaxe.IceaxeTestTools;
 import com.tsurugidb.benchmark.phonebill.util.DateUtils;
 
-class HistoryDaoIceaxeTest {
-	private static final String ICEAXE_CONFIG_PATH = "src/test/config/iceaxe.properties";
-	private static IceaxeTestTools testTools;
-	private static PhoneBillDbManager manager;
-	private static HistoryDaoIceaxe dao;
-	private static DdlIceaxe ddl;
-
-	@BeforeAll
-	static void setUpBeforeClass() throws Exception {
-		Config config = Config.getConfig(ICEAXE_CONFIG_PATH);
-		testTools = new IceaxeTestTools(config);
-		manager = testTools.getManager();
-		dao = (HistoryDaoIceaxe) manager.getHistoryDao();
-		ddl = (DdlIceaxe) manager.getDdl();
-	}
-
-	@AfterAll
-	static void tearDownAfterClass() throws Exception {
-		testTools.close();
-	}
-
-	@BeforeEach
-	void setUp() throws Exception {
-		testTools.execute(() -> ddl.dropTable("history"));
-		testTools.execute(() -> ddl.dropTable("contracts"));
-		testTools.execute(ddl::createHistoryTable);
-		testTools.execute(ddl::createContractsTable);
-	}
-
-	@AfterEach
-	void tearDown() throws Exception {
-	}
+class HistoryDaoJdbcTest extends AbstractJdbcTestCase {
 
 	@Test
-	final void testBatchInsert() {
+	final void testBatchInsert() throws SQLException {
+		HistoryDao dao = getManager().getHistoryDao();
+
 		Set<History> expectedSet = new HashSet<>();
 		List<History> list = new ArrayList<>();
 		int[] ret;
 
 		// 空のリストを渡したとき
-		ret = testTools.execute(() -> {
-			return dao.batchInsert(list);
-		});
+		ret = dao.batchInsert(list);
 		assertEquals(0, ret.length);
 
 		// 要素数 = 1のリスト
@@ -75,11 +39,9 @@ class HistoryDaoIceaxeTest {
 		expectedSet.add(h.clone());
 		list.add(h.clone());
 
-		ret = testTools.execute(() -> {
-			return dao.batchInsert(list);
-		});
+		ret = dao.batchInsert(list);
 		assertEquals(1, ret.length);
-		assertEquals(expectedSet, testTools.getHistorySet());
+		assertEquals(expectedSet, getHistorySet());
 
 		// 要素数 = 5のリスト
 		list.clear();
@@ -104,66 +66,58 @@ class HistoryDaoIceaxeTest {
 		expectedSet.add(h.clone());
 		list.add(h.clone());
 
-		ret = testTools.execute(() -> {
-			return dao.batchInsert(list);
-		});
+		ret = dao.batchInsert(list);
 		assertEquals(5, ret.length);
-		assertEquals(expectedSet, testTools.getHistorySet());
+		assertEquals(expectedSet, getHistorySet());
 	}
 
 	@Test
-	final void testInsert() {
+	final void testInsert() throws SQLException {
+		HistoryDao dao = getManager().getHistoryDao();
+
+
 		Set<History> expectedSet = new HashSet<>();
 
 		// 1件インサート
 		History h = History.create("123", "456", "C", "2022-08-30 15:15:28.312", 5, 5, 1);
 		expectedSet.add(h.clone());
 
-		// TODO: 現在は-1が返るが本来はインサート件数が返る。DB側の対応が完了したら修正する。
-		assertEquals(-1, testTools.execute(() -> {
-			return dao.insert(h);
-		}));
+		assertEquals(1, dao.insert(h));
 
-		assertEquals(expectedSet, testTools.getHistorySet());
+		assertEquals(expectedSet, getHistorySet());
 
 		// Null可なデータが全てNullのデータをインサート
 		h.setCharge(null);
 		h.setStartTime(DateUtils.toTimestamp("2022-08-30 16:15:28.512"));
 
-		// TODO: 現在は-1が返るが本来はインサート件数が返る。DB側の対応が完了したら修正する。
-		assertEquals(-1, testTools.execute(() -> {
-			return dao.insert(h);
-		}));
+		assertEquals(1, dao.insert(h));
 		expectedSet.add(h.clone());
-
-		assertEquals(expectedSet, testTools.getHistorySet());
+		assertEquals(expectedSet, getHistorySet());
 	}
 
 	@Test
-	final void testGetMaxStartTime() {
-		// 履歴が空のとき
+	final void testGetMaxStartTime() throws SQLException {
+		HistoryDao dao = getManager().getHistoryDao();
 
-		assertEquals(0L, testTools.execute(() -> {
-			return dao.getMaxStartTime();
-		}));
+		// 履歴が空のとき
+		assertEquals(0L,  dao.getMaxStartTime());
 
 		// 履歴が複数存在するとき
-		testTools.insertToHistory("Phone-0001", "Phone-0008", "C", "2020-10-31 23:59:59.999", 30, null, 0);
-		testTools.insertToHistory("Phone-0001", "Phone-0008", "C", "2020-11-01 00:00:00.000", 30, null, 0);
-		testTools.insertToHistory("Phone-0001", "Phone-0008", "C", "2021-11-15 12:12:12.000", 90, null, 1);
-		testTools.insertToHistory("Phone-0001", "Phone-0008", "C", "2020-11-30 23:59:59.999", 90, null, 0);
-		testTools.insertToHistory("Phone-0001", "Phone-0008", "C", "2020-12-01 00:00:00.000", 30, null, 0);
-		testTools.insertToHistory("Phone-0005", "Phone-0001", "C", "2020-11-10 00:00:00.000", 25, null, 0);
-		testTools.insertToHistory("Phone-0005", "Phone-0008", "R", "2020-11-30 00:00:00.000", 30, null, 0);
+		insertToHistory("Phone-0001", "Phone-0008", "C", "2020-10-31 23:59:59.999", 30,  0);
+		insertToHistory("Phone-0001", "Phone-0008", "C", "2020-11-01 00:00:00.000", 30,  0);
+		insertToHistory("Phone-0001", "Phone-0008", "C", "2021-11-15 12:12:12.000", 90,  1);
+		insertToHistory("Phone-0001", "Phone-0008", "C", "2020-11-30 23:59:59.999", 90,  0);
+		insertToHistory("Phone-0001", "Phone-0008", "C", "2020-12-01 00:00:00.000", 30,  0);
+		insertToHistory("Phone-0005", "Phone-0001", "C", "2020-11-10 00:00:00.000", 25,  0);
+		insertToHistory("Phone-0005", "Phone-0008", "R", "2020-11-30 00:00:00.000", 30,  0);
 
-		assertEquals(DateUtils.toTimestamp("2021-11-15 12:12:12.000").getTime(), testTools.execute(() -> {
-			return dao.getMaxStartTime();
-		}));
+		assertEquals(DateUtils.toTimestamp("2021-11-15 12:12:12.000").getTime(), dao.getMaxStartTime());
 
 	}
 
 	@Test
-	final void testUpdate() {
+	final void testUpdate() throws SQLException {
+		HistoryDao dao = getManager().getHistoryDao();
 		History h1 = History.create("001", "456", "C", "2022-01-10 15:15:28.312", 5, 2, 0);
 		History h2 = History.create("001", "456", "C", "2022-01-10 15:15:28.313", 5, null, 0);
 		History h3 = History.create("001", "456", "C", "2022-01-10 15:15:28.314", 5, 2, 1);
@@ -172,39 +126,32 @@ class HistoryDaoIceaxeTest {
 
 		// 空のテーブルに対してアップデート
 
-		assertEquals(-1, testTools.execute(() -> { // TODO update件数が返るようになったら期待値を0にする
-			return dao.update(h1);
-		}));
+		assertEquals(0, dao.update(h1));
 
 		// テストデータを入れる
 		Set<History> testDataSet = new HashSet<>(Arrays.asList(h1, h2, h3));
-		testTools.insertToHistory(testDataSet);
-		assertEquals(testDataSet, testTools.getHistorySet());
+		dao.batchInsert(testDataSet);
+		assertEquals(testDataSet, getHistorySet());
 
 		// 更新対象のレコードがないケース
-		assertEquals(-1, testTools.execute(() -> { // TODO update件数が返るようになったら期待値を0にする
-			return dao.update(h4);
-		}));
-		assertEquals(testDataSet, testTools.getHistorySet());
+		assertEquals(0,dao.update(h4));
+		assertEquals(testDataSet, getHistorySet());
 
 		// 同じ値で更新
-		assertEquals(-1, testTools.execute(() -> { // TODO update件数が返るようになったら期待値を1にする
-			return dao.update(h1);
-		}));
-		assertEquals(testDataSet, testTools.getHistorySet());
+		assertEquals(1,dao.update(h1));
+		assertEquals(testDataSet, getHistorySet());
 
 		// キー値以外を全て更新
-		assertEquals(-1, testTools.execute(() -> { // TODO update件数が返るようになったら期待値を1にする
-			return dao.update(h5);
-		}));
+		assertEquals(1,dao.update(h5));
 		testDataSet.add(h5);
 		testDataSet.remove(h1);
-		assertEquals(testDataSet, testTools.getHistorySet());
+		assertEquals(testDataSet, getHistorySet());
 
 	}
 
 	@Test
-	final void testBatchUpdate() {
+	final void testBatchUpdate() throws SQLException {
+		HistoryDao dao = getManager().getHistoryDao();
 		History h1 = History.create("001", "456", "C", "2022-01-10 15:15:28.312", 5, 2, 0);
 		History h2 = History.create("001", "456", "C", "2022-01-10 15:15:28.313", 5, null, 0);
 		History h3 = History.create("001", "456", "C", "2022-01-10 15:15:28.314", 5, 2, 1);
@@ -215,32 +162,31 @@ class HistoryDaoIceaxeTest {
 
 		// テストデータを入れる
 		Set<History> testDataSet = new HashSet<>(Arrays.asList(h1, h2, h3));
-		testTools.insertToHistory(testDataSet);;
-		assertEquals(testDataSet, testTools.getHistorySet());
+		dao.batchInsert(testDataSet);;
+		assertEquals(testDataSet, getHistorySet());
 
 		// アップデート実行
 		List<History> updateDataList = Arrays.asList(h2u, h4u, h3u);
-		assertEquals(3, testTools.execute(() -> { // TODO update件数が返るようになったら期待値を変更する
-			return dao.batchUpdate(updateDataList);
-		}));
+		assertEquals(3,  dao.batchUpdate(updateDataList));
 		testDataSet.remove(h2);
 		testDataSet.remove(h3);
 		testDataSet.add(h2u);
 		testDataSet.add(h3u);
-		assertEquals(testDataSet, testTools.getHistorySet());
+		assertEquals(testDataSet, getHistorySet());
 
 
 	}
 
 	@Test
 	final void testGetHistoriesKey() {
+		HistoryDao dao = getManager().getHistoryDao();
+
 		// 契約
 		Contract c1 = Contract.create("001", "2022-01-01", "2024-09-25", "dummy");
 		Contract c2 = Contract.create("002", "2022-01-01", null, "dummy");
 		Contract c3 = Contract.create("899", "2022-01-01", null, "dummy");
 		Contract c4 = Contract.create("999", "2022-01-01", null, "dummy");
-
-		testTools.insertToContracts(c1, c2, c3);
+		getManager().getContractDao().batchInsert(Arrays.asList(c1, c2, c3));
 
 		// 契約c1の履歴データ
 		History h11 = History.create("001", "002", "C", "2022-03-05 12:10:01.999", 11, null, 0);
@@ -250,7 +196,7 @@ class HistoryDaoIceaxeTest {
 		History h15 = History.create("001", "005", "C", "2022-01-01 00:00:00.000", 15, null, 0); // 境界値
 		History h16 = History.create("001", "005", "C", "2024-09-25 23:59:59.999", 16, null, 0); // 境界値
 		History h17 = History.create("001", "005", "C", "2024-09-26 00:00:00.000", 17, null, 0); // 境界値
-		testTools.insertToHistory(h11, h12, h13, h14, h15, h16, h17);
+		dao.batchInsert(Arrays.asList(h11, h12, h13, h14, h15, h16, h17));
 
 		// 契約c2の履歴データ
 		History h21 = History.create("002", "005", "C", "2022-03-05 12:10:01.999", 21, null, 0);
@@ -258,13 +204,13 @@ class HistoryDaoIceaxeTest {
 		History h23 = History.create("002", "007", "C", "2022-09-15 12:10:01.999", 23, null, 0);
 		History h24 = History.create("002", "008", "C", "2021-12-31 23:59:59.999", 14, null, 0); // 境界値
 		History h25 = History.create("002", "009", "C", "2022-01-01 00:00:00.000", 15, null, 0); // 境界値
-		testTools.insertToHistory(h21, h22, h23, h24, h25);
+		dao.batchInsert(Arrays.asList(h21, h22, h23, h24, h25));
 
 		// 契約c1, c2以外の履歴データ
 		History h7 = History.create("003", "005", "C", "2022-06-05 12:10:01.999", 7, null, 0);
 		History h8 = History.create("004", "001", "C", "2022-01-05 12:10:01.999", 8, null, 0);
 		History h9 = History.create("005", "007", "C", "2022-09-18 12:10:01.999", 9, null, 0);
-		testTools.insertToHistory(h7, h8, h9);
+		dao.batchInsert(Arrays.asList(h7, h8, h9));
 
 
 		Set<History> expectedSet = new HashSet<>();
@@ -274,9 +220,7 @@ class HistoryDaoIceaxeTest {
 		expectedSet.clear();
 		expectedSet.addAll(Arrays.asList(h11, h12, h13, h15, h16));
 		actualSet.clear();
-		actualSet.addAll(testTools.execute(() -> {
-			return dao.getHistories(c1.getKey());
-		}));
+		actualSet.addAll(dao.getHistories(c1.getKey()));
 
 		assertEquals(expectedSet, actualSet);
 
@@ -284,34 +228,28 @@ class HistoryDaoIceaxeTest {
 		expectedSet.clear();
 		expectedSet.addAll(Arrays.asList(h21, h22, h23, h25));
 		actualSet.clear();
-		actualSet.addAll(testTools.execute(() -> {
-			return dao.getHistories(c2.getKey());
-		}));
+		actualSet.addAll(dao.getHistories(c2.getKey()));
 		assertEquals(expectedSet, actualSet);
 
 		// c3: 履歴を持たない契約を指定したケース
-		assertEquals(Collections.EMPTY_LIST, testTools.execute(() -> {
-			return dao.getHistories(c3.getKey());
-		}));
+		assertEquals(Collections.EMPTY_LIST, dao.getHistories(c3.getKey()));
 
 		// c4: 履歴テーブルに存在しない契約を指定したケース
-		assertEquals(Collections.EMPTY_LIST, testTools.execute(() -> {
-			return dao.getHistories(c4.getKey());
-		}));
+		assertEquals(Collections.EMPTY_LIST, dao.getHistories(c4.getKey()));
 
 	}
 
 	@Test
-	final void testGetHistoriesCalculationTarget() {
+	final void testGetHistoriesCalculationTarget() throws SQLException {
+		HistoryDao dao = getManager().getHistoryDao();
+
 		Contract c = Contract.create("001", "2022-01-01", "2024-09-25", "dummy");
 		Date start = DateUtils.toDate("2022-01-05");
 		Date end = DateUtils.toDate("2022-02-03");
 		CalculationTarget target = new CalculationTarget(c, null, null, start, end, false);
 
 		// 履歴が空の時
-		assertEquals(Collections.emptyList(), testTools.execute(() -> {
-			return dao.getHistories(target);
-		}));
+		assertEquals(Collections.emptyList(), dao.getHistories(target));
 
 		// テスト用の履歴データ => 通話料金が発信者負担
 		History h001 = History.create("001", "456", "C", "2022-01-10 15:15:28.312", 5, 2, 0); // 検索対象
@@ -360,14 +298,12 @@ class HistoryDaoIceaxeTest {
 		histories.add(h109);
 		histories.add(h110);
 
-		testTools.insertToHistory(histories);
+		dao.batchInsert(histories);
 
-		assertEquals(histories , testTools.getHistorySet());
+		assertEquals(histories , getHistorySet());
 
 		// 期待通りのレコードがselectされることを確認
-		HashSet<History> actual = testTools.execute(() -> {
-			return new HashSet<>(dao.getHistories(target));
-		});
+		HashSet<History> actual = new HashSet(dao.getHistories(target));
 
 		assertTrue(actual.contains(h001));
 		assertTrue(actual.contains(h002));
@@ -396,12 +332,11 @@ class HistoryDaoIceaxeTest {
 
 	@Test
 	final void testGetHistories() {
+		HistoryDao dao = getManager().getHistoryDao();
 		Set<History> actualSet;
 
 		// テーブルが空の時
-		assertEquals(Collections.EMPTY_LIST, testTools.execute(() -> {
-			return dao.getHistories();
-		}));
+		assertEquals(Collections.EMPTY_LIST,  dao.getHistories());
 
 		// テーブルに5レコード追加
 		Set<History> set = new HashSet<>();
@@ -410,16 +345,15 @@ class HistoryDaoIceaxeTest {
 		set.add(History.create("3", "456", "C", "2022-08-30 15:15:28.312", 5, null, 1));
 		set.add(History.create("4", "456", "C", "2022-08-30 15:15:28.312", 5, 5, 1));
 		set.add(History.create("5", "456", "C", "2022-08-30 15:15:28.312", 5, null, 1));
-		testTools.insertToHistory(set);
+		dao.batchInsert(set);
 
-		actualSet = testTools.execute(() -> {
-			return dao.getHistories();
-		}).stream().collect(Collectors.toSet());
+		actualSet = new HashSet<History>(dao.getHistories());
 		assertEquals(set, actualSet);
 	}
 
 	@Test
 	final void testUpdateChargeNull() {
+		HistoryDao dao = getManager().getHistoryDao();
 		Set<History> actualSet;
 
 		// テーブルに5レコード追加
@@ -429,24 +363,20 @@ class HistoryDaoIceaxeTest {
 		set.add(History.create("3", "456", "C", "2022-08-30 15:15:28.312", 5, null, 1));
 		set.add(History.create("4", "456", "C", "2022-08-30 15:15:28.312", 5, 5, 1));
 		set.add(History.create("5", "456", "C", "2022-08-30 15:15:28.312", 5, null, 1));
-		testTools.insertToHistory(set);
+		dao.batchInsert(set);
 
 		// インサートされた値の確認
-		actualSet = testTools.execute(() -> {
-			return dao.getHistories();
-		}).stream().collect(Collectors.toSet());
+		actualSet = new HashSet<History>(dao.getHistories());
 		assertEquals(set, actualSet);
 
 		// updateChargeNull
-		int ret = testTools.execute(dao::updateChargeNull);
-		assertEquals(-1, ret); // TODO Iceaxeが正しいupdate件数を返せるようになったら、-1を5に変更する。
+		int ret = dao.updateChargeNull();
+		assertEquals(5, ret);
 
 		// chargeの値がすべてNULLになっていることを確認
 		set.stream().forEach(h -> h.setCharge(null));
 		set = new HashSet<>(set);
-		actualSet = testTools.execute(() -> {
-			return dao.getHistories();
-		}).stream().collect(Collectors.toSet());
+		actualSet = new HashSet<History>(dao.getHistories());
 		assertEquals(set, actualSet);
 	}
 }

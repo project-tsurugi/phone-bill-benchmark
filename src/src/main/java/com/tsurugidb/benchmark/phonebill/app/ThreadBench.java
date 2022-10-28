@@ -20,6 +20,7 @@ import com.tsurugidb.benchmark.phonebill.app.Config.TransactionOption;
 import com.tsurugidb.benchmark.phonebill.app.Config.TransactionScope;
 import com.tsurugidb.benchmark.phonebill.app.billing.PhoneBill;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
+import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.entity.Billing;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
 import com.tsurugidb.benchmark.phonebill.testdata.CreateTestData;
@@ -85,6 +86,7 @@ public class ThreadBench extends ExecutableCommand {
 					config.threadCount = threadCount;
 					config.transactionOption = option;
 					config.transactionScope = scope;
+					prepare(config);
 					Record record = new Record(config);
 					records.add(record);
 					record.start();
@@ -97,6 +99,13 @@ public class ThreadBench extends ExecutableCommand {
 		}
 	}
 
+
+	private void prepare(Config config) {
+		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
+			HistoryDao dao = manager.getHistoryDao();
+			manager.execute(TgTmSetting.of(TgTxOption.ofOCC()), dao::updateChargeNull);
+		}
+	}
 
 	private int checkResult(Config config) {
 		int n = 0;

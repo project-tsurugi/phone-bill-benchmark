@@ -26,6 +26,7 @@ public interface HistoryDao {
 
 	List<History> getHistories();
 
+	int updateChargeNull();
 
 	// RuntimeExceptionを発生させる => UT専用
 	default void throwRuntimeException() {

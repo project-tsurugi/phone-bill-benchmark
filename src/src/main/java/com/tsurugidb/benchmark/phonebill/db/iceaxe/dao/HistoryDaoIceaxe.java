@@ -88,6 +88,13 @@ public class HistoryDaoIceaxe implements HistoryDao {
 	}
 
 	@Override
+	public int updateChargeNull() {
+		var ps = utils.createPreparedStatement("update history set charge = null");
+		return utils.executeAndGetCount(ps);
+	}
+
+
+	@Override
 	public int batchUpdate(List<History> histories) {
 		// TODO アップデートに成功した件数を返すようにする
 		// TODO アップデートに失敗した(アップデートの戻り値が0)例外をスローする
