@@ -96,7 +96,7 @@ public abstract class AbstractJdbcTestCase {
 	}
 
 	protected Set<History> getHistorySet() throws SQLException {
-		return new HashSet(getHistories());
+		return new HashSet<History>(getHistories());
 	}
 
 

@@ -71,4 +71,10 @@ public class HistoryDaoDebug implements HistoryDao {
 		return dao.getHistories();
 	}
 
+
+	@Override
+	public int updateChargeNull() {
+		return dao.updateChargeNull();
+	}
+
 }

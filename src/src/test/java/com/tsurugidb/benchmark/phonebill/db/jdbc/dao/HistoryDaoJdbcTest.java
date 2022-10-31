@@ -303,7 +303,7 @@ class HistoryDaoJdbcTest extends AbstractJdbcTestCase {
 		assertEquals(histories , getHistorySet());
 
 		// 期待通りのレコードがselectされることを確認
-		HashSet<History> actual = new HashSet(dao.getHistories(target));
+		HashSet<History> actual = new HashSet<>(dao.getHistories(target));
 
 		assertTrue(actual.contains(h001));
 		assertTrue(actual.contains(h002));

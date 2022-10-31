@@ -4,9 +4,6 @@ import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Queue;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * CalculationTargetを格納するクラス。コンストラクタでTargetのコレクションを受け取り、
  * 各CalcurationTaskのCalculationTargetを配布、すべてのCalculationTargetの処理終了後に
@@ -14,8 +11,6 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class CalculationTargetQueue {
-    private static final Logger LOG = LoggerFactory.getLogger(CalculationTargetQueue.class);
-
 	/**
 	 * CalculationTargetを保持するQueue
 	 */

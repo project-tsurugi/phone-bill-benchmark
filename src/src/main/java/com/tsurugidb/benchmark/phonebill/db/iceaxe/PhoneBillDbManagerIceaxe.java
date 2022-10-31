@@ -34,7 +34,7 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
         var endpoint = config.url;
         var connector = TsurugiConnector.createConnector(endpoint);
         try {
-            var info = TgSessionInfo.of(config.user, config.password);
+            var info = TgSessionInfo.of();
             this.session = connector.createSession(info);
             this.transactionManager = session.createTransactionManager();
         } catch (IOException e) {
