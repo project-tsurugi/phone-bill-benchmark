@@ -23,6 +23,7 @@ import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.CreateTable;
 import com.tsurugidb.benchmark.phonebill.app.billing.PhoneBill;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
+import com.tsurugidb.benchmark.phonebill.db.TxOption;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.db.iceaxe.IceaxeTestTools;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.Duration;
@@ -342,7 +343,7 @@ class ContractDaoIceaxeTest {
 		new CreateTable().execute(config);
 		new CreateTestData().execute(config);
 		PhoneBillDbManager managerIceaxe = PhoneBillDbManager.createPhoneBillDbManager(config);
-		Set<Contract> iceaxeSet = managerIceaxe.execute(TgTmSetting.of(TgTxOption.ofOCC()), () -> {
+		Set<Contract> iceaxeSet = managerIceaxe.execute(TxOption.of(TgTmSetting.of(TgTxOption.ofOCC())), () -> {
 			return managerIceaxe.getContractDao().getContracts(d.getStatDate(), d.getEndDate());
 		}).stream().collect(Collectors.toSet());
 

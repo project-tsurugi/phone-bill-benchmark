@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
+import com.tsurugidb.benchmark.phonebill.db.TxOption;
 import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
 import com.tsurugidb.benchmark.phonebill.testdata.ContractBlockInfoAccessor;
@@ -119,7 +120,8 @@ public class HistoryInsertApp extends AbstractOnlineApp {
 	static long getBaseTime(Config config) {
 		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
 			HistoryDao dao = manager.getHistoryDao();
-			long maxStartTime = manager.execute(TgTmSetting.of(TgTxOption.ofOCC()), () -> dao.getMaxStartTime());
+			long maxStartTime = manager.execute(TxOption.of(TgTmSetting.of(TgTxOption.ofOCC())),
+					() -> dao.getMaxStartTime());
 			return Math.max(maxStartTime, DateUtils.nextDate(config.historyMaxDate).getTime());
 		}
 	}
@@ -142,7 +144,7 @@ public class HistoryInsertApp extends AbstractOnlineApp {
 	@Override
 	protected void updateDatabase() {
 		HistoryDao dao = manager.getHistoryDao();
-		manager.execute(TgTmSetting.ofAlways(TgTxOption.ofOCC()), () -> dao.batchInsert(histories));
+		manager.execute(TxOption.of(TgTmSetting.ofAlways(TgTxOption.ofOCC())), () -> dao.batchInsert(histories));
 		LOG.debug("ONLINE APP: Insert {} records to history.", historyInsertRecordsPerTransaction);
 	}
 

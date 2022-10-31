@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
+import com.tsurugidb.benchmark.phonebill.db.TxOption;
 import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract.Key;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
@@ -42,7 +43,7 @@ public class HistoryUpdateApp extends AbstractOnlineApp {
 	}
 
 	void updateDatabase(History history) {
-		manager.execute(TgTmSetting.ofAlways(TgTxOption.ofOCC()), () -> historyDao.update(history));
+		manager.execute(TxOption.of(TgTmSetting.ofAlways(TgTxOption.ofOCC())), () -> historyDao.update(history));
 	}
 
 	/**
@@ -52,7 +53,7 @@ public class HistoryUpdateApp extends AbstractOnlineApp {
 	 * @return
 	 */
 	List<History> getHistories(Key key) {
-		return manager.execute(TgTmSetting.ofAlways(TgTxOption.ofOCC()), () -> historyDao.getHistories(key));
+		return manager.execute(TxOption.of(TgTmSetting.ofAlways(TgTxOption.ofOCC())), () -> historyDao.getHistories(key));
 	}
 
 	@Override

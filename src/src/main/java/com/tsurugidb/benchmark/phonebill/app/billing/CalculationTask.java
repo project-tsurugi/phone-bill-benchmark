@@ -14,6 +14,7 @@ import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.Config.TransactionScope;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.RetryOverRuntimeException;
+import com.tsurugidb.benchmark.phonebill.db.TxOption;
 import com.tsurugidb.benchmark.phonebill.db.dao.BillingDao;
 import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.entity.Billing;
@@ -89,9 +90,10 @@ public class CalculationTask implements Callable<Exception> {
 				try {
 					AtomicInteger tryeInThisTx = new AtomicInteger(0);
 					String str = txOption.toString();
-					manager.execute(TgTmSetting.ofAlways(txOption), () -> {
+					manager.execute(TxOption.of(Integer.MAX_VALUE, TgTmSetting.ofAlways(txOption)), () -> {
 						tryeInThisTx.incrementAndGet();
-						LOG.debug("start tansaction with txOption = {}, key = {}, tryCount = {}", str,  target.getContract().getPhoneNumber(),  tryeInThisTx);
+						LOG.debug("start tansaction with txOption = {}, key = {}, tryCount = {}", str,
+								target.getContract().getPhoneNumber(), tryeInThisTx);
 						tryCounter.incrementAndGet();
 						calculator.doCalc(target);
 					});
@@ -107,7 +109,7 @@ public class CalculationTask implements Callable<Exception> {
 			for (;;) {
 				List<CalculationTarget> list = new ArrayList<>();
 				try {
-					manager.execute(TgTmSetting.of(txOption), () -> {
+					manager.execute(TxOption.of(0, TgTmSetting.of(txOption)), () -> {
 						for (;;) {
 							CalculationTarget target;
 							target = queue.poll();
@@ -127,14 +129,15 @@ public class CalculationTask implements Callable<Exception> {
 						Thread.sleep(10);
 						continue;
 					}
-					LOG.info("Calculation task finished normally, number of calculated contracts = {}).",
-							list.size());
+					LOG.info("Calculation task finished normally, number of calculated contracts = {}).", list.size());
 					return null;
 				} catch (RuntimeException e) {
 					// 処理対象をキューに戻す
 					queue.revert(list);
 					if (e instanceof RetryOverRuntimeException) {
-						LOG.error("Transaction aborted with retriable exception and calculation targets returned to queue.", e);
+						LOG.error(
+								"Transaction aborted with retriable exception and calculation targets returned to queue.",
+								e);
 						continue;
 					} else {
 						LOG.error("Calculation targets returned to queue and the task will be aborted.", e);

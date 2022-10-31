@@ -1,6 +1,7 @@
 package com.tsurugidb.benchmark.phonebill.app;
 
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
+import com.tsurugidb.benchmark.phonebill.db.TxOption;
 import com.tsurugidb.benchmark.phonebill.db.dao.Ddl;
 import com.tsurugidb.iceaxe.transaction.TgTxOption;
 import com.tsurugidb.iceaxe.transaction.manager.TgTmSetting;
@@ -18,11 +19,12 @@ public class CreateTable extends ExecutableCommand{
 	public void execute(Config config) throws Exception {
 		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
 			ddl = manager.getDdl();
-			manager.execute(TgTmSetting.of(TgTxOption.ofOCC()), ddl::dropTables);
-			manager.execute(TgTmSetting.of(TgTxOption.ofOCC()), ddl::createHistoryTable);
-			manager.execute(TgTmSetting.of(TgTxOption.ofOCC()), ddl::createContractsTable);
-			manager.execute(TgTmSetting.of(TgTxOption.ofOCC()), ddl::createBillingTable);
-			manager.execute(TgTmSetting.of(TgTxOption.ofOCC()), ddl::createIndexes);
+			TxOption option = TxOption.of(TgTmSetting.of(TgTxOption.ofOCC()));
+			manager.execute(option, ddl::dropTables);
+			manager.execute(option, ddl::createHistoryTable);
+			manager.execute(option, ddl::createContractsTable);
+			manager.execute(option, ddl::createBillingTable);
+			manager.execute(option, ddl::createIndexes);
 		}
 	}
 }

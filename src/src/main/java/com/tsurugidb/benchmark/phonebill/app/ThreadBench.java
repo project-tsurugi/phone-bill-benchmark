@@ -8,6 +8,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -16,10 +17,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.app.Config.DbmsType;
+import com.tsurugidb.benchmark.phonebill.app.Config.IsolationLevel;
 import com.tsurugidb.benchmark.phonebill.app.Config.TransactionOption;
 import com.tsurugidb.benchmark.phonebill.app.Config.TransactionScope;
 import com.tsurugidb.benchmark.phonebill.app.billing.PhoneBill;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
+import com.tsurugidb.benchmark.phonebill.db.TxOption;
 import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.entity.Billing;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
@@ -54,18 +57,20 @@ public class ThreadBench extends ExecutableCommand {
 		List<TransactionOption> options;
 		List<TransactionScope> scopes;
 		List<Integer> threadCounts;
+		List<IsolationLevel> isolationLevels;
 
 		if (config.dbmsType == DbmsType.ICEAXE) {
 			options = Arrays.asList(TransactionOption.LTX, TransactionOption.OCC);
 			scopes = Arrays.asList(TransactionScope.CONTRACT, TransactionScope.WHOLE);
 			threadCounts = Arrays.asList(1, 2, 4, 6);
+			isolationLevels = Collections.singletonList(IsolationLevel.SERIALIZABLE);
 		} else {
-			options = Arrays.asList(TransactionOption.OCC);
-			scopes = Arrays.asList(TransactionScope.CONTRACT);
-			threadCounts = Arrays.asList(1);
-
+			options = Collections.singletonList(TransactionOption.OCC);
+			scopes = Arrays.asList(TransactionScope.CONTRACT, TransactionScope.WHOLE);
+			threadCounts = Arrays.asList(1, 2, 4, 6);
+			isolationLevels = Arrays.asList(IsolationLevel.SERIALIZABLE, IsolationLevel.READ_COMMITTED);
 		}
-		execute(config, options, scopes, threadCounts);
+		execute(config, options, scopes, isolationLevels, threadCounts);
 
 		// 結果の出力
 		Path outputPath = Paths.get(config.csvDir).resolve("result.csv");
@@ -76,24 +81,28 @@ public class ThreadBench extends ExecutableCommand {
 	}
 
 	private void execute(Config config, List<TransactionOption> options, List<TransactionScope> scopes,
+			List<IsolationLevel> isolationLevels,
 			List<Integer> threadCounts) throws Exception {
 		new CreateTable().execute(config);
 		new CreateTestData().execute(config);
 		for (int threadCount : threadCounts) {
 			for (TransactionOption option : options) {
-				for (TransactionScope scope : scopes) {
-					config.sharedConnection = false;
-					config.threadCount = threadCount;
-					config.transactionOption = option;
-					config.transactionScope = scope;
-					prepare(config);
-					Record record = new Record(config);
-					records.add(record);
-					record.start();
-					PhoneBill phoneBill = new PhoneBill();
-					phoneBill.execute(config);
-					record.finish(phoneBill.getTryCount());
-					record.setNumberOfDiffrence(checkResult(config));
+				for (IsolationLevel isolationLevel : isolationLevels) {
+					for (TransactionScope scope : scopes) {
+						config.threadCount = threadCount;
+						config.sharedConnection = false;
+						config.transactionOption = option;
+						config.transactionScope = scope;
+						config.isolationLevel = isolationLevel;
+						prepare(config);
+						Record record = new Record(config);
+						records.add(record);
+						record.start();
+						PhoneBill phoneBill = new PhoneBill();
+						phoneBill.execute(config);
+						record.finish(phoneBill.getTryCount());
+						record.setNumberOfDiffrence(checkResult(config));
+					}
 				}
 			}
 		}
@@ -103,17 +112,17 @@ public class ThreadBench extends ExecutableCommand {
 	private void prepare(Config config) {
 		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
 			HistoryDao dao = manager.getHistoryDao();
-			manager.execute(TgTmSetting.of(TgTxOption.ofOCC()), dao::updateChargeNull);
+			manager.execute(TxOption.of(TgTmSetting.of(TgTxOption.ofOCC())), dao::updateChargeNull);
 		}
 	}
 
 	private int checkResult(Config config) {
 		int n = 0;
 		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
-			Set<History> histories = manager.execute(TgTmSetting.of(TgTxOption.ofOCC()), () -> {
+			Set<History> histories = manager.execute(TxOption.of(TgTmSetting.of(TgTxOption.ofOCC())), () -> {
 				return new HashSet<>(manager.getHistoryDao().getHistories());
 			});
-			Set<Billing> billings = manager.execute(TgTmSetting.of(TgTxOption.ofOCC()), () -> {
+			Set<Billing> billings = manager.execute(TxOption.of(TgTmSetting.of(TgTxOption.ofOCC())), () -> {
 				List<Billing> list = manager.getBillingDao().getBillings();
 				list.stream().forEachOrdered(b -> b.setBatchExecId(null)); // batchExecIdは比較対象でないのでnullをセット
 				return new HashSet<>(list);
@@ -165,6 +174,7 @@ public class ThreadBench extends ExecutableCommand {
 	private static class Record {
 		private TransactionOption option;
 		private TransactionScope scope;
+		private IsolationLevel isolationLevel;
 		private int threadCount;
 		private Instant start;
 		private DbmsType dbmsType;
@@ -175,6 +185,7 @@ public class ThreadBench extends ExecutableCommand {
 		public Record(Config config) {
 			this.option = config.transactionOption;
 			this.scope = config.transactionScope;
+			this.isolationLevel = config.isolationLevel;
 			this.threadCount = config.threadCount;
 			this.dbmsType = config.dbmsType;
 		}
@@ -199,7 +210,7 @@ public class ThreadBench extends ExecutableCommand {
 			builder.append("dbmsType=");
 			builder.append(dbmsType);
 			builder.append(", option=");
-			builder.append(option);
+			builder.append(dbmsType == DbmsType.ICEAXE ? option : isolationLevel);
 			builder.append(", scope=");
 			builder.append(scope);
 			builder.append(", threadCount=");
@@ -212,7 +223,7 @@ public class ThreadBench extends ExecutableCommand {
 			StringBuilder builder = new StringBuilder();
 			builder.append(dbmsType);
 			builder.append(",");
-			builder.append(option);
+			builder.append(dbmsType == DbmsType.ICEAXE ? option : isolationLevel);
 			builder.append(",");
 			builder.append(scope);
 			builder.append(",");

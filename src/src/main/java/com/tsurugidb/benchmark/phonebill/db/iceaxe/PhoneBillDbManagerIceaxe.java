@@ -7,6 +7,7 @@ import java.util.function.Supplier;
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.RetryOverRuntimeException;
+import com.tsurugidb.benchmark.phonebill.db.TxOption;
 import com.tsurugidb.benchmark.phonebill.db.dao.BillingDao;
 import com.tsurugidb.benchmark.phonebill.db.dao.ContractDao;
 import com.tsurugidb.benchmark.phonebill.db.dao.Ddl;
@@ -90,7 +91,8 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
 
 
     @Override
-    public void execute(TgTmSetting setting, Runnable runnable) {
+    public void execute(TxOption txOption, Runnable runnable) {
+    	TgTmSetting setting = txOption.getSettingIceaxe();
         try {
             transactionManager.execute(setting, transaction -> {
                 transactionThreadLocal.set(transaction);
@@ -108,7 +110,8 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
     }
 
     @Override
-    public <T> T execute(TgTmSetting setting, Supplier<T> supplier) {
+    public <T> T execute(TxOption txOption, Supplier<T> supplier) {
+    	TgTmSetting setting = txOption.getSettingIceaxe();
         try {
             return transactionManager.execute(setting, transaction -> {
                 transactionThreadLocal.set(transaction);

@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.ExecutableCommand;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
+import com.tsurugidb.benchmark.phonebill.db.TxOption;
 import com.tsurugidb.benchmark.phonebill.db.dao.Ddl;
 import com.tsurugidb.iceaxe.transaction.TgTxOption;
 import com.tsurugidb.iceaxe.transaction.manager.TgTmSetting;
@@ -39,7 +40,7 @@ public class CreateTestData extends ExecutableCommand {
 
 			// テーブルをTruncate
 			// インデックスの削除
-			manager.execute(TgTmSetting.of(TgTxOption.ofOCC()), () -> {
+			manager.execute(TxOption.of(TgTmSetting.of(TgTxOption.ofOCC())), () -> {
 				ddl.prepareLoadData();
 			});
 
@@ -58,7 +59,7 @@ public class CreateTestData extends ExecutableCommand {
 			LOG.info(String.format(format, config.numberOfHistoryRecords, elapsedTime / 1000d));
 
 			// Indexの再生成とDBの統計情報を更新
-			manager.execute(TgTmSetting.of(TgTxOption.ofOCC()), () -> {
+			manager.execute(TxOption.of(TgTmSetting.of(TgTxOption.ofOCC())), () -> {
 				ddl.afterLoadData();
 			});
 		}

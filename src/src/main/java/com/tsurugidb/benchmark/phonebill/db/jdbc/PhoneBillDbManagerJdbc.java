@@ -11,13 +11,13 @@ import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.RetryOverRuntimeException;
+import com.tsurugidb.benchmark.phonebill.db.TxOption;
 import com.tsurugidb.benchmark.phonebill.db.dao.BillingDao;
 import com.tsurugidb.benchmark.phonebill.db.dao.ContractDao;
 import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.dao.BillingDaoJdbc;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.dao.ContractDaoJdbc;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.dao.HistoryDaoJdbc;
-import com.tsurugidb.iceaxe.transaction.manager.TgTmSetting;
 
 
 public abstract class PhoneBillDbManagerJdbc extends PhoneBillDbManager {
@@ -100,7 +100,7 @@ public abstract class PhoneBillDbManagerJdbc extends PhoneBillDbManager {
 	}
 
 	@Override
-	public void execute(TgTmSetting setting, Runnable runnable) {
+	public void execute(TxOption txOption, Runnable runnable) {
 		for (int tryCount = 0;; tryCount++) {
 			try {
 				runnable.run();
@@ -114,7 +114,7 @@ public abstract class PhoneBillDbManagerJdbc extends PhoneBillDbManager {
 					throw e;
 				}
 				if (isRetriable(e)) {
-					if (tryCount <= getRetryCountLimit()) {
+					if (tryCount < txOption.getRetryCountJdbc()) {
 						continue;
 					}
 					throw new RetryOverRuntimeException("trey count = " + tryCount, e);
@@ -125,7 +125,7 @@ public abstract class PhoneBillDbManagerJdbc extends PhoneBillDbManager {
 	}
 
 	@Override
-	public <T> T execute(TgTmSetting setting, Supplier<T> supplier) {
+	public <T> T execute(TxOption txOption, Supplier<T> supplier) {
 		for (int tryCount = 0;; tryCount++) {
 			try {
 				T r = supplier.get();
@@ -139,7 +139,7 @@ public abstract class PhoneBillDbManagerJdbc extends PhoneBillDbManager {
 					throw e;
 				}
 				if (isRetriable(e)) {
-					if (tryCount <= getRetryCountLimit()) {
+					if (tryCount < txOption.getRetryCountJdbc()) {
 						continue;
 					}
 					throw new RetryOverRuntimeException("trey count = " + tryCount, e);

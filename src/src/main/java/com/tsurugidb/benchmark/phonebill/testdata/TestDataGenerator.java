@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.Config.DbmsType;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
+import com.tsurugidb.benchmark.phonebill.db.TxOption;
 import com.tsurugidb.benchmark.phonebill.db.dao.ContractDao;
 import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
@@ -240,7 +241,7 @@ public class TestDataGenerator {
 	 */
 	private void insertContracts(PhoneBillDbManager manager, List<Contract> contracts) {
 		ContractDao dao = manager.getContractDao();
-		manager.execute(TgTmSetting.of(TgTxOption.ofOCC()), () -> dao.batchInsert(contracts));
+		manager.execute(TxOption.of(TgTmSetting.of(TgTxOption.ofOCC())), () -> dao.batchInsert(contracts));
 		contracts.clear();
 	}
 
@@ -571,7 +572,7 @@ public class TestDataGenerator {
 		}
 
 		private void insertHistories() {
-			manager.execute(TgTmSetting.of(TgTxOption.ofOCC()), () -> {
+			manager.execute(TxOption.of(TgTmSetting.of(TgTxOption.ofOCC())), () -> {
 				historyDao.batchInsert(histories);
 			});
 			histories.clear();

@@ -12,6 +12,7 @@ import java.util.function.Supplier;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
+import com.tsurugidb.benchmark.phonebill.db.TxOption;
 import com.tsurugidb.benchmark.phonebill.db.entity.Billing;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
@@ -37,7 +38,7 @@ import com.tsurugidb.iceaxe.transaction.manager.TgTmSetting;
  *
  */
 public class IceaxeTestTools {
-	private static final TgTmSetting OCC = TgTmSetting.ofAlways(TgTxOption.ofOCC());
+	private static final TxOption OCC = TxOption.of(TgTmSetting.ofAlways(TgTxOption.ofOCC()));
 	private  final PhoneBillDbManagerIceaxe manager;
 	private  final TsurugiSession session;
 

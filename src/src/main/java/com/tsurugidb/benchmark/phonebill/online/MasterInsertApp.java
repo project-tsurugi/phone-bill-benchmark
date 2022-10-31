@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
+import com.tsurugidb.benchmark.phonebill.db.TxOption;
 import com.tsurugidb.benchmark.phonebill.db.dao.ContractDao;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.testdata.ContractBlockInfoAccessor;
@@ -47,7 +48,7 @@ public class MasterInsertApp extends AbstractOnlineApp {
 	@Override
 	protected void updateDatabase() {
 		ContractDao dao = manager.getContractDao();
-		int ret = manager.execute(TgTmSetting.ofAlways(TgTxOption.ofOCC()), () -> dao.insert(contract));
+		int ret = manager.execute(TxOption.of(TgTmSetting.ofAlways(TgTxOption.ofOCC())), () -> dao.insert(contract));
 		LOG.debug("ONLINE APP: Insert {} record to contracs(phoneNumber = {}, startDate = {}).", ret,
 				contract.getPhoneNumber(), contract.getStartDate());
 	}

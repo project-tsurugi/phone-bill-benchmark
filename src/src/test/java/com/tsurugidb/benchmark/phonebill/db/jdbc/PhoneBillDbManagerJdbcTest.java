@@ -42,7 +42,7 @@ import com.tsurugidb.benchmark.phonebill.app.Config.IsolationLevel;
 import com.tsurugidb.benchmark.phonebill.db.AbstractPhoneBillDbManagerTest;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager.SessionHoldingType;
-import com.tsurugidb.benchmark.phonebill.db.TgTmSettingDummy;
+import com.tsurugidb.benchmark.phonebill.db.TxOption;
 import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.dao.HistoryDaoJdbc;
@@ -65,7 +65,7 @@ class PhoneBillDbManagerJdbcTest extends  AbstractPhoneBillDbManagerTest{
 			final History h = before.get(0).clone();
 			h.setCharge(h.getCharge() == null ? 300 : h.getCharge() + 300);
 			after.set(0, h);
-			manager.execute(TgTmSettingDummy.getInstance(), () -> {
+			manager.execute(TxOption.of(), () -> {
 				HistoryDao dao = manager.getHistoryDao();
 				dao.update(h);
 				// コミット前は別コネクションに更新が反映されない
@@ -89,7 +89,7 @@ class PhoneBillDbManagerJdbcTest extends  AbstractPhoneBillDbManagerTest{
 			History h = before.get(0).clone();
 			after.set(0, h);
 			try {
-				manager.execute(TgTmSettingDummy.getInstance(), () -> {
+				manager.execute(TxOption.of(), () -> {
 					h.setCharge(h.getCharge() + 500);
 					HistoryDao dao = manager.getHistoryDao();
 					dao.update(h);
@@ -120,7 +120,7 @@ class PhoneBillDbManagerJdbcTest extends  AbstractPhoneBillDbManagerTest{
 			h.setCharge(h.getCharge() == null ? 300 : h.getCharge() + 300);
 			after.set(0, h);
 			tryCount = 0;
-			manager.execute(TgTmSettingDummy.getInstance(), () -> {
+			manager.execute(TxOption.of(), () -> {
 				if (++tryCount < 4) {
 					throw new RuntimeException(new SerializationFailureException("40001"));
 				}
@@ -146,7 +146,7 @@ class PhoneBillDbManagerJdbcTest extends  AbstractPhoneBillDbManagerTest{
 		try (PhoneBillDbManagerJdbc manager = new DbManagerRollbackFailure(config, testException)) {
 			tryCount = 0;
 			RuntimeException e = assertThrows(RuntimeException.class,
-					() -> manager.execute(TgTmSettingDummy.getInstance(), () -> {
+					() -> manager.execute(TxOption.of(), () -> {
 						if (++tryCount <= 1) {
 							throw new RuntimeException(new SerializationFailureException("40001"));
 						}
@@ -173,7 +173,7 @@ class PhoneBillDbManagerJdbcTest extends  AbstractPhoneBillDbManagerTest{
 			h.setCharge(h.getCharge() == null ? 300 : h.getCharge() + 300);
 			after.set(0, h);
 			HistoryDao dao = manager.getHistoryDao();
-			manager.execute(TgTmSettingDummy.getInstance(), () -> dao.update(h));
+			manager.execute(TxOption.of(), () -> dao.update(h));
 			// コミット後に別コネクションでも更新が反映されている
 			assertIterableEquals(after, getHistories());
 			assertIterableEquals(after, getHistories(manager));
@@ -187,7 +187,7 @@ class PhoneBillDbManagerJdbcTest extends  AbstractPhoneBillDbManagerTest{
 			History h = before.get(0).clone();
 			after.set(0, h);
 			try {
-				manager.execute(TgTmSettingDummy.getInstance(), () -> {
+				manager.execute(TxOption.of(), () -> {
 					h.setCharge(h.getCharge() + 500);
 					HistoryDao dao = manager.getHistoryDao();
 					dao.update(h);
@@ -229,7 +229,7 @@ class PhoneBillDbManagerJdbcTest extends  AbstractPhoneBillDbManagerTest{
 			};
 
 			tryCount = 0;
-			manager.execute(TgTmSettingDummy.getInstance(), () -> dao.update(h));
+			manager.execute(TxOption.of(), () -> dao.update(h));
 			// コミット後に別コネクションでも更新が反映されている
 			assertIterableEquals(after, getHistories());
 			assertIterableEquals(after, getHistories(manager));
@@ -241,7 +241,7 @@ class PhoneBillDbManagerJdbcTest extends  AbstractPhoneBillDbManagerTest{
 		try (PhoneBillDbManagerJdbc manager = new DbManagerRollbackFailure(config, testException)) {
 			tryCount = 0;
 			RuntimeException e = assertThrows(RuntimeException.class,
-					() -> manager.execute(TgTmSettingDummy.getInstance(), () -> {
+					() -> manager.execute(TxOption.of(), () -> {
 						if (++tryCount <= 1) {
 							throw new RuntimeException(new SerializationFailureException("40001"));
 						}

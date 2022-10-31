@@ -14,32 +14,12 @@ import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.iceaxe.PhoneBillDbManagerIceaxe;
 import com.tsurugidb.benchmark.phonebill.db.oracle.PhoneBillDbManagerOracle;
 import com.tsurugidb.benchmark.phonebill.db.postgresql.PhoneBillDbManagerPostgresql;
-import com.tsurugidb.iceaxe.transaction.manager.TgTmSetting;
 
 /**
  *
  */
 public abstract class PhoneBillDbManager implements Closeable {
     private static final Logger LOG = LoggerFactory.getLogger(PhoneBillDbManager.class);
-
-    /**
-	 * リトライ回数 => デフォルト値はintの最大値
-	 */
-	private int retryCountLimit = Integer.MAX_VALUE;
-
-	/**
-	 * @return retryCountLimit
-	 */
-	public int getRetryCountLimit() {
-		return retryCountLimit;
-	}
-	/**
-	 * @param retryCountLimit セットする retryCountLimit
-	 */
-	public void setRetryCountLimit(int retryCountLimit) {
-		this.retryCountLimit = retryCountLimit;
-	}
-
 
     // DAO取得用のメソッド
 	public abstract Ddl getDdl();
@@ -54,7 +34,7 @@ public abstract class PhoneBillDbManager implements Closeable {
      * @param setting
      * @param runnable
      */
-    public abstract void execute(TgTmSetting setting, Runnable runnable);
+    public abstract void execute(TxOption setting, Runnable runnable);
 
 
     /**
@@ -65,7 +45,7 @@ public abstract class PhoneBillDbManager implements Closeable {
      * @param supplier
      * @return
      */
-    public abstract <T> T execute(TgTmSetting setting, Supplier<T> supplier);
+    public abstract <T> T execute(TxOption setting, Supplier<T> supplier);
 
     /**
      * トランザクションをコミットする
