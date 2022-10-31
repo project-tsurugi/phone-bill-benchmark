@@ -222,7 +222,7 @@ public class PhoneBill extends ExecutableCommand {
 		LOG.info(finalMessage);
 	}
 
-	public synchronized String getStatus() {
+	public String getStatus() {
 		return queue == null ? "Initializing": queue.getStatus();
 	}
 

@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -212,19 +213,20 @@ class CalculationTaskTest extends AbstractJdbcTestCase {
 		ExecutorService service = Executors.newSingleThreadExecutor();
 		long sleepTime = 300;
 		AnotherTask anotherTask = new AnotherTask(queue, sleepTime);
-		service.submit(anotherTask);
+		Future<?> f = service.submit(anotherTask);
 		long start = System.currentTimeMillis();
 		assertNull(task.call());
 		assertEquals(3, calculator.callCount);
 		assertEquals(config.transactionScope == TransactionScope.CONTRACT ? 13: 17, tryCounter.get());
 		long elapsed = System.currentTimeMillis() - start;
 		assertTrue(elapsed > sleepTime, "elapsed time = " + elapsed + ", sleep time =" + sleepTime);
+		f.get();
 		service.shutdown();
 		}
 	}
 
 
-	private class AnotherTask implements Runnable {
+	private static class AnotherTask implements Runnable {
 		CalculationTarget target;
 		CalculationTargetQueue queue;
 		long sleepTime;

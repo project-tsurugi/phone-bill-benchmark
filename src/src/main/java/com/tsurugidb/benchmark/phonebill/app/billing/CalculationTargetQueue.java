@@ -19,7 +19,7 @@ public class CalculationTargetQueue {
 	/**
 	 * 処理中の数
 	 */
-	private volatile int numberOfRunningTargets;
+	private int numberOfRunningTargets;
 
 	/**
 	 * 処理対象の数
