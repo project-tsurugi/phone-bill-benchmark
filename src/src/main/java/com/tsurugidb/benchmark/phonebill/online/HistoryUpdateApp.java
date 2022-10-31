@@ -43,7 +43,8 @@ public class HistoryUpdateApp extends AbstractOnlineApp {
 	}
 
 	void updateDatabase(History history) {
-		manager.execute(TxOption.of(TgTmSetting.ofAlways(TgTxOption.ofOCC())), () -> historyDao.update(history));
+		manager.execute(TxOption.of(Integer.MAX_VALUE, TgTmSetting.ofAlways(TgTxOption.ofOCC())),
+				() -> historyDao.update(history));
 	}
 
 	/**
@@ -53,7 +54,8 @@ public class HistoryUpdateApp extends AbstractOnlineApp {
 	 * @return
 	 */
 	List<History> getHistories(Key key) {
-		return manager.execute(TxOption.of(TgTmSetting.ofAlways(TgTxOption.ofOCC())), () -> historyDao.getHistories(key));
+		return manager.execute(TxOption.of(Integer.MAX_VALUE, TgTmSetting.ofAlways(TgTxOption.ofOCC())),
+				() -> historyDao.getHistories(key));
 	}
 
 	@Override

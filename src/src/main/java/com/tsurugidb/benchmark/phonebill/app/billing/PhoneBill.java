@@ -174,12 +174,12 @@ public class PhoneBill extends ExecutableCommand {
 			ContractDao contractDao = manager.getContractDao();
 
 			// Billingテーブルの計算対象月のレコードを削除する
-			manager.execute(TxOption.of(TgTmSetting.of(TgTxOption.ofOCC())), () -> {
+			manager.execute(TxOption.of(), () -> {
 				billingDao.delete(start);
 			});
 
 			// 計算対象の契約を取りだし、キューに入れる
-			List<Contract> list = manager.execute(TxOption.of(TgTmSetting.ofAlways(TgTxOption.ofRTX())), () -> {
+			List<Contract> list = manager.execute(TxOption.of(Integer.MAX_VALUE, TgTmSetting.ofAlways(TgTxOption.ofRTX())), () -> {
 				return contractDao.getContracts(start, end);
 			});
 			ArrayList<CalculationTarget> targets = new ArrayList<>(list.size());

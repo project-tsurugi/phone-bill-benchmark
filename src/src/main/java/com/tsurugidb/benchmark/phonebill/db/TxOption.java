@@ -18,16 +18,12 @@ public class TxOption {
 		this.settingIceaxe = settingIceaxe;
 	}
 
-	public static TxOption of(TgTmSetting settingIceaxe) {
-		return new TxOption(Integer.MAX_VALUE, settingIceaxe);
-	}
-
 	public static TxOption of(int retryCountJdbc,  TgTmSetting settingIceaxe) {
 		return new TxOption(retryCountJdbc, settingIceaxe);
 	}
 
 	public static TxOption of() {
-		return new TxOption(Integer.MAX_VALUE, TgTmSetting.of(TgTxOption.ofOCC()));
+		return new TxOption(0, TgTmSetting.of(TgTxOption.ofOCC()));
 	}
 
 

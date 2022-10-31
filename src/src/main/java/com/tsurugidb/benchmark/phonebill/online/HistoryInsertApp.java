@@ -120,7 +120,7 @@ public class HistoryInsertApp extends AbstractOnlineApp {
 	static long getBaseTime(Config config) {
 		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
 			HistoryDao dao = manager.getHistoryDao();
-			long maxStartTime = manager.execute(TxOption.of(TgTmSetting.of(TgTxOption.ofOCC())),
+			long maxStartTime = manager.execute(TxOption.of(),
 					() -> dao.getMaxStartTime());
 			return Math.max(maxStartTime, DateUtils.nextDate(config.historyMaxDate).getTime());
 		}
@@ -144,7 +144,7 @@ public class HistoryInsertApp extends AbstractOnlineApp {
 	@Override
 	protected void updateDatabase() {
 		HistoryDao dao = manager.getHistoryDao();
-		manager.execute(TxOption.of(TgTmSetting.ofAlways(TgTxOption.ofOCC())), () -> dao.batchInsert(histories));
+		manager.execute(TxOption.of(Integer.MAX_VALUE, TgTmSetting.ofAlways(TgTxOption.ofOCC())), () -> dao.batchInsert(histories));
 		LOG.debug("ONLINE APP: Insert {} records to history.", historyInsertRecordsPerTransaction);
 	}
 

@@ -10,8 +10,6 @@ import com.tsurugidb.benchmark.phonebill.app.ExecutableCommand;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.TxOption;
 import com.tsurugidb.benchmark.phonebill.db.dao.Ddl;
-import com.tsurugidb.iceaxe.transaction.TgTxOption;
-import com.tsurugidb.iceaxe.transaction.manager.TgTmSetting;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -40,7 +38,7 @@ public class CreateTestData extends ExecutableCommand {
 
 			// テーブルをTruncate
 			// インデックスの削除
-			manager.execute(TxOption.of(TgTmSetting.of(TgTxOption.ofOCC())), () -> {
+			manager.execute(TxOption.of(), () -> {
 				ddl.prepareLoadData();
 			});
 
@@ -59,7 +57,7 @@ public class CreateTestData extends ExecutableCommand {
 			LOG.info(String.format(format, config.numberOfHistoryRecords, elapsedTime / 1000d));
 
 			// Indexの再生成とDBの統計情報を更新
-			manager.execute(TxOption.of(TgTmSetting.of(TgTxOption.ofOCC())), () -> {
+			manager.execute(TxOption.of(), () -> {
 				ddl.afterLoadData();
 			});
 		}

@@ -48,7 +48,8 @@ public class MasterInsertApp extends AbstractOnlineApp {
 	@Override
 	protected void updateDatabase() {
 		ContractDao dao = manager.getContractDao();
-		int ret = manager.execute(TxOption.of(TgTmSetting.ofAlways(TgTxOption.ofOCC())), () -> dao.insert(contract));
+		int ret = manager.execute(TxOption.of(Integer.MAX_VALUE, TgTmSetting.ofAlways(TgTxOption.ofOCC())),
+				() -> dao.insert(contract));
 		LOG.debug("ONLINE APP: Insert {} record to contracs(phoneNumber = {}, startDate = {}).", ret,
 				contract.getPhoneNumber(), contract.getStartDate());
 	}

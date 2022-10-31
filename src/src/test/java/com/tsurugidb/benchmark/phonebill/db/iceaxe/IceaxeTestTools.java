@@ -38,7 +38,7 @@ import com.tsurugidb.iceaxe.transaction.manager.TgTmSetting;
  *
  */
 public class IceaxeTestTools {
-	private static final TxOption OCC = TxOption.of(TgTmSetting.ofAlways(TgTxOption.ofOCC()));
+	private static final TxOption OCC = TxOption.of(Integer.MAX_VALUE, TgTmSetting.ofAlways(TgTxOption.ofOCC()));
 	private  final PhoneBillDbManagerIceaxe manager;
 	private  final TsurugiSession session;
 

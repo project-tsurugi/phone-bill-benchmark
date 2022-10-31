@@ -27,8 +27,6 @@ import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.entity.Billing;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
 import com.tsurugidb.benchmark.phonebill.testdata.CreateTestData;
-import com.tsurugidb.iceaxe.transaction.TgTxOption;
-import com.tsurugidb.iceaxe.transaction.manager.TgTmSetting;
 
 /**
  * スレッド数とコネクション共有の有無で、PhoneBillコマンドの実行時間がどう変化するのかを調べる
@@ -112,17 +110,17 @@ public class ThreadBench extends ExecutableCommand {
 	private void prepare(Config config) {
 		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
 			HistoryDao dao = manager.getHistoryDao();
-			manager.execute(TxOption.of(TgTmSetting.of(TgTxOption.ofOCC())), dao::updateChargeNull);
+			manager.execute(TxOption.of(), dao::updateChargeNull);
 		}
 	}
 
 	private int checkResult(Config config) {
 		int n = 0;
 		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
-			Set<History> histories = manager.execute(TxOption.of(TgTmSetting.of(TgTxOption.ofOCC())), () -> {
+			Set<History> histories = manager.execute(TxOption.of(), () -> {
 				return new HashSet<>(manager.getHistoryDao().getHistories());
 			});
-			Set<Billing> billings = manager.execute(TxOption.of(TgTmSetting.of(TgTxOption.ofOCC())), () -> {
+			Set<Billing> billings = manager.execute(TxOption.of(), () -> {
 				List<Billing> list = manager.getBillingDao().getBillings();
 				list.stream().forEachOrdered(b -> b.setBatchExecId(null)); // batchExecIdは比較対象でないのでnullをセット
 				return new HashSet<>(list);
