@@ -52,7 +52,8 @@ public class PhoneBill extends ExecutableCommand {
 	private CalculationTargetQueue queue;
 	private String finalMessage;
 	private AtomicBoolean abortRequested = new AtomicBoolean(false);
-	private AtomicInteger tryCounter = new AtomicInteger(0);;
+	private AtomicInteger tryCounter = new AtomicInteger(0);
+	private AtomicInteger abortCounter = new AtomicInteger(0);
 
 	Config config; // UTからConfigを書き換え可能にするためにパッケージプライベートにしている
 
@@ -205,7 +206,7 @@ public class PhoneBill extends ExecutableCommand {
 							SessionHoldingType.INSTANCE_FIELD);
 					managers.add(managerForTask);
 				}
-				CalculationTask task = new CalculationTask(queue, managerForTask, config, batchExecId, abortRequested, tryCounter);
+				CalculationTask task = new CalculationTask(queue, managerForTask, config, batchExecId, abortRequested, tryCounter, abortCounter);
 				futures.add(service.submit(task));
 			}
 
@@ -306,5 +307,16 @@ public class PhoneBill extends ExecutableCommand {
 	 */
 	public int getTryCount() {
 		return tryCounter.get();
+	}
+
+	/**
+	 * トランザクションがabortした回数を返します。
+	 * <p>
+	 * 正確にはTransactionが失敗した回数を返します。状況により、abortした回数と異なる値が返ることがあります。
+	 *
+	 * @return
+	 */
+	public int getAbortCount() {
+		return abortCounter.get();
 	}
 }

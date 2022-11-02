@@ -98,7 +98,7 @@ public class ThreadBench extends ExecutableCommand {
 						record.start();
 						PhoneBill phoneBill = new PhoneBill();
 						phoneBill.execute(config);
-						record.finish(phoneBill.getTryCount());
+						record.finish(phoneBill.getTryCount(), phoneBill.getAbortCount());
 						record.setNumberOfDiffrence(checkResult(config));
 						writeResult(config);
 					}
@@ -197,6 +197,7 @@ public class ThreadBench extends ExecutableCommand {
 		private DbmsType dbmsType;
 		private long elapsedMillis;
 		private int tryCount = 0;
+		private int abortCount = 0;
 		private int numberOfDiffrence = 0;
 
 		public Record(Config config) {
@@ -212,10 +213,11 @@ public class ThreadBench extends ExecutableCommand {
 			start = Instant.now();
 		}
 
-		public void finish(int tryCount) {
+		public void finish(int tryCount, int abortCount) {
 			elapsedMillis = Duration.between(start, Instant.now()).toMillis();
 			LOG.info("Finished phoneBill.exec(), elapsed secs = {}.", elapsedMillis / 1000.0);
 			this.tryCount = tryCount;
+			this.abortCount = abortCount;
 		}
 
 		public void setNumberOfDiffrence(int num) {
@@ -250,12 +252,14 @@ public class ThreadBench extends ExecutableCommand {
 			builder.append(",");
 			builder.append(tryCount);
 			builder.append(",");
+			builder.append(abortCount);
+			builder.append(",");
 			builder.append(numberOfDiffrence);
 			return builder.toString();
 		}
 
 		public static String header() {
-			return "dbmsType, option, scope, threadCount, elapsedMills, tryCount, diffrence";
+			return "dbmsType, option, scope, threadCount, elapsedMills, tryCount, abortCount, diffrence";
 		}
 
 	}

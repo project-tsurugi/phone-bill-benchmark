@@ -30,6 +30,7 @@ public class CalculationTask implements Callable<Exception> {
     private String batchExecId;
     private AtomicBoolean abortRequested;
     private AtomicInteger tryCounter;
+    private AtomicInteger abortCounter;
     Calculator calculator;
 
 
@@ -50,12 +51,13 @@ public class CalculationTask implements Callable<Exception> {
 	 * @param conn
 	 */
 	public CalculationTask(CalculationTargetQueue queue, PhoneBillDbManager manager,  Config config, String batchExecId,
-			AtomicBoolean abortRequested, AtomicInteger tryCounter) {
+			AtomicBoolean abortRequested, AtomicInteger tryCounter, AtomicInteger abortCounter) {
 		this.queue = queue;
 		this.config = config;
 		this.batchExecId = batchExecId;
 		this.abortRequested = abortRequested;
 		this.tryCounter = tryCounter;
+		this.abortCounter = abortCounter;
 		this.manager = manager;
 		billingDao = manager.getBillingDao();
 		historyDao = manager.getHistoryDao();
@@ -88,18 +90,20 @@ public class CalculationTask implements Callable<Exception> {
 					return null;
 				}
 				try {
-					AtomicInteger tryeInThisTx = new AtomicInteger(0);
+					AtomicInteger tryInThisTx = new AtomicInteger(0);
 					String str = txOption.toString();
 					manager.execute(TxOption.of(Integer.MAX_VALUE, TgTmSetting.ofAlways(txOption)), () -> {
-						tryeInThisTx.incrementAndGet();
-						LOG.debug("start tansaction with txOption = {}, key = {}, tryCount = {}", str,
-								target.getContract().getPhoneNumber(), tryeInThisTx);
+						tryInThisTx.incrementAndGet();
 						tryCounter.incrementAndGet();
+						LOG.debug("start tansaction with txOption = {}, key = {}, tryCount = {}", str,
+								target.getContract().getPhoneNumber(), tryInThisTx);
 						calculator.doCalc(target);
 					});
+					abortCounter.addAndGet(tryInThisTx.get() - 1);
 					queue.success(target);
 					n++;
 				} catch (RuntimeException e) {
+					abortCounter.incrementAndGet();
 					queue.revert(target);
 					LOG.error("Calculation target returned to queue and the task will be aborted.", e);
 					return e;
@@ -132,6 +136,7 @@ public class CalculationTask implements Callable<Exception> {
 					LOG.info("Calculation task finished normally, number of calculated contracts = {}).", list.size());
 					return null;
 				} catch (RuntimeException e) {
+					abortCounter.incrementAndGet();
 					// 処理対象をキューに戻す
 					queue.revert(list);
 					if (e instanceof RetryOverRuntimeException) {
