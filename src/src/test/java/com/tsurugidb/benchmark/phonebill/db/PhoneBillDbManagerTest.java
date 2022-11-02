@@ -8,21 +8,26 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
 import com.tsurugidb.benchmark.phonebill.db.iceaxe.PhoneBillDbManagerIceaxe;
+import com.tsurugidb.benchmark.phonebill.db.iceaxe.dao.BillingDaoIceaxe;
+import com.tsurugidb.benchmark.phonebill.db.iceaxe.dao.ContractDaoIceaxe;
 import com.tsurugidb.benchmark.phonebill.db.iceaxe.dao.DdlIceaxe;
+import com.tsurugidb.benchmark.phonebill.db.iceaxe.dao.HistoryDaoIceaxe;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.PhoneBillDbManagerJdbc;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.dao.BillingDaoJdbc;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.dao.ContractDaoJdbc;
+import com.tsurugidb.benchmark.phonebill.db.jdbc.dao.ContractDaoJdbcNoBatchUpdate;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.dao.HistoryDaoJdbc;
+import com.tsurugidb.benchmark.phonebill.db.jdbc.dao.HistoryDaoJdbcNoBatchUpdate;
 import com.tsurugidb.benchmark.phonebill.db.oracle.PhoneBillDbManagerOracle;
 import com.tsurugidb.benchmark.phonebill.db.oracle.dao.DdlOracle;
 import com.tsurugidb.benchmark.phonebill.db.postgresql.PhoneBillDbManagerPostgresql;
+import com.tsurugidb.benchmark.phonebill.db.postgresql.PhoneBillDbManagerPostgresqlNoBatchUpdate;
 import com.tsurugidb.benchmark.phonebill.db.postgresql.dao.DdlPostgresql;
 
 class PhoneBillDbManagerTest extends AbstractPhoneBillDbManagerTest {
@@ -138,52 +143,42 @@ class PhoneBillDbManagerTest extends AbstractPhoneBillDbManagerTest {
 	void testGetDdl() {
 		doTestGet(DdlPostgresql.class, ()->getManagerPostgresql().getDdl());
 		doTestGet(DdlOracle.class, ()->getManagerOracle().getDdl());
-	}
-
-	@Test
-	@Tag("tsurugi")
-	void testGetDdlIceaxe() {
+		doTestGet(DdlPostgresql.class, ()->getManagerPostgresqlNoBatchupdate().getDdl());
 		doTestGet(DdlIceaxe.class, ()->getManagerIceaxe().getDdl());
 	}
-
 
 	@Test
 	void testGetContractDao() {
 		doTestGet(ContractDaoJdbc.class, ()->getManagerPostgresql().getContractDao());
+		doTestGet(ContractDaoJdbcNoBatchUpdate.class, ()->getManagerPostgresqlNoBatchupdate().getContractDao());
 		doTestGet(ContractDaoJdbc.class, ()->getManagerOracle().getContractDao());
+		doTestGet(ContractDaoIceaxe.class, ()->getManagerIceaxe().getContractDao());
 	}
 
 	@Test
 	void testGetHistoryDao() {
 		doTestGet(HistoryDaoJdbc.class, ()->getManagerPostgresql().getHistoryDao());
+		doTestGet(HistoryDaoJdbcNoBatchUpdate.class, ()->getManagerPostgresqlNoBatchupdate().getHistoryDao());
 		doTestGet(HistoryDaoJdbc.class, ()->getManagerOracle().getHistoryDao());
+		doTestGet(HistoryDaoIceaxe.class, ()->getManagerIceaxe().getHistoryDao());
 	}
 
 	@Test
 	void testGetBillingDao() {
 		doTestGet(BillingDaoJdbc.class, ()->getManagerPostgresql().getBillingDao());
+		doTestGet(BillingDaoJdbc.class, ()->getManagerPostgresqlNoBatchupdate().getBillingDao());
 		doTestGet(BillingDaoJdbc.class, ()->getManagerOracle().getBillingDao());
+		doTestGet(BillingDaoIceaxe.class, ()->getManagerIceaxe().getBillingDao());
 	}
 
 	@Test
 	void testCreatePhoneBillDbManager() throws IOException {
 		assertEquals(PhoneBillDbManagerOracle.class, PhoneBillDbManager.createPhoneBillDbManager(getConfigOracle()).getClass());
-
 		assertEquals(PhoneBillDbManagerPostgresql.class,
 				PhoneBillDbManager.createPhoneBillDbManager(getConfigPostgresql()).getClass());
-
-	}
-
-	@Test
-	@Tag("tsurugi")
-	void testCreatePhoneBillDbManagerIceaxe() throws IOException {
-		assertEquals(PhoneBillDbManagerOracle.class, PhoneBillDbManager.createPhoneBillDbManager(getConfigOracle()).getClass());
-
-		assertEquals(PhoneBillDbManagerPostgresql.class,
-				PhoneBillDbManager.createPhoneBillDbManager(getConfigPostgresql()).getClass());
-
+		assertEquals(PhoneBillDbManagerPostgresqlNoBatchUpdate.class,
+				PhoneBillDbManager.createPhoneBillDbManager(getConfigPostgresqlNoBatchUpdate()).getClass());
 		assertEquals(PhoneBillDbManagerIceaxe.class,
 				PhoneBillDbManager.createPhoneBillDbManager(getConfigIceaxe()).getClass());
 	}
-
 }

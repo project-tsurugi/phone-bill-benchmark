@@ -14,6 +14,7 @@ import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.iceaxe.PhoneBillDbManagerIceaxe;
 import com.tsurugidb.benchmark.phonebill.db.oracle.PhoneBillDbManagerOracle;
 import com.tsurugidb.benchmark.phonebill.db.postgresql.PhoneBillDbManagerPostgresql;
+import com.tsurugidb.benchmark.phonebill.db.postgresql.PhoneBillDbManagerPostgresqlNoBatchUpdate;
 
 /**
  *
@@ -106,6 +107,9 @@ public abstract class PhoneBillDbManager implements Closeable {
 			break;
 		case POSTGRE_SQL_JDBC:
 			dbManager = new PhoneBillDbManagerPostgresql(config, type);
+			break;
+		case POSTGRE_NO_BATCHUPDATE:
+			dbManager = new PhoneBillDbManagerPostgresqlNoBatchUpdate(config, type);
 			break;
 		case ICEAXE:
 			dbManager = new PhoneBillDbManagerIceaxe(config);

@@ -22,10 +22,12 @@ import com.tsurugidb.benchmark.phonebill.util.DateUtils;
 
 class HistoryDaoJdbcTest extends AbstractJdbcTestCase {
 
-	@Test
-	final void testBatchInsert() throws SQLException {
+	@Test void testBatchInsert() throws SQLException {
 		HistoryDao dao = getManager().getHistoryDao();
+		testBatchInsertSub(dao);
+	}
 
+	protected void testBatchInsertSub(HistoryDao dao) throws SQLException {
 		Set<History> expectedSet = new HashSet<>();
 		List<History> list = new ArrayList<>();
 		int[] ret;
@@ -149,9 +151,12 @@ class HistoryDaoJdbcTest extends AbstractJdbcTestCase {
 
 	}
 
-	@Test
-	final void testBatchUpdate() throws SQLException {
+	@Test void testBatchUpdate() throws SQLException {
 		HistoryDao dao = getManager().getHistoryDao();
+		testBatchUpdateSub(dao);
+	}
+
+	protected void testBatchUpdateSub(HistoryDao dao) throws SQLException {
 		History h1 = History.create("001", "456", "C", "2022-01-10 15:15:28.312", 5, 2, 0);
 		History h2 = History.create("001", "456", "C", "2022-01-10 15:15:28.313", 5, null, 0);
 		History h3 = History.create("001", "456", "C", "2022-01-10 15:15:28.314", 5, 2, 1);
@@ -173,8 +178,6 @@ class HistoryDaoJdbcTest extends AbstractJdbcTestCase {
 		testDataSet.add(h2u);
 		testDataSet.add(h3u);
 		assertEquals(testDataSet, getHistorySet());
-
-
 	}
 
 	@Test

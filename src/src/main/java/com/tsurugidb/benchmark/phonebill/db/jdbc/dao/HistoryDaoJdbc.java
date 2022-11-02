@@ -72,7 +72,7 @@ public class HistoryDaoJdbc implements HistoryDao {
 	 * @param h
 	 * @throws SQLException
 	 */
-	private void setHistoryToInsertPs(PreparedStatement ps, History h) throws SQLException {
+	protected void setHistoryToInsertPs(PreparedStatement ps, History h) throws SQLException {
 		ps.setString(1, h.getCallerPhoneNumber());
 		ps.setString(2, h.getRecipientPhoneNumber());
 		ps.setString(3, h.getPaymentCategorty());
@@ -87,7 +87,7 @@ public class HistoryDaoJdbc implements HistoryDao {
 	}
 
 
-	private PreparedStatement createInsertPs() throws SQLException {
+	protected PreparedStatement createInsertPs() throws SQLException {
 		PreparedStatement ps = manager.getConnection().prepareStatement("insert into history("
 		+ "caller_phone_number,"
 		+ "recipient_phone_number,"
@@ -146,7 +146,7 @@ public class HistoryDaoJdbc implements HistoryDao {
 	 * @param ps
 	 * @throws SQLException
 	 */
-	private void setHistroryToUpdatePs(History history, PreparedStatement ps) throws SQLException {
+	protected void setHistroryToUpdatePs(History history, PreparedStatement ps) throws SQLException {
 		ps.setString(1, history.getRecipientPhoneNumber());
 		ps.setString(2, history.getPaymentCategorty());
 		ps.setInt(3, history.getTimeSecs());
@@ -160,7 +160,7 @@ public class HistoryDaoJdbc implements HistoryDao {
 		ps.setTimestamp(7, history.getStartTime());
 	}
 
-	private PreparedStatement createUpdatePs() throws SQLException {
+	protected PreparedStatement createUpdatePs() throws SQLException {
 		PreparedStatement ps = manager.getConnection().prepareStatement(
 				"update history"
 				+ " set recipient_phone_number = ?, payment_categorty = ?, time_secs = ?, charge = ?, df = ?"

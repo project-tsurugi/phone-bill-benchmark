@@ -30,8 +30,12 @@ class ContractDaoJdbcTest extends AbstractJdbcTestCase {
 
 
 	@Test
-	final void testBatchInsert() throws SQLException {
+	void testBatchInsert() throws SQLException {
 		ContractDao dao = getManager().getContractDao();
+		testBatchInsertSub(dao);
+	}
+
+	protected void testBatchInsertSub(ContractDao dao) throws SQLException {
 		truncateTable("contracts");
 
 		Set<Contract> expectedSet = new HashSet<>();

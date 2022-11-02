@@ -14,9 +14,9 @@ import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.PhoneBillDbManagerJdbc;
 
 public class ContractDaoJdbc implements ContractDao {
-	private final PhoneBillDbManagerJdbc manager;
+	protected final PhoneBillDbManagerJdbc manager;
 
-	private static final String SQL_INSERT = "insert into contracts("
+	protected static final String SQL_INSERT = "insert into contracts("
 			+ "phone_number,"
 			+ "start_date,"
 			+ "end_date,"
@@ -63,7 +63,7 @@ public class ContractDaoJdbc implements ContractDao {
 	 * @param ps
 	 * @throws SQLException
 	 */
-	private void setPsToContract(Contract c, PreparedStatement ps) throws SQLException {
+	protected void setPsToContract(Contract c, PreparedStatement ps) throws SQLException {
 		ps.setString(1, c.getPhoneNumber());
 		ps.setDate(2, c.getStartDate());
 		ps.setDate(3, c.getEndDate());

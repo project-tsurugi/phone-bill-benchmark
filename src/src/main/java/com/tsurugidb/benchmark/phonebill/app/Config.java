@@ -877,6 +877,7 @@ public class Config implements Cloneable {
 	public static enum DbmsType {
 		ORACLE_JDBC,
 		POSTGRE_SQL_JDBC,
+		POSTGRE_NO_BATCHUPDATE,
 		ICEAXE,
 	}
 

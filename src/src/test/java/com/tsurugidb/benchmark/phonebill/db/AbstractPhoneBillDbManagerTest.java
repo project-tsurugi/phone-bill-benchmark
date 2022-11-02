@@ -8,9 +8,11 @@ import org.junit.jupiter.api.BeforeAll;
 
 import com.tsurugidb.benchmark.phonebill.AbstractJdbcTestCase;
 import com.tsurugidb.benchmark.phonebill.app.Config;
+import com.tsurugidb.benchmark.phonebill.app.Config.DbmsType;
 import com.tsurugidb.benchmark.phonebill.app.CreateTable;
 import com.tsurugidb.benchmark.phonebill.db.iceaxe.PhoneBillDbManagerIceaxe;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.PhoneBillDbManagerJdbc;
+import com.tsurugidb.benchmark.phonebill.db.postgresql.PhoneBillDbManagerPostgresqlNoBatchUpdate;
 import com.tsurugidb.benchmark.phonebill.testdata.ContractBlockInfoAccessor;
 import com.tsurugidb.benchmark.phonebill.testdata.SingleProcessContractBlockManager;
 import com.tsurugidb.benchmark.phonebill.testdata.TestDataGenerator;
@@ -26,15 +28,19 @@ public class AbstractPhoneBillDbManagerTest extends AbstractJdbcTestCase {
 	private static PhoneBillDbManagerJdbc managerOracle;
 	private static PhoneBillDbManagerJdbc managerPostgresql;
 	private static PhoneBillDbManagerIceaxe managerIceaxe;
+	private static PhoneBillDbManagerPostgresqlNoBatchUpdate phoneBillDbManagerPostgresqlNoBatchUpdate;
 	private static Config configOracle;
 	private static Config configPostgresql;
 	private static Config configIceaxe;
+	private static Config configPostgresqlNoBatchUpdate;
 
 	@BeforeAll
 	static void beforeAllTests() throws IOException {
 		configOracle = Config.getConfig(ORACLE_CONFIG_PATH);
 		configPostgresql = Config.getConfig();
 		configIceaxe = Config.getConfig(ICEAXE_CONFIG_PATH);
+		configPostgresqlNoBatchUpdate = configPostgresql.clone();
+		configPostgresqlNoBatchUpdate.dbmsType = DbmsType.POSTGRE_NO_BATCHUPDATE;
 	}
 
 	@AfterAll
@@ -47,6 +53,9 @@ public class AbstractPhoneBillDbManagerTest extends AbstractJdbcTestCase {
 		}
 		if (managerIceaxe != null) {
 			managerIceaxe.close();
+		}
+		if (phoneBillDbManagerPostgresqlNoBatchUpdate != null) {
+			phoneBillDbManagerPostgresqlNoBatchUpdate.close();
 		}
 	}
 
@@ -83,12 +92,21 @@ public class AbstractPhoneBillDbManagerTest extends AbstractJdbcTestCase {
 		return managerPostgresql;
 	}
 
+	protected static synchronized PhoneBillDbManagerPostgresqlNoBatchUpdate getManagerPostgresqlNoBatchupdate() {
+		if (phoneBillDbManagerPostgresqlNoBatchUpdate == null) {
+			phoneBillDbManagerPostgresqlNoBatchUpdate = (PhoneBillDbManagerPostgresqlNoBatchUpdate) PhoneBillDbManager
+					.createPhoneBillDbManager(getConfigPostgresqlNoBatchUpdate());
+		}
+		return phoneBillDbManagerPostgresqlNoBatchUpdate;
+	}
+
 	protected static synchronized PhoneBillDbManagerIceaxe getManagerIceaxe() {
 		if (managerIceaxe == null) {
 			managerIceaxe = (PhoneBillDbManagerIceaxe) PhoneBillDbManager.createPhoneBillDbManager(getConfigIceaxe());
 		}
 		return managerIceaxe;
 	}
+
 
 	protected static  Config getConfigOracle() {
 		return configOracle;
@@ -100,5 +118,9 @@ public class AbstractPhoneBillDbManagerTest extends AbstractJdbcTestCase {
 
 	protected static Config getConfigIceaxe() {
 		return configIceaxe;
+	}
+
+	protected static Config getConfigPostgresqlNoBatchUpdate() {
+		return configPostgresqlNoBatchUpdate;
 	}
 }
