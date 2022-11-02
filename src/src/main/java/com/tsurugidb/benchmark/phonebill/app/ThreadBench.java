@@ -1,5 +1,6 @@
 package com.tsurugidb.benchmark.phonebill.app;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -44,39 +45,38 @@ public class ThreadBench extends ExecutableCommand {
 
 	public static void main(String[] args) throws Exception {
 		ThreadBench threadBench = new ThreadBench();
+		List<Config> configs = new ArrayList<>(args.length);
 		for (String arg: args) {
 			Config config = Config.getConfig(arg);
-			threadBench.execute(config);
+			configs.add(config);
 		}
+		threadBench.execute(configs);
 	}
 
 	@Override
-	public void execute(Config config) throws Exception {
+	public void execute(List<Config> configs) throws Exception {
 		List<TransactionOption> options;
 		List<TransactionScope> scopes;
 		List<Integer> threadCounts;
 		List<IsolationLevel> isolationLevels;
 
-		if (config.dbmsType == DbmsType.ICEAXE) {
-			options = Arrays.asList(TransactionOption.LTX, TransactionOption.OCC);
-			scopes = Arrays.asList(TransactionScope.CONTRACT, TransactionScope.WHOLE);
-			threadCounts = Arrays.asList(1, 2, 4, 6);
-			isolationLevels = Collections.singletonList(IsolationLevel.SERIALIZABLE);
-		} else {
-			options = Collections.singletonList(TransactionOption.OCC);
-			scopes = Arrays.asList(TransactionScope.CONTRACT, TransactionScope.WHOLE);
-			threadCounts = Arrays.asList(1, 2, 4, 6);
-			isolationLevels = Arrays.asList(IsolationLevel.SERIALIZABLE, IsolationLevel.READ_COMMITTED);
-		}
-		execute(config, options, scopes, isolationLevels, threadCounts);
-
-		// 結果の出力
-		Path outputPath = Paths.get(config.csvDir).resolve("result.csv");
-		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
-			pw.println(Record.header());
-			records.stream().forEach(r -> pw.println(r.toString()));
+		for (Config config : configs) {
+			if (config.dbmsType == DbmsType.ICEAXE) {
+				options = Arrays.asList(TransactionOption.LTX, TransactionOption.OCC);
+				scopes = Arrays.asList(TransactionScope.CONTRACT, TransactionScope.WHOLE);
+				threadCounts = Arrays.asList(1, 2, 4, 6);
+				isolationLevels = Collections.singletonList(IsolationLevel.SERIALIZABLE);
+			} else {
+				options = Collections.singletonList(TransactionOption.OCC);
+				scopes = Arrays.asList(TransactionScope.CONTRACT, TransactionScope.WHOLE);
+				threadCounts = Arrays.asList(1, 2, 4, 6);
+				isolationLevels = Arrays.asList(IsolationLevel.SERIALIZABLE, IsolationLevel.READ_COMMITTED);
+			}
+			execute(config, options, scopes, isolationLevels, threadCounts);
 		}
 	}
+
+
 
 	private void execute(Config config, List<TransactionOption> options, List<TransactionScope> scopes,
 			List<IsolationLevel> isolationLevels,
@@ -100,13 +100,32 @@ public class ThreadBench extends ExecutableCommand {
 						phoneBill.execute(config);
 						record.finish(phoneBill.getTryCount());
 						record.setNumberOfDiffrence(checkResult(config));
+						writeResult(config);
 					}
 				}
 			}
 		}
 	}
 
+	/**
+	 * 結果をCSVに出力する
+	 *
+	 * @param config
+	 * @throws IOException
+	 */
+	private void writeResult(Config config) throws IOException {
+		Path outputPath = Paths.get(config.csvDir).resolve("result.csv");
+		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
+			pw.println(Record.header());
+			records.stream().forEach(r -> pw.println(r.toString()));
+		}
+	}
 
+	/**
+	 * バッチ実行前に前回のバッチにより更新された履歴情報を元に戻す。
+	 *
+	 * @param config
+	 */
 	private void prepare(Config config) {
 		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
 			HistoryDao dao = manager.getHistoryDao();

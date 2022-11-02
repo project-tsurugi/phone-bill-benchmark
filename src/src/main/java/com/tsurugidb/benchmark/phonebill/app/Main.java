@@ -1,6 +1,8 @@
 package com.tsurugidb.benchmark.phonebill.app;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.tsurugidb.benchmark.phonebill.app.billing.PhoneBill;
@@ -21,7 +23,7 @@ public class Main {
 		addCommand("CreateTable", "Create tables",  CreateTable.class, ArgType.CONFIG);
 		addCommand("CreateTestData", "Create test data to database.", CreateTestData.class, ArgType.CONFIG);
 		addCommand("PhoneBill", "Execute phone bill batch.", PhoneBill.class, ArgType.CONFIG);
-		addCommand("ThreadBench", "Execute PhonBill with multiple thread counts", ThreadBench.class, ArgType.CONFIG);
+		addCommand("ThreadBench", "Execute PhonBill with multiple thread counts", ThreadBench.class, ArgType.MULTI_CONFIG);
 		addCommand("OnlineAppBench", "Execute PhonBill with and without online applications.", OnlineAppBench.class,
 				ArgType.CONFIG);
 		addCommand("TestDataStatistics", "Create test data statistics without test data.", TestDataStatistics.class,
@@ -75,8 +77,25 @@ public class Main {
 		}
 		switch(command.argType) {
 		case CONFIG:
+			if (args.length == 1) {
+				System.err.println("Config filename required");
+				usage();
+				System.exit(1);
+			}
 			Config config = Config.getConfig(args[1]);
 			executableCommand.execute(config);
+			break;
+		case MULTI_CONFIG:
+			if (args.length == 1) {
+				System.err.println("Config filenames required");
+				usage();
+				System.exit(1);
+			}
+			List<Config> configs = new ArrayList<>(args.length);
+			for (int i = 1; i < args.length; i++) {
+				configs.add(Config.getConfig(args[i]));
+			}
+			executableCommand.execute(configs);
 			break;
 		case HOST_AND_PORT:
 			if (args.length == 1 || !args[1].contains(":")) {
@@ -124,6 +143,7 @@ public class Main {
 
 	private static enum ArgType {
 		CONFIG,
+		MULTI_CONFIG,
 		HOST_AND_PORT
 	}
 
