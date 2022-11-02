@@ -2,6 +2,7 @@ package com.tsurugidb.benchmark.phonebill.db.iceaxe;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
@@ -37,6 +38,7 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
         try {
             var info = TgSessionInfo.of();
             this.session = connector.createSession(info);
+            session.setConnectTimeout(30, TimeUnit.SECONDS);
             this.transactionManager = session.createTransactionManager();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
