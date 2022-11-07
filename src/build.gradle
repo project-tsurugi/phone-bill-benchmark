@@ -62,6 +62,7 @@ dependencies {
 }
 startScripts {
     applicationName = 'run'
+    applicationDefaultJvmArgs = ['-Dcom.tsurugidb.tsubakuro.jniverify=false']
 }
 spotbugsMain {
     ignoreFailures = true
