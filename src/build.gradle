@@ -1,14 +1,41 @@
 // https://github.com/domaframework/simple-boilerplate/blob/master/build.gradle
 plugins {
-    id 'java'
-    id 'eclipse'
+    id 'java-library'
     id 'application'
+    id 'com.diffplug.eclipse.apt' version '3.24.0'
     id 'com.github.spotbugs' version '4.7.1'
 }
+
+if (hasProperty('mavenLocal')) {
+    repositories {
+        mavenLocal()
+    }
+} else {
+    repositories {
+        maven {
+            url 'https://maven.pkg.github.com/project-tsurugi/*'
+            content {
+                includeGroupByRegex 'com\\.tsurugidb.*'
+            }
+            credentials {
+                username findProperty('gpr.user') ?: System.getenv('GPR_USER')
+                password findProperty('gpr.key') ?: System.getenv('GPR_KEY')
+            }
+        }
+    }
+}
+
+repositories {
+    mavenCentral {
+        content {
+            excludeGroupByRegex 'com\\.tsurugidb.*'
+        }
+    }
+}
+
+
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
-    mainClassName = 'com.example.nedo.app.Main'
+    mainClassName = 'com.tsurugidb.benchmark.phonebill.app.Main'
 }
 distTar {
     archiveName = "phone-bill.tar"
@@ -19,12 +46,19 @@ distZip {
 jar {
     archiveName = "phone-bill.jar"
 }
-compileJava {
-    options.encoding = 'UTF-8'
+
+configurations.all {
+    resolutionStrategy.cacheChangingModulesFor 8, 'hours'
 }
-compileTestJava {
-    options.encoding = 'UTF-8'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(11)
+    }
 }
+
+
+
 test {
     useJUnitPlatform() {
         excludeTags 'oracle'
@@ -38,11 +72,15 @@ test {
     if (project.hasProperty("phone-bill.url")) {
         systemProperty "phone-bill.url", project.getProperty("phone-bill.url")
     }
+    if (project.hasProperty("url.replace")) {
+        systemProperty "url.replace", project.getProperty("url.replace")
+    }
 }
-repositories {
-  mavenCentral()
-}
+
+
 dependencies {
+  api 'com.tsurugidb.iceaxe:iceaxe-core:0.0.1-SNAPSHOT'
+
   // https://mvnrepository.com/artifact/org.postgresql/postgresql
   implementation group: 'org.postgresql', name: 'postgresql', version: '42.2.16'
   // https://mvnrepository.com/artifact/com.oracle.ojdbc/ojdbc8
@@ -60,10 +98,17 @@ dependencies {
   compileOnly"com.github.spotbugs:spotbugs-annotations:4.2.3"
   testCompileOnly"com.github.spotbugs:spotbugs-annotations:4.2.3"
 }
+
 startScripts {
     applicationName = 'run'
     applicationDefaultJvmArgs = ['-Dcom.tsurugidb.tsubakuro.jniverify=false']
 }
+
+tasks.withType(JavaCompile) { task ->
+    task.options.encoding = 'UTF-8'
+}
+
+
 spotbugsMain {
     ignoreFailures = true
     reports {
@@ -76,5 +121,40 @@ spotbugsMain {
             enabled = project.hasProperty("ci")
             destination = file("$buildDir/reports/spotbugs/main/spotbugs.xml")
         }
+    }
+}
+
+eclipse {
+    classpath {
+        file {
+            whenMerged { classpath ->
+                classpath.entries.removeAll { it.path == '.apt_generated' }
+            }
+            withXml { provider ->
+                def node = provider.asNode()
+                // specify output path for .apt_generated
+                node.appendNode( 'classpathentry', [ kind: 'src', output: 'bin/main', path: '.apt_generated'])
+            }
+        }
+    }
+}
+
+task showTsubakuroManifest {
+    doLast {
+        def tsubakuroJar = configurations["compileClasspath"].filter {
+            it.name.startsWith("tsubakuro-session")
+        }
+        def version = resources.text.fromArchiveEntry(tsubakuroJar, "META-INF/MANIFEST.MF")
+        print(version.asString())
+    }
+}
+
+task showIceaxeManifest {
+    doLast {
+        def iceaxeJar = configurations["compileClasspath"].filter {
+            it.name.startsWith("iceaxe-core")
+        }
+        def version = resources.text.fromArchiveEntry(iceaxeJar, "META-INF/MANIFEST.MF")
+        print(version.asString())
     }
 }

@@ -24,6 +24,8 @@ jobs:
         working-directory: src
     env:
       JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF8
+      GPR_USER: ${{ github.repository_owner }}
+      GPR_KEY: ${{ secrets.GHCR_PAT }}
 
     services:
       postgres:
@@ -36,6 +38,12 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+      tsurugi:
+        image: ghcr.io/project-tsurugi/tsurugi:latest
+        credentials:
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GHCR_PAT }}
+
 
     steps:
       - id: Checkout
@@ -58,13 +66,13 @@ jobs:
       - id: Assemble
         name: Assemble
         run: |
-          ./gradlew -i clean assemble
+          ./gradlew -i showTsubakuroManifest showIceaxeManifest clean assemble
 
       - id: Test
         name: Test
         continue-on-error: false
         run: |
-          ./gradlew -i test -Pphone-bill.url="jdbc:postgresql://postgres/phonebill"
+          ./gradlew -i test -Purl.replace="jdbc:postgresql://127.0.0.1/phonebill|jdbc:postgresql://postgres/phonebill,tcp://localhost:12345|tcp://tsurugi:12345"
 
       - id: Static_Analysis
         name: Static_Analysis
@@ -88,7 +96,7 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         with:
           kind: 'job-result'
-          channel: 'tsurugi-batchapp-benchmark'
+          channel: 'tsurugi-build'
           status: ${{ job.status }}
           step_context: ${{ toJson(steps) }}
           username: ${{ github.workflow }}
