@@ -2,9 +2,11 @@ package com.tsurugidb.benchmark.phonebill.db.postgresql;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.db.dao.ContractDao;
+import com.tsurugidb.benchmark.phonebill.db.dao.Ddl;
 import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.dao.ContractDaoJdbcNoBatchUpdate;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.dao.HistoryDaoJdbcNoBatchUpdate;
+import com.tsurugidb.benchmark.phonebill.db.postgresql.dao.DdlPostgresqlNoBatchUpdate;
 
 public class PhoneBillDbManagerPostgresqlNoBatchUpdate extends PhoneBillDbManagerPostgresql {
 
@@ -33,6 +35,16 @@ public class PhoneBillDbManagerPostgresqlNoBatchUpdate extends PhoneBillDbManage
 			historyDao = new HistoryDaoJdbcNoBatchUpdate(this);
 		}
 		return historyDao;
+	}
+
+	private Ddl ddl;
+
+	@Override
+	public synchronized Ddl getDdl() {
+		if (ddl == null) {
+			ddl = new DdlPostgresqlNoBatchUpdate(this);
+		}
+		return ddl;
 	}
 
 }

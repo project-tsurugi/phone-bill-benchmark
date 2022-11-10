@@ -45,18 +45,25 @@ public class DdlPostgresql extends DdlJdbc {
 	@SuppressFBWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
 	@Override
 	public void createIndexes() {
+		createIndexes(true);
+	}
+
+	protected void createIndexes(boolean createSecondaryIndexes) {
 		long startTime = System.currentTimeMillis();
-		executeWithLogging("create index idx_df on history(df)");
-		executeWithLogging("create index idx_st on history(start_time)");
-		executeWithLogging("create index idx_rp on history(recipient_phone_number, start_time)");
+		if (createSecondaryIndexes) {
+			executeWithLogging("create index idx_df on history(df)");
+			executeWithLogging("create index idx_st on history(start_time)");
+			executeWithLogging("create index idx_rp on history(recipient_phone_number, start_time)");
+		}
 		executeWithLogging(
-				"alter table history add constraint history_pkey " + "primary key (caller_phone_number, start_time)");
+				"alter table history add constraint history_pkey primary key (caller_phone_number, start_time)");
 		executeWithLogging(
-				"alter table contracts add constraint contracts_pkey " + "primary key (phone_number, start_date)");
+				"alter table contracts add constraint contracts_pkey primary key (phone_number, start_date)");
 		long elapsedTime = System.currentTimeMillis() - startTime;
 		String format = "Create indexies in %,.3f sec ";
 		LOG.info(String.format(format, elapsedTime / 1000d));
 	}
+
 
 	/**
 	 * 指定のテーブルからPrimaryKeyを削除する
@@ -75,7 +82,7 @@ public class DdlPostgresql extends DdlJdbc {
 	 * @param index
 	 */
 	@SuppressFBWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
-	private void dropIndex(String index) {
+	protected void dropIndex(String index) {
 		execute("drop index if exists " + index);
 	}
 

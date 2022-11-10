@@ -29,6 +29,7 @@ import com.tsurugidb.benchmark.phonebill.db.oracle.dao.DdlOracle;
 import com.tsurugidb.benchmark.phonebill.db.postgresql.PhoneBillDbManagerPostgresql;
 import com.tsurugidb.benchmark.phonebill.db.postgresql.PhoneBillDbManagerPostgresqlNoBatchUpdate;
 import com.tsurugidb.benchmark.phonebill.db.postgresql.dao.DdlPostgresql;
+import com.tsurugidb.benchmark.phonebill.db.postgresql.dao.DdlPostgresqlNoBatchUpdate;
 
 class PhoneBillDbManagerTest extends AbstractPhoneBillDbManagerTest {
 	int commitCount = 0;
@@ -143,7 +144,7 @@ class PhoneBillDbManagerTest extends AbstractPhoneBillDbManagerTest {
 	void testGetDdl() {
 		doTestGet(DdlPostgresql.class, ()->getManagerPostgresql().getDdl());
 		doTestGet(DdlOracle.class, ()->getManagerOracle().getDdl());
-		doTestGet(DdlPostgresql.class, ()->getManagerPostgresqlNoBatchupdate().getDdl());
+		doTestGet(DdlPostgresqlNoBatchUpdate.class, ()->getManagerPostgresqlNoBatchupdate().getDdl());
 		doTestGet(DdlIceaxe.class, ()->getManagerIceaxe().getDdl());
 	}
 
