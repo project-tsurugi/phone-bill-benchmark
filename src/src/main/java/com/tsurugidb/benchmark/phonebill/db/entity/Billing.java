@@ -1,6 +1,7 @@
 package com.tsurugidb.benchmark.phonebill.db.entity;
 
 import java.sql.Date;
+import java.time.LocalDate;
 
 import com.tsurugidb.benchmark.phonebill.util.DateUtils;
 
@@ -109,20 +110,16 @@ public class Billing {
 		return new Date(targetMonth);
 	}
 
-	// Iceaxe用のメソッド TsurguiがTime型を未サポートなので代わりにlongを使う。
-	// またTsurugiがis not nullを未サポートなので代わりにLong.MAX_VALUEを使う。
-	public long getTargetMonthAsLong() {
-		return targetMonth;
+	public LocalDate getTargetMonthAsLocalDate() {
+		return DateUtils.toLocalDate(targetMonth);
 	}
 
 	public void setTargetMonth(Date targetMonth) {
 		this.targetMonth = targetMonth.getTime();
 	}
 
-	// Iceaxe用のメソッド TsurguiがTime型を未サポートなので代わりにlongを使う。
-	// またTsurugiがis not nullを未サポートなので代わりにLong.MAX_VALUEを使う。
-	public void setTargetMonth(long targetMonth) {
-		this.targetMonth = targetMonth;
+	public void setTargetMonth(LocalDate targetMonth) {
+		this.targetMonth = DateUtils.toEpocMills(targetMonth);
 	}
 
 	public int getBasicCharge() {

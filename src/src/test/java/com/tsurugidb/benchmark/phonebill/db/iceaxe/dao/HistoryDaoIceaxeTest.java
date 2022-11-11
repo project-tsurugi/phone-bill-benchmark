@@ -3,6 +3,7 @@ package com.tsurugidb.benchmark.phonebill.db.iceaxe.dao;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.sql.Date;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -143,7 +144,7 @@ class HistoryDaoIceaxeTest {
 	final void testGetMaxStartTime() {
 		// 履歴が空のとき
 
-		assertEquals(0L, testTools.execute(() -> {
+		assertEquals(DateUtils.toEpocMills(LocalDate.MIN), testTools.execute(() -> {
 			return dao.getMaxStartTime();
 		}));
 

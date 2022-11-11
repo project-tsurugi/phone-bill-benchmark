@@ -19,7 +19,7 @@ import com.tsurugidb.iceaxe.statement.TgVariableList;
 import com.tsurugidb.iceaxe.statement.TsurugiPreparedStatementUpdate1;
 
 public class ContractDaoIceaxe implements ContractDao {
-	// TODO tsurugiがis not nullを使えないため、nullの代わりにLong.maxValueを使用している => is not nullサポート後にnullを使用するように変更する
+	// TODO tsurugiがis not nullを使えないため、nullの代わりにLocalDate.MAXを使用している => is not nullサポート後にnullを使用するように変更する
 
 	private final IceaxeUtils utils;
 
@@ -30,14 +30,14 @@ public class ContractDaoIceaxe implements ContractDao {
 	private static final TgEntityResultMapping<Contract> RESULT_MAPPING =
 			TgResultMapping.of(Contract::new)
 			.character("phone_number", Contract::setPhoneNumber)
-			.int8("start_date", Contract::setStartDate)
-			.int8("end_date", Contract::setEndDate)
+			.date("start_date", Contract::setStartDate)
+			.date("end_date", Contract::setEndDate)
 			.character("charge_rule", Contract::setRule);
 
 	private static final TgParameterMapping<Contract> PARAMETER_MAPPING = TgParameterMapping.of(Contract.class)
 			.add("phone_number", TgDataType.CHARACTER, Contract::getPhoneNumber)
-			.add("start_date", TgDataType.INT8, Contract::getStartDateAsLong)
-			.add("end_date", TgDataType.INT8, Contract::getEndDateAsLong)
+			.add("start_date", TgDataType.DATE, Contract::getStartDateAsLocalDate)
+			.add("end_date", TgDataType.DATE, Contract::getEndDateAsLocalDate)
 			.add("charge_rule", TgDataType.CHARACTER, Contract::getRule);
 
 	private TsurugiPreparedStatementUpdate1<Contract> createInsertPs() {
@@ -87,8 +87,8 @@ public class ContractDaoIceaxe implements ContractDao {
 	private Contract createContract(String phoneNumber, TsurugiResultEntity r) {
 		Contract c = new Contract();
 		c.setPhoneNumber(phoneNumber);
-		c.setStartDate(r.getInt8OrNull("start_date"));
-		c.setEndDate(r.getInt8OrNull("end_date"));
+		c.setStartDate(r.getDate("start_date"));
+		c.setEndDate(r.getDateOrNull("end_date"));
 		c.setRule(r.getCharacterOrNull("charge_rule"));
 		return c;
 	}
@@ -102,9 +102,9 @@ public class ContractDaoIceaxe implements ContractDao {
 		String sql = "select phone_number, start_date, end_date, charge_rule"
 				+ " from contracts where start_date <= :start_date and end_date >= :end_date"
 				+ " order by phone_number";
-		var variable = TgVariableList.of().int8("start_date").int8("end_date");
+		var variable = TgVariableList.of().date("start_date").date("end_date");
 		var ps = utils.createPreparedQuery(sql, TgParameterMapping.of(variable), RESULT_MAPPING);
-		var param = TgParameterList.of().add("end_date", start.getTime()).add("start_date", end.getTime());
+		var param = TgParameterList.of().add("end_date", start.toLocalDate() ).add("start_date", end.toLocalDate());
 		return utils.execute(ps, param);
 	}
 

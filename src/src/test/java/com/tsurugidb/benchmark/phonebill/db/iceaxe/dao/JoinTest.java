@@ -182,7 +182,7 @@ public class JoinTest extends AbstractJdbcTestCase {
 				.character("caller_phone_number", History::setCallerPhoneNumber)
 				.character("recipient_phone_number", History::setRecipientPhoneNumber)
 				.character("payment_categorty", History::setPaymentCategorty)
-				.int8("start_time", History::setStartTime)
+				.dateTime("start_time", History::setStartTime)
 				.int4("time_secs", History::setTimeSecs)
 				.int4("charge", History::setCharge)
 				.int4("df", History::setDf);

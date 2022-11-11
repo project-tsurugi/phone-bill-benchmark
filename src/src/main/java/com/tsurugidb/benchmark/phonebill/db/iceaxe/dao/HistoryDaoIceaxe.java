@@ -1,6 +1,8 @@
 package com.tsurugidb.benchmark.phonebill.db.iceaxe.dao;
 
-import java.sql.Date;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -30,7 +32,7 @@ public class HistoryDaoIceaxe implements HistoryDao {
 			.character("caller_phone_number", History::setCallerPhoneNumber)
 			.character("recipient_phone_number", History::setRecipientPhoneNumber)
 			.character("payment_categorty", History::setPaymentCategorty)
-			.int8("start_time", History::setStartTime)
+			.dateTime("start_time", History::setStartTime)
 			.int4("time_secs", History::setTimeSecs)
 			.int4("charge", History::setCharge)
 			.int4("df", History::setDf);
@@ -39,7 +41,7 @@ public class HistoryDaoIceaxe implements HistoryDao {
 			.add("caller_phone_number", TgDataType.CHARACTER, History::getCallerPhoneNumber)
 			.add("recipient_phone_number", TgDataType.CHARACTER, History::getRecipientPhoneNumber)
 			.add("payment_categorty", TgDataType.CHARACTER, History::getPaymentCategorty)
-			.add("start_time", TgDataType.INT8, History::getStartTimeAsLong)
+			.add("start_time", TgDataType.DATE_TIME, History::getStartTimeAsLocalDateTime)
 			.add("time_secs", TgDataType.INT4, History::getTimeSecs)
 			.add("charge", TgDataType.INT4, History::getCharge).add("df", TgDataType.INT4, History::getDf);
 
@@ -78,7 +80,7 @@ public class HistoryDaoIceaxe implements HistoryDao {
 	public long getMaxStartTime() {
 		var ps = utils.createPreparedQuery("select max(start_time) as max_start_time from history");
 		List<TsurugiResultEntity> list = utils.execute(ps);
-		return (Long) list.get(0).findInt8("max_start_time").orElse(0L);
+		return DateUtils.toEpocMills(list.get(0).findDateTime("max_start_time").orElse(LocalDateTime.MIN));
 	}
 
 	@Override
@@ -113,26 +115,27 @@ public class HistoryDaoIceaxe implements HistoryDao {
 	@Override
 	public List<History> getHistories(Key key) {
 		String sql1 = "select end_date from contracts where phone_number = :phone_number and start_date = :start_date";
-		var variable1 = TgVariableList.of().character("phone_number").int8("start_date");
+		var variable1 = TgVariableList.of().character("phone_number").date("start_date");
 		var ps1 = utils.createPreparedQuery(sql1, TgParameterMapping.of(variable1));
 		var param1 = TgParameterList.of()
 				.add("phone_number", key.getPhoneNumber())
-				.add("start_date", key.getStartDate().getTime());
+				.add("start_date", key.getStDateAsLocalDate());
 		var list = utils.execute(ps1, param1);
 		if (list.isEmpty()) {
 			return Collections.emptyList();
 		}
 
-		long endDate = list.get(0).getInt8("end_date");
+		LocalDate endDate = list.get(0).getDate("end_date");
 		String sql2 = "select caller_phone_number, recipient_phone_number, payment_categorty, start_time,"
 				+ " time_secs, charge, df from history where start_time >= :start_date and start_time < :end_date"
 				+ " and caller_phone_number = :phone_number";
-		var variable2 = TgVariableList.of().character("phone_number").int8("start_date").int8("end_date");
+		var variable2 = TgVariableList.of().character("phone_number").dateTime("start_date").dateTime("end_date");
 		var ps = utils.createPreparedQuery(sql2, TgParameterMapping.of(variable2), RESULT_MAPPING);
 		var param2 = TgParameterList.of()
 				.add("phone_number", key.getPhoneNumber())
-				.add("start_date", key.getStartDate().getTime())
-				.add("end_date", endDate == Long.MAX_VALUE ? Long.MAX_VALUE: endDate + DateUtils.A_DAY_IN_MILLISECONDS);
+				.add("start_date", key.getStartDateAsLocalDateTime())
+				.add("end_date", LocalDateTime.of(
+						endDate.equals(LocalDate.MAX) ? LocalDate.MAX: endDate.plusDays(1), LocalTime.MIDNIGHT));
 		return utils.execute(ps, param2);
 	}
 
@@ -149,7 +152,7 @@ public class HistoryDaoIceaxe implements HistoryDao {
 				+ DateUtils.A_DAY_IN_MILLISECONDS + " or c.end_date = " + Long.MAX_VALUE + ")"
 				+ " and c.phone_number = :phone_number and c.start_date = :start_date" + " order by h.start_time";
 
-		var variable = TgVariableList.of().character("phone_number").int8("start_date");
+		var variable = TgVariableList.of().character("phone_number").date("start_date");
 		var ps = utils.createPreparedQuery(sql, TgParameterMapping.of(variable), RESULT_MAPPING);
 		var param = TgParameterList.of()
 				.add("phone_number", key.getPhoneNumber())
@@ -162,8 +165,8 @@ public class HistoryDaoIceaxe implements HistoryDao {
 	@Override
 	public List<History> getHistories(CalculationTarget target) {
 		Contract contract = target.getContract();
-		Date start = target.getStart();
-		Date end = target.getEnd();
+		LocalDateTime start = LocalDateTime.of(target.getStart().toLocalDate(), LocalTime.MIDNIGHT);
+		LocalDateTime end =  LocalDateTime.of(target.getEnd().toLocalDate(), LocalTime.MIDNIGHT) ;
 
 		String sql = "select caller_phone_number, recipient_phone_number, payment_categorty, start_time, time_secs,"
 				+ " charge, df" + " from history "
@@ -171,12 +174,12 @@ public class HistoryDaoIceaxe implements HistoryDao {
 				+ " and ((caller_phone_number = :caller_phone_number  and payment_categorty = 'C') "
 				+ "  or (recipient_phone_number = :recipient_phone_number and payment_categorty = 'R'))"
 				+ " and df = 0";
-		var variable = TgVariableList.of().int8("start").int8("end").character("caller_phone_number")
+		var variable = TgVariableList.of().dateTime("start").dateTime("end").character("caller_phone_number")
 				.character("recipient_phone_number");
 		var ps = utils.createPreparedQuery(sql, TgParameterMapping.of(variable), RESULT_MAPPING);
 		var param = TgParameterList.of()
-				.add("start", start.getTime())
-				.add("end", end.getTime() + DateUtils.A_DAY_IN_MILLISECONDS)
+				.add("start", start)
+				.add("end", end.plusDays(1))
 				.add("caller_phone_number", contract.getPhoneNumber())
 				.add("recipient_phone_number",contract.getPhoneNumber());
 		return  utils.execute(ps, param);

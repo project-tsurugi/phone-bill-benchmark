@@ -129,7 +129,7 @@ public class IceaxeTestTools {
 			var callerPhoneNumber = TgVariable.ofCharacter("caller_phone_number");
 			var recipientPhoneNumber = TgVariable.ofCharacter("recipient_phone_number");
 			var paymentCategorty = TgVariable.ofCharacter("payment_categorty");
-			var startTime = TgVariable.ofInt8("start_time");
+			var startTime = TgVariable.ofDateTime("start_time");
 			var timeSecs = TgVariable.ofInt4("time_secs");
 			var charge = TgVariable.ofInt4("charge");
 			var df = TgVariable.ofInt4("df");
@@ -147,7 +147,7 @@ public class IceaxeTestTools {
 						callerPhoneNumber.bind(caller_phone_number),
 						recipientPhoneNumber.bind(recipient_phone_number),
 						paymentCategorty.bind(payment_categorty),
-						startTime.bind(start_time.getTime()),
+						startTime.bind(start_time.toLocalDateTime()),
 						timeSecs.bind(time_secs),
 						charge.bind(_charge),
 						df.bind(_df));
@@ -198,8 +198,8 @@ public class IceaxeTestTools {
 				+ ") values(:phone_number, :start_date, :end_date, :charge_rule)";
 		TgParameterMapping<Contract> param = TgParameterMapping.of(Contract.class)
 				.add("phone_number", TgDataType.CHARACTER, Contract::getPhoneNumber)
-				.add("start_date", TgDataType.INT8, Contract::getStartDateAsLong)
-				.add("end_date", TgDataType.INT8, Contract::getEndDateAsLong)
+				.add("start_date", TgDataType.DATE, Contract::getStartDateAsLocalDate)
+				.add("end_date", TgDataType.DATE, Contract::getEndDateAsLocalDate)
 				.add("charge_rule", TgDataType.CHARACTER, Contract::getRule);
 		execute(() -> {
 			try (var ps = session.createPreparedStatement(sql, param)) {
@@ -236,7 +236,7 @@ public class IceaxeTestTools {
 				+ ":batch_exec_id)";
 		TgParameterMapping<Billing> param = TgParameterMapping.of(Billing.class)
 				.add("phone_number", TgDataType.CHARACTER, Billing::getPhoneNumber)
-				.add("target_month", TgDataType.INT8, Billing::getTargetMonthAsLong)
+				.add("target_month", TgDataType.DATE, Billing::getTargetMonthAsLocalDate)
 				.add("basic_charge", TgDataType.INT4, Billing::getBasicCharge)
 				.add("metered_charge", TgDataType.INT4, Billing::getMeteredCharge)
 				.add("billing_amount", TgDataType.INT4, Billing::getBillingAmount)
@@ -286,7 +286,7 @@ public class IceaxeTestTools {
 				.character("caller_phone_number", History::setCallerPhoneNumber)
 				.character("recipient_phone_number", History::setRecipientPhoneNumber)
 				.character("payment_categorty", History::setPaymentCategorty)
-				.int8("start_time", History::setStartTime)
+				.dateTime("start_time", History::setStartTime)
 				.int4("time_secs", History::setTimeSecs)
 				.int4("charge", History::setCharge)
 				.int4("df", History::setDf);
@@ -322,7 +322,7 @@ public class IceaxeTestTools {
 		var resultMapping =
 				TgResultMapping.of(Billing::new)
 				.character("phone_number", Billing::setPhoneNumber)
-				.int8("target_month", Billing::setTargetMonth)
+				.date("target_month", Billing::setTargetMonth)
 				.int4("basic_charge", Billing::setBasicCharge)
 				.int4("metered_charge", Billing::setMeteredCharge)
 				.int4("billing_amount", Billing::setBillingAmount)
@@ -364,8 +364,8 @@ public class IceaxeTestTools {
 		var resultMapping =
 				TgResultMapping.of(Contract::new)
 				.character("phone_number", Contract::setPhoneNumber)
-				.int8("start_date", Contract::setStartDate)
-				.int8("end_date", Contract::setEndDate)
+				.date("start_date", Contract::setStartDate)
+				.date("end_date", Contract::setEndDate)
 				.character("charge_rule", Contract::setRule);
 		return execute(() -> {
 			try (var ps = session.createPreparedQuery(sql, resultMapping)) {

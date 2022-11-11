@@ -1,6 +1,8 @@
 package com.tsurugidb.benchmark.phonebill.db.entity;
 
 import java.sql.Date;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import com.tsurugidb.benchmark.phonebill.util.DateUtils;
 
@@ -133,6 +135,10 @@ public class Contract implements Cloneable {
 			return phoneNumber;
 		}
 
+		public LocalDate getStDateAsLocalDate() {
+			return DateUtils.toLocalDate(startDate);
+		}
+
 		public void setPhoneNumber(String phoneNumber) {
 			this.phoneNumber = phoneNumber;
 		}
@@ -140,6 +146,11 @@ public class Contract implements Cloneable {
 		public Date getStartDate() {
 			return new Date(startDate);
 		}
+
+		public LocalDateTime getStartDateAsLocalDateTime() {
+			return DateUtils.toLocalDateTime(startDate);
+		}
+
 
 		public void setStartDate(Date startDate) {
 			this.startDate = startDate.getTime();
@@ -172,39 +183,37 @@ public class Contract implements Cloneable {
 		return new Date(startDate);
 	}
 
-	public long getStartDateAsLong() {
-		return startDate;
+	public LocalDate getStartDateAsLocalDate() {
+		return DateUtils.toLocalDate(startDate);
 	}
 
 	public void setStartDate(Date startDate) {
 		this.startDate = startDate.getTime();
 	}
 
-	public void setStartDate(long startDate) {
-		this.startDate = startDate;
+	public void setStartDate(LocalDate startDate) {
+		this.startDate = DateUtils.toEpocMills(startDate);
 	}
 
 	public Date getEndDate() {
 		return endDate == null ? null : new Date(endDate);
 	}
 
-	// Iceaxe用のメソッド TsurguiがTime型を未サポートなので代わりにlongを使う。
-	// またTsurugiがis not nullを未サポートなので代わりにLong.MAX_VALUEを使う。
-	public long getEndDateAsLong() {
+	// Tsurugiがis not nullを未サポートなのでNULL代わりにLocalDate.MAXを使う。
+	public LocalDate getEndDateAsLocalDate() {
 		if (endDate == null) {
-			return Long.MAX_VALUE;
+			return LocalDate.MAX;
 		}
-		return endDate;
+		return DateUtils.toLocalDate(endDate);
 	}
 
 	public void setEndDate(Date endDate) {
 		this.endDate = endDate == null ? null : endDate.getTime();
 	}
 
-	// Iceaxe用のメソッド TsurguiがTime型を未サポートなので代わりにlongを使う。
-	// またTsurugiがis not nullを未サポートなので代わりにLong.MAX_VALUEを使う。
-	public void setEndDate(Long endDate) {
-		this.endDate = endDate == Long.MAX_VALUE  ? null : endDate;
+	// Tsurugiがis not nullを未サポートなので代わりにLocalDate.MAXを使う。
+	public void setEndDate(LocalDate endDate) {
+		this.endDate = endDate.equals(LocalDate.MAX)  ? null : DateUtils.toEpocMills(endDate);
 	}
 
 

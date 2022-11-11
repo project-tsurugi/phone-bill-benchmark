@@ -2,6 +2,7 @@ package com.tsurugidb.benchmark.phonebill.db.entity;
 
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 import com.tsurugidb.benchmark.phonebill.util.DateUtils;
 
@@ -163,16 +164,16 @@ public class History implements Cloneable{
 		return new Timestamp(startTime);
 	}
 
-	public long getStartTimeAsLong() {
-		return startTime;
+	public LocalDateTime getStartTimeAsLocalDateTime() {
+		return DateUtils.toLocalDateTime(startTime);
 	}
 
 	public void setStartTime(Timestamp startTime) {
 		this.startTime = startTime.getTime();
 	}
 
-	public void setStartTime(long startTime) {
-		this.startTime = startTime;
+	public void setStartTime(LocalDateTime startTime) {
+		this.startTime = DateUtils.toEpocMills(startTime);
 	}
 
 	public int getTimeSecs() {

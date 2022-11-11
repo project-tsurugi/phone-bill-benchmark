@@ -48,7 +48,7 @@ public class DdlIceaxe implements Ddl {
 				+ "caller_phone_number varchar(15) not null," 		// 発信者電話番号
 				+ "recipient_phone_number varchar(15) not null," 	// 受信者電話番号
 				+ "payment_categorty char(1) not null," 			// 料金区分
-				+ "start_time bigint not null,"			 		// 通話開始時刻
+				+ "start_time timestamp not null,"			 		// 通話開始時刻
 				+ "time_secs int not null," 					// 通話時間(秒)
 				+ "charge int," 								// 料金
 				+ "df int not null," 							// 論理削除フラグ
@@ -60,8 +60,8 @@ public class DdlIceaxe implements Ddl {
 	public void createContractsTable() {
 		String create_table = "create table contracts ("
 				+ "phone_number varchar(15) not null," 		// 電話番号
-				+ "start_date bigint not null," 				// 契約開始日
-				+ "end_date bigint,"							// 契約終了日
+				+ "start_date date not null," 				// 契約開始日
+				+ "end_date date,"							// 契約終了日
 				+ "charge_rule varchar(255) not null,"		// 料金計算ルール
 				+ "primary key (phone_number, start_date)"
 				+ ")";
@@ -71,12 +71,11 @@ public class DdlIceaxe implements Ddl {
 	public void createBillingTable() {
 		String create_table = "create table billing ("
 				+ "phone_number varchar(15) not null," 					// 電話番号
-				+ "target_month bigint not null," 						// 対象年月
+				+ "target_month date not null," 						// 対象年月
 				+ "basic_charge int not null," 						// 基本料金
 				+ "metered_charge int not null,"					// 従量料金
 				+ "billing_amount int not null,"					// 請求金額
 				+ "batch_exec_id varchar(36) not null,"					// バッチ実行ID
-//				+ "constraint  billing_pkey primary key(target_month, phone_number, batch_exec_id)"
 				+ "primary key(target_month, phone_number, batch_exec_id)"
 				+ ")";
 		execute(create_table);
