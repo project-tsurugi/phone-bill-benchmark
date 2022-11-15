@@ -211,4 +211,9 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 			contract.setEndDate(new Date(startTime + r * DAY_IN_MILLS));
 		}
 	}
+
+	@Override
+	protected void atTerminate() {
+		manager.close();
+	}
 }

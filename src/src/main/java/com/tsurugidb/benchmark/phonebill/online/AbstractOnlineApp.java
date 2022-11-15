@@ -120,6 +120,15 @@ public abstract class AbstractOnlineApp implements Runnable{
 	protected abstract void updateDatabase();
 
 
+	/**
+	 * アプリの終了前に呼び出されるコールバック。デフォルトでは何もしない。
+	 *
+	 */
+	protected void atTerminate() {
+		// Nothing to do
+	}
+
+
 	@Override
 	@SuppressFBWarnings("DM_EXIT")
 	public void run() {
@@ -135,6 +144,7 @@ public abstract class AbstractOnlineApp implements Runnable{
 			while (!terminationRequested.get()) {
 				schedule();
 			}
+			atTerminate();
 			LOG.info("{} terminated.", name);
 		} catch (RuntimeException | IOException e) {
 			LOG.error("Aborting by exception", e);

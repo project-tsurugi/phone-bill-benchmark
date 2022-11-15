@@ -172,4 +172,9 @@ public class HistoryInsertApp extends AbstractOnlineApp {
 	ContractInfoReader getContractInfoReader() {
 		return generateHistoryTask.getContractInfoReader();
 	}
+
+	@Override
+	protected void atTerminate() {
+		manager.close();
+	}
 }

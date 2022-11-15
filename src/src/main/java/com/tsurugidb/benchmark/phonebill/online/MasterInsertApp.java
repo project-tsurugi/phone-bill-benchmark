@@ -53,4 +53,9 @@ public class MasterInsertApp extends AbstractOnlineApp {
 		LOG.debug("ONLINE APP: Insert {} record to contracs(phoneNumber = {}, startDate = {}).", ret,
 				contract.getPhoneNumber(), contract.getStartDate());
 	}
+
+	@Override
+	protected void atTerminate() {
+		manager.close();
+	}
 }

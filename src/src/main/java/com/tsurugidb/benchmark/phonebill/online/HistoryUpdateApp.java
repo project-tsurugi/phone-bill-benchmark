@@ -132,4 +132,9 @@ public class HistoryUpdateApp extends AbstractOnlineApp {
 			history.setCharge(null);
 		}
 	}
+
+	@Override
+	protected void atTerminate() {
+		manager.close();
+	}
 }
