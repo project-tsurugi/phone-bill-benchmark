@@ -38,13 +38,13 @@ java {
     mainClassName = 'com.tsurugidb.benchmark.phonebill.app.Main'
 }
 distTar {
-    archiveName = "phone-bill.tar"
+    archiveFileName = "phone-bill.tar"
 }
 distZip {
-    archiveName = "phone-bill.zip"
+    archiveFileName = "phone-bill.zip"
 }
 jar {
-    archiveName = "phone-bill.jar"
+    archiveFileName = "phone-bill.jar"
 }
 
 configurations.all {
@@ -79,7 +79,7 @@ test {
 
 
 dependencies {
-  api 'com.tsurugidb.iceaxe:iceaxe-core:0.0.1-SNAPSHOT'
+  implementation 'com.tsurugidb.iceaxe:iceaxe-core:0.0.1-SNAPSHOT' 
 
   // https://mvnrepository.com/artifact/org.postgresql/postgresql
   implementation group: 'org.postgresql', name: 'postgresql', version: '42.2.16'
@@ -97,6 +97,11 @@ dependencies {
   implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.0'
   compileOnly"com.github.spotbugs:spotbugs-annotations:4.2.3"
   testCompileOnly"com.github.spotbugs:spotbugs-annotations:4.2.3"
+}
+
+
+configurations.implementation {
+    exclude group: 'org.slf4j', module: 'slf4j-simple'
 }
 
 startScripts {
