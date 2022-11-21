@@ -135,4 +135,4 @@ CBで電話料金計算バッチを実行する際に使用することを想定
     * もっとも簡単な対応方法は、サンプリング間隔を延ばすこと => 測定精度とのトレードオフ
     * 他に方法がないか要調査
 * `create_flame_graph.sh` 実行時に他のtateyama-serverが動いているせいで、tateyama-serverの起動に失敗することがある。この場合、原因となるtateyama-server停止後に`create_flame_graph.sh` を実行すれば良い。
-* `create_flame_graph.sh`の出力ファイルは実行後とに上書きされます。
+* `create_flame_graph.sh`の出力ファイルは実行ごとに上書きされます。
