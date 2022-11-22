@@ -38,9 +38,11 @@ $INSTALL_DIR/phone-bill/bin/run PhoneBill $CONF
 kill %1
 wait
 
+# shutdown oltp server
+
+$TSURUGI_DIR/bin/oltp kill --conf=$BIN_DIR/etc/phone-bill.ini && true
+
 # create flame graph from tateyama-server
 
 /usr/bin/perf script | stackcollapse-perf.pl | flamegraph.pl > $LOG_DIR/$LABEL-server-fg.svg
-
-
 
