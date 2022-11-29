@@ -23,6 +23,7 @@ import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.RetryOverRuntimeException;
 import com.tsurugidb.benchmark.phonebill.db.entity.Billing;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
+import com.tsurugidb.benchmark.phonebill.db.entity.History;
 import com.tsurugidb.benchmark.phonebill.util.DateUtils;
 
 class CalculationTaskTest extends AbstractJdbcTestCase {
@@ -282,6 +283,18 @@ class CalculationTaskTest extends AbstractJdbcTestCase {
 			if (callCount == countThrowsRetriableException) {
 				throw retriableException;
 			}
+		}
+
+		@Override
+		public List<History> doCalc1(CalculationTarget target) {
+			// TODO 自動生成されたメソッド・スタブ
+			return null;
+		}
+
+		@Override
+		public void doCalc2(List<History> histories, CalculationTarget target) {
+			// TODO 自動生成されたメソッド・スタブ
+
 		}
 	}
 }

@@ -92,14 +92,26 @@ public class CalculationTask implements Callable<Exception> {
 				try {
 					AtomicInteger tryInThisTx = new AtomicInteger(0);
 					String str = txOption.toString();
+					List<History> histories =
 					manager.execute(TxOption.of(Integer.MAX_VALUE, TgTmSetting.ofAlways(txOption)), () -> {
 						tryInThisTx.incrementAndGet();
 						tryCounter.incrementAndGet();
-						LOG.debug("start tansaction with txOption = {}, key = {}, tryCount = {}", str,
+						LOG.debug("start tx1 with txOption = {}, key = {}, tryCount = {}", str,
 								target.getContract().getPhoneNumber(), tryInThisTx);
-						calculator.doCalc(target);
+						return calculator.doCalc1(target);
 					});
-					abortCounter.addAndGet(tryInThisTx.get() - 1);
+					try {
+					Thread.sleep(10*1000);
+					} catch (InterruptedException e) {
+						LOG.error("InterruptedException caught", e);
+					}
+					manager.execute(TxOption.of(Integer.MAX_VALUE, TgTmSetting.ofAlways(txOption)), () -> {
+						tryInThisTx.incrementAndGet();
+						tryCounter.incrementAndGet();
+						LOG.debug("start tx2 with txOption = {}, key = {}, tryCount = {}", str,
+								target.getContract().getPhoneNumber(), tryInThisTx);
+						calculator.doCalc2(histories, target);
+					});
 					queue.success(target);
 					n++;
 				} catch (RuntimeException e) {
@@ -191,16 +203,34 @@ public class CalculationTask implements Callable<Exception> {
 		 * @param target
 		 */
 		void doCalc(CalculationTarget target);
+		List<History> doCalc1(CalculationTarget target);
+		void doCalc2(List<History> histories, CalculationTarget target);
 	}
 
 	protected class CalculatorImpl implements Calculator {
 		@Override
 		public void doCalc(CalculationTarget target) {
+			List<History> histories =  doCalc1(target);
+			doCalc2(histories, target);
+		}
+
+
+		@Override
+		public List<History> doCalc1(CalculationTarget target) {
 			Contract contract = target.getContract();
 			LOG.debug("Start calculation for  contract: {}.", contract);
 			try {
-				List<History> histories = historyDao.getHistories(target);
+				return historyDao.getHistories(target);
+			} catch (RuntimeException e) {
+				LOG.debug("Abort calculation for contract: " + contract + ".", e);
+				throw e;
+			}
+		}
 
+		@Override
+		public void doCalc2(List<History> histories, CalculationTarget target) {
+			Contract contract = target.getContract();
+			try {
 				CallChargeCalculator callChargeCalculator = target.getCallChargeCalculator();
 				BillingCalculator billingCalculator = target.getBillingCalculator();
 				billingCalculator.init();
