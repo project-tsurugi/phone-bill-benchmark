@@ -44,5 +44,9 @@ $TSURUGI_DIR/bin/oltp kill --conf=$BIN_DIR/etc/phone-bill.ini && true
 
 # create flame graph from tateyama-server
 
-/usr/bin/perf script | stackcollapse-perf.pl | flamegraph.pl > $LOG_DIR/$LABEL-server-fg.svg
+/usr/bin/perf script -i perf.data | stackcollapse-perf.pl | flamegraph.pl > $LOG_DIR/$LABEL-server-fg.svg
+
+# Remove file: perf.ata
+
+rm -f perf.data*
 
