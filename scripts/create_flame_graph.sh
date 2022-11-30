@@ -13,8 +13,9 @@ BIN_DIR=$(cd $(dirname $0); pwd)
 
 # start oltp server
 
+sed "s!log_location=.*!log_location=$TSURUGI_LOG_DIR!" $BIN_DIR/etc/phone-bill.ini.template > $BIN_DIR/etc/phone-bill.ini
 $TSURUGI_DIR/bin/oltp kill --conf=$BIN_DIR/etc/phone-bill.ini && true
-rm -rf  $TSURUGI_DIR/var/data/log
+rm -rf  $TSURUGI_LOG_DIR
 export GLOG_logtostderr=1
 
 $TSURUGI_DIR/bin/oltp start --conf=etc/phone-bill.ini --v=30 &> $LOG_DIR/$LABEL-tateyama-server.log && true

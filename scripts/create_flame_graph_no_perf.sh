@@ -13,12 +13,12 @@ BIN_DIR=$(cd $(dirname $0); pwd)
 
 # start oltp server
 
+sed "s!log_location=.*!log_location=$TSURUGI_LOG_DIR!" $BIN_DIR/etc/phone-bill.ini.template > $BIN_DIR/etc/phone-bill.ini
 $TSURUGI_DIR/bin/oltp kill --conf=$BIN_DIR/etc/phone-bill.ini && true
-rm -rf  $TSURUGI_DIR/var/data/log
+rm -rf  $TSURUGI_LOG_DIR
 export GLOG_logtostderr=1
 
 $TSURUGI_DIR/bin/oltp start --conf=etc/phone-bill.ini --v=30 &> $LOG_DIR/$LABEL-tateyama-server.log && true
-PID_SERVER=`ps -ef | grep tateyama-server | grep -v grep | awk '{print $2}'`
 
 # create test data
 
@@ -27,22 +27,13 @@ export JAVA_OPTS="$JAVA_OPTS -Dlogback.configurationFile=etc/logback.xml -Dlogfi
 $INSTALL_DIR/phone-bill/bin/run CreateTestData $CONF
 
 
-# execute phone-bill batch with profiling
-
-#/usr/bin/perf record -a --call-graph dwarf -p $PID_SERVER &
-#/usr/bin/perf record -a -g -p $PID_SERVER &
+# execute phone-bill batch 
 
 export JAVA_OPTS="$JAVA_OPTS -agentpath:$ASYNC_PROFILER_DIR/build/libasyncProfiler.so=start,event=wall,include="'com/tsurugidb/*'",threads,file=$LOG_DIR/$LABEL-client-fg.html"
 $INSTALL_DIR/phone-bill/bin/run PhoneBill $CONF
-
-#kill %1
-#wait
 
 # shutdown oltp server
 
 $TSURUGI_DIR/bin/oltp kill --conf=$BIN_DIR/etc/phone-bill.ini && true
 
-# create flame graph from tateyama-server
-
-#/usr/bin/perf script | stackcollapse-perf.pl | flamegraph.pl > $LOG_DIR/$LABEL-server-fg.svg
 

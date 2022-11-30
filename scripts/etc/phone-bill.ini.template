@@ -1,14 +1,14 @@
 [datastore]
-    log_location=/home/umegane/tsurugi/tsurugi/var/data/log
+    log_location=/* Replace with appropriate path. */
 
 [sql]
     lazy_worker=false
-    thread_pool_size=100
+    thread_pool_size=64
 
 [stream_endpoint]
     port=12345
-    threads=130
+    threads=3
 
 [ipc_endpoint]
     database_name=phone-bill
-    threads=130
+    threads=64
