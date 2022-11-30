@@ -46,7 +46,7 @@ $TSURUGI_DIR/bin/oltp kill --conf=$BIN_DIR/etc/phone-bill.ini && true
 
 /usr/bin/perf script -i perf.data | stackcollapse-perf.pl | flamegraph.pl > $LOG_DIR/$LABEL-server-fg.svg
 
-# Remove file: perf.ata
+# Clean up
 
 rm -f perf.data*
 
