@@ -168,21 +168,43 @@ public class HistoryDaoIceaxe implements HistoryDao {
 		LocalDateTime start = LocalDateTime.of(target.getStart().toLocalDate(), LocalTime.MIDNIGHT);
 		LocalDateTime end =  LocalDateTime.of(target.getEnd().toLocalDate(), LocalTime.MIDNIGHT) ;
 
-		String sql = "select caller_phone_number, recipient_phone_number, payment_categorty, start_time, time_secs,"
+//		TODO 現状のTsurugiはorを使った検索で意図したようにセカンダリインデックスを使用しないので初のQueryに分けて
+//		実行している。この問題が解決したら元のqueryに戻す。
+//
+//		String sql = "select caller_phone_number, recipient_phone_number, payment_categorty, start_time, time_secs,"
+//				+ " charge, df" + " from history "
+//				+ "where start_time >= :start and start_time < :end"
+//				+ " and ((caller_phone_number = :caller_phone_number  and payment_categorty = 'C') "
+//				+ "  or (recipient_phone_number = :recipient_phone_number and payment_categorty = 'R'))"
+//				+ " and df = 0";
+
+
+
+		String sql1 = "select caller_phone_number, recipient_phone_number, payment_categorty, start_time, time_secs,"
 				+ " charge, df" + " from history "
 				+ "where start_time >= :start and start_time < :end"
-				+ " and ((caller_phone_number = :caller_phone_number  and payment_categorty = 'C') "
-				+ "  or (recipient_phone_number = :recipient_phone_number and payment_categorty = 'R'))"
-				+ " and df = 0";
-		var variable = TgVariableList.of().dateTime("start").dateTime("end").character("caller_phone_number")
+				+ " and recipient_phone_number = :recipient_phone_number and payment_categorty = 'R' and df = 0";
+		String sql2 = "select caller_phone_number, recipient_phone_number, payment_categorty, start_time, time_secs,"
+				+ " charge, df" + " from history "
+				+ "where start_time >= :start and start_time < :end"
+				+ " and caller_phone_number = :caller_phone_number  and payment_categorty = 'C' and df = 0";
+		var variable1 = TgVariableList.of().dateTime("start").dateTime("end").character("recipient_phone_number")
 				.character("recipient_phone_number");
-		var ps = utils.createPreparedQuery(sql, TgParameterMapping.of(variable), RESULT_MAPPING);
-		var param = TgParameterList.of()
+		var variable2 = TgVariableList.of().dateTime("start").dateTime("end").character("caller_phone_number")
+				.character("caller_phone_number");
+		var ps1 = utils.createPreparedQuery(sql1, TgParameterMapping.of(variable1), RESULT_MAPPING);
+		var ps2 = utils.createPreparedQuery(sql2, TgParameterMapping.of(variable2), RESULT_MAPPING);
+		var param1 = TgParameterList.of()
 				.add("start", start)
 				.add("end", end.plusDays(1))
-				.add("caller_phone_number", contract.getPhoneNumber())
 				.add("recipient_phone_number",contract.getPhoneNumber());
-		return  utils.execute(ps, param);
+		var param2 = TgParameterList.of()
+				.add("start", start)
+				.add("end", end.plusDays(1))
+				.add("caller_phone_number", contract.getPhoneNumber());
+		List<History> list = utils.execute(ps1, param1);
+		list.addAll(utils.execute(ps2, param2));
+		return list;
 	}
 
 	@Override
