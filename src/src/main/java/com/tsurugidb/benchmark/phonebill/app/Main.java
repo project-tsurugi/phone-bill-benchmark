@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.tsurugidb.benchmark.phonebill.app.billing.OnlineApp;
 import com.tsurugidb.benchmark.phonebill.app.billing.PhoneBill;
 import com.tsurugidb.benchmark.phonebill.db.oracle.LoadTestDataCsvToOracle;
 import com.tsurugidb.benchmark.phonebill.db.postgresql.LoadTestDataCsvToPostgreSql;
@@ -22,7 +23,8 @@ public class Main {
 	static {
 		addCommand("CreateTable", "Create tables",  CreateTable.class, ArgType.CONFIG);
 		addCommand("CreateTestData", "Create test data to database.", CreateTestData.class, ArgType.CONFIG);
-		addCommand("PhoneBill", "Execute phone bill batch.", PhoneBill.class, ArgType.CONFIG);
+		addCommand("PhoneBill", "Execute phone bill batch with online applications.", PhoneBill.class, ArgType.CONFIG);
+		addCommand("OnlineApp", "Execute online applications.", OnlineApp.class, ArgType.CONFIG);
 		addCommand("ThreadBench", "Execute PhonBill with multiple thread counts", ThreadBench.class, ArgType.MULTI_CONFIG);
 		addCommand("OnlineAppBench", "Execute PhonBill with and without online applications.", OnlineAppBench.class,
 				ArgType.CONFIG);
