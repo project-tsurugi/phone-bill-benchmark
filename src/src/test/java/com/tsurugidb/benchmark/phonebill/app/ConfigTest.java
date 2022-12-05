@@ -258,6 +258,7 @@ class ConfigTest {
 
 		/* Iceaxe固有のパラメータ */
 		assertEquals(TransactionOption.OCC	, config.transactionOption);
+		assertEquals(false, config.usePreparedTables);
 
 		/* オンラインアプリケーションに関するパラメータ */
 		assertEquals(0, config.masterUpdateRecordsPerMin);
@@ -324,6 +325,7 @@ class ConfigTest {
 
 		/* Iceaxe固有のパラメータ */
 		assertEquals(TransactionOption.LTX	, config.transactionOption);
+		assertEquals(true, config.usePreparedTables);
 
 		/* CSVに関するパラメータ */
 		assertEquals("/tmp/csv", config.csvDir);

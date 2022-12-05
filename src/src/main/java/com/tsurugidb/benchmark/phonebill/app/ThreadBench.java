@@ -60,16 +60,14 @@ public class ThreadBench extends ExecutableCommand {
 		List<Integer> threadCounts;
 		List<IsolationLevel> isolationLevels;
 
+		threadCounts = Arrays.asList(1, 2, 4, 6, 8, 16, 32, 64);
+		scopes = Arrays.asList(TransactionScope.CONTRACT, TransactionScope.WHOLE);
 		for (Config config : configs) {
 			if (config.dbmsType == DbmsType.ICEAXE) {
 				options = Arrays.asList(TransactionOption.LTX, TransactionOption.OCC);
-				scopes = Arrays.asList(TransactionScope.CONTRACT, TransactionScope.WHOLE);
-				threadCounts = Arrays.asList(1, 2, 4, 6);
 				isolationLevels = Collections.singletonList(IsolationLevel.SERIALIZABLE);
 			} else {
 				options = Collections.singletonList(TransactionOption.OCC);
-				scopes = Arrays.asList(TransactionScope.CONTRACT, TransactionScope.WHOLE);
-				threadCounts = Arrays.asList(1, 2, 4, 6);
 				isolationLevels = Arrays.asList(IsolationLevel.SERIALIZABLE, IsolationLevel.READ_COMMITTED);
 			}
 			execute(config, options, scopes, isolationLevels, threadCounts);
@@ -83,10 +81,10 @@ public class ThreadBench extends ExecutableCommand {
 			List<Integer> threadCounts) throws Exception {
 		new CreateTable().execute(config);
 		new CreateTestData().execute(config);
-		for (int threadCount : threadCounts) {
-			for (TransactionOption option : options) {
-				for (IsolationLevel isolationLevel : isolationLevels) {
-					for (TransactionScope scope : scopes) {
+		for (TransactionOption option : options) {
+			for (IsolationLevel isolationLevel : isolationLevels) {
+				for (TransactionScope scope : scopes) {
+					for (int threadCount : threadCounts) {
 						config.threadCount = threadCount;
 						config.sharedConnection = false;
 						config.transactionOption = option;

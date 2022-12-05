@@ -31,9 +31,11 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
     private final TsurugiSession session;
     private final TsurugiTransactionManager transactionManager;
     private final ThreadLocal<TsurugiTransaction> transactionThreadLocal = new ThreadLocal<>();
+    private final Config config;
 
 	public PhoneBillDbManagerIceaxe(Config config) {
-        var endpoint = config.url;
+		this.config = config;
+		var endpoint = config.url;
         var connector = TsurugiConnector.createConnector(endpoint);
         try {
             var info = TgSessionInfo.of();
@@ -166,4 +168,11 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
             throw new UncheckedIOException(e);
         }
     }
+
+	/**
+	 * @return config
+	 */
+	public Config getConfig() {
+		return config;
+	}
 }
