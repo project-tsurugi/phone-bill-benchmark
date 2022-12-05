@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -91,6 +92,7 @@ public class CalculationTask implements Callable<Exception> {
 				}
 				try {
 					AtomicInteger tryInThisTx = new AtomicInteger(0);
+					LOG.debug("Start calculation for  contract: {}.", target.getContract());
 					String str = txOption.toString();
 					manager.execute(TxOption.of(Integer.MAX_VALUE, TgTmSetting.ofAlways(txOption)), () -> {
 						tryInThisTx.incrementAndGet();
@@ -101,19 +103,23 @@ public class CalculationTask implements Callable<Exception> {
 					});
 					abortCounter.addAndGet(tryInThisTx.get() - 1);
 					queue.success(target);
+					LOG.debug("End calculation for contract: {}.", target.getContract());
 					n++;
 				} catch (RuntimeException e) {
 					abortCounter.incrementAndGet();
 					queue.revert(target);
-					LOG.error("Calculation target returned to queue and the task will be aborted.", e);
+					LOG.error("Abort calculation for contract: " + target.getContract() + ".", e);
+					LOG.debug("Calculation target returned to queue and the task will be aborted.");
 					return e;
 				}
 			}
 		} else {
 			for (;;) {
 				List<CalculationTarget> list = new ArrayList<>();
+				String str = txOption.toString();
 				try {
 					manager.execute(TxOption.of(0, TgTmSetting.of(txOption)), () -> {
+						LOG.debug("start tansaction with txOption = {}, tryCount = {}", str, tryCounter);
 						for (;;) {
 							CalculationTarget target;
 							target = queue.poll();
@@ -125,6 +131,7 @@ public class CalculationTask implements Callable<Exception> {
 								break;
 							}
 							tryCounter.incrementAndGet();
+							LOG.debug("Start calculation for  contract: {}.", target.getContract());
 							calculator.doCalc(target);
 						}
 					});
@@ -133,25 +140,31 @@ public class CalculationTask implements Callable<Exception> {
 						Thread.sleep(10);
 						continue;
 					}
-					LOG.info("Calculation task finished normally, number of calculated contracts = {}).", list.size());
+					LOG.info("Calculation task finished normally, contracts = {}).", getContracts(list));
 					return null;
 				} catch (RuntimeException e) {
 					abortCounter.incrementAndGet();
 					// 処理対象をキューに戻す
 					queue.revert(list);
+					LOG.info("Calculation task aborted, contracts = {}).", getContracts(list));
 					if (e instanceof RetryOverRuntimeException) {
-						LOG.error(
+						LOG.debug(
 								"Transaction aborted with retriable exception and calculation targets returned to queue.",
 								e);
 						continue;
 					} else {
-						LOG.error("Calculation targets returned to queue and the task will be aborted.", e);
+						LOG.debug("Calculation targets returned to queue and the task will be aborted.", e);
 						return e;
 					}
 				}
 			}
 		}
 	}
+
+	static String getContracts(List<CalculationTarget> list) {
+		return String.join(",", list.stream().map(t -> t.getContract().toString()).collect(Collectors.toList()));
+	}
+
 
 	/**
 	 * Billingテーブルを更新する
@@ -197,27 +210,20 @@ public class CalculationTask implements Callable<Exception> {
 		@Override
 		public void doCalc(CalculationTarget target) {
 			Contract contract = target.getContract();
-			LOG.debug("Start calculation for  contract: {}.", contract);
-			try {
-				List<History> histories = historyDao.getHistories(target);
+			List<History> histories = historyDao.getHistories(target);
 
-				CallChargeCalculator callChargeCalculator = target.getCallChargeCalculator();
-				BillingCalculator billingCalculator = target.getBillingCalculator();
-				billingCalculator.init();
-				for (History h : histories) {
-					if (h.getTimeSecs() < 0) {
-						throw new RuntimeException("Negative time: " + h.getTimeSecs());
-					}
-					h.setCharge(callChargeCalculator.calc(h.getTimeSecs()));
-					billingCalculator.addCallCharge(h.getCharge());
+			CallChargeCalculator callChargeCalculator = target.getCallChargeCalculator();
+			BillingCalculator billingCalculator = target.getBillingCalculator();
+			billingCalculator.init();
+			for (History h : histories) {
+				if (h.getTimeSecs() < 0) {
+					throw new RuntimeException("Negative time: " + h.getTimeSecs());
 				}
-				historyDao.batchUpdate(histories);
-				updateBilling(contract, billingCalculator, target.getStart());
-				LOG.debug("End calculation for contract: {}.", contract);
-			} catch (RuntimeException e) {
-				LOG.debug("Abort calculation for contract: " + contract + ".", e);
-				throw e;
+				h.setCharge(callChargeCalculator.calc(h.getTimeSecs()));
+				billingCalculator.addCallCharge(h.getCharge());
 			}
+			historyDao.batchUpdate(histories);
+			updateBilling(contract, billingCalculator, target.getStart());
 		}
 	}
 
