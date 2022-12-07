@@ -119,35 +119,29 @@ public class CalculationTask implements Callable<Exception> {
 		} else {
 			while (continueLoop()) {
 				List<CalculationTarget> list = new ArrayList<>();
+				CalculationTarget firstTarget = queue.take();
+				if (firstTarget == null) {
+					continue;
+				}
+				list.add(firstTarget);
 				TransactionId tid = new TransactionId();
 				try {
 					manager.execute(TxOption.of(0, TgTmSetting.of(txOption)), () -> {
 						tid.set(manager.getTransactionId());
-						LOG.debug("Transaction started, tid = {}, txOption = {}, tryCount = {}", tid, txOption, tryCounter,
-								manager.getTransactionId());
-						while  (abortRequested.get() == false) {
+						LOG.debug("Transaction started, tid = {}, txOption = {}, tryCount = {}", tid, txOption,
+								tryCounter, manager.getTransactionId());
+						tryCounter.incrementAndGet();
+						calculator.doCalc(firstTarget);
+						while (abortRequested.get() == false) {
 							CalculationTarget target;
 							target = queue.poll();
-							if (target != null) {
-								LOG.debug(queue.getStatus());
-								list.add(target);
-								tryCounter.incrementAndGet();
-								LOG.debug("Start calculation for  contract: {}.", target.getContract());
-								calculator.doCalc(target);
-							} else {
-								if (queue.finished()) {
-									break;
-								}
-								if (list.size() == 0) {
-									try {
-										Thread.sleep(10);
-									} catch (InterruptedException e) {
-										// Nothing to do.
-									}
-								} else {
-									break;
-								}
+							if (target == null) {
+								break;
 							}
+							LOG.debug(queue.getStatus());
+							list.add(target);
+							tryCounter.incrementAndGet();
+							calculator.doCalc(target);
 						}
 					});
 					nCalculated += list.size();
@@ -228,6 +222,8 @@ public class CalculationTask implements Callable<Exception> {
 	protected class CalculatorImpl implements Calculator {
 		@Override
 		public void doCalc(CalculationTarget target) {
+			LOG.debug("Start calculation for  contract: {}.", target.getContract());
+
 			Contract contract = target.getContract();
 			List<History> histories = historyDao.getHistories(target);
 
