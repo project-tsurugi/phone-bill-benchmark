@@ -199,7 +199,6 @@ class HistoryUpdateAppTest extends AbstractJdbcTestCase {
 			history.setRecipientPhoneNumber("RECV");
 			history.setCharge(999);
 			history.setDf(1);
-			history.setPaymentCategorty("C");
 			history.setTimeSecs(221);
 			app.updateDatabase(history);
 		}
@@ -210,7 +209,6 @@ class HistoryUpdateAppTest extends AbstractJdbcTestCase {
 			history.setRecipientPhoneNumber("TEST_NUMBER");
 			history.setCharge(55899988);
 			history.setDf(0);
-			history.setPaymentCategorty("C");
 			history.setTimeSecs(22551);
 			app.updateDatabase(history);
 		}
