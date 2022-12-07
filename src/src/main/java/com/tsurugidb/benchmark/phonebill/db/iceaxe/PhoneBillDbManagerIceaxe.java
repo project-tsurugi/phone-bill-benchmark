@@ -2,6 +2,8 @@ package com.tsurugidb.benchmark.phonebill.db.iceaxe;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.NoSuchElementException;
+import java.util.OptionalLong;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
@@ -26,6 +28,9 @@ import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionRetryOverIOE
 import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionRuntimeException;
 import com.tsurugidb.iceaxe.transaction.manager.TgTmSetting;
 import com.tsurugidb.iceaxe.transaction.manager.TsurugiTransactionManager;
+import com.tsurugidb.tsubakuro.sql.SqlServiceException;
+import com.tsurugidb.tsubakuro.sql.Transaction;
+import com.tsurugidb.tsubakuro.sql.impl.TransactionImpl;
 
 public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
     private final TsurugiSession session;
@@ -106,10 +111,16 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
                     transactionThreadLocal.remove();
                 }
             });
-        } catch (TsurugiTransactionRetryOverIOException e) {
-        	throw new RetryOverRuntimeException(e);
         } catch (IOException e) {
+        	if (isRetriable(e)) {
+            	throw new RetryOverRuntimeException(e);
+        	}
             throw new UncheckedIOException(e);
+        } catch (RuntimeException e) {
+        	if (isRetriable(e)) {
+            	throw new RetryOverRuntimeException(e);
+        	}
+        	throw e;
         }
     }
 
@@ -125,10 +136,16 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
                     transactionThreadLocal.remove();
                 }
             });
-        } catch (TsurugiTransactionRetryOverIOException e) {
-        	throw new RetryOverRuntimeException(e);
         } catch (IOException e) {
+        	if (isRetriable(e)) {
+            	throw new RetryOverRuntimeException(e);
+        	}
             throw new UncheckedIOException(e);
+        } catch (RuntimeException e) {
+        	if (isRetriable(e)) {
+            	throw new RetryOverRuntimeException(e);
+        	}
+        	throw e;
         }
     }
 
@@ -175,4 +192,33 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
 	public Config getConfig() {
 		return config;
 	}
+
+	@Override
+	public String getTransactionId() {
+		try {
+			Transaction tx = getCurrentTransaction().getLowTransaction();
+			OptionalLong tid =  TransactionImpl.getId(tx);
+			return Long.toString(tid.orElseThrow());
+		} catch (NoSuchElementException | IOException e) {
+			return "none";
+		}
+	}
+
+	/**
+	 * Throwableがリトライ可能か調べる
+	 */
+	private boolean isRetriable(Throwable t) {
+		// TODO: これはとりあえず動くコードでしかない。OLTPが返すエラーコードが整理されたら、それを反映したコードにする
+		while (t != null) {
+			if (t instanceof TsurugiTransactionRetryOverIOException) {
+				return true;
+			}
+			if (t instanceof SqlServiceException) {
+				return true;
+			}
+			t = t.getCause();
+		}
+		return false;
+	}
+
 }

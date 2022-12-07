@@ -32,6 +32,8 @@ public class CalculationTask implements Callable<Exception> {
     private AtomicBoolean abortRequested;
     private AtomicInteger tryCounter;
     private AtomicInteger abortCounter;
+	private int nCalculated = 0;
+
     Calculator calculator;
 
 
@@ -82,87 +84,106 @@ public class CalculationTask implements Callable<Exception> {
 		}
 
 		if (config.transactionScope == TransactionScope.CONTRACT) {
-			int n = 0;
-			for (;;) {
+			while (continueLoop()) {
 				CalculationTarget target = queue.take();
-				LOG.debug(queue.getStatus());
-				if (target == null || abortRequested.get() == true) {
-					LOG.info("Calculation task finished normally, number of calculated contracts = {}).", n);
-					return null;
+				if (target == null) {
+					continue;
 				}
+				LOG.debug(queue.getStatus());
+				TransactionId tid = new TransactionId();
 				try {
 					AtomicInteger tryInThisTx = new AtomicInteger(0);
 					LOG.debug("Start calculation for  contract: {}.", target.getContract());
-					String str = txOption.toString();
+					String top = txOption.toString();
 					manager.execute(TxOption.of(Integer.MAX_VALUE, TgTmSetting.ofAlways(txOption)), () -> {
 						tryInThisTx.incrementAndGet();
 						tryCounter.incrementAndGet();
-						LOG.debug("start tansaction with txOption = {}, key = {}, tryCount = {}", str,
+						tid.set(manager.getTransactionId());
+						LOG.debug("Transaction started, tid = {}, txOption = {}, key = {}, tryCount = {}", tid, top,
 								target.getContract().getPhoneNumber(), tryInThisTx);
 						calculator.doCalc(target);
 					});
 					abortCounter.addAndGet(tryInThisTx.get() - 1);
 					queue.success(target);
-					LOG.debug("End calculation for contract: {}.", target.getContract());
-					n++;
+					LOG.debug("Transaction completed, tid = {}, contract = {}.", tid, target.getContract());
+					nCalculated++;
 				} catch (RuntimeException e) {
 					abortCounter.incrementAndGet();
 					queue.revert(target);
-					LOG.error("Abort calculation for contract: " + target.getContract() + ".", e);
-					LOG.debug("Calculation target returned to queue and the task will be aborted.");
-					return e;
+					LOG.error("Transaction aborted, tid = {}, contract = {}.", tid, target.getContract(), e);
+					if (!(e instanceof RetryOverRuntimeException)) {
+						LOG.debug("Calculation task aborted.", e);
+						return e;
+					}
 				}
 			}
 		} else {
-			for (;;) {
+			while (continueLoop()) {
 				List<CalculationTarget> list = new ArrayList<>();
 				String str = txOption.toString();
+				TransactionId tid = new TransactionId();
 				try {
 					manager.execute(TxOption.of(0, TgTmSetting.of(txOption)), () -> {
-						LOG.debug("start tansaction with txOption = {}, tryCount = {}", str, tryCounter);
-						for (;;) {
+						tid.set(manager.getTransactionId());
+						LOG.debug("Transaction started, tid = {}, txOption = {}, tryCount = {}", tid, str, tryCounter,
+								manager.getTransactionId());
+						while  (abortRequested.get() == false) {
 							CalculationTarget target;
 							target = queue.poll();
 							if (target != null) {
+								LOG.debug(queue.getStatus());
 								list.add(target);
+								tryCounter.incrementAndGet();
+								LOG.debug("Start calculation for  contract: {}.", target.getContract());
+								calculator.doCalc(target);
+							} else {
+								if (queue.finished()) {
+									break;
+								}
+								if (list.size() == 0) {
+									try {
+										Thread.sleep(10);
+									} catch (InterruptedException e) {
+										// Nothing to do.
+									}
+								} else {
+									break;
+								}
 							}
-							LOG.debug(queue.getStatus());
-							if (target == null || abortRequested.get() == true) {
-								break;
-							}
-							tryCounter.incrementAndGet();
-							LOG.debug("Start calculation for  contract: {}.", target.getContract());
-							calculator.doCalc(target);
 						}
 					});
+					nCalculated += list.size();
+					LOG.debug("Transaction completed, tid = {}, contract = {}.", tid, getPhoneNumbers(list));
 					queue.success(list);
-					if (abortRequested.get() == false && !queue.finished()) {
-						Thread.sleep(10);
-						continue;
-					}
-					LOG.info("Calculation task finished normally, contracts = {}).", getContracts(list));
-					return null;
 				} catch (RuntimeException e) {
 					abortCounter.incrementAndGet();
 					// 処理対象をキューに戻す
 					queue.revert(list);
-					LOG.info("Calculation task aborted, contracts = {}).", getContracts(list));
-					if (e instanceof RetryOverRuntimeException) {
-						LOG.debug(
-								"Transaction aborted with retriable exception and calculation targets returned to queue.",
-								e);
-						continue;
-					} else {
-						LOG.debug("Calculation targets returned to queue and the task will be aborted.", e);
+					LOG.debug("Transaction aborted, tid = {}, contract = {}.", tid, getPhoneNumbers(list));
+					if (!(e instanceof RetryOverRuntimeException)) {
+						LOG.error("Calculation task aborting by exception.", e);
 						return e;
 					}
 				}
 			}
 		}
+		return null;
 	}
 
-	static String getContracts(List<CalculationTarget> list) {
-		return String.join(",", list.stream().map(t -> t.getContract().toString()).collect(Collectors.toList()));
+	private boolean continueLoop() {
+		if (abortRequested.get() == true) {
+			LOG.info("Calculation task finished by abort rquest, number of calculated contracts = {}.", nCalculated);
+			return false;
+		}
+		if (queue.finished()) {
+			LOG.info("Calculation task finished normally, number of calculated contracts = {}.", nCalculated);
+			return false;
+		}
+		return true;
+	}
+
+	static String getPhoneNumbers(List<CalculationTarget> list) {
+		return String.join(",", list.stream().map(t -> t.getContract().getPhoneNumber()).collect(Collectors.toList()));
 	}
 
 
@@ -227,4 +248,16 @@ public class CalculationTask implements Callable<Exception> {
 		}
 	}
 
+	private class TransactionId {
+		private String tid ="none";
+
+		void set(String tid) {
+			this.tid = tid;
+		}
+
+		@Override
+		public String toString() {
+			return tid;
+		}
+	}
 }

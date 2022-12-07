@@ -122,4 +122,15 @@ public abstract class PhoneBillDbManager implements Closeable {
 	public static PhoneBillDbManager createPhoneBillDbManager(Config config) {
 		return createPhoneBillDbManager(config, SessionHoldingType.THREAD_LOCAL);
 	}
+
+
+	/**
+	 * 実行中、または最後に実行したトランザクションのトランザクションIDを取得する。
+	 * トランザクションIDを取得できない場合は文字列"none"を返す。
+	 *
+	 * @return トランザクションID
+	 */
+	public String getTransactionId() {
+		return "none";
+	}
 }
