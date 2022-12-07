@@ -33,6 +33,7 @@ public class CalculationTask implements Callable<Exception> {
     private AtomicInteger tryCounter;
     private AtomicInteger abortCounter;
 	private int nCalculated = 0;
+	private TgTxOption txOption = null;
 
     Calculator calculator;
 
@@ -65,15 +66,6 @@ public class CalculationTask implements Callable<Exception> {
 		billingDao = manager.getBillingDao();
 		historyDao = manager.getHistoryDao();
 		calculator = new CalculatorImpl();
-	}
-
-	@Override
-	public Exception call() throws Exception {
-		// TODO スレッド終了時にトランザクションが終了してしまうが、すべてのスレッドの処理終了を待って
-		// commit or rollbackするようにしたい。
-		LOG.info("Calculation task started.");
-
-		TgTxOption txOption = null;
 		switch (config.transactionOption) {
 		case OCC:
 			txOption = TgTxOption.ofOCC();
@@ -82,6 +74,14 @@ public class CalculationTask implements Callable<Exception> {
 			txOption = TgTxOption.ofLTX("history", "billing").priority(TransactionPriority.INTERRUPT_EXCLUDE);
 			break;
 		}
+	}
+
+	@Override
+	public Exception call() throws Exception {
+		// TODO スレッド終了時にトランザクションが終了してしまうが、すべてのスレッドの処理終了を待って
+		// commit or rollbackするようにしたい。
+		LOG.info("Calculation task started.");
+
 
 		if (config.transactionScope == TransactionScope.CONTRACT) {
 			while (continueLoop()) {
@@ -94,12 +94,11 @@ public class CalculationTask implements Callable<Exception> {
 				try {
 					AtomicInteger tryInThisTx = new AtomicInteger(0);
 					LOG.debug("Start calculation for  contract: {}.", target.getContract());
-					String top = txOption.toString();
 					manager.execute(TxOption.of(Integer.MAX_VALUE, TgTmSetting.ofAlways(txOption)), () -> {
 						tryInThisTx.incrementAndGet();
 						tryCounter.incrementAndGet();
 						tid.set(manager.getTransactionId());
-						LOG.debug("Transaction started, tid = {}, txOption = {}, key = {}, tryCount = {}", tid, top,
+						LOG.debug("Transaction started, tid = {}, txOption = {}, key = {}, tryCount = {}", tid, txOption,
 								target.getContract().getPhoneNumber(), tryInThisTx);
 						calculator.doCalc(target);
 					});
@@ -120,12 +119,11 @@ public class CalculationTask implements Callable<Exception> {
 		} else {
 			while (continueLoop()) {
 				List<CalculationTarget> list = new ArrayList<>();
-				String str = txOption.toString();
 				TransactionId tid = new TransactionId();
 				try {
 					manager.execute(TxOption.of(0, TgTmSetting.of(txOption)), () -> {
 						tid.set(manager.getTransactionId());
-						LOG.debug("Transaction started, tid = {}, txOption = {}, tryCount = {}", tid, str, tryCounter,
+						LOG.debug("Transaction started, tid = {}, txOption = {}, tryCount = {}", tid, txOption, tryCounter,
 								manager.getTransactionId());
 						while  (abortRequested.get() == false) {
 							CalculationTarget target;
