@@ -18,8 +18,8 @@ $TSURUGI_DIR/bin/oltp kill --conf=$BIN_DIR/etc/phone-bill.ini && true
 rm -rf  $TSURUGI_LOG_DIR
 export GLOG_logtostderr=1
 
-$TSURUGI_DIR/bin/oltp start --conf=etc/phone-bill.ini --v=30 &> $LOG_DIR/$LABEL-tateyama-server.log && true
-PID_SERVER=`ps -ef | grep tateyama-server | grep -v grep | awk '{print $2}'`
+$TSURUGI_DIR/bin/oltp start --conf=etc/phone-bill.ini --v=$TSURUGI_LOG_LEVEL &> $LOG_DIR/$LABEL-tateyama-server.log && true
+PID_SERVER=`ps -f -u $USER | grep tateyama-server | grep -v grep | awk '{print $2}'`
 
 # create test data
 
