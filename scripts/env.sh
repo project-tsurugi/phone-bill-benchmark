@@ -1,5 +1,9 @@
 #!/bin/bash
 
+if [ -n "$TSURUGI_LOG_LEVEL" ]; then
+  ORG_TSURUGI_LOG_LEVEL=$TSURUGI_LOG_LEVEL
+fi
+
 INSTALL_DIR=$HOME
 TSURUGI_DIR=$HOME/tsurugi/tsurugi
 TSURUGI_LOG_DIR=$TSURUGI_DIR/var/data/log
@@ -14,4 +18,6 @@ if [ -f $HOME/.phonebill ]; then
    . $HOME/.phonebill
 fi
 
-
+if [ -n "$ORG_TSURUGI_LOG_LEVEL" ]; then
+  TSURUGI_LOG_LEVEL=$ORG_TSURUGI_LOG_LEVEL
+fi
