@@ -13,15 +13,15 @@ CBで電話料金計算バッチを実行する際に使用することを想定
 * install.sh
   * 電話料金計算バッチをインストールする
 * create_flame_graph.sh
-  * 電話料金計算バッチを実行し、server(tateyama server)と、client(電話料金計算バッチ)のフレームグラフを取得する。
+  * 電話料金計算バッチを実行し、server(tateyama server)と、client(電話料金計算バッチ)のフレームグラフを取得する
 * env.sh
   * 他のスクリプト実行時に参照されるスクリプト
   * 環境依存の設定を記述する
 
 ## 各スクリプトの使用方法
 
-* プロジェクトphone-bill-benchmarkの全ファイルを展開した状態で実行してください。
-* 以下のプロダクトがインストールされている必要があります。
+* プロジェクトphone-bill-benchmarkの全ファイルを展開した状態で実行してください
+* 以下のプロダクトがインストールされている必要があります
   * JDK11
     * 環境変数JAVA_HOMEが設定されていること
   * async profiler
@@ -40,7 +40,7 @@ CBで電話料金計算バッチを実行する際に使用することを想定
     * Ubuntu標準のツールです
     * https://github.com/project-tsurugi/sandbox-performance-tools/blob/master/docs/measurement.md
   * server側のフレームグラフ作成用のスクリプト
-    * 以下の2つのパールスクリプトに実行権を与え、パスの通ったディレクトリに配置してください。
+    * 以下の2つのパールスクリプトに実行権を与え、パスの通ったディレクトリに配置してください
       * stackcollapse-perf.pl
       * flamegraph.pl
     * 入手先
@@ -68,6 +68,14 @@ CBで電話料金計算バッチを実行する際に使用することを想定
     * server側のflame graph
     * client側のflame graph
   * デフォルト値は `$HOME/logs`
+* TSURUGI_LOG_DIR
+  * tsurugiのデータファイルの保存場所
+  * デフォルト値は`$TSURUGI_DIR/var/data/log`
+* TSURUGI_LOG_LEVEL
+  * tateyama-serverのログレベル
+  * デフォルト値は30
+  * 詳細なログが必要なときは50を指定する
+  * TSURUGI_LOG_LEVELが既に設定済みの場合は`env.sh`, `$HOME/.phonebill`より既存の設定値を優先する。
 
 ### install.sh
 
@@ -115,12 +123,11 @@ CBで電話料金計算バッチを実行する際に使用することを想定
   
 ## その他、課題など
 
+* create_flame_graph.shはperfコマンドに指定するプロセスIDをpsコマンドの出力から取得している。同一ユーザが別のtateyama-serverを起動している場合に正しくPIDを取得できないので、同一ユーザが他のtateyama-serverを起動していない状態で使用すること
 * テストデータのデータ量
   * 現在のデータ量だとdbs44で1スレッドの実行で25～50秒程度、スレッド数を増やした場合やtsurugiの性能向上により測定時間が短すぎる場合はデータ量を増やした方が良い。
 * スレッド数
   * 現在スレッド数=1でのみ動作確認済み
-  * issue#99のため複数スレッドでの動作確認ができない 
-    * issue#99がクローズされたのでテストする予定
 * create_flame_graph.shの処理時間は、電話料金計算バッチ以外の処理を多数含むため、電話料金計算バッチの処理時間の目安としても使用できない。現時点では、次のログから処理時間を抽出する必要がある。
 ```
 18:03:08.027 [main] INFO  c.t.b.p.app.billing.PhoneBill - Billings calculated in 42.373 sec 
