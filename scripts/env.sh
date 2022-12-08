@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ -n "$TSURUGI_LOG_LEVEL" ]; then
+if [ -n "${TSURUGI_LOG_LEVEL-}" ]; then
   ORG_TSURUGI_LOG_LEVEL=$TSURUGI_LOG_LEVEL
 fi
 
@@ -18,6 +18,6 @@ if [ -f $HOME/.phonebill ]; then
    . $HOME/.phonebill
 fi
 
-if [ -n "$ORG_TSURUGI_LOG_LEVEL" ]; then
+if [ -n "${ORG_TSURUGI_LOG_LEVEL-}" ]; then
   TSURUGI_LOG_LEVEL=$ORG_TSURUGI_LOG_LEVEL
 fi
