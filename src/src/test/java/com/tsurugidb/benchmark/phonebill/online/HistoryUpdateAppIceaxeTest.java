@@ -198,18 +198,16 @@ class HistoryUpdateAppIceaxeTest {
 			history.setRecipientPhoneNumber("RECV");
 			history.setCharge(999);
 			history.setDf(1);
-			history.setPaymentCategorty("C");
 			history.setTimeSecs(221);
 			app.updateDatabase(history);
 		}
 
-		// 52番目のレコードを書き換える
+		// 12番目のレコードを書き換える
 		{
 			History history = expected.get(12);
 			history.setRecipientPhoneNumber("TEST_NUMBER");
 			history.setCharge(55899988);
 			history.setDf(0);
-			history.setPaymentCategorty("C");
 			history.setTimeSecs(22551);
 			app.updateDatabase(history);
 		}

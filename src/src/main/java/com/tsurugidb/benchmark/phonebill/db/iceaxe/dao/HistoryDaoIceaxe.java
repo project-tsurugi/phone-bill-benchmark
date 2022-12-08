@@ -71,8 +71,8 @@ public class HistoryDaoIceaxe implements HistoryDao {
 
 	private TsurugiPreparedStatementUpdate1<History> createUpdatePs() {
 		String sql = "update history"
-				+ " set recipient_phone_number = :recipient_phone_number, payment_categorty = :payment_categorty, time_secs = :time_secs, charge = :charge, df = :df"
-				+ " where caller_phone_number = :caller_phone_number and start_time = :start_time";
+				+ " set recipient_phone_number = :recipient_phone_number, time_secs = :time_secs, charge = :charge, df = :df"
+				+ " where caller_phone_number = :caller_phone_number and payment_categorty = :payment_categorty and start_time = :start_time";
 		return utils.createPreparedStatement(sql, PARAMETER_MAPPING);
 	}
 
@@ -168,7 +168,7 @@ public class HistoryDaoIceaxe implements HistoryDao {
 		LocalDateTime start = LocalDateTime.of(target.getStart().toLocalDate(), LocalTime.MIDNIGHT);
 		LocalDateTime end =  LocalDateTime.of(target.getEnd().toLocalDate(), LocalTime.MIDNIGHT) ;
 
-//		TODO 現状のTsurugiはorを使った検索で意図したようにセカンダリインデックスを使用しないので初のQueryに分けて
+//		TODO 現状のTsurugiはorを使った検索で意図したようにセカンダリインデックスを使用しないので二つのQueryに分けて
 //		実行している。この問題が解決したら元のqueryに戻す。
 //
 //		String sql = "select caller_phone_number, recipient_phone_number, payment_categorty, start_time, time_secs,"

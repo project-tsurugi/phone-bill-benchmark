@@ -124,7 +124,7 @@ class HistoryDaoJdbcTest extends AbstractJdbcTestCase {
 		History h2 = History.create("001", "456", "C", "2022-01-10 15:15:28.313", 5, null, 0);
 		History h3 = History.create("001", "456", "C", "2022-01-10 15:15:28.314", 5, 2, 1);
 		History h4 = History.create("001", "456", "C", "2022-01-05 00:00:00.000", 5, 2, 0);
-		History h5 = History.create("001", "459", "R", "2022-01-10 15:15:28.312", 3, null, 1);
+		History h5 = History.create("001", "459", "C", "2022-01-10 15:15:28.312", 3, null, 1);
 
 		// 空のテーブルに対してアップデート
 
@@ -161,8 +161,8 @@ class HistoryDaoJdbcTest extends AbstractJdbcTestCase {
 		History h2 = History.create("001", "456", "C", "2022-01-10 15:15:28.313", 5, null, 0);
 		History h3 = History.create("001", "456", "C", "2022-01-10 15:15:28.314", 5, 2, 1);
 
-		History h2u = History.create("001", "499", "R", "2022-01-10 15:15:28.313", 15, 5, 1);
-		History h3u = History.create("001", "512", "R", "2022-01-10 15:15:28.314", 15, null, 0);
+		History h2u = History.create("001", "499", "C", "2022-01-10 15:15:28.313", 15, 5, 1);
+		History h3u = History.create("001", "512", "C", "2022-01-10 15:15:28.314", 15, null, 0);
 		History h4u = History.create("001", "456", "C", "2022-01-05 00:00:00.000", 5, 2, 0); // 同一キーのデータがないのでアップデートされない
 
 		// テストデータを入れる

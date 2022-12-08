@@ -148,23 +148,23 @@ public class HistoryDaoJdbc implements HistoryDao {
 	 */
 	protected void setHistroryToUpdatePs(History history, PreparedStatement ps) throws SQLException {
 		ps.setString(1, history.getRecipientPhoneNumber());
-		ps.setString(2, history.getPaymentCategorty());
-		ps.setInt(3, history.getTimeSecs());
+		ps.setInt(2, history.getTimeSecs());
 		if (history.getCharge() == null) {
-			ps.setNull(4, Types.INTEGER);
+			ps.setNull(3, Types.INTEGER);
 		} else {
-			ps.setInt(4, history.getCharge());
+			ps.setInt(3, history.getCharge());
 		}
-		ps.setInt(5, history.getDf());
-		ps.setString(6, history.getCallerPhoneNumber());
+		ps.setInt(4, history.getDf());
+		ps.setString(5, history.getCallerPhoneNumber());
+		ps.setString(6, history.getPaymentCategorty());
 		ps.setTimestamp(7, history.getStartTime());
 	}
 
 	protected PreparedStatement createUpdatePs() throws SQLException {
 		PreparedStatement ps = manager.getConnection().prepareStatement(
 				"update history"
-				+ " set recipient_phone_number = ?, payment_categorty = ?, time_secs = ?, charge = ?, df = ?"
-				+ " where caller_phone_number = ? and start_time = ?");
+				+ " set recipient_phone_number = ?,time_secs = ?, charge = ?, df = ?"
+				+ " where caller_phone_number = ? and payment_categorty = ?  and start_time = ?");
 		return ps;
 	}
 

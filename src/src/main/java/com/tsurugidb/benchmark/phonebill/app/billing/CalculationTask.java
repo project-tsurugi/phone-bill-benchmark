@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +32,9 @@ public class CalculationTask implements Callable<Exception> {
     private AtomicBoolean abortRequested;
     private AtomicInteger tryCounter;
     private AtomicInteger abortCounter;
+	private int nCalculated = 0;
+	private TgTxOption txOption = null;
+
     Calculator calculator;
 
 
@@ -62,15 +66,6 @@ public class CalculationTask implements Callable<Exception> {
 		billingDao = manager.getBillingDao();
 		historyDao = manager.getHistoryDao();
 		calculator = new CalculatorImpl();
-	}
-
-	@Override
-	public Exception call() throws Exception {
-		// TODO スレッド終了時にトランザクションが終了してしまうが、すべてのスレッドの処理終了を待って
-		// commit or rollbackするようにしたい。
-		LOG.info("Calculation task started.");
-
-		TgTxOption txOption = null;
 		switch (config.transactionOption) {
 		case OCC:
 			txOption = TgTxOption.ofOCC();
@@ -79,79 +74,110 @@ public class CalculationTask implements Callable<Exception> {
 			txOption = TgTxOption.ofLTX("history", "billing").priority(TransactionPriority.INTERRUPT_EXCLUDE);
 			break;
 		}
+	}
+
+	@Override
+	public Exception call() throws Exception {
+		// TODO スレッド終了時にトランザクションが終了してしまうが、すべてのスレッドの処理終了を待って
+		// commit or rollbackするようにしたい。
+		LOG.info("Calculation task started.");
+
 
 		if (config.transactionScope == TransactionScope.CONTRACT) {
-			int n = 0;
-			for (;;) {
+			while (continueLoop()) {
 				CalculationTarget target = queue.take();
-				LOG.debug(queue.getStatus());
-				if (target == null || abortRequested.get() == true) {
-					LOG.info("Calculation task finished normally, number of calculated contracts = {}).", n);
-					return null;
+				if (target == null) {
+					continue;
 				}
+				LOG.debug(queue.getStatus());
+				TransactionId tid = new TransactionId();
 				try {
 					AtomicInteger tryInThisTx = new AtomicInteger(0);
-					String str = txOption.toString();
+					LOG.debug("Start calculation for  contract: {}.", target.getContract());
 					manager.execute(TxOption.of(Integer.MAX_VALUE, TgTmSetting.ofAlways(txOption)), () -> {
 						tryInThisTx.incrementAndGet();
 						tryCounter.incrementAndGet();
-						LOG.debug("start tansaction with txOption = {}, key = {}, tryCount = {}", str,
+						tid.set(manager.getTransactionId());
+						LOG.debug("Transaction started, tid = {}, txOption = {}, key = {}, tryCount = {}", tid, txOption,
 								target.getContract().getPhoneNumber(), tryInThisTx);
 						calculator.doCalc(target);
 					});
 					abortCounter.addAndGet(tryInThisTx.get() - 1);
 					queue.success(target);
-					n++;
+					LOG.debug("Transaction completed, tid = {}, contract = {}.", tid, target.getContract());
+					nCalculated++;
 				} catch (RuntimeException e) {
 					abortCounter.incrementAndGet();
 					queue.revert(target);
-					LOG.error("Calculation target returned to queue and the task will be aborted.", e);
-					return e;
+					LOG.error("Transaction aborted, tid = {}, contract = {}.", tid, target.getContract(), e);
+					if (!(e instanceof RetryOverRuntimeException)) {
+						LOG.debug("Calculation task aborted.", e);
+						return e;
+					}
 				}
 			}
 		} else {
-			for (;;) {
+			while (continueLoop()) {
 				List<CalculationTarget> list = new ArrayList<>();
+				CalculationTarget firstTarget = queue.take();
+				if (firstTarget == null) {
+					continue;
+				}
+				list.add(firstTarget);
+				TransactionId tid = new TransactionId();
 				try {
 					manager.execute(TxOption.of(0, TgTmSetting.of(txOption)), () -> {
-						for (;;) {
+						tid.set(manager.getTransactionId());
+						LOG.debug("Transaction started, tid = {}, txOption = {}, tryCount = {}", tid, txOption,
+								tryCounter, manager.getTransactionId());
+						tryCounter.incrementAndGet();
+						calculator.doCalc(firstTarget);
+						while (abortRequested.get() == false) {
 							CalculationTarget target;
 							target = queue.poll();
-							if (target != null) {
-								list.add(target);
-							}
-							LOG.debug(queue.getStatus());
-							if (target == null || abortRequested.get() == true) {
+							if (target == null) {
 								break;
 							}
+							LOG.debug(queue.getStatus());
+							list.add(target);
 							tryCounter.incrementAndGet();
 							calculator.doCalc(target);
 						}
 					});
+					nCalculated += list.size();
+					LOG.debug("Transaction completed, tid = {}, contract = {}.", tid, getPhoneNumbers(list));
 					queue.success(list);
-					if (abortRequested.get() == false && !queue.finished()) {
-						Thread.sleep(10);
-						continue;
-					}
-					LOG.info("Calculation task finished normally, number of calculated contracts = {}).", list.size());
-					return null;
 				} catch (RuntimeException e) {
 					abortCounter.incrementAndGet();
 					// 処理対象をキューに戻す
 					queue.revert(list);
-					if (e instanceof RetryOverRuntimeException) {
-						LOG.error(
-								"Transaction aborted with retriable exception and calculation targets returned to queue.",
-								e);
-						continue;
-					} else {
-						LOG.error("Calculation targets returned to queue and the task will be aborted.", e);
+					LOG.debug("Transaction aborted, tid = {}, contract = {}.", tid, getPhoneNumbers(list));
+					if (!(e instanceof RetryOverRuntimeException)) {
+						LOG.error("Calculation task aborting by exception.", e);
 						return e;
 					}
 				}
 			}
 		}
+		return null;
 	}
+
+	private boolean continueLoop() {
+		if (abortRequested.get() == true) {
+			LOG.info("Calculation task finished by abort rquest, number of calculated contracts = {}.", nCalculated);
+			return false;
+		}
+		if (queue.finished()) {
+			LOG.info("Calculation task finished normally, number of calculated contracts = {}.", nCalculated);
+			return false;
+		}
+		return true;
+	}
+
+	static String getPhoneNumbers(List<CalculationTarget> list) {
+		return String.join(",", list.stream().map(t -> t.getContract().getPhoneNumber()).collect(Collectors.toList()));
+	}
+
 
 	/**
 	 * Billingテーブルを更新する
@@ -196,29 +222,36 @@ public class CalculationTask implements Callable<Exception> {
 	protected class CalculatorImpl implements Calculator {
 		@Override
 		public void doCalc(CalculationTarget target) {
-			Contract contract = target.getContract();
-			LOG.debug("Start calculation for  contract: {}.", contract);
-			try {
-				List<History> histories = historyDao.getHistories(target);
+			LOG.debug("Start calculation for  contract: {}.", target.getContract());
 
-				CallChargeCalculator callChargeCalculator = target.getCallChargeCalculator();
-				BillingCalculator billingCalculator = target.getBillingCalculator();
-				billingCalculator.init();
-				for (History h : histories) {
-					if (h.getTimeSecs() < 0) {
-						throw new RuntimeException("Negative time: " + h.getTimeSecs());
-					}
-					h.setCharge(callChargeCalculator.calc(h.getTimeSecs()));
-					billingCalculator.addCallCharge(h.getCharge());
+			Contract contract = target.getContract();
+			List<History> histories = historyDao.getHistories(target);
+
+			CallChargeCalculator callChargeCalculator = target.getCallChargeCalculator();
+			BillingCalculator billingCalculator = target.getBillingCalculator();
+			billingCalculator.init();
+			for (History h : histories) {
+				if (h.getTimeSecs() < 0) {
+					throw new RuntimeException("Negative time: " + h.getTimeSecs());
 				}
-				historyDao.batchUpdate(histories);
-				updateBilling(contract, billingCalculator, target.getStart());
-				LOG.debug("End calculation for contract: {}.", contract);
-			} catch (RuntimeException e) {
-				LOG.debug("Abort calculation for contract: " + contract + ".", e);
-				throw e;
+				h.setCharge(callChargeCalculator.calc(h.getTimeSecs()));
+				billingCalculator.addCallCharge(h.getCharge());
 			}
+			historyDao.batchUpdate(histories);
+			updateBilling(contract, billingCalculator, target.getStart());
 		}
 	}
 
+	private class TransactionId {
+		private String tid ="none";
+
+		void set(String tid) {
+			this.tid = tid;
+		}
+
+		@Override
+		public String toString() {
+			return tid;
+		}
+	}
 }

@@ -114,7 +114,9 @@ class PhoneBillTest extends AbstractJdbcTestCase {
         // Phone-0001が先に処理されテーブルが更新されるが、Phone-005の処理でExceptionが発生し、処理全体がロールバックされる
 		insertToHistory("Phone-0001", "Phone-0008", "C", "2020-11-01 00:30:00.000", 30, 0);  	// 計算対象
 		insertToHistory("Phone-0005", "Phone-0001", "C", "2020-11-10 01:00:00.000", -1, 0);  	// 通話時間が負数なのでExceptionがスローされる
-		phoneBill.doCalc( DateUtils.toDate("2020-11-01"), DateUtils.toDate("2020-11-30"));
+		RuntimeException re =  assertThrows(RuntimeException.class, () ->
+		phoneBill.doCalc(DateUtils.toDate("2020-11-01"), DateUtils.toDate("2020-11-30")));
+		assertEquals("Negative time: -1", re.getMessage());
 		billings = getBillings();
 		// 既存の請求データの削除処理は他の処理と別トランザクションのためロールバックされず削除された状態になる
 		assertEquals(0, billings.size());

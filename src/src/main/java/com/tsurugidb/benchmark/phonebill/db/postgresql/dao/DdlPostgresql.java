@@ -53,10 +53,10 @@ public class DdlPostgresql extends DdlJdbc {
 		if (createSecondaryIndexes) {
 			executeWithLogging("create index idx_df on history(df)");
 			executeWithLogging("create index idx_st on history(start_time)");
-			executeWithLogging("create index idx_rp on history(recipient_phone_number, start_time)");
+			executeWithLogging("create index idx_rp on history(recipient_phone_number, payment_categorty, start_time)");
 		}
 		executeWithLogging(
-				"alter table history add constraint history_pkey primary key (caller_phone_number, start_time)");
+				"alter table history add constraint history_pkey primary key (caller_phone_number, payment_categorty, start_time)");
 		executeWithLogging(
 				"alter table contracts add constraint contracts_pkey primary key (phone_number, start_date)");
 		long elapsedTime = System.currentTimeMillis() - startTime;

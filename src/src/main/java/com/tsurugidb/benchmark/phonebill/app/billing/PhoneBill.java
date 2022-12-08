@@ -156,7 +156,7 @@ public class PhoneBill extends ExecutableCommand {
 	 * @param end
 	 * @throws Exception
 	 */
-	void doCalc(Date start, Date end) {
+	void doCalc(Date start, Date end) throws Exception {
 		abortRequested.set(false);
 		LOG.info("Phone bill batch started.");
 		String batchExecId = UUID.randomUUID().toString();
@@ -234,9 +234,11 @@ public class PhoneBill extends ExecutableCommand {
 	 * @param futures
 	 * @param managers
 	 * @param abortRequested
+	 * @throws Exception
 	 */
 	private void cleanup(Set<Future<Exception>> futures, List<PhoneBillDbManager> managers,
-			AtomicBoolean abortRequested) {
+			AtomicBoolean abortRequested) throws Exception {
+		Exception cause = null;
 		while (!futures.isEmpty()) {
 			try {
 				Thread.sleep(100);
@@ -263,13 +265,17 @@ public class PhoneBill extends ExecutableCommand {
 						}
 					}
 				}
-				if (e != null) {
-					LOG.error("Exception cought", e);
+				if (e != null && cause == null) {
+					cause = e;
 					abortRequested.set(true);
 				}
 			}
 		}
 		managers.stream().forEach(m->m.close());
+		if (cause != null) {
+			LOG.error("Phone bill batch aborting by exception.");
+			throw cause;
+		}
 	}
 
 	/**
