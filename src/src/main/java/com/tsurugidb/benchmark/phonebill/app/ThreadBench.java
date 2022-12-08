@@ -246,7 +246,7 @@ public class ThreadBench extends ExecutableCommand {
 			builder.append(",");
 			builder.append(threadCount);
 			builder.append(",");
-			builder.append(elapsedMillis);
+			builder.append(elapsedMillis/1000.0);
 			builder.append(",");
 			builder.append(tryCount);
 			builder.append(",");
@@ -257,7 +257,7 @@ public class ThreadBench extends ExecutableCommand {
 		}
 
 		public static String header() {
-			return "dbmsType, option, scope, threadCount, elapsedMills, tryCount, abortCount, diffrence";
+			return "dbmsType, option, scope, threadCount, elapsedSeconds, tryCount, abortCount, diffrence";
 		}
 
 	}
