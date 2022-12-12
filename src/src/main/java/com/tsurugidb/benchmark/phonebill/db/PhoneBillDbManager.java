@@ -52,36 +52,14 @@ public abstract class PhoneBillDbManager implements Closeable {
      * トランザクションをコミットする
      *
      */
-    public final void commit() {
-        commit(null);
-    }
-
-    /**
-     * トランザクションをコミットし、ロールバックに成功したときに
-     * listenerを呼び出す。
-     *
-     * @param listener
-     */
-    public abstract void commit(Runnable listener);
-
-
+    public abstract void commit();
 
     /**
      * トランザクションをロールバックする。
      */
-    public final void rollback() {
-        rollback(null);
-    }
+    public abstract void rollback();
 
     /**
-     * トランザクションをロールバックし、ロールバックに成功したときに
-     * listenerを呼び出す。
-     *
-     * @param listener
-     */
-    public abstract void rollback(Runnable listener);
-
-
     /**
      * 管理しているすべてのコネクションをクローズする
      */

@@ -862,7 +862,7 @@ class PhoneBillDbManagerJdbcTest extends  AbstractPhoneBillDbManagerTest{
 		}
 
 		@Override
-		public void rollback(Runnable listener) {
+		public void rollback() {
 			throw e;
 		}
 	}
