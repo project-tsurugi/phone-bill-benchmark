@@ -32,9 +32,6 @@ import com.tsurugidb.benchmark.phonebill.db.postgresql.dao.DdlPostgresql;
 import com.tsurugidb.benchmark.phonebill.db.postgresql.dao.DdlPostgresqlNoBatchUpdate;
 
 class PhoneBillDbManagerTest extends AbstractPhoneBillDbManagerTest {
-	int commitCount = 0;
-	int rollbackCount = 0;
-
 	@Test
 	void testCommitAndRollback() throws Exception {
 
