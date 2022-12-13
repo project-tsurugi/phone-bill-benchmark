@@ -82,16 +82,16 @@ class PhoneBillDbManagerTest extends AbstractPhoneBillDbManagerTest {
 
 			// commit(Runnable)のテスト
 			commitCount =0;
-			manager.commit(()->{commitCount++;});
+			manager.commit((t)->{commitCount++;});
 			assertEquals(1, commitCount);
-			manager.commit(()->{commitCount++;});
+			manager.commit((t)->{commitCount++;});
 			assertEquals(2, commitCount);
 
 			// rollback(Runnable)のテスト
 			rollbackCount = 0;
-			manager.rollback(()->{rollbackCount++;});
+			manager.rollback((t)->{rollbackCount++;});
 			assertEquals(1, rollbackCount);
-			manager.rollback(()->{rollbackCount++;});
+			manager.rollback((t)->{rollbackCount++;});
 			assertEquals(2, rollbackCount);
 		}
 
@@ -104,7 +104,7 @@ class PhoneBillDbManagerTest extends AbstractPhoneBillDbManagerTest {
 
 			// Listenerが呼び出されないことの確認
 			commitCount = 3;
-			assertThrows(RuntimeException.class, () ->manager.commit(()->{commitCount++;}));
+			assertThrows(RuntimeException.class, () ->manager.commit((t)->{commitCount++;}));
 			assertEquals(3, commitCount);
 		}
 
@@ -117,7 +117,7 @@ class PhoneBillDbManagerTest extends AbstractPhoneBillDbManagerTest {
 
 			// Listenerが呼び出されないことの確認
 			rollbackCount = 4;
-			assertThrows(RuntimeException.class, () ->manager.rollback(()->{rollbackCount++;}));
+			assertThrows(RuntimeException.class, () ->manager.rollback((t)->{rollbackCount++;}));
 			assertEquals(4, rollbackCount);
 		}
 

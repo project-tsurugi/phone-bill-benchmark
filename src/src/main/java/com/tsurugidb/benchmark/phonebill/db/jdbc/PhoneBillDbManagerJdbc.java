@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.slf4j.Logger;
@@ -18,6 +19,7 @@ import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.dao.BillingDaoJdbc;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.dao.ContractDaoJdbc;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.dao.HistoryDaoJdbc;
+import com.tsurugidb.iceaxe.transaction.TsurugiTransaction;
 
 
 public abstract class PhoneBillDbManagerJdbc extends PhoneBillDbManager {
@@ -55,7 +57,7 @@ public abstract class PhoneBillDbManagerJdbc extends PhoneBillDbManager {
 	}
 
 	@Override
-	public void commit(Runnable listener) {
+	public void commit(Consumer<TsurugiTransaction> listener) {
 		Connection c = getConnection();
 		try {
 			c.commit();
@@ -63,12 +65,12 @@ public abstract class PhoneBillDbManagerJdbc extends PhoneBillDbManager {
 			throw new RuntimeException(e);
 		}
 		if (listener != null) {
-			listener.run();
+			listener.accept(null);
 		}
 	}
 
 	@Override
-	public void rollback(Runnable listener) {
+	public void rollback(Consumer<TsurugiTransaction> listener) {
 		Connection c = getConnection();
 		try {
 			c.rollback();
@@ -76,7 +78,7 @@ public abstract class PhoneBillDbManagerJdbc extends PhoneBillDbManager {
 			throw new RuntimeException(e);
 		}
 		if (listener != null) {
-			listener.run();
+			listener.accept(null);
 		}
 	}
 

@@ -5,6 +5,7 @@ import java.io.UncheckedIOException;
 import java.util.NoSuchElementException;
 import java.util.OptionalLong;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
@@ -154,7 +155,7 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
     }
 
     @Override
-    public void commit(Runnable listener) {
+    public void commit(Consumer<TsurugiTransaction> listener) {
         if (listener != null) {
             var transaction = getCurrentTransaction();
             transaction.addCommitListener(listener);
@@ -163,7 +164,7 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
 
 
     @Override
-    public void rollback(Runnable listener) {
+    public void rollback(Consumer<TsurugiTransaction> listener) {
         var transaction = getCurrentTransaction();
         if (listener != null) {
             transaction.addRollbackListener(listener);
