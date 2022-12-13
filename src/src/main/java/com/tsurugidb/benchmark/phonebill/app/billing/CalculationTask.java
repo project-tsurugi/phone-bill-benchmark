@@ -242,7 +242,7 @@ public class CalculationTask implements Callable<Exception> {
 		}
 	}
 
-	private static class TransactionId {
+	private class TransactionId {
 		private String tid ="none";
 
 		void set(String tid) {
