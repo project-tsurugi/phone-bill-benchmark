@@ -55,22 +55,28 @@ public abstract class PhoneBillDbManagerJdbc extends PhoneBillDbManager {
 	}
 
 	@Override
-	public void commit() {
+	public void commit(Runnable listener) {
 		Connection c = getConnection();
 		try {
 			c.commit();
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}
+		if (listener != null) {
+			listener.run();
+		}
 	}
 
 	@Override
-	public void rollback() {
+	public void rollback(Runnable listener) {
 		Connection c = getConnection();
 		try {
 			c.rollback();
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
+		}
+		if (listener != null) {
+			listener.run();
 		}
 	}
 

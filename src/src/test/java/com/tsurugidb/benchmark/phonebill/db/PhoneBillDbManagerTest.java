@@ -77,6 +77,19 @@ class PhoneBillDbManagerTest extends AbstractPhoneBillDbManagerTest {
 			assertIterableEquals(before, getHistories());
 			assertIterableEquals(before, getHistories(manager));
 
+			// commit(Runnable)のテスト
+			commitCount =0;
+			manager.commit(()->{commitCount++;});
+			assertEquals(1, commitCount);
+			manager.commit(()->{commitCount++;});
+			assertEquals(2, commitCount);
+
+			// rollback(Runnable)のテスト
+			rollbackCount = 0;
+			manager.rollback(()->{rollbackCount++;});
+			assertEquals(1, rollbackCount);
+			manager.rollback(()->{rollbackCount++;});
+			assertEquals(2, rollbackCount);
 		}
 
 		// コミットに失敗するケース
@@ -86,6 +99,10 @@ class PhoneBillDbManagerTest extends AbstractPhoneBillDbManagerTest {
 			RuntimeException e = assertThrows(RuntimeException.class, () ->manager.commit());
 			assertTrue(e.getCause() instanceof SQLException);
 
+			// Listenerが呼び出されないことの確認
+			commitCount = 3;
+			assertThrows(RuntimeException.class, () ->manager.commit(()->{commitCount++;}));
+			assertEquals(3, commitCount);
 		}
 
 		// ロールバックに失敗するケース
@@ -95,6 +112,10 @@ class PhoneBillDbManagerTest extends AbstractPhoneBillDbManagerTest {
 			RuntimeException e = assertThrows(RuntimeException.class, () ->manager.rollback());
 			assertTrue(e.getCause() instanceof SQLException);
 
+			// Listenerが呼び出されないことの確認
+			rollbackCount = 4;
+			assertThrows(RuntimeException.class, () ->manager.rollback(()->{rollbackCount++;}));
+			assertEquals(4, rollbackCount);
 		}
 
 	}

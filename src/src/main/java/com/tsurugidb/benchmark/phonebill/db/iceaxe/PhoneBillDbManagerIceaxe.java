@@ -154,13 +154,20 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
     }
 
     @Override
-    public void commit() {
+    public void commit(Runnable listener) {
+        if (listener != null) {
+            var transaction = getCurrentTransaction();
+            transaction.addCommitListener(listener);
+        }
     }
 
 
     @Override
-    public void rollback() {
+    public void rollback(Runnable listener) {
         var transaction = getCurrentTransaction();
+        if (listener != null) {
+            transaction.addRollbackListener(listener);
+        }
         try {
             transaction.rollback();
         } catch (IOException e) {
