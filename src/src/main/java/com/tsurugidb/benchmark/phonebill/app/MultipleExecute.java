@@ -8,8 +8,6 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -24,27 +22,22 @@ import com.tsurugidb.benchmark.phonebill.app.Config.TransactionScope;
 import com.tsurugidb.benchmark.phonebill.app.billing.PhoneBill;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.TxOption;
-import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.entity.Billing;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
 import com.tsurugidb.benchmark.phonebill.testdata.CreateTestData;
 
 /**
- * スレッド数とコネクション共有の有無で、PhoneBillコマンドの実行時間がどう変化するのかを調べる
- * ためのコマンド.
- *
- * threadCounts, sharedConnection以外の設定値はコンフィグレーションファイルで指定された
- * 値を使用する。
+ * 引数でしていされた複数の設定でバッチを実行する。
  *
  */
-public class ThreadBench extends ExecutableCommand {
-    private static final Logger LOG = LoggerFactory.getLogger(ThreadBench.class);
+public class MultipleExecute extends ExecutableCommand {
+    private static final Logger LOG = LoggerFactory.getLogger(MultipleExecute.class);
 	private List<Record> records = new ArrayList<>();
 	private Set<History> expectedHistories;
 	private Set<Billing> expectedBillings;
 
 	public static void main(String[] args) throws Exception {
-		ThreadBench threadBench = new ThreadBench();
+		MultipleExecute threadBench = new MultipleExecute();
 		List<Config> configs = new ArrayList<>(args.length);
 		for (String arg: args) {
 			Config config = Config.getConfig(arg);
@@ -55,53 +48,17 @@ public class ThreadBench extends ExecutableCommand {
 
 	@Override
 	public void execute(List<Config> configs) throws Exception {
-		List<TransactionOption> options;
-		List<TransactionScope> scopes;
-		List<Integer> threadCounts;
-		List<IsolationLevel> isolationLevels;
-
-		threadCounts = Arrays.asList(1, 2, 4, 6, 8, 16, 32, 64);
-		scopes = Arrays.asList(TransactionScope.CONTRACT, TransactionScope.WHOLE);
 		for (Config config : configs) {
-			if (config.dbmsType == DbmsType.ICEAXE) {
-				options = Arrays.asList(TransactionOption.LTX, TransactionOption.OCC);
-				isolationLevels = Collections.singletonList(IsolationLevel.SERIALIZABLE);
-			} else {
-				options = Collections.singletonList(TransactionOption.OCC);
-				isolationLevels = Arrays.asList(IsolationLevel.SERIALIZABLE, IsolationLevel.READ_COMMITTED);
-			}
-			execute(config, options, scopes, isolationLevels, threadCounts);
-		}
-	}
-
-
-
-	private void execute(Config config, List<TransactionOption> options, List<TransactionScope> scopes,
-			List<IsolationLevel> isolationLevels,
-			List<Integer> threadCounts) throws Exception {
-		new CreateTable().execute(config);
-		new CreateTestData().execute(config);
-		for (TransactionOption option : options) {
-			for (IsolationLevel isolationLevel : isolationLevels) {
-				for (TransactionScope scope : scopes) {
-					for (int threadCount : threadCounts) {
-						config.threadCount = threadCount;
-						config.sharedConnection = false;
-						config.transactionOption = option;
-						config.transactionScope = scope;
-						config.isolationLevel = isolationLevel;
-						prepare(config);
-						Record record = new Record(config);
-						records.add(record);
-						record.start();
-						PhoneBill phoneBill = new PhoneBill();
-						phoneBill.execute(config);
-						record.finish(phoneBill.getTryCount(), phoneBill.getAbortCount());
-						record.setNumberOfDiffrence(checkResult(config));
-						writeResult(config);
-					}
-				}
-			}
+			new CreateTable().execute(config);
+			new CreateTestData().execute(config);
+			Record record = new Record(config);
+			records.add(record);
+			record.start();
+			PhoneBill phoneBill = new PhoneBill();
+			phoneBill.execute(config);
+			record.finish(phoneBill.getTryCount(), phoneBill.getAbortCount());
+			record.setNumberOfDiffrence(checkResult(config));
+			writeResult(config);
 		}
 	}
 
@@ -116,18 +73,6 @@ public class ThreadBench extends ExecutableCommand {
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
 			pw.println(Record.header());
 			records.stream().forEach(r -> pw.println(r.toString()));
-		}
-	}
-
-	/**
-	 * バッチ実行前に前回のバッチにより更新された履歴情報を元に戻す。
-	 *
-	 * @param config
-	 */
-	private void prepare(Config config) {
-		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
-			HistoryDao dao = manager.getHistoryDao();
-			manager.execute(TxOption.of(), dao::updateChargeNull);
 		}
 	}
 

@@ -25,7 +25,7 @@ public class Main {
 		addCommand("CreateTestData", "Create test data to database.", CreateTestData.class, ArgType.CONFIG);
 		addCommand("PhoneBill", "Execute phone bill batch with online applications.", PhoneBill.class, ArgType.CONFIG);
 		addCommand("OnlineApp", "Execute online applications.", OnlineApp.class, ArgType.CONFIG);
-		addCommand("ThreadBench", "Execute PhonBill with multiple thread counts", ThreadBench.class, ArgType.MULTI_CONFIG);
+		addCommand("MultipleExecute", "Execute PhonBill with multiple configurations", MultipleExecute.class, ArgType.MULTI_CONFIG);
 		addCommand("OnlineAppBench", "Execute PhonBill with and without online applications.", OnlineAppBench.class,
 				ArgType.CONFIG);
 		addCommand("TestDataStatistics", "Create test data statistics without test data.", TestDataStatistics.class,
@@ -117,14 +117,14 @@ public class Main {
 		System.err.println("usage: run command [file]");
 		System.err.println("  or:  run command hostname:port");
 		System.err.println();
-		System.err.println("Following commands can specify a filename of configuration file,");
-		System.err.println("If not specified filename, the default value is used.");
+		System.err.println("Following commands must specify a filename of configuration file.");
 		System.err.println();
 		for(Command command: COMMAND_MAP.values()) {
-			if (command.argType == ArgType.CONFIG) {
+			if (command.argType == ArgType.CONFIG || command.argType == ArgType.MULTI_CONFIG) {
 				System.err.println("  " + command.name+": " + command.description);
 			}
 		}
+
 		System.err.println();
 		System.err.println("Following commands must specify a hostname and port number of server.");
 		System.err.println();
