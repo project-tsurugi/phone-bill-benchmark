@@ -6,22 +6,32 @@
 以下の環境で開発、動作確認を行っています。同等環境を用意願います。
 
 * OS
- - Ubuntu 18.04LTS
+ - Ubuntu 20.04LTS
 * JDK
- - openjdk 11.0.7
+  - openjdk 11.0.7
 * DBMS
-  - PostgreSQL 13.2
-  - Oracle Database 19c Enterprise Edition Release 19.0.0.0.0
+  - PostgreSQL 12
+  - Oracle Database 19c Enterprise Edition
+  - Tsurugi
 
 ## ビルドとインストール
 
-ソースコードをgithubから取得
+### 認証情報の設定
+
+GitHubのアクセスに必要な認証情報を設定
+
+* 環境変数GPR_USERにGitHubのユーザ名を設定
+  * project-tsurugiに対するアクセス権のあるユーザを指定
+* 環境変数GPR_KEYにGitHubのパーソナルアクセストークンを設定
+  * scopeに `repo`, `read:packages`を含むパーソナルアクセストークンが必要
+
+### ソースコードをgithubから取得
 
 ```
 git clone git@github.com:project-tsurugi/phone-bill-benchmark.git
 ```
 
-ビルド
+### ビルド
 
 ```
 cd src
@@ -29,11 +39,15 @@ cd src
 ```
 ビルドに成功すると、インストール用のアーカイブ`build/distributions/phone-bill.tar`が生成される。
 
+### インストール
+
 実行環境の任意のディレクトリで、生成された`phone-bill.tar` を展開してインストールする。
 
 ```
 tar xf phone-bill.tar
 ```
+
+## 実行
 
 スクリプト`phone-bill/bin/run`でサンプルバッチを起動する。下の例では、引数を与えて
 いないので、エラーとなりusageが表示される。
@@ -105,6 +119,9 @@ url=jdbc:postgresql://127.0.0.1/phonebill
 user=phonebill
 password=phonebill
 isolation.level=READ_COMMITTED
+# DBMSタイプ
+dbms.type=POSTGRE_SQL_JDBC
+
 
 # オンラインアプリケーションに関するパラメータ
 master.update.records.per.min=0
@@ -132,12 +149,14 @@ oracle.sql.loader.path=sqlldr
 oracle.sql.loader.sid=
 oracle.create.index.option=nologging parallel 32
 
+# Iceaxe固有のパラメータ
+transaction.option=OCC
+use.prepared.tables=false
+
 # その他のパラメータ
 random.seed=0
 transaction.scope=WHOLE
 listen.port=0
-
-
 ```
 
 ### 料金計算に関するパラメータ
@@ -190,13 +209,24 @@ listen.port=0
 
 ### JDBCに関するパラメータ
 * url
-  - JDBC URL
+  - ORacle, PostgreSQL利用時のJDBC URL
+  - Tsurugi利用時のendpoint
 * user
   - DBのログイン認証に使用するユーザ名
 * password
   - DBのログイン認証に使用するパスワード
-* solation.level
+* isolation.level
   - 使用するトランザクション分離レベル、`READ_COMMITTED` と `SERIALIZABLE`のみが指定可能
+  - Tsurugi利用時は無視される
+### DBMSタイプ
+
+* dbms.type
+  * 使用するDBMSを指定する
+  　* POSTGRE_SQL_JDBC: PostgreSQL
+  　* ORACLE_JDBC: Oracle
+  　* ICEAXE: Tsurugi
+
+
 
 ### オンラインアプリケーションに関するパラメータ
 
@@ -213,11 +243,11 @@ listen.port=0
 * history.update.thread.count=1
   * 通話履歴マスタを更新するスレッドのスレッド数。 
 * history.insert.transaction.per.min
-  * 通話履歴の追加頻度、`history.insert.thread.count`で指定した各スレッドが1分間にこで指定されたレコード回数だけ契約マスタを更新する。-1を指定すると連続で通話履歴を追加する。
+  * 通話履歴の追加頻度、`history.insert.thread.count`で指定した各スレッドが1分間にこで指定された回数だけ契約マスタを更新する。-1を指定すると連続で通話履歴を追加する。
 * history.insert.thread.count=1
   * 通話履歴マスタを追加するスレッドのスレッド数。 
 * history.insert.records.per.transaction
-  * 通話履歴の追加時に1回で追加するレコードする。
+  * 通話履歴の追加時に1回で追加するレコード数。
 * skip.database.access=false
   * ツール自体のテスト用のパラメータです。常にfalseを指定して使用してください。
 
@@ -251,6 +281,15 @@ listen.port=0
   - SQL*Loader実行時にしていするOracle SID。Oracle SIDを指定しなくてもSQL\*Loaderを実行可能な環境では指定不要です。
 * oracle.create.index.option
   - インデックスおよびプライマリーキー生成時に追加でしていするオプションを指定します。デフォルトでは、`nologging parallel 32`が用いられます。実行環境に応じて適宜指定してください。
+
+### Iceaxe固有のパラメータ
+Tsurugi利用時のみ有効なパラメータです。
+
+* transaction.option
+  - バッチ実行時のTransaction Option, OCCとLTXのいずれかを指定する。 
+* use.prepared.tables=false
+  - ツール自体のテスト用のパラメータです。常にfalseを指定して使用してください。
+
 
 ### その他のパラメータ
 * random.seed=0
@@ -322,6 +361,7 @@ phone-bill/bin/run CreateTable config.properties
 
 ## マルチノード構成でのサンプルバッチの実行
 
+現在この機能はメンテナンスされていません。正しく動作しない可能性があります。
 オンラインアプリケーションがデータベースに十分な負荷を与えられない場合のために、マルチノード構成でサンプルバッチを実行可能です。
 
 ### 概要
@@ -455,9 +495,7 @@ Start         Type       Node            Status    Message from client
 ```
 
 ## 注意点
-
 * サンプルバッチを複数回実行する場合、実行の前に都度テストデータの生成を行って
 ください。テストデータの生成を行わずに、複数回バッチを実行すると、バッチの実行によりデータが書き換わるため、1回目の実行と2回目の条件が変わってしまいます。とくに、オンラインアプリケーションにより大量にデータを追加した場合、処理時間が大幅に増えることがあります。
 * テストデータの生成を行うと、通話履歴テーブルと契約マスタの既存データは削除されます。月額利用料金テーブルのデータは削除されずそのまま残ります。
 * 分布関数に`UNIFORM`を指定しても、電話番号の頻度に大きなばらつきがあるように見えます。これは当該電話番号の契約期間の長短により電話番号の選択可能性が変わり、電話番号の頻度は電話番号の選択可能性に依存するためです。
-
