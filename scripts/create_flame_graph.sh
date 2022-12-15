@@ -24,7 +24,7 @@ PID_SERVER=`ps -f -u $USER | grep tateyama-server | grep -v grep | awk '{print $
 # create test data
 
 rm -f $LOG_DIR/$LABEL-client.log
-export JAVA_OPTS="$JAVA_OPTS -Dlogback.configurationFile=etc/logback.xml -Dlogfile=$LOG_DIR/$LABEL-client.log"
+export JAVA_OPTS="$JAVA_OPTS -Dlogback.configurationFile=$BIN_DIR/etc/logback.xml -Dlogfile=$LOG_DIR/$LABEL-client.log"
 $INSTALL_DIR/phone-bill/bin/run CreateTestData $CONF
 
 

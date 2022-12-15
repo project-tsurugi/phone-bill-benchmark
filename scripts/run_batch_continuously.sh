@@ -16,7 +16,7 @@ BIN_DIR=$(cd $(dirname $0); pwd)
 # create test data
 
 rm -f $LOG_DIR/$LABEL-client.log
-export JAVA_OPTS="$JAVA_OPTS -Dlogback.configurationFile=etc/logback_for_continuously.xml"
+export JAVA_OPTS="$JAVA_OPTS -Dlogback.configurationFile=$BIN_DIR/etc/logback_for_continuously.xml"
 $INSTALL_DIR/phone-bill/bin/run CreateTestData $CONF
 
 

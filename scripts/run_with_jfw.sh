@@ -23,7 +23,7 @@ $TSURUGI_DIR/bin/oltp start --conf=etc/phone-bill.ini --v=30 &> $LOG_DIR/$LABEL-
 # create test data
 
 rm -f $LOG_DIR/$LABEL-client.log
-export JAVA_OPTS="$JAVA_OPTS -Dlogback.configurationFile=etc/logback.xml -Dlogfile=$LOG_DIR/$LABEL-client.log"
+export JAVA_OPTS="$JAVA_OPTS -Dlogback.configurationFile=$BIN_DIR/etc/logback.xml -Dlogfile=$LOG_DIR/$LABEL-client.log"
 $INSTALL_DIR/phone-bill/bin/run CreateTestData $CONF
 
 
