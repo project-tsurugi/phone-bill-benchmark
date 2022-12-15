@@ -84,6 +84,10 @@ public class ContractInfoReader {
 	 */
 	private Random random;
 
+	/**
+	 * getNewContract()の戻り値用のインスタンス。高速化のためにインスタンスを使い回す。
+	 */
+	private  Contract retContract;
 
 
 	/**
@@ -125,6 +129,7 @@ public class ContractInfoReader {
 	}
 
 
+
 	/**
 	 * 個別にパラメータを指定可能なコンストラクタ。UT以外で使用禁止。
 	 *
@@ -152,6 +157,8 @@ public class ContractInfoReader {
 		loadActiveBlockNumberList();
 		posInBlock = 0;
 		blockNumber = -1;
+		retContract = new Contract();
+		retContract.setRule("dummy");
 	}
 
 	/**
@@ -164,13 +171,6 @@ public class ContractInfoReader {
 	}
 
 
-	/**
-	 * getNewContract()の戻り値用のインスタンス。高速化のためにインスタンスを使い回す。
-	 */
-	private static Contract retContract = new Contract();
-	static {
-		retContract.setRule("dummy");
-	}
 
 	/**
 	 * 新規に作成する契約を返す
