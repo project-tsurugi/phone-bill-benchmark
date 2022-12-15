@@ -21,9 +21,6 @@ import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.entity.Billing;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
-import com.tsurugidb.iceaxe.transaction.TgTxOption;
-import com.tsurugidb.iceaxe.transaction.manager.TgTmSetting;
-import com.tsurugidb.sql.proto.SqlRequest.TransactionPriority;
 
 public class CalculationTask implements Callable<Exception> {
     private static final Logger LOG = LoggerFactory.getLogger(CalculationTask.class);
@@ -33,7 +30,7 @@ public class CalculationTask implements Callable<Exception> {
     private AtomicInteger tryCounter;
     private AtomicInteger abortCounter;
 	private int nCalculated = 0;
-	private TgTxOption txOption = null;
+	private TxOption txOption = null;
 
     Calculator calculator;
 
@@ -68,10 +65,10 @@ public class CalculationTask implements Callable<Exception> {
 		calculator = new CalculatorImpl();
 		switch (config.transactionOption) {
 		case OCC:
-			txOption = TgTxOption.ofOCC();
+			txOption = TxOption.ofOCC(config.transactionScope == TransactionScope.CONTRACT ? Integer.MAX_VALUE : 0, "CalculationTask");
 			break;
 		case LTX:
-			txOption = TgTxOption.ofLTX("history", "billing").priority(TransactionPriority.INTERRUPT_EXCLUDE);
+			txOption = TxOption.ofLTX(config.transactionScope == TransactionScope.CONTRACT ? Integer.MAX_VALUE : 0, "CalculationTask");
 			break;
 		}
 	}
@@ -94,7 +91,7 @@ public class CalculationTask implements Callable<Exception> {
 				try {
 					AtomicInteger tryInThisTx = new AtomicInteger(0);
 					LOG.debug("Start calculation for  contract: {}.", target.getContract());
-					manager.execute(TxOption.of(Integer.MAX_VALUE, TgTmSetting.ofAlways(txOption)), () -> {
+					manager.execute(txOption, () -> {
 						tryInThisTx.incrementAndGet();
 						tryCounter.incrementAndGet();
 						tid.set(manager.getTransactionId());
@@ -126,7 +123,7 @@ public class CalculationTask implements Callable<Exception> {
 				list.add(firstTarget);
 				TransactionId tid = new TransactionId();
 				try {
-					manager.execute(TxOption.of(0, TgTmSetting.of(txOption)), () -> {
+					manager.execute(txOption, () -> {
 						tid.set(manager.getTransactionId());
 						LOG.debug("Transaction started, tid = {}, txOption = {}, tryCount = {}", tid, txOption,
 								tryCounter, manager.getTransactionId());

@@ -122,7 +122,7 @@ class PhoneBillDbManagerJdbcTest extends  AbstractPhoneBillDbManagerTest{
 			h.setCharge(h.getCharge() == null ? 300 : h.getCharge() + 300);
 			after.set(0, h);
 			tryCount = 0;
-			manager.execute(TxOption.of(10, null), () -> {
+			manager.execute(TxOption.of(10), () -> {
 				if (++tryCount < 4) {
 					throw new RuntimeException(new SerializationFailureException("40001"));
 				}
@@ -231,7 +231,7 @@ class PhoneBillDbManagerJdbcTest extends  AbstractPhoneBillDbManagerTest{
 			};
 
 			tryCount = 0;
-			manager.execute(TxOption.of(10, null), () -> dao.update(h));
+			manager.execute(TxOption.of(10), () -> dao.update(h));
 			// コミット後に別コネクションでも更新が反映されている
 			assertIterableEquals(after, getHistories());
 			assertIterableEquals(after, getHistories(manager));

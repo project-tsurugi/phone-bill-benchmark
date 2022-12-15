@@ -116,7 +116,7 @@ public abstract class PhoneBillDbManagerJdbc extends PhoneBillDbManager {
 					throw e;
 				}
 				if (isRetriable(e)) {
-					if (tryCount < txOption.getRetryCountJdbc()) {
+					if (tryCount < txOption.getRetryCountLimit()) {
 						continue;
 					}
 					throw new RetryOverRuntimeException("trey count = " + tryCount, e);
@@ -141,7 +141,7 @@ public abstract class PhoneBillDbManagerJdbc extends PhoneBillDbManager {
 					throw e;
 				}
 				if (isRetriable(e)) {
-					if (tryCount < txOption.getRetryCountJdbc()) {
+					if (tryCount < txOption.getRetryCountLimit()) {
 						continue;
 					}
 					throw new RetryOverRuntimeException("trey count = " + tryCount, e);

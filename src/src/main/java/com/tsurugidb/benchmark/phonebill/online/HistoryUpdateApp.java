@@ -17,8 +17,6 @@ import com.tsurugidb.benchmark.phonebill.db.entity.History;
 import com.tsurugidb.benchmark.phonebill.testdata.CallTimeGenerator;
 import com.tsurugidb.benchmark.phonebill.testdata.ContractBlockInfoAccessor;
 import com.tsurugidb.benchmark.phonebill.testdata.ContractInfoReader;
-import com.tsurugidb.iceaxe.transaction.TgTxOption;
-import com.tsurugidb.iceaxe.transaction.manager.TgTmSetting;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -43,7 +41,7 @@ public class HistoryUpdateApp extends AbstractOnlineApp {
 	}
 
 	void updateDatabase(History history) {
-		manager.execute(TxOption.of(Integer.MAX_VALUE, TgTmSetting.ofAlways(TgTxOption.ofOCC())),
+		manager.execute(TxOption.ofOCC(Integer.MAX_VALUE, "HistoryUpdateApp-read"),
 				() -> historyDao.update(history));
 	}
 
@@ -54,7 +52,7 @@ public class HistoryUpdateApp extends AbstractOnlineApp {
 	 * @return
 	 */
 	List<History> getHistories(Key key) {
-		return manager.execute(TxOption.of(Integer.MAX_VALUE, TgTmSetting.ofAlways(TgTxOption.ofOCC())),
+		return manager.execute(TxOption.ofOCC(Integer.MAX_VALUE, "HistoryUpdateApp-write"),
 				() -> historyDao.getHistories(key));
 	}
 
