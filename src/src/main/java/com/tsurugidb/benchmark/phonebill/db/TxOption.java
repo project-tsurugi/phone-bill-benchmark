@@ -1,5 +1,9 @@
 package com.tsurugidb.benchmark.phonebill.db;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager.CounterKey;
 import com.tsurugidb.iceaxe.transaction.TgTxOption;
 import com.tsurugidb.iceaxe.transaction.manager.TgTmSetting;
 
@@ -23,6 +27,12 @@ public class TxOption {
 	 * トランザクションに付けるラベル、Iceaxe以外では無効
 	 */
 	private String label;
+
+
+	/**
+	 * CounterKeyのキャッシュ
+	 */
+	private Map<String, CounterKey> counterkeyCache = new HashMap<>();
 
 
 	private TxOption(int retryCountLmit, TgTxOption option, String label) {
@@ -109,5 +119,21 @@ public class TxOption {
 	 */
 	public String getLabel() {
 		return label;
+	}
+
+
+	/**
+	 * 指定の名称のgetCounterKeyを取得する
+	 *
+	 * @param name
+	 * @return
+	 */
+	public CounterKey getCounterKey(String name) {
+		CounterKey key = counterkeyCache.get(name);
+		if (key == null) {
+			key = new CounterKey(label, name);
+			counterkeyCache.put(name, key);
+		}
+		return key;
 	}
 }
