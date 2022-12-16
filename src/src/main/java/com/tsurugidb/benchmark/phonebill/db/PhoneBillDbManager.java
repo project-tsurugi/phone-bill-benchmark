@@ -1,6 +1,7 @@
 package com.tsurugidb.benchmark.phonebill.db;
 
 import java.io.Closeable;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.slf4j.Logger;
@@ -15,6 +16,7 @@ import com.tsurugidb.benchmark.phonebill.db.iceaxe.PhoneBillDbManagerIceaxe;
 import com.tsurugidb.benchmark.phonebill.db.oracle.PhoneBillDbManagerOracle;
 import com.tsurugidb.benchmark.phonebill.db.postgresql.PhoneBillDbManagerPostgresql;
 import com.tsurugidb.benchmark.phonebill.db.postgresql.PhoneBillDbManagerPostgresqlNoBatchUpdate;
+import com.tsurugidb.iceaxe.transaction.TsurugiTransaction;
 
 /**
  *
@@ -62,7 +64,7 @@ public abstract class PhoneBillDbManager implements Closeable {
      *
      * @param listener
      */
-    public abstract void commit(Runnable listener);
+    public abstract void commit(Consumer<TsurugiTransaction> listener);
 
 
 
@@ -79,7 +81,7 @@ public abstract class PhoneBillDbManager implements Closeable {
      *
      * @param listener
      */
-    public abstract void rollback(Runnable listener);
+    public abstract void rollback(Consumer<TsurugiTransaction> listener);
 
 
     /**

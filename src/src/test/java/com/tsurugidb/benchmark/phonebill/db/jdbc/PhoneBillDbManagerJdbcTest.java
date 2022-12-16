@@ -32,6 +32,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.function.Consumer;
 
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -47,6 +48,7 @@ import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.dao.HistoryDaoJdbc;
 import com.tsurugidb.benchmark.phonebill.db.postgresql.PhoneBillDbManagerPostgresql;
+import com.tsurugidb.iceaxe.transaction.TsurugiTransaction;
 
 class PhoneBillDbManagerJdbcTest extends  AbstractPhoneBillDbManagerTest{
 	private int tryCount = 0;
@@ -862,7 +864,7 @@ class PhoneBillDbManagerJdbcTest extends  AbstractPhoneBillDbManagerTest{
 		}
 
 		@Override
-		public void rollback(Runnable listener) {
+		public void rollback(Consumer<TsurugiTransaction> listener) {
 			throw e;
 		}
 	}

@@ -118,7 +118,7 @@ class IceaxeUtilsTest {
 	}
 
 	@Test
-	final void testExecuteAndGetCount() {
+	final void testExecuteAndGetCount() throws IOException {
 		TsurugiPreparedStatementUpdate1<History> psThrowIOException = new TsurugiPreparedStatementUpdate1<History>(
 				session, null, null, null) {
 			@Override
