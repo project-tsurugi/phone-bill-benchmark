@@ -107,22 +107,27 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
             transactionManager.execute(setting, transaction -> {
                 transactionThreadLocal.set(transaction);
                 try {
+                	countup(txOption, BEGIN_TX);
                     runnable.run();
+                	countup(txOption, TRY_COMMIT);
                 } finally {
                     transactionThreadLocal.remove();
                 }
             });
         } catch (IOException e) {
+            countup(txOption, ABORTED);
         	if (isRetriable(e)) {
             	throw new RetryOverRuntimeException(e);
         	}
             throw new UncheckedIOException(e);
         } catch (RuntimeException e) {
+            countup(txOption, ABORTED);
         	if (isRetriable(e)) {
             	throw new RetryOverRuntimeException(e);
         	}
         	throw e;
         }
+        countup(txOption, SUCCESS);
     }
 
     @Override
@@ -132,17 +137,23 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
             return transactionManager.execute(setting, transaction -> {
                 transactionThreadLocal.set(transaction);
                 try {
-                    return supplier.get();
+                	countup(txOption, BEGIN_TX);
+                    var ret =  supplier.get();
+                	countup(txOption, TRY_COMMIT);
+                	return ret;
+
                 } finally {
                     transactionThreadLocal.remove();
                 }
             });
         } catch (IOException e) {
+            countup(txOption, ABORTED);
         	if (isRetriable(e)) {
             	throw new RetryOverRuntimeException(e);
         	}
             throw new UncheckedIOException(e);
         } catch (RuntimeException e) {
+            countup(txOption, ABORTED);
         	if (isRetriable(e)) {
             	throw new RetryOverRuntimeException(e);
         	}

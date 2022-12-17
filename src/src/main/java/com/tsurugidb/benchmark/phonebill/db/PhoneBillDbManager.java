@@ -1,6 +1,9 @@
 package com.tsurugidb.benchmark.phonebill.db;
 
 import java.io.Closeable;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -24,12 +27,21 @@ import com.tsurugidb.iceaxe.transaction.TsurugiTransaction;
 public abstract class PhoneBillDbManager implements Closeable {
     private static final Logger LOG = LoggerFactory.getLogger(PhoneBillDbManager.class);
 
+    // カウンタを格納するmap
+    private static Map<CounterKey, AtomicInteger> ccounterMap = new ConcurrentHashMap<>();
+
+    // カウンタの名称
+	protected static final String BEGIN_TX = "BEGIN_TX";
+	protected static final String TRY_COMMIT = "TRY_COMMIT";
+	protected static final String SUCCESS = "SUCCESS";
+	protected static final String ABORTED = "ABORTED";
+
+
     // DAO取得用のメソッド
 	public abstract Ddl getDdl();
 	public abstract ContractDao getContractDao();
 	public abstract HistoryDao getHistoryDao();
 	public abstract BillingDao getBillingDao();
-
 
     /**
      * トランザクションを実行する
@@ -134,5 +146,76 @@ public abstract class PhoneBillDbManager implements Closeable {
 	 */
 	public String getTransactionId() {
 		return "none";
+	}
+
+
+	protected  final void countup(TxOption option, String name ) {
+		CounterKey key = option.getCounterKey(name);
+		AtomicInteger counter = ccounterMap.get(key);
+		if (counter == null) {
+			counter = new AtomicInteger(0);
+			ccounterMap.put(key, counter);
+		}
+		counter.incrementAndGet();
+	}
+
+
+
+	/**
+	 * counterMapで使用するキー
+	 */
+	static class CounterKey {
+		/**
+		 * トランザクションのラベル
+		 */
+		String label;
+		/**
+		 * カウンタの名称
+		 */
+		String name;
+
+
+		/**
+		 * コンストラクタ
+		 *
+		 * @param label
+		 * @param name
+		 */
+		CounterKey(String label, String name) {
+			this.label = label;
+			this.name = name;
+		}
+
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + ((label == null) ? 0 : label.hashCode());
+			result = prime * result + ((name == null) ? 0 : name.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			CounterKey other = (CounterKey) obj;
+			if (label == null) {
+				if (other.label != null)
+					return false;
+			} else if (!label.equals(other.label))
+				return false;
+			if (name == null) {
+				if (other.name != null)
+					return false;
+			} else if (!name.equals(other.name))
+				return false;
+			return true;
+		}
 	}
 }

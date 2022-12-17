@@ -40,8 +40,6 @@ import com.tsurugidb.benchmark.phonebill.testdata.ActiveBlockNumberHolder;
 import com.tsurugidb.benchmark.phonebill.testdata.ContractBlockInfoAccessor;
 import com.tsurugidb.benchmark.phonebill.testdata.DbContractBlockInfoInitializer;
 import com.tsurugidb.benchmark.phonebill.testdata.SingleProcessContractBlockManager;
-import com.tsurugidb.iceaxe.transaction.TgTxOption;
-import com.tsurugidb.iceaxe.transaction.manager.TgTmSetting;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -180,7 +178,7 @@ public class PhoneBill extends ExecutableCommand {
 			});
 
 			// 計算対象の契約を取りだし、キューに入れる
-			List<Contract> list = manager.execute(TxOption.of(Integer.MAX_VALUE, TgTmSetting.ofAlways(TgTxOption.ofRTX())), () -> {
+			List<Contract> list = manager.execute(TxOption.ofRTX(Integer.MAX_VALUE, "GetContracts"), () -> {
 				return contractDao.getContracts(start, end);
 			});
 			ArrayList<CalculationTarget> targets = new ArrayList<>(list.size());

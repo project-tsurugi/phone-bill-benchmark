@@ -21,8 +21,6 @@ import com.tsurugidb.benchmark.phonebill.testdata.GenerateHistoryTask;
 import com.tsurugidb.benchmark.phonebill.testdata.HistoryKey;
 import com.tsurugidb.benchmark.phonebill.testdata.TestDataGenerator;
 import com.tsurugidb.benchmark.phonebill.util.DateUtils;
-import com.tsurugidb.iceaxe.transaction.TgTxOption;
-import com.tsurugidb.iceaxe.transaction.manager.TgTmSetting;
 
 /**
  * 通話履歴を追加するオンラインアプリケーション.
@@ -144,7 +142,7 @@ public class HistoryInsertApp extends AbstractOnlineApp {
 	@Override
 	protected void updateDatabase() {
 		HistoryDao dao = manager.getHistoryDao();
-		manager.execute(TxOption.of(Integer.MAX_VALUE, TgTmSetting.ofAlways(TgTxOption.ofOCC())), () -> dao.batchInsert(histories));
+		manager.execute(TxOption.ofOCC(Integer.MAX_VALUE, "HistoryInsertApp"), () -> dao.batchInsert(histories));
 		LOG.debug("ONLINE APP: Insert {} records to history.", historyInsertRecordsPerTransaction);
 	}
 
