@@ -38,7 +38,7 @@ public class CreateTestData extends ExecutableCommand {
 
 			// テーブルをTruncate
 			// インデックスの削除
-			manager.execute(TxOption.of(), () -> {
+			manager.execute(TxOption.ofLTX(0, "CreateTable", "history", "contracts", "billing"), () -> {
 				ddl.prepareLoadData();
 			});
 
@@ -57,7 +57,7 @@ public class CreateTestData extends ExecutableCommand {
 			LOG.info(String.format(format, config.numberOfHistoryRecords, elapsedTime / 1000d));
 
 			// Indexの再生成とDBの統計情報を更新
-			manager.execute(TxOption.of(), () -> {
+			manager.execute(TxOption.ofLTX(0, "CreateTable", "history", "contracts", "billing"), () -> {
 				ddl.afterLoadData();
 			});
 		}

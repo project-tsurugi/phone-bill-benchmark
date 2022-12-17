@@ -114,14 +114,14 @@ public class OnlineAppBench extends ExecutableCommand {
 
 	private void afterExec(Config config) {
 		List<History> histories = new ArrayList<>();
-		manager.execute(TxOption.of(), () -> {
+		manager.execute(TxOption.ofRTX(0, "OnlineAppBench.afterExec"), () -> {
 			histories.addAll(manager.getHistoryDao().getHistories());
 		});
 		int historyUpdated = countUpdated(histories, orgHistories, History::getKey);
 		int historyInserted = histories.size() - orgHistories.size();
 
 		List<Contract> contracts = new ArrayList<>();
-		manager.execute(TxOption.of(), () -> {
+		manager.execute(TxOption.ofRTX(0, "OnlineAppBench.afterExec"), () -> {
 			contracts.addAll(manager.getContractDao().getContracts());
 		});
 		int masterUpdated = countUpdated(contracts, orgContracts, Contract::getKey);
@@ -159,7 +159,7 @@ public class OnlineAppBench extends ExecutableCommand {
 	List<Contract> orgContracts;
 
 	private void beforeExec(Config config) {
-		manager.execute(TxOption.of(), () -> {
+		manager.execute(TxOption.ofRTX(0, "OnlineAppBench"), () -> {
 			orgHistories = manager.getHistoryDao().getHistories();
 			orgContracts = manager.getContractDao().getContracts();
 		});
