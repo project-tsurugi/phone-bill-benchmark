@@ -25,6 +25,7 @@ public class Main {
 		addCommand("CreateTestData", "Create test data to database.", CreateTestData.class, ArgType.CONFIG);
 		addCommand("PhoneBill", "Execute phone bill batch with online applications.", PhoneBill.class, ArgType.CONFIG);
 		addCommand("OnlineApp", "Execute online applications.", OnlineApp.class, ArgType.CONFIG);
+		addCommand("CreateConfigVariation", "Create config variation.", CreateConfigVariation.class, ArgType.CONFIG);
 		addCommand("MultipleExecute", "Execute PhonBill with multiple configurations", MultipleExecute.class, ArgType.MULTI_CONFIG);
 		addCommand("OnlineAppBench", "Execute PhonBill with and without online applications.", OnlineAppBench.class,
 				ArgType.CONFIG);
