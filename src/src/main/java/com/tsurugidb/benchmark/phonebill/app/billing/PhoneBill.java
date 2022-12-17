@@ -173,7 +173,7 @@ public class PhoneBill extends ExecutableCommand {
 			ContractDao contractDao = manager.getContractDao();
 
 			// Billingテーブルの計算対象月のレコードを削除する
-			manager.execute(TxOption.ofLTX(Integer.MIN_VALUE, "delete_billing", "billing"), () -> {
+			manager.execute(TxOption.ofLTX(Integer.MIN_VALUE, "billing"), () -> {
 				billingDao.delete(start);
 			});
 

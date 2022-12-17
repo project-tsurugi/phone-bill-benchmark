@@ -17,11 +17,7 @@ public class CreateTable extends ExecutableCommand{
 	public void execute(Config config) throws Exception {
 		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
 			ddl = manager.getDdl();
-			if (config.usePreparedTables) {
-				manager.execute(TxOption.ofLTX(0, "DropTable", "history", "contracts", "billing"),
-						() -> ddl.truncateTable("history"));
-			}
-			TxOption option = TxOption.ofOCC(0, "CreateTable");
+			TxOption option = TxOption.ofLTX(0, "CreateTable", "history", "contracts", "billing");
 			manager.execute(option, ddl::dropTables);
 			manager.execute(option, ddl::createHistoryTable);
 			manager.execute(option, ddl::createContractsTable);
