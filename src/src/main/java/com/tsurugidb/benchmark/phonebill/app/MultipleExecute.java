@@ -49,6 +49,8 @@ public class MultipleExecute extends ExecutableCommand {
 	@Override
 	public void execute(List<Config> configs) throws Exception {
 		for (Config config : configs) {
+			LOG.info("Config initialized" + System.lineSeparator() + "--- " + System.lineSeparator() + config
+					+ System.lineSeparator() + "---");
 			new CreateTable().execute(config);
 			new CreateTestData().execute(config);
 			Record record = new Record(config);

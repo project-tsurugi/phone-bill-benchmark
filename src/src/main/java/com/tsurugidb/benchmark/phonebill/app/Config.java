@@ -18,6 +18,12 @@ import com.tsurugidb.benchmark.phonebill.util.DateUtils;
 
 public class Config implements Cloneable {
 	/**
+	 * Config作成時にログを出力するかを指定するフラグ
+	 */
+	public static boolean logging = true;
+
+
+	/**
 	 * プロパティ
 	 */
 	private Properties prop;
@@ -382,10 +388,11 @@ public class Config implements Cloneable {
 			.forEach(k -> prop.put(k.substring(SYSPROP_PREFIX.length()), System.getProperty(k)));
 		init();
 		replaceUrl();
-
-		Logger logger = LoggerFactory.getLogger(Config.class);
-		logger.info("Config initialized" +
-				System.lineSeparator() + "--- " + System.lineSeparator() + this.toString() + "---");
+		if (logging) {
+			Logger logger = LoggerFactory.getLogger(Config.class);
+			logger.info("Config initialized" + System.lineSeparator() + "--- " + System.lineSeparator()
+					+ this.toString() + System.lineSeparator() + "---");
+		}
 	}
 
 

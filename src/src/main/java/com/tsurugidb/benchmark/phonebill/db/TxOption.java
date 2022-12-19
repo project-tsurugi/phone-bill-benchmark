@@ -38,6 +38,7 @@ public class TxOption {
 	private TxOption(int retryCountLmit, String label, TgTxOption option) {
 		option.label(label);
 		this.retryCountLmit = retryCountLmit;
+		this.label = label;
 		this.setting = retryCountLmit == 0 ? TgTmSetting.of(option) : TgTmSetting.ofAlways(option, retryCountLmit);
 	}
 

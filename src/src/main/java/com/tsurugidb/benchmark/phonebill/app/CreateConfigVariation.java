@@ -62,9 +62,10 @@ public class CreateConfigVariation extends ExecutableCommand {
 	}
 
 	private void createConfig(Config config) throws IOException {
-		final String filename = (config.dbmsType == DbmsType.ICEAXE ?
-				"TG-" + config.transactionOption : "PG-" + config.isolationLevel)
-				+ "-" + config.transactionScope + "-T" + config.threadCount + ".properties";
+		final String fmt = "%s-%s-%s-T%02d.properties";
+		final String filename = String.format(fmt, config.dbmsType == DbmsType.ICEAXE ? "TG" : "PG",
+				config.dbmsType == DbmsType.ICEAXE ? config.transactionOption : config.isolationLevel,
+				config.transactionScope, config.threadCount);
 		Path path = Path.of(filename);
 		Files.writeString(path, config.toString());
 	}

@@ -194,6 +194,10 @@ class ConfigTest {
 		for (Field field : config.getClass().getDeclaredFields()) {
 			field.setAccessible(true);
 			String key = field.getName();
+			if (key.equals("logging")) {
+				continue; // "logging" is not a configuration parameter.
+			}
+
 			Object value = field.get(config);
 			if (Character.isLowerCase(key.charAt(0))) {
 				map.put(key, value);

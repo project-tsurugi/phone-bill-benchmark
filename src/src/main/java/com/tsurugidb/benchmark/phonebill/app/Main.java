@@ -1,5 +1,6 @@
 package com.tsurugidb.benchmark.phonebill.app;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -21,12 +22,14 @@ import com.tsurugidb.benchmark.phonebill.testdata.TestDataStatistics;
 public class Main {
 	private static final Map<String, Command> COMMAND_MAP = new LinkedHashMap<>();
 	static {
-		addCommand("CreateTable", "Create tables",  CreateTable.class, ArgType.CONFIG);
+		addCommand("CreateTable", "Create tables", CreateTable.class, ArgType.CONFIG);
 		addCommand("CreateTestData", "Create test data to database.", CreateTestData.class, ArgType.CONFIG);
 		addCommand("PhoneBill", "Execute phone bill batch with online applications.", PhoneBill.class, ArgType.CONFIG);
 		addCommand("OnlineApp", "Execute online applications.", OnlineApp.class, ArgType.CONFIG);
-		addCommand("CreateConfigVariation", "Create config variation.", CreateConfigVariation.class, ArgType.CONFIG);
-		addCommand("MultipleExecute", "Execute PhonBill with multiple configurations", MultipleExecute.class, ArgType.MULTI_CONFIG);
+		addCommand("CreateConfigVariation", "Create config variation.", CreateConfigVariation.class,
+				ArgType.CONFIG_WITHOUT_LOGIING);
+		addCommand("MultipleExecute", "Execute PhonBill with multiple configurations", MultipleExecute.class,
+				ArgType.MULTI_CONFIG);
 		addCommand("OnlineAppBench", "Execute PhonBill with and without online applications.", OnlineAppBench.class,
 				ArgType.CONFIG);
 		addCommand("TestDataStatistics", "Create test data statistics without test data.", TestDataStatistics.class,
@@ -41,12 +44,12 @@ public class Main {
 				PhoneBillClient.class, ArgType.HOST_AND_PORT);
 		addCommand("OnlineAppClient", "Execute phone bill batch client for multienode execution.",
 				OnlineAppClient.class, ArgType.HOST_AND_PORT);
-		addCommand("Status", "Reports the execution status of client processes.",
-				CommandLineClient.class, Message.GET_CLUSTER_STATUS, ArgType.HOST_AND_PORT);
-		addCommand("Start", "Start execution a phone bill batch and online applications.",
-				CommandLineClient.class, Message.START_EXECUTION, ArgType.HOST_AND_PORT);
-		addCommand("Shutdown", "Terminate all client processes and a server process.",
-				CommandLineClient.class, Message.SHUTDOWN_CLUSTER, ArgType.HOST_AND_PORT);
+		addCommand("Status", "Reports the execution status of client processes.", CommandLineClient.class,
+				Message.GET_CLUSTER_STATUS, ArgType.HOST_AND_PORT);
+		addCommand("Start", "Start execution a phone bill batch and online applications.", CommandLineClient.class,
+				Message.START_EXECUTION, ArgType.HOST_AND_PORT);
+		addCommand("Shutdown", "Terminate all client processes and a server process.", CommandLineClient.class,
+				Message.SHUTDOWN_CLUSTER, ArgType.HOST_AND_PORT);
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -79,16 +82,15 @@ public class Main {
 			throw new AssertionError();
 		}
 		switch(command.argType) {
+		case CONFIG_WITHOUT_LOGIING:
+			Config.logging = false;
+			execWithConfig(args, executableCommand);
+			break;
 		case CONFIG:
-			if (args.length == 1) {
-				System.err.println("Config filename required");
-				usage();
-				System.exit(1);
-			}
-			Config config = Config.getConfig(args[1]);
-			executableCommand.execute(config);
+			execWithConfig(args, executableCommand);
 			break;
 		case MULTI_CONFIG:
+			Config.logging = false;
 			if (args.length == 1) {
 				System.err.println("Config filenames required");
 				usage();
@@ -112,6 +114,18 @@ public class Main {
 		}
 	}
 
+	private static void execWithConfig(String[] args, ExecutableCommand executableCommand)
+			throws IOException, Exception {
+		if (args.length == 1) {
+			System.err.println("Config filename required");
+			usage();
+			System.exit(1);
+		}
+
+		Config config = Config.getConfig(args[1]);
+		executableCommand.execute(config);
+	}
+
 
 	private static void usage() {
 		System.err.println();
@@ -121,7 +135,7 @@ public class Main {
 		System.err.println("Following commands must specify a filename of configuration file.");
 		System.err.println();
 		for(Command command: COMMAND_MAP.values()) {
-			if (command.argType == ArgType.CONFIG || command.argType == ArgType.MULTI_CONFIG) {
+			if (!(command.argType == ArgType.HOST_AND_PORT)) {
 				System.err.println("  " + command.name+": " + command.description);
 			}
 		}
@@ -146,6 +160,7 @@ public class Main {
 
 	private static enum ArgType {
 		CONFIG,
+		CONFIG_WITHOUT_LOGIING,
 		MULTI_CONFIG,
 		HOST_AND_PORT
 	}
