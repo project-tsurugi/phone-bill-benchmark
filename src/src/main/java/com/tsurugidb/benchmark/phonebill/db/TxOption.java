@@ -35,7 +35,7 @@ public class TxOption {
 	private Map<String, CounterKey> counterkeyCache = new HashMap<>();
 
 
-	private TxOption(int retryCountLmit, TgTxOption option, String label) {
+	private TxOption(int retryCountLmit, String label, TgTxOption option) {
 		option.label(label);
 		this.retryCountLmit = retryCountLmit;
 		this.setting = retryCountLmit == 0 ? TgTmSetting.of(option) : TgTmSetting.ofAlways(option, retryCountLmit);
@@ -71,7 +71,7 @@ public class TxOption {
      * @return
      */
     public static TxOption ofOCC(int retryCountLmit,  String label) {
-        return new  TxOption(retryCountLmit, TgTxOption.ofOCC(), label);
+        return new  TxOption(retryCountLmit, label, TgTxOption.ofOCC());
     }
 
     /**
@@ -82,8 +82,12 @@ public class TxOption {
      * @param writePreserveTableNames table name to Write Preserve
      * @return transaction option
      */
-    public static TxOption ofLTX(int retryCountLmit,  String label, String... writePreserveTableNames) {
-        return new  TxOption(retryCountLmit, TgTxOption.ofLTX(writePreserveTableNames), label);
+    public static TxOption ofLTX(int retryCountLmit,  String label, Table... writePreserveTables) {
+    	TgTxOption tgTxOption = TgTxOption.ofLTX();
+    	for (Table table: writePreserveTables) {
+    		tgTxOption.addWritePreserve(table.getTableName());
+    	}
+        return new  TxOption(retryCountLmit, label, tgTxOption);
     }
 
 
@@ -95,7 +99,7 @@ public class TxOption {
      * @return transaction option
      */
     public static TxOption ofRTX(int retryCountLmit,  String label) {
-        return new  TxOption(retryCountLmit, TgTxOption.ofRTX(), label);
+        return new  TxOption(retryCountLmit, label, TgTxOption.ofRTX());
     }
 
 
@@ -135,5 +139,27 @@ public class TxOption {
 			counterkeyCache.put(name, key);
 		}
 		return key;
+	}
+
+	/**
+	 * ofLTX()で指定するテーブルを定義する列挙型
+	 */
+	public static enum Table {
+		HISTORY("history"),
+		CONTRACTS("contracts"),
+		BILLING("billing");
+
+		private String tableName;
+
+		private Table(String tableName) {
+			this.tableName = tableName;
+		}
+
+		/**
+		 * @return tableName
+		 */
+		public String getTableName() {
+			return tableName;
+		}
 	}
 }

@@ -238,7 +238,7 @@ public class TestDataGenerator {
 	 */
 	private void insertContracts(PhoneBillDbManager manager, List<Contract> contracts) {
 		ContractDao dao = manager.getContractDao();
-		manager.execute(TxOption.of(), () -> dao.batchInsert(contracts));
+		manager.execute(TxOption.ofOCC(0, "insertContracts"), () -> dao.batchInsert(contracts));
 		contracts.clear();
 	}
 
@@ -569,7 +569,7 @@ public class TestDataGenerator {
 		}
 
 		private void insertHistories() {
-			manager.execute(TxOption.of(), () -> {
+			manager.execute(TxOption.ofOCC(0, "insertHistories"), () -> {
 				historyDao.batchInsert(histories);
 			});
 			histories.clear();

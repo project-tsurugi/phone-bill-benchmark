@@ -16,6 +16,7 @@ import com.tsurugidb.benchmark.phonebill.app.Config.TransactionScope;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.RetryOverRuntimeException;
 import com.tsurugidb.benchmark.phonebill.db.TxOption;
+import com.tsurugidb.benchmark.phonebill.db.TxOption.Table;
 import com.tsurugidb.benchmark.phonebill.db.dao.BillingDao;
 import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.entity.Billing;
@@ -65,10 +66,12 @@ public class CalculationTask implements Callable<Exception> {
 		calculator = new CalculatorImpl();
 		switch (config.transactionOption) {
 		case OCC:
-			txOption = TxOption.ofOCC(config.transactionScope == TransactionScope.CONTRACT ? Integer.MAX_VALUE : 0, "CalculationTask");
+			txOption = TxOption.ofOCC(config.transactionScope == TransactionScope.CONTRACT ? Integer.MAX_VALUE : 0,
+					"CalculationTask");
 			break;
 		case LTX:
-			txOption = TxOption.ofLTX(config.transactionScope == TransactionScope.CONTRACT ? Integer.MAX_VALUE : 0, "CalculationTask");
+			txOption = TxOption.ofLTX(config.transactionScope == TransactionScope.CONTRACT ? Integer.MAX_VALUE : 0,
+					"CalculationTask", Table.HISTORY, Table.BILLING);
 			break;
 		}
 	}

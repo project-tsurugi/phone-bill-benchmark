@@ -2,6 +2,7 @@ package com.tsurugidb.benchmark.phonebill.app;
 
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.TxOption;
+import com.tsurugidb.benchmark.phonebill.db.TxOption.Table;
 import com.tsurugidb.benchmark.phonebill.db.dao.Ddl;
 
 public class CreateTable extends ExecutableCommand{
@@ -17,7 +18,10 @@ public class CreateTable extends ExecutableCommand{
 	public void execute(Config config) throws Exception {
 		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
 			ddl = manager.getDdl();
-			TxOption option = TxOption.of();
+			if (config.usePreparedTables) {
+				manager.execute(TxOption.ofLTX(0, "CreateTable", Table.HISTORY), () -> ddl.truncateTable("history"));
+			}
+			TxOption option = TxOption.ofOCC(0, "CreateTable");
 			manager.execute(option, ddl::dropTables);
 			manager.execute(option, ddl::createHistoryTable);
 			manager.execute(option, ddl::createContractsTable);

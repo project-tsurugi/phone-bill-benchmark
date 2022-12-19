@@ -79,10 +79,10 @@ public class MultipleExecute extends ExecutableCommand {
 	private int checkResult(Config config) {
 		int n = 0;
 		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
-			Set<History> histories = manager.execute(TxOption.of(), () -> {
+			Set<History> histories = manager.execute(TxOption.ofRTX(0, "checkResult"), () -> {
 				return new HashSet<>(manager.getHistoryDao().getHistories());
 			});
-			Set<Billing> billings = manager.execute(TxOption.of(), () -> {
+			Set<Billing> billings = manager.execute(TxOption.ofRTX(0, "checkResult"), () -> {
 				List<Billing> list = manager.getBillingDao().getBillings();
 				list.stream().forEachOrdered(b -> b.setBatchExecId(null)); // batchExecIdは比較対象でないのでnullをセット
 				return new HashSet<>(list);
