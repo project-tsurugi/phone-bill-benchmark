@@ -11,6 +11,9 @@ import com.tsurugidb.iceaxe.transaction.manager.TgTmSetting;
  * PhoneBillDbManager使用時に指定するTxOption.
  *
  */
+/**
+ *
+ */
 public class TxOption {
 	/**
 	 * リトライ可能な例外が返った場合にリトライする回数の上限
@@ -22,6 +25,11 @@ public class TxOption {
 	 */
 	private TgTmSetting setting;
 
+
+	/**
+	 * Iceaxeのトランザクションオプション、Iceaxe以外では無効。
+	 */
+	private TgTxOption tgTxOption;
 
 	/**
 	 * トランザクションに付けるラベル、Iceaxe以外では無効
@@ -39,6 +47,7 @@ public class TxOption {
 		option.label(label);
 		this.retryCountLmit = retryCountLmit;
 		this.label = label;
+		this.tgTxOption = option;
 		this.setting = retryCountLmit == 0 ? TgTmSetting.of(option) : TgTmSetting.ofAlways(option, retryCountLmit);
 	}
 
@@ -162,5 +171,10 @@ public class TxOption {
 		public String getTableName() {
 			return tableName;
 		}
+	}
+
+	@Override
+	public String toString() {
+		return tgTxOption.toString();
 	}
 }

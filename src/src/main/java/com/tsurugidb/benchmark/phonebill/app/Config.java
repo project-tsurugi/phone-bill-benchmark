@@ -254,6 +254,13 @@ public class Config implements Cloneable {
 	public int threadCount;
 	private static final String THREAD_COUNT = "thread.count";
 
+
+	/**
+	 * 料金計算スレッドのスレッド数
+	 */
+	public int createTestDataThreadCount;
+	private static final String CREATE_TEST_DATA_THREAD_COUNT = "create.test.data.thread.count";
+
 	/**
 	 * 料金計算のスレッドが、メインスレッドとJDBC Connectionを共有することを示すフラグ
 	 */
@@ -454,6 +461,7 @@ public class Config implements Cloneable {
 		// スレッドに関するパラメータ
 		threadCount = getInt(THREAD_COUNT, 1);
 		sharedConnection = getBoolean(SHARED_CONNECTION, true);
+		createTestDataThreadCount = getInt(CREATE_TEST_DATA_THREAD_COUNT, 1);
 
 		// オンラインアプリケーションに関するパラメータ
 		masterUpdateRecordsPerMin = getInt(MASTER_UPDATE_RECORDS_PER_MIN, 0);
@@ -836,6 +844,7 @@ public class Config implements Cloneable {
 		sb.append(String.format(commentFormat, "スレッドに関するパラメータ"));
 		sb.append(String.format(format, THREAD_COUNT, threadCount));
 		sb.append(String.format(format, SHARED_CONNECTION, sharedConnection));
+		sb.append(String.format(format, CREATE_TEST_DATA_THREAD_COUNT, createTestDataThreadCount));
 		sb.append(System.lineSeparator());
 		sb.append(String.format(commentFormat, "CSVに関するパラメータ"));
 		sb.append(String.format(format, CSV_DIR, csvDir));

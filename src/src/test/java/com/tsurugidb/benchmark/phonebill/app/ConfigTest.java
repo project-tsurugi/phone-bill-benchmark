@@ -249,6 +249,7 @@ class ConfigTest {
 		/* スレッドに関するパラメータ */
 		assertEquals(1, config.threadCount);
 		assertEquals(true, config.sharedConnection);
+		assertEquals(1, config.createTestDataThreadCount);
 
 		/* CSVに関するパラメータ */
 		assertEquals("/var/lib/csv", config.csvDir);
@@ -355,6 +356,7 @@ class ConfigTest {
 		/* スレッドに関するパラメータ */
 		assertEquals(10, config.threadCount);
 		assertEquals(false, config.sharedConnection);
+		assertEquals(15, config.createTestDataThreadCount);
 
 		/* JDBCに関するパラメータ */
 		assertEquals("jdbc:other://127.0.0.1/mydatabase", config.url);

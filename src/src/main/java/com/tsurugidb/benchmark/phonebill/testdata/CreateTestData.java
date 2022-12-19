@@ -9,6 +9,7 @@ import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.ExecutableCommand;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.TxOption;
+import com.tsurugidb.benchmark.phonebill.db.TxOption.Table;
 import com.tsurugidb.benchmark.phonebill.db.dao.Ddl;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -34,6 +35,9 @@ public class CreateTestData extends ExecutableCommand {
 
 			// テーブルをTruncate
 			// インデックスの削除
+			if (config.usePreparedTables) {
+				manager.execute(TxOption.ofLTX(0, "CreateTable", Table.HISTORY), () -> ddl.truncateTable("history"));
+			}
 			manager.execute(TxOption.ofOCC(Integer.MAX_VALUE, "CreateTestData"), () -> {
 				ddl.prepareLoadData();
 			});

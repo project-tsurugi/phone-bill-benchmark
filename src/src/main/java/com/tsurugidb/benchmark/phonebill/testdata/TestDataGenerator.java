@@ -353,7 +353,7 @@ public class TestDataGenerator {
 	public void generateHistory(List<Params> paramsList) {
 
 		// 通話履歴を生成するタスクとスレッドの生成
-		ExecutorService service = Executors.newFixedThreadPool(config.threadCount);
+		ExecutorService service = Executors.newFixedThreadPool(config.createTestDataThreadCount);
 
 		int numberOfTasks = paramsList.size();
 		Set<Future<Result>> futureSet = new HashSet<>(paramsList.size());
