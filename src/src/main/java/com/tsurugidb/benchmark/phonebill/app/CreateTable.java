@@ -21,7 +21,7 @@ public class CreateTable extends ExecutableCommand{
 			if (config.usePreparedTables) {
 				manager.execute(TxOption.ofLTX(0, "CreateTable", Table.HISTORY), () -> ddl.truncateTable("history"));
 			}
-			TxOption option = TxOption.ofOCC(0, "CreateTable");
+			TxOption option = TxOption.ofOCC(Integer.MAX_VALUE, "CreateTable");
 			manager.execute(option, ddl::dropTables);
 			manager.execute(option, ddl::createHistoryTable);
 			manager.execute(option, ddl::createContractsTable);
