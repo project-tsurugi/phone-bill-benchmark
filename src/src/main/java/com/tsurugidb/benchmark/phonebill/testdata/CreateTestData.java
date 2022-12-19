@@ -32,15 +32,16 @@ public class CreateTestData extends ExecutableCommand {
 		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
 			Ddl ddl = manager.getDdl();
 
-			int seed = config.randomSeed;
-			ContractBlockInfoAccessor accessor = new SingleProcessContractBlockManager();
-			TestDataGenerator generator = new TestDataGenerator(config, new Random(seed), accessor);
-
 			// テーブルをTruncate
 			// インデックスの削除
 			manager.execute(TxOption.ofOCC(Integer.MAX_VALUE, "CreateTestData"), () -> {
 				ddl.prepareLoadData();
 			});
+
+			// TestDataGeneratorの初期化
+			int seed = config.randomSeed;
+			ContractBlockInfoAccessor accessor = new SingleProcessContractBlockManager();
+			TestDataGenerator generator = new TestDataGenerator(config, new Random(seed), accessor);
 
 			// 契約マスタのテストデータ生成
 			long startTime = System.currentTimeMillis();
