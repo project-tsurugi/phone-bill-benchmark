@@ -22,6 +22,7 @@ import com.tsurugidb.benchmark.phonebill.app.Config.TransactionScope;
 import com.tsurugidb.benchmark.phonebill.app.billing.PhoneBill;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.TxOption;
+import com.tsurugidb.benchmark.phonebill.db.TxOption.Table;
 import com.tsurugidb.benchmark.phonebill.db.entity.Billing;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
 import com.tsurugidb.benchmark.phonebill.testdata.CreateTestData;
@@ -35,6 +36,7 @@ public class MultipleExecute extends ExecutableCommand {
 	private List<Record> records = new ArrayList<>();
 	private Set<History> expectedHistories;
 	private Set<Billing> expectedBillings;
+	private boolean firstExce = true;
 
 	public static void main(String[] args) throws Exception {
 		MultipleExecute threadBench = new MultipleExecute();
@@ -51,8 +53,16 @@ public class MultipleExecute extends ExecutableCommand {
 		for (Config config : configs) {
 			LOG.info("Config initialized" + System.lineSeparator() + "--- " + System.lineSeparator() + config
 					+ System.lineSeparator() + "---");
-			new CreateTable().execute(config);
-			new CreateTestData().execute(config);
+			if (firstExce) {
+//				firstExce = false;
+				new CreateTable().execute(config);
+				new CreateTestData().execute(config);
+			} else {
+				try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
+					manager.execute(TxOption.ofLTX(Integer.MAX_VALUE, "updateChargeNull", Table.HISTORY),
+							manager.getHistoryDao()::updateChargeNull);
+				}
+			}
 			Record record = new Record(config);
 			records.add(record);
 			record.start();
