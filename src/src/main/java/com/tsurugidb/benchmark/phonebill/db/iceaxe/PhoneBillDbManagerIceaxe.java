@@ -3,7 +3,6 @@ package com.tsurugidb.benchmark.phonebill.db.iceaxe;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.NoSuchElementException;
-import java.util.OptionalLong;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -30,8 +29,6 @@ import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionRuntimeExcep
 import com.tsurugidb.iceaxe.transaction.manager.TgTmSetting;
 import com.tsurugidb.iceaxe.transaction.manager.TsurugiTransactionManager;
 import com.tsurugidb.tsubakuro.sql.SqlServiceException;
-import com.tsurugidb.tsubakuro.sql.Transaction;
-import com.tsurugidb.tsubakuro.sql.impl.TransactionImpl;
 
 public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
     private final TsurugiSession session;
@@ -208,9 +205,8 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
 	@Override
 	public String getTransactionId() {
 		try {
-			Transaction tx = getCurrentTransaction().getLowTransaction();
-			OptionalLong tid =  TransactionImpl.getId(tx);
-			return Long.toString(tid.orElseThrow());
+			String txId = getCurrentTransaction().getTransactionId();
+			return txId;
 		} catch (NoSuchElementException | IOException e) {
 			return "none";
 		}

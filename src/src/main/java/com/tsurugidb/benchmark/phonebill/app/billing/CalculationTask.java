@@ -123,6 +123,7 @@ public class CalculationTask implements Callable<Exception> {
 				if (firstTarget == null) {
 					continue;
 				}
+				LOG.debug(queue.getStatus());
 				list.add(firstTarget);
 				TransactionId tid = new TransactionId();
 				try {
