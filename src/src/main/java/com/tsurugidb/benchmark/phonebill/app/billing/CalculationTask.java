@@ -66,12 +66,10 @@ public class CalculationTask implements Callable<Exception> {
 		calculator = new CalculatorImpl();
 		switch (config.transactionOption) {
 		case OCC:
-			txOption = TxOption.ofOCC(config.transactionScope == TransactionScope.CONTRACT ? Integer.MAX_VALUE : 0,
-					"CalculationTask");
+			txOption = TxOption.ofOCC(0, "CalculationTask");
 			break;
 		case LTX:
-			txOption = TxOption.ofLTX(config.transactionScope == TransactionScope.CONTRACT ? Integer.MAX_VALUE : 0,
-					"CalculationTask", Table.HISTORY, Table.BILLING);
+			txOption = TxOption.ofLTX(0, "CalculationTask", Table.HISTORY, Table.BILLING);
 			break;
 		}
 	}
@@ -254,5 +252,14 @@ public class CalculationTask implements Callable<Exception> {
 		public String toString() {
 			return tid;
 		}
+	}
+
+	/**
+	 * txOptionを取得する(UT用)
+	 *
+	 * @return txOption
+	 */
+	TxOption getTxOption() {
+		return txOption;
 	}
 }

@@ -31,10 +31,10 @@ public abstract class PhoneBillDbManager implements Closeable {
     private static Map<CounterKey, AtomicInteger> ccounterMap = new ConcurrentHashMap<>();
 
     // カウンタの名称
-	protected static final String BEGIN_TX = "BEGIN_TX";
-	protected static final String TRY_COMMIT = "TRY_COMMIT";
-	protected static final String SUCCESS = "SUCCESS";
-	protected static final String ABORTED = "ABORTED";
+	public static final String BEGIN_TX = "BEGIN_TX";
+	public static final String TRY_COMMIT = "TRY_COMMIT";
+	public static final String SUCCESS = "SUCCESS";
+	public static final String ABORTED = "ABORTED";
 
 
     // DAO取得用のメソッド
@@ -159,6 +159,30 @@ public abstract class PhoneBillDbManager implements Closeable {
 		counter.incrementAndGet();
 	}
 
+
+
+	/**
+	 * カウンタのカウント値を取得する。カウンタが存在しない場合は0を返す。
+	 *
+	 * @param key カウンタのキー
+	 * @return カウント値
+	 */
+	public static int getCounter(CounterKey key) {
+		AtomicInteger counter = ccounterMap.get(key);
+		if (counter == null) {
+			return 0;
+		}
+		return counter.intValue();
+	}
+
+
+	/**
+	 * カウンタを初期化する。
+	 *
+	 */
+	public static void initCounter() {
+		ccounterMap.clear();
+	}
 
 
 	/**
