@@ -33,11 +33,13 @@ public class CreateTestData extends ExecutableCommand {
 		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
 			Ddl ddl = manager.getDdl();
 
-			// テーブルをTruncate
-			// インデックスの削除
+			// DDLはOCCで実行されるが、Prepared tablesに巨大なデータがあると一部のDDL実行が極端に遅くなるため、
+			// 予めテーブル上のデータをLTXで削除しとく
 			if (config.usePreparedTables) {
 				manager.execute(TxOption.ofLTX(0, "CreateTable", Table.HISTORY), () -> ddl.truncateTable("history"));
 			}
+			// テーブルをTruncate
+			// インデックスの削除
 			manager.execute(TxOption.ofOCC(Integer.MAX_VALUE, "CreateTestData"), () -> {
 				ddl.prepareLoadData();
 			});
