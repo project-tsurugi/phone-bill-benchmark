@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import com.tsurugidb.benchmark.phonebill.AbstractJdbcTestCase;
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
+import com.tsurugidb.benchmark.phonebill.db.TxOption;
 import com.tsurugidb.benchmark.phonebill.db.dao.Ddl;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
@@ -114,7 +115,7 @@ public class JoinTest extends AbstractJdbcTestCase {
 	private void preparePostgresql() {
 		PhoneBillDbManager manager = getManagerPostgresql();
 		Ddl ddl = manager.getDdl();
-		manager.execute(null, () -> {
+		manager.execute(TxOption.of(), () -> {
 			ddl.dropTable("contracts");
 			ddl.dropTable("history");
 			ddl.createContractsTable();
