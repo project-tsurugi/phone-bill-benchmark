@@ -71,6 +71,7 @@ public class PhoneBill extends ExecutableCommand {
 		List<AbstractOnlineApp> list = createOnlineApps(config, accessor);
 		final ExecutorService service = list.isEmpty() ? null : Executors.newFixedThreadPool(list.size());
 		try {
+			PhoneBillDbManager.initCounter();
 			// オンラインアプリを実行する
 			list.parallelStream().forEach(task -> service.submit(task));
 
@@ -84,8 +85,8 @@ public class PhoneBill extends ExecutableCommand {
 				service.shutdown();
 				service.awaitTermination(5, TimeUnit.MINUTES);
 			}
+			LOG.info("Counter infos: \n---\n{}---", PhoneBillDbManager.createCounterReport());
 		}
-		LOG.info("Counter infos: \n---\n{}\n---", PhoneBillDbManager.createCounterReport());
 	}
 
 

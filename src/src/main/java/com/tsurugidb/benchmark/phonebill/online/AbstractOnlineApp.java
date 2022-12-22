@@ -115,6 +115,9 @@ public abstract class AbstractOnlineApp implements Runnable{
 		ContractDao contractDao = manager.getContractDao();
 
 		for (;;) { // 処理に成功するまで無限にリトライする
+			if (terminationRequested.get()) {
+				return;
+			}
 			try {
 				manager.execute(TxOption.ofOCC(0, baseName), () -> {
 					createData(contractDao, historyDao);
