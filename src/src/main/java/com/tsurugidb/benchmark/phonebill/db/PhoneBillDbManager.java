@@ -1,7 +1,12 @@
 package com.tsurugidb.benchmark.phonebill.db;
 
+import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -241,5 +246,38 @@ public abstract class PhoneBillDbManager implements Closeable {
 				return false;
 			return true;
 		}
+	}
+
+	public static String createCounterReport() {
+		// 使用されているラベルととカウンタ名をリストアップ
+		final Set<String> counterNames = new LinkedHashSet<>();
+		final Set<String> labels = new LinkedHashSet<>();
+		counterNames.add(BEGIN_TX);
+		counterNames.add(TRY_COMMIT);
+		counterNames.add(ABORTED);
+		counterNames.add(SUCCESS);
+		for(CounterKey key: ccounterMap.keySet()) {
+			counterNames.add(key.name);
+			labels.add(key.label);
+		}
+
+		// レポートの作成
+		final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		try (PrintStream ps = new PrintStream(bos, true, StandardCharsets.UTF_8)) {
+			// ヘッダを生成
+			ps.println("TX_LABELS," + String.join(",", counterNames));
+			// 本体
+			for(String label: labels) {
+				ps.print(label);
+				for (String countrName: counterNames) {
+					CounterKey key = new CounterKey(label, countrName);
+					AtomicInteger c = ccounterMap.get(key);
+					ps.print(',');
+					ps.print(c == null ? 0: c.get());
+				}
+				ps.println();
+			}
+		}
+		return new String(bos.toString(StandardCharsets.UTF_8));
 	}
 }
