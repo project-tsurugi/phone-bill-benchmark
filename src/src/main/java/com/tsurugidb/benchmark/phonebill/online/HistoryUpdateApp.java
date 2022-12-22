@@ -9,8 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
-import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
-import com.tsurugidb.benchmark.phonebill.db.TxOption;
+import com.tsurugidb.benchmark.phonebill.db.dao.ContractDao;
 import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract.Key;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
@@ -27,8 +26,6 @@ public class HistoryUpdateApp extends AbstractOnlineApp {
 	private Updater[] updaters = { new Updater1(), new Updater2() };
 	private History history;
 	private Random random;
-	private HistoryDao historyDao;
-	private PhoneBillDbManager manager;
 
 	public HistoryUpdateApp(Config config, Random random, ContractBlockInfoAccessor accessor)
 			throws IOException {
@@ -36,28 +33,10 @@ public class HistoryUpdateApp extends AbstractOnlineApp {
 		this.callTimeGenerator = CallTimeGenerator.createCallTimeGenerator(random, config);
 		this.contractInfoReader = ContractInfoReader.create(config, accessor, random);
 		this.random = random;
-		manager = PhoneBillDbManager.createPhoneBillDbManager(config);
-		historyDao = manager.getHistoryDao();
-	}
-
-	void updateDatabase(History history) {
-		manager.execute(TxOption.ofOCC(Integer.MAX_VALUE, "HistoryUpdateApp-read"),
-				() -> historyDao.update(history));
-	}
-
-	/**
-	 * 発信者電話番号と通話開始時刻が指定の契約に合致するレコードを取得する
-	 *
-	 * @param key
-	 * @return
-	 */
-	List<History> getHistories(Key key) {
-		return manager.execute(TxOption.ofOCC(Integer.MAX_VALUE, "HistoryUpdateApp-write"),
-				() -> historyDao.getHistories(key));
 	}
 
 	@Override
-	protected void createData() {
+	protected void createData(ContractDao contractDao, HistoryDao historyDao) {
 		List<History> histories = Collections.emptyList();
 		while (histories.isEmpty()) {
 			// 更新対象となる契約を選択
@@ -67,7 +46,7 @@ public class HistoryUpdateApp extends AbstractOnlineApp {
 			if (skipDatabaseAccess) {
 				return;
 			}
-			histories = getHistories(key);
+			histories = historyDao.getHistories(key);
 		}
 
 		// 取り出した履歴から1レコードを取り出し更新する
@@ -78,8 +57,8 @@ public class HistoryUpdateApp extends AbstractOnlineApp {
 	}
 
 	@Override
-	protected void updateDatabase() {
-		updateDatabase(history);
+	protected void updateDatabase(ContractDao contractDao, HistoryDao historyDao) {
+		historyDao.update(history);
 		LOG.debug("ONLINE APP: Update 1 record from history(callerPhoneNumber = {}, startTime = {}).",
 				history.getCallerPhoneNumber(), history.getStartTime());
 	}
@@ -131,8 +110,10 @@ public class HistoryUpdateApp extends AbstractOnlineApp {
 		}
 	}
 
-	@Override
-	protected void atTerminate() {
-		manager.close();
+	/**
+	 * @param history セットする(UT専用)
+	 */
+	void setHistory(History history) {
+		this.history = history;
 	}
 }

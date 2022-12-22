@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.TxOption;
+import com.tsurugidb.benchmark.phonebill.db.dao.ContractDao;
 import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
 import com.tsurugidb.benchmark.phonebill.testdata.ContractBlockInfoAccessor;
@@ -31,7 +32,6 @@ import com.tsurugidb.benchmark.phonebill.util.DateUtils;
  */
 public class HistoryInsertApp extends AbstractOnlineApp {
     private static final Logger LOG = LoggerFactory.getLogger(HistoryInsertApp.class);
-	private final PhoneBillDbManager manager;
 	private int historyInsertRecordsPerTransaction;
 	private GenerateHistoryTask generateHistoryTask;
 	private long baseTime;
@@ -61,7 +61,6 @@ public class HistoryInsertApp extends AbstractOnlineApp {
 		this.baseTime = baseTime;
 		this.duration = duration;
 		this.random = random;
-		manager = PhoneBillDbManager.createPhoneBillDbManager(config);
 		TestDataGenerator testDataGenerator = new TestDataGenerator(config, random, accessor);
 		generateHistoryTask = testDataGenerator.getGenerateHistoryTaskForOnlineApp();
 	}
@@ -126,7 +125,7 @@ public class HistoryInsertApp extends AbstractOnlineApp {
 
 
 	@Override
-	protected void createData() {
+	protected void createData(ContractDao contractDao, HistoryDao historyDao) {
 		histories.clear();
 		for (int i = 0; i < historyInsertRecordsPerTransaction; i++) {
 			HistoryKey key;
@@ -140,9 +139,8 @@ public class HistoryInsertApp extends AbstractOnlineApp {
 	}
 
 	@Override
-	protected void updateDatabase() {
-		HistoryDao dao = manager.getHistoryDao();
-		manager.execute(TxOption.ofOCC(Integer.MAX_VALUE, "HistoryInsertApp"), () -> dao.batchInsert(histories));
+	protected void updateDatabase(ContractDao contractDao, HistoryDao historyDao) {
+		historyDao.batchInsert(histories);
 		LOG.debug("ONLINE APP: Insert {} records to history.", historyInsertRecordsPerTransaction);
 	}
 
@@ -169,10 +167,5 @@ public class HistoryInsertApp extends AbstractOnlineApp {
 	 */
 	ContractInfoReader getContractInfoReader() {
 		return generateHistoryTask.getContractInfoReader();
-	}
-
-	@Override
-	protected void atTerminate() {
-		manager.close();
 	}
 }

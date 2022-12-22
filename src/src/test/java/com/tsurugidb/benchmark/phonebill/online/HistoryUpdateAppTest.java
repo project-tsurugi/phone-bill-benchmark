@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Random;
 
 import org.junit.jupiter.api.AfterEach;
@@ -19,6 +18,8 @@ import com.tsurugidb.benchmark.phonebill.AbstractJdbcTestCase;
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.CreateTable;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
+import com.tsurugidb.benchmark.phonebill.db.TxOption;
+import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract.Key;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
@@ -139,27 +140,6 @@ class HistoryUpdateAppTest extends AbstractJdbcTestCase {
 
 
 	/**
-	 * getHistories()のテスト
-	 */
-	@Test
-	void testGetHistories() throws Exception {
-		// chargeがnullでない履歴を作る
-		History h = getHistories().get(0);
-		h.setCharge(200);
-		app.updateDatabase(h);
-		List<History> histories = getHistories();
-		List<Contract> contracts = getContracts();
-
-		Map<Key, List<History>> map = getContractHistoryMap(contracts, histories);
-
-		// すべてのキーについて、getHistory()の値が期待通りかを確認する
-		for (Entry<Key, List<History>> entry : map.entrySet()) {
-			assertEquals(entry.getValue(), app.getHistories(entry.getKey()));
-		}
-
-	}
-
-	/**
 	 * すべての契約と契約に属する履歴のマップを作成する
 	 *
 	 * @return
@@ -191,6 +171,8 @@ class HistoryUpdateAppTest extends AbstractJdbcTestCase {
 	 */
 	@Test
 	void testUpdateDatabase() throws Exception {
+		HistoryDao historyDao  = manager.getHistoryDao();
+
 		List<History> expected = getHistories();
 
 		// 最初のレコードを書き換える
@@ -200,7 +182,10 @@ class HistoryUpdateAppTest extends AbstractJdbcTestCase {
 			history.setCharge(999);
 			history.setDf(1);
 			history.setTimeSecs(221);
-			app.updateDatabase(history);
+			app.setHistory(history);
+			manager.execute(TxOption.of(), () -> {
+				app.updateDatabase(null, historyDao);
+			});
 		}
 
 		// 52番目のレコードを書き換える
@@ -210,7 +195,10 @@ class HistoryUpdateAppTest extends AbstractJdbcTestCase {
 			history.setCharge(55899988);
 			history.setDf(0);
 			history.setTimeSecs(22551);
-			app.updateDatabase(history);
+			app.setHistory(history);
+			manager.execute(TxOption.of(), () -> {
+				app.updateDatabase(null, historyDao);
+			});
 		}
 
 		// アプリによる更新後の値が期待した値であることの確認

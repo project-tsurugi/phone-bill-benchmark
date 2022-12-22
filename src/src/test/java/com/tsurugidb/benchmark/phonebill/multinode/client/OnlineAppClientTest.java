@@ -15,6 +15,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
+import com.tsurugidb.benchmark.phonebill.db.dao.ContractDao;
+import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.online.AbstractOnlineApp;
 
 class OnlineAppClientTest {
@@ -58,17 +60,9 @@ class OnlineAppClientTest {
 		private int count;
 
 		public TestApp(String baseName, int count) throws SQLException, IOException {
-			super(0, Config.getConfig(), new Random());
+			super( 0, Config.getConfig(), new Random());
 			this.baseName = baseName;
 			this.count = count;
-		}
-
-		@Override
-		protected void createData() {
-		}
-
-		@Override
-		protected void updateDatabase() {
 		}
 
 		@Override
@@ -79,6 +73,14 @@ class OnlineAppClientTest {
 		@Override
 		public String getBaseName() {
 			return baseName;
+		}
+
+		@Override
+		protected void createData(ContractDao contractDao, HistoryDao historyDao) {
+		}
+
+		@Override
+		protected void updateDatabase(ContractDao contractDao, HistoryDao historyDao) {
 		}
 	}
 }

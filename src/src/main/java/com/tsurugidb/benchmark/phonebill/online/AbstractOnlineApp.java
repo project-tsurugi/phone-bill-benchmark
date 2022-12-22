@@ -13,6 +13,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
+import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
+import com.tsurugidb.benchmark.phonebill.db.TxOption;
+import com.tsurugidb.benchmark.phonebill.db.dao.ContractDao;
+import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -77,9 +81,15 @@ public abstract class AbstractOnlineApp implements Runnable{
 	private String baseName;
 
 
+	// DBマネージャとDAO
+	private PhoneBillDbManager manager;
+
+
+
 	public AbstractOnlineApp(int execPerMin, Config config, Random random) {
 		this.execPerMin = execPerMin;
 		this.random = random;
+		manager = PhoneBillDbManager.createPhoneBillDbManager(config);
 		skipDatabaseAccess = config.skipDatabaseAccess;
 		setName(0);
 	}
@@ -100,33 +110,40 @@ public abstract class AbstractOnlineApp implements Runnable{
 	 * createData()でデータを生成し、updateDatabase()で生成したデータを
 	 * DBに反映する。
 	 */
-	final void exec() throws IOException {
-		createData();
-		if (!skipDatabaseAccess) {
-			updateDatabase();
+	final void exec() {
+		HistoryDao historyDao = manager.getHistoryDao();
+		ContractDao contractDao = manager.getContractDao();
+
+		for (;;) { // 処理に成功するまで無限にリトライする
+			try {
+				manager.execute(TxOption.ofOCC(0, baseName), () -> {
+					createData(contractDao, historyDao);
+					if (!skipDatabaseAccess) {
+						updateDatabase(contractDao, historyDao);
+					}
+				});
+			} catch (RuntimeException e) {
+				LOG.info("Caught exception, retrying... ", e);
+			}
+			return;
 		}
 	}
 
 	/**
 	 * DBに入れるデータを生成する
+	 * @param historyDao
+	 * @param contractDao
 	 * @throws IOException
 	 */
-	protected abstract void createData();
+	protected abstract void createData(ContractDao contractDao, HistoryDao historyDao);
 
 	/**
 	 * createDataで生成したデータをDBに反映する
+	 * @param historyDao
+	 * @param contractDao
 	 * @throws IOException
 	 */
-	protected abstract void updateDatabase();
-
-
-	/**
-	 * アプリの終了前に呼び出されるコールバック。デフォルトでは何もしない。
-	 *
-	 */
-	protected void atTerminate() {
-		// Nothing to do
-	}
+	protected abstract void updateDatabase(ContractDao contractDao, HistoryDao historyDao);
 
 
 	@Override
@@ -144,11 +161,12 @@ public abstract class AbstractOnlineApp implements Runnable{
 			while (!terminationRequested.get()) {
 				schedule();
 			}
-			atTerminate();
 			LOG.info("{} terminated.", name);
 		} catch (RuntimeException | IOException e) {
 			LOG.error("Aborting by exception", e);
 			System.exit(1);
+		} finally {
+			manager.close();
 		}
 	}
 

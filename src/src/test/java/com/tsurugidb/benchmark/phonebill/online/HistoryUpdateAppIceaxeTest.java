@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,6 +15,7 @@ import org.junit.jupiter.api.Test;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.CreateTable;
+import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract.Key;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
@@ -138,27 +138,6 @@ class HistoryUpdateAppIceaxeTest {
 
 
 	/**
-	 * getHistories()のテスト
-	 */
-	@Test
-	void testGetHistories() throws Exception {
-		// chargeがnullでない履歴を作る
-		History h = testTools.getHistoryList().get(0);
-		h.setCharge(200);
-		app.updateDatabase(h);
-		 List<History> histories = testTools.getHistoryList();
-		 List<Contract> contracts = testTools.getContractList();
-
-		Map<Key, List<History>> map = getContractHistoryMap(contracts, histories);
-
-		// すべてのキーについて、getHistory()の値が期待通りかを確認する
-		for (Entry<Key, List<History>> entry : map.entrySet()) {
-			assertEquals(entry.getValue(), app.getHistories(entry.getKey()));
-		}
-
-	}
-
-	/**
 	 * すべての契約と契約に属する履歴のマップを作成する
 	 *
 	 * @return
@@ -190,6 +169,7 @@ class HistoryUpdateAppIceaxeTest {
 	 */
 	@Test
 	void testUpdateDatabase() throws Exception {
+		HistoryDao historyDao  = testTools.getManager().getHistoryDao();
 		List<History> expected = testTools.getHistoryList();
 
 		// 最初のレコードを書き換える
@@ -199,7 +179,10 @@ class HistoryUpdateAppIceaxeTest {
 			history.setCharge(999);
 			history.setDf(1);
 			history.setTimeSecs(221);
-			app.updateDatabase(history);
+			app.setHistory(history);
+			testTools.execute(() -> {
+				app.updateDatabase(null, historyDao);
+			});
 		}
 
 		// 12番目のレコードを書き換える
@@ -209,7 +192,10 @@ class HistoryUpdateAppIceaxeTest {
 			history.setCharge(55899988);
 			history.setDf(0);
 			history.setTimeSecs(22551);
-			app.updateDatabase(history);
+			app.setHistory(history);
+			testTools.execute(() -> {
+				app.updateDatabase(null, historyDao);
+			});
 		}
 
 		// アプリによる更新後の値が期待した値であることの確認

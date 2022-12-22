@@ -13,9 +13,8 @@ import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.Config.DbmsType;
-import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
-import com.tsurugidb.benchmark.phonebill.db.TxOption;
 import com.tsurugidb.benchmark.phonebill.db.dao.ContractDao;
+import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract.Key;
 import com.tsurugidb.benchmark.phonebill.testdata.ContractBlockInfoAccessor;
@@ -30,8 +29,6 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 
 	private ContractInfoReader contractInfoReader;
 	private Config config;
-	private PhoneBillDbManager manager;
-	private ContractDao dao;
 	private Random random;
 	private Updater[] updaters = {new Updater1(), new Updater2()};
 
@@ -48,8 +45,6 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 		this.config = config;
 		this.random = random;
 		this.contractInfoReader = ContractInfoReader.create(config, accessor, random);
-		manager = PhoneBillDbManager.createPhoneBillDbManager(config);
-		dao = manager.getContractDao();
 	}
 
 
@@ -106,23 +101,13 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 	}
 
 
-	/**
-	 * 指定の契約を取得する
-	 *
-	 * @param key
-	 * @return
-	 */
-	List<Contract> getContracts(String phoneNumber) {
-		return manager.execute(TxOption.ofRTX(Integer.MAX_VALUE, "MasterUpdateApp-read"), ()->dao.getContracts(phoneNumber));
-	}
-
 	@Override
-	protected void createData() {
+	protected void createData(ContractDao contractDao, HistoryDao historyDao) {
 		// Nothing to do
 	}
 
 	@Override
-	protected void updateDatabase() {
+	protected void updateDatabase(ContractDao contractDao, HistoryDao historyDao) {
 
 		// 更新対象の電話番号を取得
 		Key key = contractInfoReader.getKeyUpdatingContract();
@@ -132,7 +117,7 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 		}
 
 		// 当該電話番号の契約を取得
-		List<Contract> contracts = getContracts(key.getPhoneNumber());
+		List<Contract> contracts = contractDao.getContracts(key.getPhoneNumber());
 		if (contracts.isEmpty()) {
 			// 電話番号にマッチする契約がなかったとき(DBに追加される前の電話番号を選んだ場合) => 基本的にありえない
 			LOG.warn("No contract found for phoneNumber = {}.", key.getPhoneNumber());
@@ -152,7 +137,7 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 
 		// 契約を更新
 
-		int ret = manager.execute(TxOption.ofOCC(Integer.MAX_VALUE, "MasterUpdateApp-write"), () -> dao.update(updatingContract));
+		int ret =  contractDao.update(updatingContract);
 		// TODO 現バージョンのIceaxeはupdate件数を返さないので下のチェックの対象外にしている
 		if (ret != 1 && config.dbmsType != DbmsType.ICEAXE ) {
 			// select ～ updateの間に対象レコードが削除されたケース -> 基本的にありえない
@@ -208,10 +193,5 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 			int r = random.nextInt(d + 1);
 			contract.setEndDate(new Date(startTime + r * DAY_IN_MILLS));
 		}
-	}
-
-	@Override
-	protected void atTerminate() {
-		manager.close();
 	}
 }

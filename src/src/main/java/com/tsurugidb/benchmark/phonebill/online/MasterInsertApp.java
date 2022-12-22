@@ -7,9 +7,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
-import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
-import com.tsurugidb.benchmark.phonebill.db.TxOption;
 import com.tsurugidb.benchmark.phonebill.db.dao.ContractDao;
+import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.testdata.ContractBlockInfoAccessor;
 import com.tsurugidb.benchmark.phonebill.testdata.TestDataGenerator;
@@ -20,7 +19,6 @@ import com.tsurugidb.benchmark.phonebill.testdata.TestDataGenerator;
  */
 public class MasterInsertApp extends AbstractOnlineApp {
     private static final Logger LOG = LoggerFactory.getLogger(MasterInsertApp.class);
-    private PhoneBillDbManager manager;
 
     /**
      * 本アプリケーションが使用するTestDataGenerator
@@ -34,26 +32,18 @@ public class MasterInsertApp extends AbstractOnlineApp {
 
 	public MasterInsertApp(Config config, Random random, ContractBlockInfoAccessor accessor) throws IOException {
 		super(config.masterInsertReccrdsPerMin, config, random);
-		manager = PhoneBillDbManager.createPhoneBillDbManager(config);
 		testDataGenerator = new TestDataGenerator(config, new Random(config.randomSeed), accessor);
 	}
 
 	@Override
-	protected void createData() {
+	protected void createData(ContractDao contractDao, HistoryDao historyDao) {
 		contract = testDataGenerator.getNewContract();
 	}
 
 	@Override
-	protected void updateDatabase() {
-		ContractDao dao = manager.getContractDao();
-		int ret = manager.execute(TxOption.ofOCC(Integer.MAX_VALUE, "MasterInsertApp"),
-				() -> dao.insert(contract));
+	protected void updateDatabase(ContractDao contractDao, HistoryDao historyDao) {
+		int ret = contractDao.insert(contract);
 		LOG.debug("ONLINE APP: Insert {} record to contracs(phoneNumber = {}, startDate = {}).", ret,
 				contract.getPhoneNumber(), contract.getStartDate());
-	}
-
-	@Override
-	protected void atTerminate() {
-		manager.close();
 	}
 }

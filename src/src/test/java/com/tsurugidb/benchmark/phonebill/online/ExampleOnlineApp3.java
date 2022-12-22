@@ -15,6 +15,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
+import com.tsurugidb.benchmark.phonebill.db.dao.ContractDao;
+import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -51,7 +53,7 @@ public class ExampleOnlineApp3 extends AbstractOnlineApp {
 	}
 
 	@Override
-	protected void createData() {
+	protected void createData(ContractDao contractDao, HistoryDao historyDao) {
 		LOG.info("createData called.");
 		try {
 			Thread.sleep(100);
@@ -62,7 +64,7 @@ public class ExampleOnlineApp3 extends AbstractOnlineApp {
 	}
 
 	@Override
-	protected void updateDatabase() {
+	protected void updateDatabase(ContractDao contractDao, HistoryDao historyDao) {
 		LOG.info("updateDatabase called.");
 		try {
 			Thread.sleep(100);
