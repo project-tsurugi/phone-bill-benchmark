@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.ExecutableCommand;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
+import com.tsurugidb.benchmark.phonebill.db.TxLabel;
 import com.tsurugidb.benchmark.phonebill.db.TxOption;
 import com.tsurugidb.benchmark.phonebill.db.TxOption.Table;
 import com.tsurugidb.benchmark.phonebill.db.dao.Ddl;
@@ -36,11 +37,11 @@ public class CreateTestData extends ExecutableCommand {
 			// DDLはOCCで実行されるが、Prepared tablesに巨大なデータがあると一部のDDL実行が極端に遅くなるため、
 			// 予めテーブル上のデータをLTXで削除しとく
 			if (config.usePreparedTables) {
-				manager.execute(TxOption.ofLTX(0, "CreateTable", Table.HISTORY), () -> ddl.truncateTable("history"));
+				manager.execute(TxOption.ofLTX(0, TxLabel.DDL, Table.HISTORY), () -> ddl.truncateTable("history"));
 			}
 			// テーブルをTruncate
 			// インデックスの削除
-			manager.execute(TxOption.ofOCC(Integer.MAX_VALUE, "CreateTestData"), () -> {
+			manager.execute(TxOption.ofOCC(Integer.MAX_VALUE, TxLabel.DDL), () -> {
 				ddl.prepareLoadData();
 			});
 
@@ -64,7 +65,7 @@ public class CreateTestData extends ExecutableCommand {
 			LOG.info(String.format(format, config.numberOfHistoryRecords, elapsedTime / 1000d));
 
 			// Indexの再生成とDBの統計情報を更新
-			manager.execute(TxOption.ofOCC(Integer.MAX_VALUE, "CreateTestData"), () -> {
+			manager.execute(TxOption.ofOCC(Integer.MAX_VALUE, TxLabel.DDL), () -> {
 				ddl.afterLoadData();
 			});
 		}

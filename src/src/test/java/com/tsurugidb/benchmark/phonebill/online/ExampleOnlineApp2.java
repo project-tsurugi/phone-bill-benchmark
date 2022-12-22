@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
+import com.tsurugidb.benchmark.phonebill.db.TxLabel;
 import com.tsurugidb.benchmark.phonebill.db.dao.ContractDao;
 import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 
@@ -73,5 +74,10 @@ public class ExampleOnlineApp2 extends AbstractOnlineApp {
 			// Nothing to do
 		}
 		LOG.info("updateDatabase Done.");
+	}
+
+	@Override
+	public TxLabel getTxLabel() {
+		return TxLabel.TEST;
 	}
 }

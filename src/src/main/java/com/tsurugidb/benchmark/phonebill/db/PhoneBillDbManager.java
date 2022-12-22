@@ -5,12 +5,14 @@ import java.io.Closeable;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -197,7 +199,7 @@ public abstract class PhoneBillDbManager implements Closeable {
 		/**
 		 * トランザクションのラベル
 		 */
-		String label;
+		TxLabel label;
 		/**
 		 * カウンタの名称
 		 */
@@ -210,7 +212,7 @@ public abstract class PhoneBillDbManager implements Closeable {
 		 * @param label
 		 * @param name
 		 */
-		CounterKey(String label, String name) {
+		CounterKey(TxLabel label, String name) {
 			this.label = label;
 			this.name = name;
 		}
@@ -234,10 +236,7 @@ public abstract class PhoneBillDbManager implements Closeable {
 			if (getClass() != obj.getClass())
 				return false;
 			CounterKey other = (CounterKey) obj;
-			if (label == null) {
-				if (other.label != null)
-					return false;
-			} else if (!label.equals(other.label))
+			if (label != other.label)
 				return false;
 			if (name == null) {
 				if (other.name != null)
@@ -251,15 +250,15 @@ public abstract class PhoneBillDbManager implements Closeable {
 	public static String createCounterReport() {
 		// 使用されているラベルととカウンタ名をリストアップ
 		final Set<String> counterNames = new LinkedHashSet<>();
-		final Set<String> labels = new LinkedHashSet<>();
 		counterNames.add(BEGIN_TX);
 		counterNames.add(TRY_COMMIT);
 		counterNames.add(ABORTED);
 		counterNames.add(SUCCESS);
 		for(CounterKey key: ccounterMap.keySet()) {
 			counterNames.add(key.name);
-			labels.add(key.label);
 		}
+		final List<TxLabel> labels = ccounterMap.keySet().stream().map(k -> k.label).distinct().sorted()
+				.collect(Collectors.toList());
 
 		// レポートの作成
 		final ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -267,7 +266,7 @@ public abstract class PhoneBillDbManager implements Closeable {
 			// ヘッダを生成
 			ps.println("TX_LABELS," + String.join(",", counterNames));
 			// 本体
-			for(String label: labels) {
+			for(TxLabel label: labels) {
 				ps.print(label);
 				for (String countrName: counterNames) {
 					CounterKey key = new CounterKey(label, countrName);
@@ -278,6 +277,6 @@ public abstract class PhoneBillDbManager implements Closeable {
 				ps.println();
 			}
 		}
-		return new String(bos.toString(StandardCharsets.UTF_8));
+		return bos.toString(StandardCharsets.UTF_8);
 	}
 }

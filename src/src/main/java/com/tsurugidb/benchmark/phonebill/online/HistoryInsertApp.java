@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
+import com.tsurugidb.benchmark.phonebill.db.TxLabel;
 import com.tsurugidb.benchmark.phonebill.db.TxOption;
 import com.tsurugidb.benchmark.phonebill.db.dao.ContractDao;
 import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
@@ -117,7 +118,7 @@ public class HistoryInsertApp extends AbstractOnlineApp {
 	static long getBaseTime(Config config) {
 		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
 			HistoryDao dao = manager.getHistoryDao();
-			long maxStartTime = manager.execute(TxOption.ofRTX(0, "getBaseTime"),
+			long maxStartTime = manager.execute(TxOption.ofRTX(0, TxLabel.INITIALIZE),
 					() -> dao.getMaxStartTime());
 			return Math.max(maxStartTime, DateUtils.nextDate(config.historyMaxDate).getTime());
 		}
@@ -167,5 +168,11 @@ public class HistoryInsertApp extends AbstractOnlineApp {
 	 */
 	ContractInfoReader getContractInfoReader() {
 		return generateHistoryTask.getContractInfoReader();
+	}
+
+
+	@Override
+	public TxLabel getTxLabel() {
+		return TxLabel.HISTORY_INSERT_APP;
 	}
 }

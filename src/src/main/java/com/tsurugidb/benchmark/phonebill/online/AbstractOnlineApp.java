@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
+import com.tsurugidb.benchmark.phonebill.db.TxLabel;
 import com.tsurugidb.benchmark.phonebill.db.TxOption;
 import com.tsurugidb.benchmark.phonebill.db.dao.ContractDao;
 import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
@@ -119,7 +120,7 @@ public abstract class AbstractOnlineApp implements Runnable{
 				return;
 			}
 			try {
-				manager.execute(TxOption.ofOCC(0, baseName), () -> {
+				manager.execute(TxOption.ofOCC(0, getTxLabel()), () -> {
 					createData(contractDao, historyDao);
 					if (!skipDatabaseAccess) {
 						updateDatabase(contractDao, historyDao);
@@ -275,4 +276,11 @@ public abstract class AbstractOnlineApp implements Runnable{
 	public String getBaseName() {
 		return baseName;
 	}
+
+	/**
+	 * オンラインアプリが使用するTxLabelを返す
+	 *
+	 * @return
+	 */
+	public abstract TxLabel getTxLabel();
 }

@@ -15,6 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
+import com.tsurugidb.benchmark.phonebill.db.TxLabel;
 import com.tsurugidb.benchmark.phonebill.db.dao.ContractDao;
 import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.online.AbstractOnlineApp;
@@ -81,6 +82,11 @@ class OnlineAppClientTest {
 
 		@Override
 		protected void updateDatabase(ContractDao contractDao, HistoryDao historyDao) {
+		}
+
+		@Override
+		public TxLabel getTxLabel() {
+			return TxLabel.TEST;
 		}
 	}
 }

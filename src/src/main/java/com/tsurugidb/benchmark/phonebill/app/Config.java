@@ -20,7 +20,7 @@ public class Config implements Cloneable {
 	/**
 	 * Config作成時にログを出力するかを指定するフラグ
 	 */
-	public static boolean logging = true;
+	static boolean logging = true;
 
 
 	/**

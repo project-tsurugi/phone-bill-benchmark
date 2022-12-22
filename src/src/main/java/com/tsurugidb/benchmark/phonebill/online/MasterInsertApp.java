@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
+import com.tsurugidb.benchmark.phonebill.db.TxLabel;
 import com.tsurugidb.benchmark.phonebill.db.dao.ContractDao;
 import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
@@ -45,5 +46,10 @@ public class MasterInsertApp extends AbstractOnlineApp {
 		int ret = contractDao.insert(contract);
 		LOG.debug("ONLINE APP: Insert {} record to contracs(phoneNumber = {}, startDate = {}).", ret,
 				contract.getPhoneNumber(), contract.getStartDate());
+	}
+
+	@Override
+	public TxLabel getTxLabel() {
+		return TxLabel.MASTER_INSERT_APP;
 	}
 }

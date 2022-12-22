@@ -21,6 +21,7 @@ import com.tsurugidb.benchmark.phonebill.app.Config.TransactionOption;
 import com.tsurugidb.benchmark.phonebill.app.Config.TransactionScope;
 import com.tsurugidb.benchmark.phonebill.app.billing.PhoneBill;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
+import com.tsurugidb.benchmark.phonebill.db.TxLabel;
 import com.tsurugidb.benchmark.phonebill.db.TxOption;
 import com.tsurugidb.benchmark.phonebill.db.TxOption.Table;
 import com.tsurugidb.benchmark.phonebill.db.entity.Billing;
@@ -59,7 +60,7 @@ public class MultipleExecute extends ExecutableCommand {
 				new CreateTestData().execute(config);
 			} else {
 				try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
-					manager.execute(TxOption.ofLTX(Integer.MAX_VALUE, "updateChargeNull", Table.HISTORY),
+					manager.execute(TxOption.ofLTX(Integer.MAX_VALUE, TxLabel.INITIALIZE, Table.HISTORY),
 							manager.getHistoryDao()::updateChargeNull);
 				}
 			}
@@ -91,10 +92,10 @@ public class MultipleExecute extends ExecutableCommand {
 	private int checkResult(Config config) {
 		int n = 0;
 		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
-			Set<History> histories = manager.execute(TxOption.ofRTX(0, "checkResult"), () -> {
+			Set<History> histories = manager.execute(TxOption.ofRTX(0, TxLabel.CHECK_RESULT), () -> {
 				return new HashSet<>(manager.getHistoryDao().getHistories());
 			});
-			Set<Billing> billings = manager.execute(TxOption.ofRTX(0, "checkResult"), () -> {
+			Set<Billing> billings = manager.execute(TxOption.ofRTX(0, TxLabel.CHECK_RESULT), () -> {
 				List<Billing> list = manager.getBillingDao().getBillings();
 				list.stream().forEachOrdered(b -> b.setBatchExecId(null)); // batchExecIdは比較対象でないのでnullをセット
 				return new HashSet<>(list);

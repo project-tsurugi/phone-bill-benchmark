@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.app.billing.PhoneBill;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
+import com.tsurugidb.benchmark.phonebill.db.TxLabel;
 import com.tsurugidb.benchmark.phonebill.db.TxOption;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
@@ -114,14 +115,14 @@ public class OnlineAppBench extends ExecutableCommand {
 
 	private void afterExec(Config config) {
 		List<History> histories = new ArrayList<>();
-		manager.execute(TxOption.ofRTX(0, "afterExec"), () -> {
+		manager.execute(TxOption.ofRTX(0, TxLabel.CHECK_RESULT), () -> {
 			histories.addAll(manager.getHistoryDao().getHistories());
 		});
 		int historyUpdated = countUpdated(histories, orgHistories, History::getKey);
 		int historyInserted = histories.size() - orgHistories.size();
 
 		List<Contract> contracts = new ArrayList<>();
-		manager.execute(TxOption.ofRTX(0, "afterExec"), () -> {
+		manager.execute(TxOption.ofRTX(0, TxLabel.CHECK_RESULT), () -> {
 			contracts.addAll(manager.getContractDao().getContracts());
 		});
 		int masterUpdated = countUpdated(contracts, orgContracts, Contract::getKey);
@@ -159,7 +160,7 @@ public class OnlineAppBench extends ExecutableCommand {
 	List<Contract> orgContracts;
 
 	private void beforeExec(Config config) {
-		manager.execute(TxOption.ofRTX(0, "beforeExec"), () -> {
+		manager.execute(TxOption.ofRTX(0, TxLabel.INITIALIZE), () -> {
 			orgHistories = manager.getHistoryDao().getHistories();
 			orgContracts = manager.getContractDao().getContracts();
 		});

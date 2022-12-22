@@ -15,6 +15,7 @@ import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.Config.TransactionScope;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.RetryOverRuntimeException;
+import com.tsurugidb.benchmark.phonebill.db.TxLabel;
 import com.tsurugidb.benchmark.phonebill.db.TxOption;
 import com.tsurugidb.benchmark.phonebill.db.TxOption.Table;
 import com.tsurugidb.benchmark.phonebill.db.dao.BillingDao;
@@ -66,10 +67,10 @@ public class CalculationTask implements Callable<Exception> {
 		calculator = new CalculatorImpl();
 		switch (config.transactionOption) {
 		case OCC:
-			txOption = TxOption.ofOCC(0, "CalculationTask");
+			txOption = TxOption.ofOCC(0, TxLabel.BATCH_MAIN);
 			break;
 		case LTX:
-			txOption = TxOption.ofLTX(0, "CalculationTask", Table.HISTORY, Table.BILLING);
+			txOption = TxOption.ofLTX(0, TxLabel.BATCH_MAIN, Table.HISTORY, Table.BILLING);
 			break;
 		}
 	}

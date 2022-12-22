@@ -1,5 +1,7 @@
 package com.tsurugidb.benchmark.phonebill.db;
 
+import static  com.tsurugidb.benchmark.phonebill.db.TxLabel.*;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,23 +20,23 @@ public class TxOption {
 	/**
 	 * リトライ可能な例外が返った場合にリトライする回数の上限
 	 */
-	private int retryCountLmit;
+	private final int retryCountLmit;
 
 	/**
 	 * Iceaxeのトランザクションセッティング、Iceaxe以外では無効。
 	 */
-	private TgTmSetting setting;
+	private final TgTmSetting setting;
 
 
 	/**
 	 * Iceaxeのトランザクションオプション、Iceaxe以外では無効。
 	 */
-	private TgTxOption tgTxOption;
+	private final TgTxOption tgTxOption;
 
 	/**
 	 * トランザクションに付けるラベル、Iceaxe以外では無効
 	 */
-	private String label;
+	private final TxLabel label;
 
 
 	/**
@@ -43,8 +45,8 @@ public class TxOption {
 	private Map<String, CounterKey> counterkeyCache = new HashMap<>();
 
 
-	private TxOption(int retryCountLmit, String label, TgTxOption option) {
-		option.label(label);
+	private TxOption(int retryCountLmit, TxLabel label, TgTxOption option) {
+		option.label(label.toString());
 		this.retryCountLmit = retryCountLmit;
 		this.label = label;
 		this.tgTxOption = option;
@@ -68,7 +70,7 @@ public class TxOption {
      * @return transaction option
      */
     public static TxOption of(int retryCountLmit) {
-		return ofOCC(retryCountLmit, "default");
+		return ofOCC(retryCountLmit, DEFAULT);
     }
 
 
@@ -80,7 +82,7 @@ public class TxOption {
      * @param label label for transaction
      * @return
      */
-    public static TxOption ofOCC(int retryCountLmit,  String label) {
+    public static TxOption ofOCC(int retryCountLmit,  TxLabel label) {
         return new  TxOption(retryCountLmit, label, TgTxOption.ofOCC());
     }
 
@@ -92,7 +94,7 @@ public class TxOption {
      * @param writePreserveTableNames table name to Write Preserve
      * @return transaction option
      */
-    public static TxOption ofLTX(int retryCountLmit,  String label, Table... writePreserveTables) {
+    public static TxOption ofLTX(int retryCountLmit,  TxLabel label, Table... writePreserveTables) {
     	TgTxOption tgTxOption = TgTxOption.ofLTX();
     	for (Table table: writePreserveTables) {
     		tgTxOption.addWritePreserve(table.getTableName());
@@ -108,7 +110,7 @@ public class TxOption {
      * @param label label for transaction
      * @return transaction option
      */
-    public static TxOption ofRTX(int retryCountLmit,  String label) {
+    public static TxOption ofRTX(int retryCountLmit,  TxLabel label) {
         return new  TxOption(retryCountLmit, label, TgTxOption.ofRTX());
     }
 
@@ -126,15 +128,6 @@ public class TxOption {
 	public TgTmSetting getSettingIceaxe() {
 		return setting;
 	}
-
-
-	/**
-	 * @return label
-	 */
-	public String getLabel() {
-		return label;
-	}
-
 
 	/**
 	 * 指定の名称のgetCounterKeyを取得する

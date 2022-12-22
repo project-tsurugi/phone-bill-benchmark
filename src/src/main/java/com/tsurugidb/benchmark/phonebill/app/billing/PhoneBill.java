@@ -26,6 +26,7 @@ import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.ExecutableCommand;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager.SessionHoldingType;
+import com.tsurugidb.benchmark.phonebill.db.TxLabel;
 import com.tsurugidb.benchmark.phonebill.db.TxOption;
 import com.tsurugidb.benchmark.phonebill.db.TxOption.Table;
 import com.tsurugidb.benchmark.phonebill.db.dao.BillingDao;
@@ -176,12 +177,12 @@ public class PhoneBill extends ExecutableCommand {
 			ContractDao contractDao = manager.getContractDao();
 
 			// Billingテーブルの計算対象月のレコードを削除する
-			manager.execute(TxOption.ofLTX(0, "deleteBillings", Table.BILLING), () -> {
+			manager.execute(TxOption.ofLTX(0, TxLabel.BATCH_INITIALIZE, Table.BILLING), () -> {
 				billingDao.delete(start);
 			});
 
 			// 計算対象の契約を取りだし、キューに入れる
-			List<Contract> list = manager.execute(TxOption.ofRTX(Integer.MAX_VALUE, "GetContracts"), () -> {
+			List<Contract> list = manager.execute(TxOption.ofRTX(Integer.MAX_VALUE, TxLabel.BATCH_INITIALIZE), () -> {
 				return contractDao.getContracts(start, end);
 			});
 			ArrayList<CalculationTarget> targets = new ArrayList<>(list.size());
