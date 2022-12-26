@@ -108,6 +108,7 @@ public class CalculationTask implements Callable<Exception> {
 				} catch (RuntimeException e) {
 					abortCounter.incrementAndGet();
 					queue.revert(target);
+					PhoneBillDbManager.addRetringExceptions(e);
 					LOG.error("Transaction aborted, tid = {}, contract = {}.", tid, target.getContract(), e);
 					if (!(e instanceof RetryOverRuntimeException)) {
 						LOG.debug("Calculation task aborted.", e);
@@ -149,6 +150,7 @@ public class CalculationTask implements Callable<Exception> {
 					queue.success(list);
 				} catch (RuntimeException e) {
 					abortCounter.incrementAndGet();
+					PhoneBillDbManager.addRetringExceptions(e);
 					// 処理対象をキューに戻す
 					queue.revert(list);
 					LOG.debug("Transaction aborted, tid = {}, contract = {}.", tid, getPhoneNumbers(list));

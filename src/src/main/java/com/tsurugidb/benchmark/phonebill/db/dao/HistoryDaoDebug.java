@@ -77,4 +77,15 @@ public class HistoryDaoDebug implements HistoryDao {
 		return dao.updateChargeNull();
 	}
 
+
+	@Override
+	public int delete(String phoneNumber) {
+		return dao.delete(phoneNumber);
+	}
+
+
+	@Override
+	public List<String> getAllPhoneNumbers() {
+		return dao.getAllPhoneNumbers();
+	}
 }

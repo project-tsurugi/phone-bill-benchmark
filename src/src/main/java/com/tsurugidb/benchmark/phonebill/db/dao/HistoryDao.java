@@ -28,6 +28,10 @@ public interface HistoryDao {
 
 	int updateChargeNull();
 
+	int delete(String phoneNumber);
+
+	List<String> getAllPhoneNumbers();
+
 	// RuntimeExceptionを発生させる => UT専用
 	default void throwRuntimeException() {
 		throw new RuntimeException();

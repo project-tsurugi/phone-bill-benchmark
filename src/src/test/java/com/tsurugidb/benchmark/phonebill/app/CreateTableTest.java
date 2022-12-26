@@ -21,10 +21,13 @@ import com.tsurugidb.benchmark.phonebill.app.Config.DbmsType;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager.SessionHoldingType;
 import com.tsurugidb.benchmark.phonebill.db.dao.Ddl;
+import com.tsurugidb.benchmark.phonebill.db.iceaxe.IceaxeTestTools;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.PhoneBillDbManagerJdbc;
+import com.tsurugidb.benchmark.phonebill.testdata.CreateTestData;
 
 class CreateTableTest extends AbstractJdbcTestCase {
-	private static String ORACLE_CONFIG_PATH = "src/test/config/oracle.properties";
+	private static final String ORACLE_CONFIG_PATH = "src/test/config/oracle.properties";
+	private static final String ICEAXE_CONFIG_PATH = "src/test/config/iceaxe-mini.properties";
 
 	@Test
 	void test() throws SQLException, IOException {
@@ -209,4 +212,28 @@ class CreateTableTest extends AbstractJdbcTestCase {
 		}
 		return c == 1;
 	}
+
+
+	/**
+	 * Iceaxe, usePreparedTables = trueのときのテスト。このとき、history tableに対してdrop tableが
+	 * よばれずdelete tableによりデータの消去が行われる。
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	void test2() throws Exception {
+		Config config = Config.getConfig(ICEAXE_CONFIG_PATH);
+		config.usePreparedTables = true;
+
+		// テストデータを作成
+		new CreateTestData().execute(config);
+
+		IceaxeTestTools tools = new IceaxeTestTools(config);
+		assertTrue(tools.getHistoryList().size() > 0);
+
+		// テストデータを削除
+		new CreateTable().execute(config);
+		assertTrue(tools.getHistoryList().isEmpty());
+	}
+
 }

@@ -87,6 +87,7 @@ public class PhoneBill extends ExecutableCommand {
 				service.awaitTermination(5, TimeUnit.MINUTES);
 			}
 			LOG.info("Counter infos: \n---\n{}---", PhoneBillDbManager.createCounterReport());
+			LOG.info("Exception infos: \n---\n{}---", PhoneBillDbManager.createExceptionReport());
 		}
 	}
 

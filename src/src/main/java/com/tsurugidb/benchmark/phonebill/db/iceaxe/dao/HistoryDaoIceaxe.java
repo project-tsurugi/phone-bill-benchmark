@@ -6,6 +6,7 @@ import java.time.LocalTime;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.tsurugidb.benchmark.phonebill.app.billing.CalculationTarget;
 import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
@@ -19,6 +20,7 @@ import com.tsurugidb.iceaxe.result.TgEntityResultMapping;
 import com.tsurugidb.iceaxe.result.TgResultMapping;
 import com.tsurugidb.iceaxe.result.TsurugiResultEntity;
 import com.tsurugidb.iceaxe.statement.TgDataType;
+import com.tsurugidb.iceaxe.statement.TgEntityParameterMapping;
 import com.tsurugidb.iceaxe.statement.TgParameterList;
 import com.tsurugidb.iceaxe.statement.TgParameterMapping;
 import com.tsurugidb.iceaxe.statement.TgVariableList;
@@ -212,5 +214,24 @@ public class HistoryDaoIceaxe implements HistoryDao {
 		String sql = "select caller_phone_number, recipient_phone_number, payment_categorty, start_time, time_secs, charge, df from history";
 		var ps = utils.createPreparedQuery(sql, RESULT_MAPPING);
 		return utils.execute(ps);
+	}
+
+
+	@Override
+	public int delete(String phoneNumber) {
+		String sql = "delete from history where  caller_phone_number = :caller_phone_number";
+		TgEntityParameterMapping<String> mapping = TgParameterMapping.of(String.class)
+				.add("caller_phone_number", TgDataType.CHARACTER, String::toString);
+		var ps = utils.createPreparedStatement(sql, mapping);
+		return utils.executeAndGetCount(ps, phoneNumber);
+	}
+
+
+	@Override
+	public List<String> getAllPhoneNumbers() {
+		String sql = "select distinct caller_phone_number from history";
+		var ps = utils.createPreparedQuery(sql);
+		var list = utils.execute(ps);
+		return list.stream().map(r -> r.getCharacter("caller_phone_number")).collect(Collectors.toList());
 	}
 }

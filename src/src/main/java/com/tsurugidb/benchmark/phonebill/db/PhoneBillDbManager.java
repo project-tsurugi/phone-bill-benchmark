@@ -1,14 +1,23 @@
 package com.tsurugidb.benchmark.phonebill.db;
 
+import static java.nio.file.StandardOpenOption.*;
+
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.io.PrintStream;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -35,13 +44,18 @@ public abstract class PhoneBillDbManager implements Closeable {
     private static final Logger LOG = LoggerFactory.getLogger(PhoneBillDbManager.class);
 
     // カウンタを格納するmap
-    private static Map<CounterKey, AtomicInteger> ccounterMap = new ConcurrentHashMap<>();
+    private static final Map<CounterKey, AtomicInteger> ccounterMap = new ConcurrentHashMap<>();
 
     // カウンタの名称
 	public static final String BEGIN_TX = "BEGIN_TX";
 	public static final String TRY_COMMIT = "TRY_COMMIT";
 	public static final String SUCCESS = "SUCCESS";
 	public static final String ABORTED = "ABORTED";
+
+
+	// リトライするExceptionを集計するためのコレクション
+
+	public static final Collection<Exception> retryingExceptions = new ConcurrentLinkedQueue<>();
 
 
     // DAO取得用のメソッド
@@ -247,6 +261,11 @@ public abstract class PhoneBillDbManager implements Closeable {
 		}
 	}
 
+	/**
+	 * カウンタのレポートを作成する
+	 *
+	 * @return レポートの文字列
+	 */
 	public static String createCounterReport() {
 		// 使用されているラベルととカウンタ名をリストアップ
 		final Set<String> counterNames = new LinkedHashSet<>();
@@ -278,5 +297,33 @@ public abstract class PhoneBillDbManager implements Closeable {
 			}
 		}
 		return bos.toString(StandardCharsets.UTF_8);
+	}
+
+
+	/**
+	 * 例外のレポートを作成する
+	 *
+	 * @return レポートの文字列
+	 */
+	public static String createExceptionReport() {
+		Path outputPath = Path.of("/tmp/outpubt.bin");
+		try (ObjectOutputStream os = new ObjectOutputStream(
+				Files.newOutputStream(outputPath, CREATE, TRUNCATE_EXISTING, WRITE))) {
+			for (Object obj : retryingExceptions) {
+				os.writeObject(obj);
+			}
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
+		}
+		return "Wrote to " + outputPath.toString();
+	}
+
+	/**
+	 * リトライするExceptionを記録する
+	 *
+	 * @param e
+	 */
+	public static void addRetringExceptions(Exception e) {
+		retryingExceptions.add(e);
 	}
 }

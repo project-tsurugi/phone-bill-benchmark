@@ -127,6 +127,7 @@ public abstract class AbstractOnlineApp implements Runnable{
 					}
 				});
 			} catch (RuntimeException e) {
+				PhoneBillDbManager.addRetringExceptions(e);
 				LOG.info("Caught exception, retrying... ", e);
 			}
 			return;

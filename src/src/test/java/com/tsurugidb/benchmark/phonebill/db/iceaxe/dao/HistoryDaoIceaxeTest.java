@@ -450,4 +450,77 @@ class HistoryDaoIceaxeTest {
 		}).stream().collect(Collectors.toSet());
 		assertEquals(set, actualSet);
 	}
+
+	@Test
+	final void testDelete() {
+		Set<History> actualSet;
+
+		// テーブルに5レコード追加
+		History h1 = History.create("001", "456", "C", "2022-01-10 15:15:28.312", 5, 2, 0);
+		History h21 = History.create("002", "456", "C", "2022-01-10 15:15:28.313", 5, null, 0);
+		History h22 = History.create("002", "456", "C", "2022-01-10 15:15:28.314", 5, 2, 1);
+		History h3 = History.create("003", "456", "C", "2022-01-05 00:00:00.000", 5, 2, 0);
+		History h4 = History.create("004", "459", "C", "2022-01-10 15:15:28.312", 3, null, 1);
+
+		Set<History> set = new HashSet<>(Arrays.asList(h1, h21, h22,  h3, h4));
+		testTools.execute(() -> {
+			dao.batchInsert(set);
+		});
+
+		// インサートされた値の確認
+		actualSet = testTools.execute(() -> {
+			return dao.getHistories();
+		}).stream().collect(Collectors.toSet());
+		assertEquals(set, actualSet);
+
+		// 1件delete
+		assertEquals(-1, testTools.execute(() -> { // TODO delete件数が返るようになったら期待値を変更する
+			return dao.delete("003");
+		}));
+		set.remove(h3);
+		actualSet = testTools.execute(() -> {
+			return dao.getHistories();
+		}).stream().collect(Collectors.toSet());
+		assertEquals(set, actualSet);
+
+		// 複数件delete
+		assertEquals(-1, testTools.execute(() -> { // TODO delete件数が返るようになったら期待値を変更する
+			return dao.delete("002");
+		}));
+		set.removeAll(Arrays.asList(h21, h22));
+		actualSet = testTools.execute(() -> {
+			return dao.getHistories();
+		}).stream().collect(Collectors.toSet());
+		assertEquals(set, actualSet);
+	}
+
+	@Test
+	final void testGetAllPhoneNumbers() {
+		Set<History> actualSet;
+
+		// テーブルに5レコード追加
+		History h1 = History.create("001", "456", "C", "2022-01-10 15:15:28.312", 5, 2, 0);
+		History h21 = History.create("002", "456", "C", "2022-01-10 15:15:28.313", 5, null, 0);
+		History h22 = History.create("002", "456", "C", "2022-01-10 15:15:28.314", 5, 2, 1);
+		History h3 = History.create("003", "456", "C", "2022-01-05 00:00:00.000", 5, 2, 0);
+		History h4 = History.create("004", "459", "C", "2022-01-10 15:15:28.312", 3, null, 1);
+
+		Set<History> set = new HashSet<>(Arrays.asList(h1, h21, h22,  h3, h4));
+		testTools.execute(() -> {
+			dao.batchInsert(set);
+		});
+
+		// インサートされた値の確認
+		actualSet = testTools.execute(() -> {
+			return dao.getHistories();
+		}).stream().collect(Collectors.toSet());
+		assertEquals(set, actualSet);
+
+		// テスト実行
+		Set<String> expect = set.stream().map(h -> h.getCallerPhoneNumber()).collect(Collectors.toSet());
+		assertEquals(expect, testTools.execute(() -> {
+			return dao.getAllPhoneNumbers();
+		}).stream().collect(Collectors.toSet()));
+	}
+
 }

@@ -246,4 +246,34 @@ public class HistoryDaoJdbc implements HistoryDao {
 		}
 		return list;
 	}
+
+	@Override
+	public int delete(String phoneNumber) {
+		Connection conn = manager.getConnection();
+		String sql = "delete from history where  caller_phone_number = ?";
+		try (PreparedStatement ps = conn.prepareStatement(sql)) {
+			ps.setString(1, phoneNumber);
+			return ps.executeUpdate();
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@Override
+	public List<String> getAllPhoneNumbers() {
+		Connection conn = manager.getConnection();
+		List<String> list = new ArrayList<>();
+		String sql = "select distinct caller_phone_number from history";
+		try (PreparedStatement ps = conn.prepareStatement(sql)) {
+			try (ResultSet rs = ps.executeQuery()) {
+				while (rs.next()) {
+					String phoneNumber = rs.getString(1);
+					list.add(phoneNumber);
+				}
+			}
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+		return list;
+	}
 }
