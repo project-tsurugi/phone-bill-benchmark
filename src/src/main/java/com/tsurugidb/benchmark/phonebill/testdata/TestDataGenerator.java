@@ -171,7 +171,7 @@ public class TestDataGenerator {
 			} else {
 				dividedParams.numberOfHistory = config.maxNumberOfLinesHistoryCsv;
 				// 各タスクに異なる乱数発生器を使用する
-				params.random = new Random(random.nextLong());
+				dividedParams.random = new Random(random.nextLong());
 				dividedParams.start = list.get(i - 1).end;
 			}
 			double scale = ((double)firstNumberOfHistory + (double)(config.maxNumberOfLinesHistoryCsv) * i)
