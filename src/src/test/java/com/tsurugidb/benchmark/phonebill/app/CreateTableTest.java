@@ -13,6 +13,7 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -221,6 +222,7 @@ class CreateTableTest extends AbstractJdbcTestCase {
 	 * @throws Exception
 	 */
 	@Test
+	@Disabled("DDLとDMLを同一TX内で混在すると起きる問題を解決するまで正常動作しない")
 	void test2() throws Exception {
 		Config config = Config.getConfig(ICEAXE_CONFIG_PATH);
 		config.usePreparedTables = true;
