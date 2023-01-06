@@ -1,11 +1,11 @@
 package com.tsurugidb.benchmark.phonebill.app;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.tsurugidb.benchmark.phonebill.app.ExecutableCommand.ConfigInfo;
 import com.tsurugidb.benchmark.phonebill.app.billing.OnlineApp;
 import com.tsurugidb.benchmark.phonebill.app.billing.PhoneBill;
 import com.tsurugidb.benchmark.phonebill.db.oracle.LoadTestDataCsvToOracle;
@@ -96,11 +96,8 @@ public class Main {
 				usage();
 				System.exit(1);
 			}
-			List<Config> configs = new ArrayList<>(args.length);
-			for (int i = 1; i < args.length; i++) {
-				configs.add(Config.getConfig(args[i]));
-			}
-			executableCommand.execute(configs);
+			List<ConfigInfo> configInfos = ExecutableCommand.createConfigInfos(args, 1);
+			executableCommand.execute(configInfos);
 			break;
 		case HOST_AND_PORT:
 			if (args.length == 1 || !args[1].contains(":")) {

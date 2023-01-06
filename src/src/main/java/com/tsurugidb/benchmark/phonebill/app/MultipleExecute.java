@@ -41,19 +41,16 @@ public class MultipleExecute extends ExecutableCommand {
 
 	public static void main(String[] args) throws Exception {
 		MultipleExecute threadBench = new MultipleExecute();
-		List<Config> configs = new ArrayList<>(args.length);
-		for (String arg: args) {
-			Config config = Config.getConfig(arg);
-			configs.add(config);
-		}
-		threadBench.execute(configs);
+		List<ConfigInfo> configInfos = createConfigInfos(args, 0);
+		threadBench.execute(configInfos);
 	}
 
 	@Override
-	public void execute(List<Config> configs) throws Exception {
-		for (Config config : configs) {
-			LOG.info("Config initialized" + System.lineSeparator() + "--- " + System.lineSeparator() + config
-					+ System.lineSeparator() + "---");
+	public void execute(List<ConfigInfo> configInfos) throws Exception {
+		for (ConfigInfo info : configInfos) {
+			Config config = info.config;
+			LOG.info("Using config {} " + System.lineSeparator() + "--- " + System.lineSeparator() + config
+					+ System.lineSeparator() + "---", info.configPath.toAbsolutePath().toString());
 			if (firstExce) {
 //				firstExce = false;
 				new CreateTable().execute(config);
