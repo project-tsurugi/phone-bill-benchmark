@@ -109,7 +109,7 @@ public class CalculationTask implements Callable<Exception> {
 					abortCounter.incrementAndGet();
 					queue.revert(target);
 					PhoneBillDbManager.addRetringExceptions(e);
-					LOG.error("Transaction aborted, tid = {}, contract = {}.", tid, target.getContract(), e);
+					LOG.debug("Transaction aborted, tid = {}, contract = {}.", tid, target.getContract(), e);
 					if (!(e instanceof RetryOverRuntimeException)) {
 						LOG.debug("Calculation task aborted.", e);
 						return e;
