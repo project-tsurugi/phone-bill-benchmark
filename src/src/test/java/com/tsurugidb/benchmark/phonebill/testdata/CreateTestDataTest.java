@@ -2,8 +2,6 @@ package com.tsurugidb.benchmark.phonebill.testdata;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -63,12 +61,8 @@ class CreateTestDataTest extends AbstractJdbcTestCase {
 		// マルチスレッドで何回テストデータを生成しても毎回同じデータが生成される
 		createTestData.execute(config);
 
-		Map<Key, History> actualMap = getHistories().stream().collect(Collectors.toMap(h -> h.getKey(), Function.identity()));
-		String a = expectMap.values().stream().map(h -> h.toString()).sorted().collect(Collectors.joining("\n"));
-		Files.writeString(Path.of("a.txt"), a);
-		String e = actualMap.values().stream().map(h -> h.toString()).sorted().collect(Collectors.joining("\n"));
-		Files.writeString(Path.of("e.txt"), e);
-
+		Map<Key, History> actualMap = getHistories().stream()
+				.collect(Collectors.toMap(h -> h.getKey(), Function.identity()));
 
 		for(Key key: expectMap.keySet()) {
 			History expect = expectMap.get(key);
