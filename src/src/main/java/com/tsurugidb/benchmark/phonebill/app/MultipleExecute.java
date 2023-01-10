@@ -23,7 +23,6 @@ import com.tsurugidb.benchmark.phonebill.app.billing.PhoneBill;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.TxLabel;
 import com.tsurugidb.benchmark.phonebill.db.TxOption;
-import com.tsurugidb.benchmark.phonebill.db.TxOption.Table;
 import com.tsurugidb.benchmark.phonebill.db.entity.Billing;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
 import com.tsurugidb.benchmark.phonebill.testdata.CreateTestData;
@@ -37,7 +36,6 @@ public class MultipleExecute extends ExecutableCommand {
 	private List<Record> records = new ArrayList<>();
 	private Set<History> expectedHistories;
 	private Set<Billing> expectedBillings;
-	private boolean firstExce = true;
 
 	public static void main(String[] args) throws Exception {
 		MultipleExecute threadBench = new MultipleExecute();
@@ -51,16 +49,8 @@ public class MultipleExecute extends ExecutableCommand {
 			Config config = info.config;
 			LOG.info("Using config {} " + System.lineSeparator() + "--- " + System.lineSeparator() + config
 					+ System.lineSeparator() + "---", info.configPath.toAbsolutePath().toString());
-			if (firstExce) {
-//				firstExce = false;
-				new CreateTable().execute(config);
-				new CreateTestData().execute(config);
-			} else {
-				try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
-					manager.execute(TxOption.ofLTX(Integer.MAX_VALUE, TxLabel.INITIALIZE, Table.HISTORY),
-							manager.getHistoryDao()::updateChargeNull);
-				}
-			}
+			new CreateTable().execute(config);
+			new CreateTestData().execute(config);
 			Record record = new Record(config);
 			records.add(record);
 			record.start();
@@ -125,18 +115,18 @@ public class MultipleExecute extends ExecutableCommand {
 			if (actual.contains(t)) {
 				continue;
 			}
-			LOG.info("only in expect:"  + t);
+			LOG.debug("only in expect:"  + t);
 			n++;
 		}
 		for(T t: actual) {
 			if (expect.contains(t)) {
 				continue;
 			}
-			LOG.info("only in actual:" + t);
+			LOG.debug("only in actual:" + t);
 			n++;
 		}
 		if (n != 0) {
-			LOG.error("Did not get the same results.");
+			LOG.info("Did not get the same results.");
 		}
 		return n;
 	}

@@ -412,9 +412,7 @@ public class IceaxeTestTools {
 	 * 指定のテーブルをトランケートする。
 	 */
 	public void truncateTable(String tableName) {
-		manager.execute(OCC, () -> {
-			manager.getDdl().truncateTable(tableName);
-		});
+		execute("delete from " + tableName);
 	}
 
     public void execute(Runnable runnable) {

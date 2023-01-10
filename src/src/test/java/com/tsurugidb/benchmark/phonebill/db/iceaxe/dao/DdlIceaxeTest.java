@@ -72,41 +72,6 @@ class DdlIceaxeTest {
 
 
 	/**
-	 * {@link com.tsurugidb.benchmark.phonebill.db.iceaxe.dao.DdlIceaxe#truncateTable(java.lang.String)} のためのテスト・メソッド。
-	 */
-	@Test
-	final void testTruncateTable() {
-		// テスト対象のテーブルを作成
-		if (testTools.tableExists("history")) {
-			testTools.execute( ()->{
-			ddl.dropTable("history");
-			});
-		}
-		testTools.execute(ddl::createHistoryTable);
-		assertEquals(0, testTools.countRecords("history"));
-
-		// テストデータを入れる
-
-		testTools.insertToHistory("Phone-0001", "Phone-0008", "C", "2020-10-31 23:59:59.999", 30, null, 0);
-		testTools.insertToHistory("Phone-0001", "Phone-0008", "C", "2020-11-01 00:00:00.000", 30, null, 0);
-		testTools.insertToHistory("Phone-0001", "Phone-0008", "C", "2020-11-15 12:12:12.000", 90, null, 1);
-		testTools.insertToHistory("Phone-0001", "Phone-0008", "C", "2020-11-30 23:59:59.999", 90, null, 0);
-		testTools.insertToHistory("Phone-0001", "Phone-0008", "C", "2020-12-01 00:00:00.000", 30, null, 0);
-		testTools.insertToHistory("Phone-0005", "Phone-0001", "C", "2020-11-10 00:00:00.000", 25, null, 0);
-		testTools.insertToHistory("Phone-0005", "Phone-0008", "R", "2020-11-30 00:00:00.000", 30, null, 0);
-
-		assertEquals(7, testTools.countRecords("history"));
-
-		testTools.execute(() -> {
-			ddl.truncateTable("history");
-		});
-
-		assertEquals(0, testTools.countRecords("history"));
-
-
-	}
-
-	/**
 	 * {@link com.tsurugidb.benchmark.phonebill.db.iceaxe.dao.DdlIceaxe#createHistoryTable()} のためのテスト・メソッド。
 	 */
 	@Test

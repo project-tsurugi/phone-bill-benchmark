@@ -34,25 +34,14 @@ public class DdlIceaxe implements Ddl {
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}
-		if (opt.isPresent()) {
-			if (usePreparedTables && tableName.equalsIgnoreCase("history")) {
-				truncateTable(tableName);
-			} else {
-				execute("drop table " + tableName);
-			}
+		if (opt.isPresent() && !(usePreparedTables && tableName.equalsIgnoreCase("history"))) {
+			execute("drop table " + tableName);
 		}
 	}
 
 	@Override
-	public void truncateTable(String tableName) {
-		execute("delete from " + tableName);
-	}
-
-	@Override
 	public void createHistoryTable() {
-		if (usePreparedTables) {
-			truncateTable("history");
-		} else {
+		if (!usePreparedTables) {
 			String create_table = "create table history ("
 					+ "caller_phone_number varchar(15) not null," 		// 発信者電話番号
 					+ "recipient_phone_number varchar(15) not null," 	// 受信者電話番号

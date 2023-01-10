@@ -7,11 +7,6 @@ public interface Ddl {
 	public void dropTable(String tableName);
 
 	/**
-	 * 指定のテーブルをトランケートする。
-	 */
-	public void truncateTable(String tableName);
-
-	/**
 	 * すべてのテーブルを削除する。テーブルが存在しない場合もエラーにならない。
 	 */
 	public default void dropTables() {
