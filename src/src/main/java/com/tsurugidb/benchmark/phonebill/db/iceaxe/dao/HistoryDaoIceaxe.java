@@ -229,7 +229,7 @@ public class HistoryDaoIceaxe implements HistoryDao {
 
 	@Override
 	public List<String> getAllPhoneNumbers() {
-		String sql = "select distinct caller_phone_number from history";
+		String sql = "select caller_phone_number from history group by caller_phone_number";
 		var ps = utils.createPreparedQuery(sql);
 		var list = utils.execute(ps);
 		return list.stream().map(r -> r.getCharacter("caller_phone_number")).collect(Collectors.toList());

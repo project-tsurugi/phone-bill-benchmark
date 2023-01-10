@@ -38,7 +38,7 @@ public class CreateTable extends ExecutableCommand{
 			HistoryDao historyDao = manager.getHistoryDao();
 			if (config.usePreparedTables && config.dbmsType == DbmsType.ICEAXE) {
 				List<String> list = manager.execute(TxOption.ofRTX(Integer.MAX_VALUE, TxLabel.DDL),
-						historyDao::getAllPhoneNumbers).stream().sorted().distinct().collect(Collectors.toList());
+						historyDao::getAllPhoneNumbers);
 				if (list.size() != 0) {
 					LOG.info("Deleting {} phone numbers from history table.", list.size());
 					BlockingQueue<String> queue = new ArrayBlockingQueue<String>(list.size(), true, list);
