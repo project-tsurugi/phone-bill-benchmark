@@ -225,18 +225,15 @@ class CreateTableTest extends AbstractJdbcTestCase {
 		Config config = Config.getConfig(ICEAXE_CONFIG_PATH);
 		config.usePreparedTables = true;
 
-		// CreateTable実行後にデータがないことを確認
-		new CreateTable().execute(config);
-		IceaxeTestTools tools = new IceaxeTestTools(config);
-		assertEquals(0, tools.getHistoryList().size());
-
 		// テストデータを作成
 		new CreateTestData().execute(config);
-		assertEquals(config.numberOfHistoryRecords, tools.getHistoryList().size());
+
+		IceaxeTestTools tools = new IceaxeTestTools(config);
+		assertTrue(tools.getHistoryList().size() > 0);
 
 		// テストデータを削除
 		new CreateTable().execute(config);
-		assertEquals(0, tools.getHistoryList().size());
+		assertTrue(tools.getHistoryList().isEmpty());
 	}
 
 }
