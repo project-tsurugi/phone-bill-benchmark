@@ -6,8 +6,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager.CounterKey;
-import com.tsurugidb.iceaxe.transaction.TgTxOption;
 import com.tsurugidb.iceaxe.transaction.manager.TgTmSetting;
+import com.tsurugidb.iceaxe.transaction.option.TgTxOption;
+import com.tsurugidb.iceaxe.transaction.option.TgTxOptionLtx;
 
 /**
  * PhoneBillDbManager使用時に指定するTxOption.
@@ -95,11 +96,11 @@ public class TxOption {
      * @return transaction option
      */
     public static TxOption ofLTX(int retryCountLmit,  TxLabel label, Table... writePreserveTables) {
-    	TgTxOption tgTxOption = TgTxOption.ofLTX();
+    	TgTxOptionLtx tgTxOption = TgTxOption.ofLTX();
     	for (Table table: writePreserveTables) {
     		tgTxOption.addWritePreserve(table.getTableName());
     	}
-        return new  TxOption(retryCountLmit, label, tgTxOption);
+        return new TxOption(retryCountLmit, label, tgTxOption);
     }
 
 
