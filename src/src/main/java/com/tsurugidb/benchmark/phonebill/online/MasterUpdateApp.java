@@ -145,7 +145,7 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 			throw new RuntimeException("Fail to update contracts: " + updatingContract);
 		}
 		if (LOG.isDebugEnabled()) {
-			LOG.debug("ONLINE APP: Update 1 record from contracs(phoneNumber = {}, startDate = {}, endDate = {}).",
+			LOG.debug("ONLINE APP: Update 1 record from contracts(phoneNumber = {}, startDate = {}, endDate = {}).",
 					updatingContract.getPhoneNumber(), updatingContract.getStartDate(), updatingContract.getEndDate());
 		}
 	}
