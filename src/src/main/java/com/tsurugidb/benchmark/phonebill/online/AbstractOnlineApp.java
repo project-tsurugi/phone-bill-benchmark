@@ -126,11 +126,12 @@ public abstract class AbstractOnlineApp implements Runnable{
 						updateDatabase(contractDao, historyDao);
 					}
 				});
+				break;
 			} catch (RuntimeException e) {
 				PhoneBillDbManager.addRetringExceptions(e);
 				LOG.info("Caught exception, retrying... ", e);
+				continue;
 			}
-			return;
 		}
 	}
 
