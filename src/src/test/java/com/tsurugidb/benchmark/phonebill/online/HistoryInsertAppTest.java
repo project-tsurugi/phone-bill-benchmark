@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import com.tsurugidb.benchmark.phonebill.AbstractJdbcTestCase;
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.CreateTable;
+import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
 import com.tsurugidb.benchmark.phonebill.testdata.AbstractContractBlockInfoInitializer;
 import com.tsurugidb.benchmark.phonebill.testdata.ContractBlockInfoAccessor;
@@ -52,35 +53,36 @@ class HistoryInsertAppTest extends AbstractJdbcTestCase {
 		config.historyInsertRecordsPerTransaction = 33;
 		HistoryInsertApp app = (HistoryInsertApp) HistoryInsertApp
 				.createHistoryInsertApps(config, new Random(), accessor, 1).get(0);
-		long expectedBaseTime = HistoryInsertApp.getBaseTime(config);
+		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
+			long expectedBaseTime = HistoryInsertApp.getBaseTime(config);
 
-		// exec()呼び出し毎にhistoryのレコードが増えることを確認
+			// exec()呼び出し毎にhistoryのレコードが増えることを確認
 
-		int expectedHistorySize = 0;
-		for (int i = 0; i < 10; i++) {
-			app.exec();
-			expectedHistorySize += config.historyInsertRecordsPerTransaction;
-			assertEquals(expectedHistorySize, countRecords("history"));
+			int expectedHistorySize = 0;
+			for (int i = 0; i < 10; i++) {
+				app.exec(manager);
+				expectedHistorySize += config.historyInsertRecordsPerTransaction;
+				assertEquals(expectedHistorySize, countRecords("history"));
+			}
+			// ブロック情報がキャッシュされていることの確認
+			// 呼び出し前の値をチェック
+			assertEquals(1, app.getContractInfoReader().getBlockInfos().getNumberOfActiveBlacks());
+			accessor.submit(accessor.getNewBlock()); // 新しいブロックをアクティブなブロックとしてsubmit
+			// ブロック情報はキャッシュされているので、submitの結果が反映されない
+			assertEquals(1, app.getContractInfoReader().getBlockInfos().getNumberOfActiveBlacks());
+
+			// === atScheduleListCreatedのテスト
+
+			assertEquals(expectedHistorySize, app.getKeySet().size());
+			assertEquals(expectedBaseTime, app.getBaseTime());
+
+			// 呼び出し後の値をチェック
+			app.atScheduleListCreated(null);
+			assertEquals(0, app.getKeySet().size());
+			assertEquals(expectedBaseTime + AbstractOnlineApp.CREATE_SCHEDULE_INTERVAL_MILLS, app.getBaseTime());
+			// submitの結果が反映されている
+			assertEquals(2, app.getContractInfoReader().getBlockInfos().getNumberOfActiveBlacks());
 		}
-
-		// ブロック情報がキャッシュされていることの確認
-		// 呼び出し前の値をチェック
-		assertEquals(1, app.getContractInfoReader().getBlockInfos().getNumberOfActiveBlacks());
-		accessor.submit(accessor.getNewBlock()); // 新しいブロックをアクティブなブロックとしてsubmit
-		// ブロック情報はキャッシュされているので、submitの結果が反映されない
-		assertEquals(1, app.getContractInfoReader().getBlockInfos().getNumberOfActiveBlacks());
-
-		// === atScheduleListCreatedのテスト
-
-		assertEquals(expectedHistorySize, app.getKeySet().size());
-		assertEquals(expectedBaseTime, app.getBaseTime());
-
-		// 呼び出し後の値をチェック
-		app.atScheduleListCreated(null);
-		assertEquals(0, app.getKeySet().size());
-		assertEquals(expectedBaseTime + AbstractOnlineApp.CREATE_SCHEDULE_INTERVAL_MILLS, app.getBaseTime());
-		// submitの結果が反映されている
-		assertEquals(2, app.getContractInfoReader().getBlockInfos().getNumberOfActiveBlacks());
 	}
 
 	/**
@@ -94,24 +96,28 @@ class HistoryInsertAppTest extends AbstractJdbcTestCase {
 		config.historyInsertRecordsPerTransaction = 1;
 		HistoryInsertApp app;
 		app = (HistoryInsertApp) HistoryInsertApp.createHistoryInsertApps(config, new Random(0), accessor, 1).get(0);
-		app.exec();
-		List<History> expected = getHistories();
+		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
+			app.exec(manager);
+			List<History> expected = getHistories();
 
-		// 同じシードの乱数生成器を使うと、同じhistoryデータが生成されることを確認
-		truncateTable("history");
-		app = (HistoryInsertApp) HistoryInsertApp.createHistoryInsertApps(config, new Random(0), accessor, 1).get(0);
-		app.exec();
-		assertEquals(expected, getHistories());
+			// 同じシードの乱数生成器を使うと、同じhistoryデータが生成されることを確認
+			truncateTable("history");
+			app = (HistoryInsertApp) HistoryInsertApp.createHistoryInsertApps(config, new Random(0), accessor, 1)
+					.get(0);
+			app.exec(manager);
+			assertEquals(expected, getHistories());
 
-		// app.exec()の実行前にkeySet()にキーを登録しておくと違うhistoryデータが生成されることを確認
-		truncateTable("history");
-		app = (HistoryInsertApp) HistoryInsertApp.createHistoryInsertApps(config, new Random(0), accessor, 1).get(0);
-		HistoryKey key = new HistoryKey();
-		key.startTime = expected.get(0).getStartTime().getTime();
-		key.callerPhoneNumber = Integer.parseInt(expected.get(0).getCallerPhoneNumber());
-		app.getKeySet().add(key);
-		app.exec();
-		assertNotEquals(expected, getHistories());
+			// app.exec(manager)の実行前にkeySet()にキーを登録しておくと違うhistoryデータが生成されることを確認
+			truncateTable("history");
+			app = (HistoryInsertApp) HistoryInsertApp.createHistoryInsertApps(config, new Random(0), accessor, 1)
+					.get(0);
+			HistoryKey key = new HistoryKey();
+			key.startTime = expected.get(0).getStartTime().getTime();
+			key.callerPhoneNumber = Integer.parseInt(expected.get(0).getCallerPhoneNumber());
+			app.getKeySet().add(key);
+			app.exec(manager);
+			assertNotEquals(expected, getHistories());
+		}
 	}
 
 
@@ -127,7 +133,9 @@ class HistoryInsertAppTest extends AbstractJdbcTestCase {
 
 		// historyInsertAppによるテストデータを投入
 		AbstractOnlineApp app = HistoryInsertApp.createHistoryInsertApps(config, new Random(), accessor, 1).get(0);
-		app.exec();
+		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
+			app.exec(manager);
+		}
 
 		// テストデータ投入後は、baseTimeが通話開始時刻の最大値になる
 		long max = getHistories().stream().mapToLong(h -> h.getStartTime().getTime()).max().getAsLong();

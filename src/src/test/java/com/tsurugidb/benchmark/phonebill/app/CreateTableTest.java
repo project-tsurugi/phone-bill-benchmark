@@ -228,12 +228,13 @@ class CreateTableTest extends AbstractJdbcTestCase {
 		// テストデータを作成
 		new CreateTestData().execute(config);
 
-		IceaxeTestTools tools = new IceaxeTestTools(config);
-		assertTrue(tools.getHistoryList().size() > 0);
+		try (IceaxeTestTools tools = new IceaxeTestTools(config)) {
+			assertTrue(tools.getHistoryList().size() > 0);
 
-		// テストデータを削除
-		new CreateTable().execute(config);
-		assertTrue(tools.getHistoryList().isEmpty());
+			// テストデータを削除
+			new CreateTable().execute(config);
+			assertTrue(tools.getHistoryList().isEmpty());
+		}
 	}
 
 }

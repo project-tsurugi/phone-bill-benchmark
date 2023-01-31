@@ -1,5 +1,6 @@
 package com.tsurugidb.benchmark.phonebill.db.iceaxe;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.sql.Timestamp;
@@ -36,7 +37,7 @@ import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionRuntimeExcep
  * setUpBeforeClass()でインスタンスを作成し、tearDownAfterClass()でクローズして使用してください。
  *
  */
-public class IceaxeTestTools {
+public class IceaxeTestTools implements Closeable {
 	private static final TxOption OCC = TxOption.ofOCC(Integer.MAX_VALUE, TxLabel.TEST);
 	private  final PhoneBillDbManagerIceaxe manager;
 	private  final TsurugiSession session;
@@ -46,6 +47,7 @@ public class IceaxeTestTools {
 		this.session = manager.getSession();
 	}
 
+	@Override
 	public void close() {
 		manager.close();
 	}

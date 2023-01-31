@@ -62,7 +62,8 @@ class HistoryUpdateAppTest extends AbstractJdbcTestCase {
 
 	@AfterEach
 	void after() throws SQLException {
-		manager.rollback();
+		manager.commit();
+		manager.close();
 	}
 
 
@@ -76,7 +77,7 @@ class HistoryUpdateAppTest extends AbstractJdbcTestCase {
 		History target;
 		target = histories.get(48);
 		setRandom(contracts, map, target, true, 0);
-		app.exec();
+		app.exec(manager);
 		target.setDf(1);
 		target.setCharge(null);
 		testExecSub(histories);
@@ -84,7 +85,7 @@ class HistoryUpdateAppTest extends AbstractJdbcTestCase {
 		// 通話時間を更新するケース
 		target = histories.get(48);
 		setRandom(contracts, map, target, false, 3185);
-		app.exec();
+		app.exec(manager);
 		target.setTimeSecs(3185 +1); // 通話時間は random.next() + 1 なので、
 		target.setCharge(null);
 		testExecSub(histories);

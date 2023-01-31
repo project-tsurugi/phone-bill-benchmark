@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.CreateTable;
+import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
 import com.tsurugidb.benchmark.phonebill.db.iceaxe.IceaxeTestTools;
 import com.tsurugidb.benchmark.phonebill.testdata.AbstractContractBlockInfoInitializer;
@@ -71,12 +72,13 @@ public class HistoryInsertAppIceaxeTest  {
 
 		// exec()呼び出し毎にhistoryのレコードが増えることを確認
 		int expectedHistorySize = 0;
-		for (int i = 0; i < 10; i++) {
-			app.exec();
-			expectedHistorySize += config.historyInsertRecordsPerTransaction;
-			assertEquals(expectedHistorySize, testTools.countRecords("history"));
+		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
+			for (int i = 0; i < 10; i++) {
+				app.exec(manager);
+				expectedHistorySize += config.historyInsertRecordsPerTransaction;
+				assertEquals(expectedHistorySize, testTools.countRecords("history"));
+			}
 		}
-
 		// ブロック情報がキャッシュされていることの確認
 		// 呼び出し前の値をチェック
 		assertEquals(1, app.getContractInfoReader().getBlockInfos().getNumberOfActiveBlacks());
@@ -108,24 +110,29 @@ public class HistoryInsertAppIceaxeTest  {
 		config.historyInsertRecordsPerTransaction = 1;
 		HistoryInsertApp app;
 		app = (HistoryInsertApp) HistoryInsertApp.createHistoryInsertApps(config, new Random(0), accessor, 1).get(0);
-		app.exec();
-		List<History> expected =testTools.getHistoryList();
+		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
 
-		// 同じシードの乱数生成器を使うと、同じhistoryデータが生成されることを確認
-		testTools.truncateTable("history");
-		app = (HistoryInsertApp) HistoryInsertApp.createHistoryInsertApps(config, new Random(0), accessor, 1).get(0);
-		app.exec();
-		assertEquals(expected, testTools.getHistoryList());
+			app.exec(manager);
+			List<History> expected = testTools.getHistoryList();
 
-		// app.exec()の実行前にkeySet()にキーを登録しておくと違うhistoryデータが生成されることを確認
-		testTools.truncateTable("history");
-		app = (HistoryInsertApp) HistoryInsertApp.createHistoryInsertApps(config, new Random(0), accessor, 1).get(0);
-		HistoryKey key = new HistoryKey();
-		key.startTime = expected.get(0).getStartTime().getTime();
-		key.callerPhoneNumber = Integer.parseInt(expected.get(0).getCallerPhoneNumber());
-		app.getKeySet().add(key);
-		app.exec();
-		assertNotEquals(expected, testTools.getHistoryList());
+			// 同じシードの乱数生成器を使うと、同じhistoryデータが生成されることを確認
+			testTools.truncateTable("history");
+			app = (HistoryInsertApp) HistoryInsertApp.createHistoryInsertApps(config, new Random(0), accessor, 1)
+					.get(0);
+			app.exec(manager);
+			assertEquals(expected, testTools.getHistoryList());
+
+			// app.exec()の実行前にkeySet()にキーを登録しておくと違うhistoryデータが生成されることを確認
+			testTools.truncateTable("history");
+			app = (HistoryInsertApp) HistoryInsertApp.createHistoryInsertApps(config, new Random(0), accessor, 1)
+					.get(0);
+			HistoryKey key = new HistoryKey();
+			key.startTime = expected.get(0).getStartTime().getTime();
+			key.callerPhoneNumber = Integer.parseInt(expected.get(0).getCallerPhoneNumber());
+			app.getKeySet().add(key);
+			app.exec(manager);
+			assertNotEquals(expected, testTools.getHistoryList());
+		}
 	}
 
 
@@ -141,7 +148,9 @@ public class HistoryInsertAppIceaxeTest  {
 
 		// historyInsertAppによるテストデータを投入
 		AbstractOnlineApp app = HistoryInsertApp.createHistoryInsertApps(config, new Random(), accessor, 1).get(0);
-		app.exec();
+		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
+			app.exec(manager);
+		}
 
 		// テストデータ投入後は、baseTimeが通話開始時刻の最大値になる
 		long max = testTools.getHistoryList().stream().mapToLong(h -> h.getStartTime().getTime()).max().getAsLong();

@@ -82,15 +82,14 @@ public abstract class AbstractOnlineApp implements Runnable{
 	private String baseName;
 
 
-	// DBマネージャとDAO
-	private PhoneBillDbManager manager;
-
+	// Config
+	private Config config;
 
 
 	public AbstractOnlineApp(int execPerMin, Config config, Random random) {
 		this.execPerMin = execPerMin;
 		this.random = random;
-		manager = PhoneBillDbManager.createPhoneBillDbManager(config);
+		this.config = config;
 		skipDatabaseAccess = config.skipDatabaseAccess;
 		setName(0);
 	}
@@ -110,8 +109,9 @@ public abstract class AbstractOnlineApp implements Runnable{
 	 *
 	 * createData()でデータを生成し、updateDatabase()で生成したデータを
 	 * DBに反映する。
+	 * @param manager
 	 */
-	final void exec() {
+	final void exec(PhoneBillDbManager manager) {
 		HistoryDao historyDao = manager.getHistoryDao();
 		ContractDao contractDao = manager.getContractDao();
 
@@ -155,7 +155,7 @@ public abstract class AbstractOnlineApp implements Runnable{
 	@Override
 	@SuppressFBWarnings("DM_EXIT")
 	public void run() {
-		try {
+		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)){
 			Thread.currentThread().setName(name);
 			if (execPerMin == 0) {
 				// txPerMinが0の場合は何もしない
@@ -165,22 +165,21 @@ public abstract class AbstractOnlineApp implements Runnable{
 			startTime = System.currentTimeMillis();
 			scheduleList.add(startTime);
 			while (!terminationRequested.get()) {
-				schedule();
+				schedule(manager);
 			}
 			LOG.info("{} terminated.", name);
 		} catch (RuntimeException | IOException e) {
 			LOG.error("Aborting by exception", e);
 			System.exit(1);
-		} finally {
-			manager.close();
 		}
 	}
 
 	/**
 	 * スケジュールに従いexec()を呼び出す
+	 * @param manager
 	 * @throws IOException
 	 */
-	private void schedule() throws IOException {
+	private void schedule(PhoneBillDbManager manager) throws IOException {
 		Long schedule = scheduleList.get(0);
 		if (System.currentTimeMillis() < schedule ) {
 			if (execPerMin > 0) {
@@ -193,7 +192,7 @@ public abstract class AbstractOnlineApp implements Runnable{
 				return;
 			} else {
 				// 連続実行が指定されているケース
-				exec();
+				exec(manager);
 				return;
 			}
 		}
@@ -203,7 +202,7 @@ public abstract class AbstractOnlineApp implements Runnable{
 			// スケジュールリストの最後のエントリはスケジュールを作成する時刻
 			creatScheduleList(schedule);
 		} else {
-			exec();
+			exec(manager);
 		}
 	}
 

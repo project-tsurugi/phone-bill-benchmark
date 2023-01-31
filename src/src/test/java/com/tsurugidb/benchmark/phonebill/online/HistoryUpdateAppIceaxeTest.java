@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.CreateTable;
+import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract.Key;
@@ -67,27 +68,27 @@ class HistoryUpdateAppIceaxeTest {
 
 	@Test
 	void testExec() throws Exception {
-		 List<History> histories = testTools.getHistoryList();
-		 List<Contract> contracts = testTools.getContractList();
+		List<History> histories = testTools.getHistoryList();
+		List<Contract> contracts = testTools.getContractList();
 		Map<Key, List<History>> map = getContractHistoryMap(contracts, histories);
+		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
+			// 削除フラグを立てるケース
+			History target;
+			target = histories.get(18);
+			setRandom(contracts, map, target, true, 0);
+			app.exec(manager);
+			target.setDf(1);
+			target.setCharge(null);
+			testExecSub(histories);
 
-		// 削除フラグを立てるケース
-		History target;
-		target = histories.get(18);
-		setRandom(contracts, map, target, true, 0);
-		app.exec();
-		target.setDf(1);
-		target.setCharge(null);
-		testExecSub(histories);
-
-		// 通話時間を更新するケース
-		target = histories.get(23);
-		setRandom(contracts, map, target, false, 3185);
-		app.exec();
-		target.setTimeSecs(3185 +1); // 通話時間は random.next() + 1 なので、
-		target.setCharge(null);
-		testExecSub(histories);
-
+			// 通話時間を更新するケース
+			target = histories.get(23);
+			setRandom(contracts, map, target, false, 3185);
+			app.exec(manager);
+			target.setTimeSecs(3185 + 1); // 通話時間は random.next() + 1 なので、
+			target.setCharge(null);
+			testExecSub(histories);
+		}
 
 	}
 

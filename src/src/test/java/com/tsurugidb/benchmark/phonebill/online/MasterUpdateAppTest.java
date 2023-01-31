@@ -41,80 +41,79 @@ class MasterUpdateAppTest extends AbstractJdbcTestCase {
 		}
 		List<Contract> expected = getContracts();
 
-
 		// テスト用のオンラインアプリケーションを使用してアプリケーションを初期化する
 		RandomStub random = new RandomStub();
 		MasterUpdateApp app = new MasterUpdateApp(config, random, accessor);
+		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
 
+			// 0番目の契約の契約終了日を契約完了日の3日後にする
+			setRandomValues(random, 0, 0, 3);
+			app.exec(manager);
+			setEndDate(expected.get(0), 3);
+			testContracts(expected);
 
-		// 0番目の契約の契約終了日を契約完了日の3日後にする
-		setRandomValues(random, 0, 0, 3);
-		app.exec();
-		setEndDate(expected.get(0), 3);
-		testContracts(expected);
+			// 0番目の契約の契約終了日をnullにする
+			setRandomValues(random, 0, 0, 0);
+			app.exec(manager);
+			expected.get(0).setEndDate((Date) null);
+			testContracts(expected);
 
-		// 0番目の契約の契約終了日をnullにする
-		setRandomValues(random, 0, 0, 0);
-		app.exec();
-		expected.get(0).setEndDate((Date)null);
-		testContracts(expected);
+			// 13番目の契約の契約終了日をnullにする
+			setRandomValues(random, 13, 0, 0);
+			app.exec(manager);
+			expected.get(13).setEndDate((Date) null);
+			testContracts(expected);
 
-		// 13番目の契約の契約終了日をnullにする
-		setRandomValues(random, 13, 0, 0);
-		app.exec();
-		expected.get(13).setEndDate((Date)null);
-		testContracts(expected);
+			// 15番目の契約の契約終了日を契約完了日の3日後にする
+			setRandomValues(random, 15, 0, 3);
+			app.exec(manager);
+			setEndDate(expected.get(15), 3);
+			testContracts(expected);
 
-		// 15番目の契約の契約終了日を契約完了日の3日後にする
-		setRandomValues(random, 15, 0, 3);
-		app.exec();
-		setEndDate(expected.get(15), 3);
-		testContracts(expected);
+			// 同一の電話番号を２つもつ契約の更新
+			//
+			// n | phone_number | start_date | end_date
+			// 80 | 00000000081 | 2010-11-11 | 2017-11-12
+			// 81 | 00000000081 | 2020-08-08 |
+			//
+			// テストデータが想定通りの値であることを確認
+			assertEquals("00000000081", expected.get(80).getPhoneNumber());
+			assertEquals("00000000081", expected.get(81).getPhoneNumber());
+			assertEquals(DateUtils.toDate("2010-11-11"), expected.get(80).getStartDate());
+			assertEquals(DateUtils.toDate("2020-08-08"), expected.get(81).getStartDate());
+			assertEquals(DateUtils.toDate("2017-11-12"), expected.get(80).getEndDate());
+			assertNull(expected.get(81).getEndDate());
 
-		// 同一の電話番号を２つもつ契約の更新
-		//
-		//  n  | phone_number | start_date |  end_date
-		//  80 | 00000000081  | 2010-11-11 | 2017-11-12
-		//  81 | 00000000081  | 2020-08-08 |
-		//
-		// テストデータが想定通りの値であることを確認
-		assertEquals("00000000081", expected.get(80).getPhoneNumber());
-		assertEquals("00000000081", expected.get(81).getPhoneNumber());
-		assertEquals(DateUtils.toDate("2010-11-11"), expected.get(80).getStartDate());
-		assertEquals(DateUtils.toDate("2020-08-08"), expected.get(81).getStartDate());
-		assertEquals(DateUtils.toDate("2017-11-12"), expected.get(80).getEndDate());
-		assertNull( expected.get(81).getEndDate());
+			setRandomValues(random, 80, 0, 3);
+			app.exec(manager);
+			setEndDate(expected.get(80), 3);
+			testContracts(expected);
 
-		setRandomValues(random, 80, 0, 3);
-		app.exec();
-		setEndDate(expected.get(80), 3);
-		testContracts(expected);
+			setRandomValues(random, 80, 1, 4);
+			app.exec(manager);
+			setEndDate(expected.get(81), 4);
+			testContracts(expected);
 
-		setRandomValues(random, 80, 1, 4);
-		app.exec();
-		setEndDate(expected.get(81), 4);
-		testContracts(expected);
+			setRandomValues(random, 81, 0, 5);
+			app.exec(manager);
+			setEndDate(expected.get(80), 5);
+			testContracts(expected);
 
-		setRandomValues(random, 81, 0, 5);
-		app.exec();
-		setEndDate(expected.get(80), 5);
-		testContracts(expected);
+			setRandomValues(random, 81, 1, 6);
+			app.exec(manager);
+			setEndDate(expected.get(81), 6);
+			testContracts(expected);
 
-		setRandomValues(random, 81, 1, 6);
-		app.exec();
-		setEndDate(expected.get(81), 6);
-		testContracts(expected);
-
-
-		// 同一の電話番号で契約期間が重複しない契約がみつからずエラーになるケース
-		List<Integer> list = new ArrayList<Integer>();
-		list.addAll(Arrays.asList(0, 81));
-		for(int i = 0; i < 100; i++) {
-			list.addAll(Arrays.asList(0, 1, 3650));
+			// 同一の電話番号で契約期間が重複しない契約がみつからずエラーになるケース
+			List<Integer> list = new ArrayList<Integer>();
+			list.addAll(Arrays.asList(0, 81));
+			for (int i = 0; i < 100; i++) {
+				list.addAll(Arrays.asList(0, 1, 3650));
+			}
+			random.setValues(list.toArray(new Integer[0]));
+			app.exec(manager); // LOGに警告がでるがエラーにはならない
+			testContracts(expected); // 値が変化していないことを確認する
 		}
-		random.setValues(list.toArray(new Integer[0]));
-		app.exec(); // LOGに警告がでるがエラーにはならない
-		testContracts(expected);  // 値が変化していないことを確認する
 	}
 
 

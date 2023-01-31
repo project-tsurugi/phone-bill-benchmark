@@ -48,27 +48,28 @@ class MasterInsertAppTest extends AbstractJdbcTestCase {
 
 		ContractBlockInfoAccessor accessor2 = new SingleProcessContractBlockManager();
 		MasterInsertApp app = new MasterInsertApp(config, new Random(seed), accessor2);
-		app.exec();
-		app.exec();
-		app.exec();
-		app.exec();
-		app.exec();
-		List<Contract> list = getContracts();
-		assertEquals(5, list.size());
-		for (int i = 0; i < 5; i++) {
-			assertEquals(expectedList.get(i), list.get(i));
+		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
+			app.exec(manager);
+			app.exec(manager);
+			app.exec(manager);
+			app.exec(manager);
+			app.exec(manager);
+			List<Contract> list = getContracts();
+			assertEquals(5, list.size());
+			for (int i = 0; i < 5; i++) {
+				assertEquals(expectedList.get(i), list.get(i));
+			}
+
+			// 追加で5レコード生成して、Generatorで生成したレコードと一致することを確認
+			app.exec(manager);
+			app.exec(manager);
+			app.exec(manager);
+			app.exec(manager);
+			app.exec(manager);
+			list = getContracts();
+			assertEquals(10, list.size());
+			assertEquals(expectedList, list);
 		}
-
-		// 追加で5レコード生成して、Generatorで生成したレコードと一致することを確認
-		app.exec();
-		app.exec();
-		app.exec();
-		app.exec();
-		app.exec();
-		list = getContracts();
-		assertEquals(10, list.size());
-		assertEquals(expectedList, list);
-
 	}
 
 
