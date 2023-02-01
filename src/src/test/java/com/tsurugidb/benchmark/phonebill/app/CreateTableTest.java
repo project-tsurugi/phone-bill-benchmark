@@ -223,11 +223,11 @@ class CreateTableTest extends AbstractJdbcTestCase {
 	@Test
 	void test2() throws Exception {
 		Config config = Config.getConfig(ICEAXE_CONFIG_PATH);
-		config.usePreparedTables = true;
 
 		// テストデータを作成
 		new CreateTestData().execute(config);
 
+		config.usePreparedTables = true;
 		try (IceaxeTestTools tools = new IceaxeTestTools(config)) {
 			assertTrue(tools.getHistoryList().size() > 0);
 
