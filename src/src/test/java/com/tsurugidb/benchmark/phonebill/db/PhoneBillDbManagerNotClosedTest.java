@@ -15,7 +15,7 @@ public class PhoneBillDbManagerNotClosedTest {
 	 */
 	@Test
 	void testNotClosed() throws IOException {
-		PhoneBillDbManager.reportNotCloaded();
+		PhoneBillDbManager.reportNotClosed();
 		assertEquals(0, PhoneBillDbManager.getNotClosed().size());
 
 		// 複数のManagerがクローズされていないケース
@@ -23,18 +23,18 @@ public class PhoneBillDbManagerNotClosedTest {
 		PhoneBillDbManager m1 = PhoneBillDbManager.createPhoneBillDbManager(config);
 		PhoneBillDbManager m2 = PhoneBillDbManager.createPhoneBillDbManager(config);
 
-		PhoneBillDbManager.reportNotCloaded();
+		PhoneBillDbManager.reportNotClosed();
 		assertEquals(2, PhoneBillDbManager.getNotClosed().size());
 		assertTrue(PhoneBillDbManager.getNotClosed().contains(m1));
 		assertTrue(PhoneBillDbManager.getNotClosed().contains(m2));
 
 		m1.close();
-		PhoneBillDbManager.reportNotCloaded();
+		PhoneBillDbManager.reportNotClosed();
 		assertEquals(1, PhoneBillDbManager.getNotClosed().size());
 		assertTrue(PhoneBillDbManager.getNotClosed().contains(m2));
 
 		m2.close();
-		PhoneBillDbManager.reportNotCloaded();
+		PhoneBillDbManager.reportNotClosed();
 		assertEquals(0, PhoneBillDbManager.getNotClosed().size());
 	}
 }

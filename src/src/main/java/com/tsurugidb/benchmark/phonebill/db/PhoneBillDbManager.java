@@ -364,7 +364,11 @@ public abstract class PhoneBillDbManager implements Closeable {
 	 * クローズしていないPhoneBillDbManagerのレポートを出力する。
 	 *
 	 */
-	public static void reportNotCloaded() {
+	public static void reportNotClosed() {
+		if (stackTraceMap.isEmpty()) {
+			LOG.error("No leak has been discovered.");
+			return;
+		}
 		for(String stackTrace: stackTraceMap.values()) {
 			LOG.error("A leak has been discovered, stack trace = {}.", stackTrace);
 		}
