@@ -83,7 +83,7 @@ public abstract class PhoneBillDbManagerJdbc extends PhoneBillDbManager {
 	}
 
 	@Override
-	public void close() {
+	public void doClose() {
 		RuntimeException exception = null;
 		for (Connection c : connectionList) {
 			try {

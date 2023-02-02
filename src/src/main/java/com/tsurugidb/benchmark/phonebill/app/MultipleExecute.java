@@ -59,6 +59,7 @@ public class MultipleExecute extends ExecutableCommand {
 			record.finish(phoneBill.getTryCount(), phoneBill.getAbortCount());
 			record.setNumberOfDiffrence(checkResult(config));
 			writeResult(config);
+			PhoneBillDbManager.reportNotCloaded();
 		}
 	}
 

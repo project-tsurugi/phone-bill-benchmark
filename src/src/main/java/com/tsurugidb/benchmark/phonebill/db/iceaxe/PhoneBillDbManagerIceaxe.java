@@ -187,7 +187,7 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
     }
 
     @Override
-    public void close() {
+    public void doClose() {
         try {
             session.close();
         } catch (IOException e) {

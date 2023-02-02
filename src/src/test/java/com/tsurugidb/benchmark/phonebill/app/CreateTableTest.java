@@ -32,22 +32,23 @@ class CreateTableTest extends AbstractJdbcTestCase {
 	@Test
 	void test() throws SQLException, IOException {
 		Config config = Config.getConfig();
-		PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config);
-		Ddl ddl = manager.getDdl();
+		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
+			Ddl ddl = manager.getDdl();
 
-		ddl.dropTables();
-		// テーブルが存在しないことを確認
-		assertFalse(existsTable("billing"));
-		assertFalse(existsTable("contracts"));
-		assertFalse(existsTable("history"));
+			ddl.dropTables();
+			// テーブルが存在しないことを確認
+			assertFalse(existsTable("billing"));
+			assertFalse(existsTable("contracts"));
+			assertFalse(existsTable("history"));
 
-		// テーブルが作成されることを確認
-		ddl.createBillingTable();
-		assertTrue(existsTable("billing"));
-		ddl.createContractsTable();
-		assertTrue(existsTable("contracts"));
-		ddl.createHistoryTable();
-		assertTrue(existsTable("history"));
+			// テーブルが作成されることを確認
+			ddl.createBillingTable();
+			assertTrue(existsTable("billing"));
+			ddl.createContractsTable();
+			assertTrue(existsTable("contracts"));
+			ddl.createHistoryTable();
+			assertTrue(existsTable("history"));
+		}
 	}
 
 	@Test
@@ -86,9 +87,9 @@ class CreateTableTest extends AbstractJdbcTestCase {
 
 
 	private void testPrepareAndAfterLoadDataSub(Config config) throws Exception {
-		PhoneBillDbManagerJdbc manager = (PhoneBillDbManagerJdbc) PhoneBillDbManager.createPhoneBillDbManager(config,
-				SessionHoldingType.INSTANCE_FIELD);
-		try (Connection conn = manager.getConnection()) {
+		try (PhoneBillDbManagerJdbc manager = (PhoneBillDbManagerJdbc) PhoneBillDbManager
+				.createPhoneBillDbManager(config, SessionHoldingType.INSTANCE_FIELD)) {
+			Connection conn = manager.getConnection();
 			// テーブルを作成
 			CreateTable createTable = new CreateTable();
 			createTable.execute(config);
@@ -105,21 +106,20 @@ class CreateTableTest extends AbstractJdbcTestCase {
 			Set<String> contractsIndexSet = new HashSet<String>();
 			contractsIndexSet.add("contracts_pkey");
 
-
 			// インデックスの存在を確認
-			assertEquals(historyIndexSet, getIndexNameSet(conn,  history));
-			assertEquals(contractsIndexSet, getIndexNameSet(conn,  contracts));
+			assertEquals(historyIndexSet, getIndexNameSet(conn, history));
+			assertEquals(contractsIndexSet, getIndexNameSet(conn, contracts));
 
 			// インデックス削除されたことを確認
 			Ddl ddl = manager.getDdl();
 			ddl.prepareLoadData();
-			assertEquals(Collections.EMPTY_SET, getIndexNameSet(conn,  history));
-			assertEquals(Collections.EMPTY_SET, getIndexNameSet(conn,  contracts));
+			assertEquals(Collections.EMPTY_SET, getIndexNameSet(conn, history));
+			assertEquals(Collections.EMPTY_SET, getIndexNameSet(conn, contracts));
 
 			// インデックスが復活したことを確認
 			ddl.afterLoadData();
-			assertEquals(historyIndexSet, getIndexNameSet(conn,  history));
-			assertEquals(contractsIndexSet, getIndexNameSet(conn,  contracts));
+			assertEquals(historyIndexSet, getIndexNameSet(conn, history));
+			assertEquals(contractsIndexSet, getIndexNameSet(conn, contracts));
 		}
 	}
 
@@ -145,9 +145,9 @@ class CreateTableTest extends AbstractJdbcTestCase {
 	}
 
 	void testDropIndexAndDropPrimaryKeySub(Config config) throws Exception {
-		PhoneBillDbManagerJdbc manager = (PhoneBillDbManagerJdbc) PhoneBillDbManager.createPhoneBillDbManager(config,
-				SessionHoldingType.INSTANCE_FIELD);
-		try (Connection conn = manager.getConnection()) {
+		try (PhoneBillDbManagerJdbc manager = (PhoneBillDbManagerJdbc) PhoneBillDbManager
+				.createPhoneBillDbManager(config, SessionHoldingType.INSTANCE_FIELD)) {
+			Connection conn = manager.getConnection();
 			// テーブルを作成
 			CreateTable createTable = new CreateTable();
 			createTable.execute(config);
@@ -156,18 +156,18 @@ class CreateTableTest extends AbstractJdbcTestCase {
 			String tableName = config.dbmsType == DbmsType.ORACLE_JDBC ? "HISTORY" : "history";
 
 			// インデックスの存在を確認
-			assertTrue(getIndexNameSet(conn,  tableName).contains("idx_df"));
-			assertTrue(getIndexNameSet(conn,  tableName).contains("history_pkey"));
+			assertTrue(getIndexNameSet(conn, tableName).contains("idx_df"));
+			assertTrue(getIndexNameSet(conn, tableName).contains("history_pkey"));
 
 			// インデックス、PK削除
 			ddl.prepareLoadData();
-			assertFalse(getIndexNameSet(conn,  tableName).contains("idx_df"));
-			assertFalse(getIndexNameSet(conn,  tableName).contains("history_pkey"));
+			assertFalse(getIndexNameSet(conn, tableName).contains("idx_df"));
+			assertFalse(getIndexNameSet(conn, tableName).contains("history_pkey"));
 
 			// 2回呼んでもエラーにならない
 			ddl.prepareLoadData();
-			assertFalse(getIndexNameSet(conn,  tableName).contains("idx_df"));
-			assertFalse(getIndexNameSet(conn,  tableName).contains("history_pkey"));
+			assertFalse(getIndexNameSet(conn, tableName).contains("idx_df"));
+			assertFalse(getIndexNameSet(conn, tableName).contains("history_pkey"));
 		}
 	}
 

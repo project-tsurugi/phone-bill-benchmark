@@ -7,6 +7,8 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -56,6 +58,12 @@ public abstract class PhoneBillDbManager implements Closeable {
 	// リトライするExceptionを集計するためのコレクション
 
 	public static final Collection<Exception> retryingExceptions = new ConcurrentLinkedQueue<>();
+
+
+	// クローズ漏れチェック用のマップ
+
+	private static Map<PhoneBillDbManager, String> stackTraceMap = new ConcurrentHashMap<>();
+
 
 
     // DAO取得用のメソッド
@@ -121,7 +129,16 @@ public abstract class PhoneBillDbManager implements Closeable {
      * 管理しているすべてのコネクションをクローズする
      */
     @Override
-    public abstract void close();
+    public final void close() {
+    	doClose();
+    	stackTraceMap.remove(this);
+    }
+
+
+    /**
+     * 派生クラスのクローズ処理
+     */
+    protected abstract void doClose();
 
 
 	/**
@@ -150,7 +167,13 @@ public abstract class PhoneBillDbManager implements Closeable {
 			dbManager = new PhoneBillDbManagerIceaxe(config);
 			break;
 		}
-		LOG.info("using " + dbManager.getClass().getSimpleName());
+		LOG.debug("using " + dbManager.getClass().getSimpleName());
+		// クローズ漏れのレポート用にスタックトレースを記録する
+		StringWriter sw = new StringWriter();
+		try (PrintWriter pw = new PrintWriter(sw)) {
+			new Exception("Stack trace").printStackTrace(pw);
+		}
+		stackTraceMap.put(dbManager, sw.toString());
 		return dbManager;
 	}
 
@@ -325,5 +348,25 @@ public abstract class PhoneBillDbManager implements Closeable {
 	 */
 	public static void addRetringExceptions(Exception e) {
 		retryingExceptions.add(e);
+	}
+
+
+	/**
+	 * クローズしていないPhoneBillDbManagerのコレクションを返す
+	 *
+	 * @return
+	 */
+	public static Set<PhoneBillDbManager> getNotClosed() {
+		return stackTraceMap.keySet();
+	}
+
+	/**
+	 * クローズしていないPhoneBillDbManagerのレポートを出力する。
+	 *
+	 */
+	public static void reportNotCloaded() {
+		for(String stackTrace: stackTraceMap.values()) {
+			LOG.error("A leak has been discovered, stack trace = {}.", stackTrace);
+		}
 	}
 }
