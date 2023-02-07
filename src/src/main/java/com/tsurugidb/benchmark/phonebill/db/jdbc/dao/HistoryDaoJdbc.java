@@ -276,4 +276,15 @@ public class HistoryDaoJdbc implements HistoryDao {
 		}
 		return list;
 	}
+
+	@Override
+	public int delete() {
+		Connection conn = manager.getConnection();
+		String sql = "delete from history";
+		try (PreparedStatement ps = conn.prepareStatement(sql)) {
+			return ps.executeUpdate();
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+	}
 }

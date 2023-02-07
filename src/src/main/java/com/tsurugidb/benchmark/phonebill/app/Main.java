@@ -50,6 +50,7 @@ public class Main {
 				Message.START_EXECUTION, ArgType.HOST_AND_PORT);
 		addCommand("Shutdown", "Terminate all client processes and a server process.", CommandLineClient.class,
 				Message.SHUTDOWN_CLUSTER, ArgType.HOST_AND_PORT);
+		addCommand("Issue", "Reproduce the issue #xxx.", Issue207.class, ArgType.CONFIG);
 	}
 
 	public static void main(String[] args) throws Exception {

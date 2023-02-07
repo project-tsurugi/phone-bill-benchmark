@@ -234,4 +234,12 @@ public class HistoryDaoIceaxe implements HistoryDao {
 		var list = utils.execute(ps);
 		return list.stream().map(r -> r.getCharacter("caller_phone_number")).collect(Collectors.toList());
 	}
+
+
+	@Override
+	public int delete() {
+		String sql = "delete from history";
+		var ps = utils.createPreparedStatement(sql);
+		return utils.executeAndGetCount(ps);
+	}
 }

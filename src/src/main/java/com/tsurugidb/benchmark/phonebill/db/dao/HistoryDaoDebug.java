@@ -88,4 +88,10 @@ public class HistoryDaoDebug implements HistoryDao {
 	public List<String> getAllPhoneNumbers() {
 		return dao.getAllPhoneNumbers();
 	}
+
+
+	@Override
+	public int delete() {
+		return dao.delete();
+	}
 }
