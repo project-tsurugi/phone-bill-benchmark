@@ -83,7 +83,7 @@ public class IceaxeUtils {
 
 	public int executeAndGetCount(TsurugiPreparedStatementUpdate0 ps) {
 		try (ps){
-			return ps.executeAndGetCount(manager.getCurrentTransaction());
+			return manager.getCurrentTransaction().executeAndGetCount(ps);
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		} catch (TsurugiTransactionException e) {
@@ -93,7 +93,7 @@ public class IceaxeUtils {
 
 	public <T> int executeAndGetCount(TsurugiPreparedStatementUpdate1<T> ps, T t) {
 		try (ps){
-			return ps.executeAndGetCount(manager.getCurrentTransaction(), t);
+			return manager.getCurrentTransaction().executeAndGetCount(ps, t);
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		} catch (TsurugiTransactionException e) {
@@ -106,7 +106,7 @@ public class IceaxeUtils {
 		try (ps) {
 			int i = 0;
 			for (T t: c) {
-				ret[i++] = ps.executeAndGetCount(manager.getCurrentTransaction(), t);
+				ret[i++] = manager.getCurrentTransaction().executeAndGetCount(ps, t);
 			}
 			return ret;
 		} catch (IOException e) {

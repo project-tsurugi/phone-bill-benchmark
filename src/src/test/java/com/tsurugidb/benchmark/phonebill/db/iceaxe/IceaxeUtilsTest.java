@@ -9,6 +9,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
@@ -22,6 +23,7 @@ import com.tsurugidb.iceaxe.statement.TgParameterList;
 import com.tsurugidb.iceaxe.statement.TgParameterMapping;
 import com.tsurugidb.iceaxe.statement.TsurugiPreparedStatementQuery0;
 import com.tsurugidb.iceaxe.statement.TsurugiPreparedStatementQuery1;
+import com.tsurugidb.iceaxe.statement.TsurugiPreparedStatementUpdate0;
 import com.tsurugidb.iceaxe.statement.TsurugiPreparedStatementUpdate1;
 import com.tsurugidb.iceaxe.transaction.TsurugiTransaction;
 import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionException;
@@ -39,7 +41,6 @@ class IceaxeUtilsTest {
 	private static final TsurugiTransactionException TSURUGI_TRANSACTION_EXCEPTION = new TsurugiTransactionException(new ServerException() {
 		@Override
 		public DiagnosticCode getDiagnosticCode() {
-			// TODO 自動生成されたメソッド・スタブ
 			return null;
 		}
 	});
@@ -47,7 +48,7 @@ class IceaxeUtilsTest {
 
 
 
-	private static PhoneBillDbManagerIceaxe manager;
+	private static TestManager manager;
 	private static TsurugiSession session;
 	private static IceaxeUtils utils;
 
@@ -64,9 +65,15 @@ class IceaxeUtilsTest {
 		manager.close();
 	}
 
+	@BeforeEach
+	void setUp() {
+		manager.transaction = null;
+	}
+
 	@Test
 	final void testCreatePreparedStatement() {
 		assertThrows(UncheckedIOException.class, () -> utils.createPreparedStatement(null, null));
+		assertThrows(UncheckedIOException.class, () -> utils.createPreparedStatement(null));
 	}
 
 	@Test
@@ -119,45 +126,64 @@ class IceaxeUtilsTest {
 
 	@Test
 	final void testExecuteAndGetCount() throws IOException {
-		TsurugiPreparedStatementUpdate1<History> psThrowIOException = new TsurugiPreparedStatementUpdate1<History>(
-				session, null, null, null) {
+		List<History> list = Collections
+				.singletonList(History.create("1", "2", "C", "2022-01-01 00:00:00.000", 10, null, 0));
+
+		manager.transaction = new TsurugiTransaction(session, null, null) {
 			@Override
-			public int executeAndGetCount(TsurugiTransaction transaction, History h)
-					throws IOException, TsurugiTransactionException {
+		    public <P> int executeAndGetCount(TsurugiPreparedStatementUpdate1<P> ps, P parameter) throws IOException, TsurugiTransactionException {
+				throw IO_EXCEPTION;
+		    }
+
+			@Override
+		    public int executeAndGetCount(TsurugiPreparedStatementUpdate0 ps) throws IOException, TsurugiTransactionException {
 				throw IO_EXCEPTION;
 			}
 		};
+		assertThrows(UncheckedIOException.class,
+				() -> utils.executeAndGetCount((TsurugiPreparedStatementUpdate0) null));
+		assertThrows(UncheckedIOException.class,
+				() -> utils.executeAndGetCount((TsurugiPreparedStatementUpdate1<History>) null, (History) null));
+		assertThrows(UncheckedIOException.class,
+				() -> utils.executeAndGetCount((TsurugiPreparedStatementUpdate1<History>) null, list));
 
-		TsurugiPreparedStatementUpdate1<History> psThrowTsurugiTransactionException = new TsurugiPreparedStatementUpdate1<>(
-				session, null, null, null) {
+		manager.transaction = new TsurugiTransaction(session, null, null) {
 			@Override
-			public int executeAndGetCount(TsurugiTransaction transaction, History h)
+			public <P> int executeAndGetCount(TsurugiPreparedStatementUpdate1<P> ps, P parameter)
 					throws IOException, TsurugiTransactionException {
 				throw TSURUGI_TRANSACTION_EXCEPTION;
 			}
-		};
 
-		assertThrows(UncheckedIOException.class, () -> utils.executeAndGetCount(psThrowIOException, (History) null));
+			@Override
+			public int executeAndGetCount(TsurugiPreparedStatementUpdate0 ps)
+					throws IOException, TsurugiTransactionException {
+				throw TSURUGI_TRANSACTION_EXCEPTION;
+			}
+
+		};
 		assertThrows(TsurugiTransactionRuntimeException.class,
-				() -> utils.executeAndGetCount(psThrowTsurugiTransactionException, (History) null));
-		List<History> list = Collections
-				.singletonList(History.create("1", "2", "C", "2022-01-01 00:00:00.000", 10, null, 0));
-		assertThrows(UncheckedIOException.class, () -> utils.executeAndGetCount(psThrowIOException, list));
+				() -> utils.executeAndGetCount((TsurugiPreparedStatementUpdate0) null));
 		assertThrows(TsurugiTransactionRuntimeException.class,
-				() -> utils.executeAndGetCount(psThrowTsurugiTransactionException, list));
+				() -> utils.executeAndGetCount((TsurugiPreparedStatementUpdate1<History>) null, (History) null));
+		assertThrows(TsurugiTransactionRuntimeException.class,
+				() -> utils.executeAndGetCount((TsurugiPreparedStatementUpdate1<History>) null, list));
 	}
 
 	private static class TestManager extends PhoneBillDbManagerIceaxe {
-		TestSession session;
+		TsurugiTransaction transaction = null;
 
 		public TestManager(Config config) {
 			super(config);
-			session = new TestSession(super.getSession());
 		}
 
 		@Override
 		public TsurugiSession getSession() {
-			return session;
+			return new TestSession(super.getSession());
+		}
+
+		@Override
+		public TsurugiTransaction getCurrentTransaction() {
+			return transaction == null ?  super.getCurrentTransaction() : transaction;
 		}
 	}
 
@@ -171,6 +197,11 @@ class IceaxeUtilsTest {
 	    public <P> TsurugiPreparedStatementUpdate1<P> createPreparedStatement(String sql, TgParameterMapping<P> parameterMapping) throws IOException {
 	        throw new IOException();
 	    }
+
+		@Override
+		public TsurugiPreparedStatementUpdate0 createPreparedStatement(String sql) throws IOException {
+	        throw new IOException();
+		}
 
 		@Override
 	    public <R> TsurugiPreparedStatementQuery0<R> createPreparedQuery(String sql, TgResultMapping<R> resultMapping) throws IOException {

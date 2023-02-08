@@ -118,7 +118,7 @@ public class DdlIceaxe implements Ddl {
 	private void execute(String sql) {
 		TsurugiSession session = manager.getSession();
         try (var ps = session.createPreparedStatement(sql)) {
-            ps.executeAndGetCount(manager.getCurrentTransaction());
+            manager.getCurrentTransaction().executeAndGetCount(ps);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         } catch (TsurugiTransactionException e) {

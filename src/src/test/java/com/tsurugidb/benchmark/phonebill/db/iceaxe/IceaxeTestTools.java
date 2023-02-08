@@ -94,7 +94,7 @@ public class IceaxeTestTools implements Closeable {
 		return (long) execute(() ->{
 			try (var ps = session.createPreparedQuery(sql)) {
 				TsurugiTransaction transaction = manager.getCurrentTransaction();
-				List<TsurugiResultEntity> list = ps.executeAndGetList(transaction);
+				List<TsurugiResultEntity> list = transaction.executeAndGetList(ps);
 				if (list.size() == 1) {
 					return (Long) list.get(0).getInt8("cnt");
 				}
@@ -152,7 +152,7 @@ public class IceaxeTestTools implements Closeable {
 						timeSecs.bind(time_secs),
 						charge.bind(_charge),
 						df.bind(_df));
-				ps.executeAndGetCount(manager.getCurrentTransaction(), param);
+				manager.getCurrentTransaction().executeAndGetCount(ps, param);
 			} catch (IOException e) {
 				throw new UncheckedIOException(e);
 			} catch (TsurugiTransactionException e) {
@@ -205,7 +205,7 @@ public class IceaxeTestTools implements Closeable {
 		execute(() -> {
 			try (var ps = session.createPreparedStatement(sql, param)) {
 				for(Contract c: contracts) {
-					ps.executeAndGetCount(manager.getCurrentTransaction(), c);
+					manager.getCurrentTransaction().executeAndGetCount(ps, c);
 				}
 			} catch (IOException e) {
 				throw new UncheckedIOException(e);
@@ -246,7 +246,7 @@ public class IceaxeTestTools implements Closeable {
 		execute(() -> {
 			try (var ps = session.createPreparedStatement(sql, param)) {
 				for(Billing b: billings) {
-					ps.executeAndGetCount(manager.getCurrentTransaction(), b);
+					manager.getCurrentTransaction().executeAndGetCount(ps, b);
 				}
 			} catch (IOException e) {
 				throw new UncheckedIOException(e);
@@ -400,7 +400,7 @@ public class IceaxeTestTools implements Closeable {
 		execute(() -> {
 			try (var ps = session.createPreparedStatement(sql)) {
 				TsurugiTransaction transaction = manager.getCurrentTransaction();
-				ps.executeAndGetCount(transaction);
+				transaction.executeAndGetCount(ps);
 			} catch (IOException e) {
 				throw new UncheckedIOException(e);
 			} catch (TsurugiTransactionException e) {
