@@ -1,7 +1,10 @@
 package com.tsurugidb.benchmark.phonebill.app;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -32,6 +35,8 @@ import com.tsurugidb.benchmark.phonebill.testdata.CreateTestData;
  *
  */
 public class MultipleExecute extends ExecutableCommand {
+	private static final String ENV_NAME = "DB_INIT_CMD";
+
     private static final Logger LOG = LoggerFactory.getLogger(MultipleExecute.class);
 	private List<Record> records = new ArrayList<>();
 	private Set<History> expectedHistories;
@@ -49,6 +54,9 @@ public class MultipleExecute extends ExecutableCommand {
 			Config config = info.config;
 			LOG.info("Using config {} " + System.lineSeparator() + "--- " + System.lineSeparator() + config
 					+ System.lineSeparator() + "---", info.configPath.toAbsolutePath().toString());
+			if (config.dbmsType == DbmsType.ICEAXE) {
+				dbiInit();
+			}
 			new CreateTable().execute(config);
 			new CreateTestData().execute(config);
 			Record record = new Record(config);
@@ -60,6 +68,38 @@ public class MultipleExecute extends ExecutableCommand {
 			record.setNumberOfDiffrence(checkResult(config));
 			writeResult(config);
 			PhoneBillDbManager.reportNotClosed();
+		}
+	}
+
+
+	/**
+	 * 環境変数"DB_INIT_CMD"が設定されている場合、環境変数で指定されたコマンドを実行する
+	 *
+	 * @throws IOException
+	 * @throws InterruptedException
+	 */
+	private void dbiInit() throws IOException, InterruptedException {
+		LOG.info("Enter to dbInit().");
+		String cmd = System.getenv(ENV_NAME);
+		if (cmd == null || cmd.isEmpty()) {
+			return;
+		}
+		LOG.info("Executing command: {}.", cmd);
+		ProcessBuilder pb = new ProcessBuilder(cmd);
+		pb.redirectError();
+		Process p = pb.start();
+		try (BufferedReader r = new BufferedReader(
+				new InputStreamReader(p.getInputStream(), Charset.defaultCharset()))) {
+			String line;
+			while ((line = r.readLine()) != null) {
+				System.out.println(line);
+			}
+		}
+		int retCode = p.waitFor();
+		String msg = cmd + " was terminated with exit code " + retCode + ".";
+		LOG.info(msg);
+		if (retCode != 0) {
+			throw new RuntimeException(msg);
 		}
 	}
 
