@@ -86,7 +86,7 @@ public class MultipleExecute extends ExecutableCommand {
 		}
 		LOG.info("Executing command: {}.", cmd);
 		ProcessBuilder pb = new ProcessBuilder(cmd);
-		pb.redirectError();
+		pb.redirectErrorStream(true);
 		Process p = pb.start();
 		try (BufferedReader r = new BufferedReader(
 				new InputStreamReader(p.getInputStream(), Charset.defaultCharset()))) {
