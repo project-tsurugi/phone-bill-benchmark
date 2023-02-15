@@ -50,7 +50,7 @@ public class DdlIceaxe implements Ddl {
 					+ "time_secs int not null," 					// 通話時間(秒)
 					+ "charge int," 								// 料金
 					+ "df int not null," 							// 論理削除フラグ
-					+ "primary key (caller_phone_number, start_time)"
+					+ "primary key (caller_phone_number, payment_categorty, start_time)"
 					+ ")";
 			execute(create_table);
 		}
