@@ -20,7 +20,7 @@ public class DdlPostgresql extends DdlJdbc {
 				+ "time_secs integer not null," 					// 通話時間(秒)
 				+ "charge integer," 								// 料金
 				+ "df integer not null" 							// 論理削除フラグ
-				+ ")";
+				+ ") with (fillfactor=80)";
 		execute(create_table);
 	}
 
