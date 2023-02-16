@@ -35,6 +35,20 @@ public class CreateTable extends ExecutableCommand{
 	public void execute(Config config) throws Exception {
 		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
 			Ddl ddl = manager.getDdl();
+			TxOption option = TxOption.ofOCC(Integer.MAX_VALUE, TxLabel.DDL);
+			manager.execute(option, ddl::dropTables);
+			manager.execute(option, ddl::createHistoryTable);
+			manager.execute(option, ddl::createContractsTable);
+			manager.execute(option, ddl::createBillingTable);
+			manager.execute(option, ddl::createIndexes);
+		}
+	}
+
+
+	public void deleteHistories(Config config) throws Exception  {
+		long startTime = System.currentTimeMillis();
+
+		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
 			HistoryDao historyDao = manager.getHistoryDao();
 			if (config.usePreparedTables && config.dbmsType == DbmsType.ICEAXE) {
 				List<String> list = manager.execute(TxOption.ofRTX(Integer.MAX_VALUE, TxLabel.DDL),
@@ -45,14 +59,12 @@ public class CreateTable extends ExecutableCommand{
 					deleteHistories(config, queue);
 				}
 			}
-			TxOption option = TxOption.ofOCC(Integer.MAX_VALUE, TxLabel.DDL);
-			manager.execute(option, ddl::dropTables);
-			manager.execute(option, ddl::createHistoryTable);
-			manager.execute(option, ddl::createContractsTable);
-			manager.execute(option, ddl::createBillingTable);
-			manager.execute(option, ddl::createIndexes);
 		}
+		long elapsedTime = System.currentTimeMillis() - startTime;
+		String format = "%,d records deleted from  history table in %,.3f sec ";
+		LOG.info(String.format(format, config.numberOfHistoryRecords, elapsedTime / 1000d));
 	}
+
 
 	private void deleteHistories(Config config, BlockingQueue<String> queue) throws InterruptedException, ExecutionException {
 		int nThread = config.createTestDataThreadCount;

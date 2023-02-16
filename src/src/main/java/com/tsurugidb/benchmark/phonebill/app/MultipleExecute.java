@@ -22,7 +22,6 @@ import com.tsurugidb.benchmark.phonebill.app.Config.DbmsType;
 import com.tsurugidb.benchmark.phonebill.app.Config.IsolationLevel;
 import com.tsurugidb.benchmark.phonebill.app.Config.TransactionOption;
 import com.tsurugidb.benchmark.phonebill.app.Config.TransactionScope;
-import com.tsurugidb.benchmark.phonebill.app.billing.PhoneBill;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.TxLabel;
 import com.tsurugidb.benchmark.phonebill.db.TxOption;
@@ -59,15 +58,18 @@ public class MultipleExecute extends ExecutableCommand {
 			}
 			new CreateTable().execute(config);
 			new CreateTestData().execute(config);
-			Record record = new Record(config);
-			records.add(record);
-			record.start();
-			PhoneBill phoneBill = new PhoneBill();
-			phoneBill.execute(config);
-			record.finish(phoneBill.getTryCount(), phoneBill.getAbortCount());
-			record.setNumberOfDiffrence(checkResult(config));
-			writeResult(config);
-			PhoneBillDbManager.reportNotClosed();
+			new CreateTable().deleteHistories(config);
+
+
+//			Record record = new Record(config);
+//			records.add(record);
+//			record.start();
+//			PhoneBill phoneBill = new PhoneBill();
+//			phoneBill.execute(config);
+//			record.finish(phoneBill.getTryCount(), phoneBill.getAbortCount());
+//			record.setNumberOfDiffrence(checkResult(config));
+//			writeResult(config);
+//			PhoneBillDbManager.reportNotClosed();
 		}
 	}
 
