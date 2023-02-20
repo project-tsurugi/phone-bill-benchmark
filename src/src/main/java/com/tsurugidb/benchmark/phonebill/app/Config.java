@@ -174,7 +174,7 @@ public class Config implements Cloneable {
 	 * 1分間に追加する1スレッドあたりのマスタのレコード数
 	 */
 	public int masterInsertReccrdsPerMin;
-	private static final String MASTER_INSERT_RECCRDS_PER_MIN = "master.insert.reccrds.per.min";
+	private static final String MASTER_INSERT_RECCRDS_PER_MIN = "master.insert.records.per.min";
 
 	/**
 	 * 1分間に更新する1スレッドあたりの通話履歴レコード数
