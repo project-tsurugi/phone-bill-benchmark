@@ -46,7 +46,7 @@ public class PhoneNumberGenerator {
 	 * @param n
 	 * @return
 	 */
-	String to11DigtString(long n) {
+	public String to11DigtString(long n) {
 		char buf[] = new char[11];
 		int pos = 11;
 		while (n > 0) {
