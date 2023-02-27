@@ -1,5 +1,7 @@
 package com.tsurugidb.benchmark.phonebill.db.iceaxe.dao;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -7,6 +9,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.app.billing.CalculationTarget;
 import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
@@ -25,8 +30,11 @@ import com.tsurugidb.iceaxe.statement.TgParameterList;
 import com.tsurugidb.iceaxe.statement.TgParameterMapping;
 import com.tsurugidb.iceaxe.statement.TgVariableList;
 import com.tsurugidb.iceaxe.statement.TsurugiPreparedStatementUpdate1;
+import com.tsurugidb.tsubakuro.explain.PlanGraphException;
 
 public class HistoryDaoIceaxe implements HistoryDao {
+	private static final Logger LOG = LoggerFactory.getLogger(HistoryDaoIceaxe.class);
+
 	private final IceaxeUtils utils;
 
 	private static final TgEntityResultMapping<History> RESULT_MAPPING =
@@ -223,6 +231,14 @@ public class HistoryDaoIceaxe implements HistoryDao {
 		TgEntityParameterMapping<String> mapping = TgParameterMapping.of(String.class)
 				.add("caller_phone_number", TgDataType.CHARACTER, String::toString);
 		var ps = utils.createPreparedStatement(sql, mapping);
+		try {
+			String str = ps.explain(sql).getLowPlanGraph().toString();
+			LOG.debug("Plan: {}", str);
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
+		} catch (PlanGraphException e) {
+			throw new RuntimeException(e);
+		}
 		return utils.executeAndGetCount(ps, phoneNumber);
 	}
 
