@@ -7,6 +7,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
@@ -26,24 +27,28 @@ public class Issue220 extends ExecutableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(Issue220.class);
 
 
-
 	private static final int[] THREAD_COUNTS = { 1, 4, 16, 64 };
 	private static final TxOption OCC  =  TxOption.ofOCC(1, TxLabel.TEST);
 	private static final TxOption LTX = TxOption.ofLTX(1, TxLabel.TEST, Table.HISTORY);
-	private static final int RECORDS_PER_COMMIT = 1;
 
 	private AtomicLong remaining;
+	private AtomicInteger retryCounter;
+	private static int recordsPerCommit;
 	private List<Record> records = new ArrayList<>();
 
 
 	public static void main(String[] args) throws Exception {
 		Config config = Config.getConfig();
-		config.numberOfHistoryRecords = 6400;
+		config.maxNumberOfLinesHistoryCsv=1;
 		new Issue220().execute(config);
 	}
 
 	@Override
 	public void execute(Config config) throws Exception {
+		recordsPerCommit = config.maxNumberOfLinesHistoryCsv;
+		LOG.info("Number of history records = {}, records per an commit = {}", config.numberOfHistoryRecords,
+				recordsPerCommit);
+
 		// テーブルの作成
 		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
 			Ddl ddl = manager.getDdl();
@@ -54,7 +59,9 @@ public class Issue220 extends ExecutableCommand {
 		}
 
 		// スレッド数、TxOptionを変えて複数回実行する
+		long base = config.numberOfHistoryRecords;
 		for (int threadCount : THREAD_COUNTS) {
+//			config.numberOfHistoryRecords = base * threadCount;
 			execute(config, threadCount, () -> {
 				return new InsertTask(config, OCC, false);
 			}, "Insert, OCC");
@@ -67,16 +74,17 @@ public class Issue220 extends ExecutableCommand {
 			execute(config, threadCount, () -> {
 				return new DeleteTask(config, LTX, false);
 			}, "Delete, LTX");
-			execute(config, threadCount, () -> {
-				return new InsertTask(config, null, true);
-			}, "Insert, NO_DB");
-			execute(config, threadCount, () -> {
-				return new DeleteTask(config, null, true);
-			}, "Delete, NO_DB");
+//			execute(config, threadCount, () -> {
+//				return new InsertTask(config, null, true);
+//			}, "Insert, NO_DB");
+//			execute(config, threadCount, () -> {
+//				return new DeleteTask(config, null, true);
+//			}, "Delete, NO_DB");
 		}
 
 		// レポート出力
-		System.out.println("Type, Option, Threads, Time(sec)");
+		System.out.println("Type, Option, NumberOfRecords, Threads, Time(sec), RetryCount");
+		records.sort((r1, r2) -> r1.description.compareTo(r2.description));
 		for (Record record: records) {
 			record.print();
 		}
@@ -84,10 +92,11 @@ public class Issue220 extends ExecutableCommand {
 
 	public void execute(Config config, int threadCount, Supplier<Runnable> supplier, String description)
 			throws InterruptedException, ExecutionException {
-		Record record = new Record(description + ", T" + threadCount);
+		Record record = new Record(description + ", T" + String.format("%02d", threadCount));
 		record.start();
 		records.add(record);
 		remaining = new AtomicLong(config.numberOfHistoryRecords);
+		retryCounter = new AtomicInteger(0);
 		ExecutorService service = Executors.newFixedThreadPool(threadCount);
 		List<Future<?>> futures = new ArrayList<>(threadCount);
 		for (int i = 0; i < threadCount; i++) {
@@ -98,7 +107,14 @@ public class Issue220 extends ExecutableCommand {
 		for(Future<?> f: futures) {
 			f.get();
 		}
-		record.end();
+		record.end(config.numberOfHistoryRecords);
+		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
+			HistoryDao dao = manager.getHistoryDao();
+			int c = manager.execute(LTX, () -> {
+				return  dao.count();
+			});
+			LOG.info("History table has {} records.", c);
+		}
 	}
 
 
@@ -124,13 +140,13 @@ public class Issue220 extends ExecutableCommand {
 			try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
 				HistoryDao dao  = manager.getHistoryDao();
 				for (;;) {
-					long basePhoneNumber = remaining.getAndAdd(-RECORDS_PER_COMMIT);
+					long basePhoneNumber = remaining.getAndAdd(-recordsPerCommit);
 					if (basePhoneNumber <= 0) {
 						break;
 					}
-					int n = (int) (basePhoneNumber > RECORDS_PER_COMMIT ? RECORDS_PER_COMMIT : basePhoneNumber);
+					int n = (int) (basePhoneNumber > recordsPerCommit ? recordsPerCommit : basePhoneNumber);
 					History h = new History();
-					h.setRecipientPhoneNumber(phoneNumberGenerator.getPhoneNumber(0));
+					h.setRecipientPhoneNumber(phoneNumberGenerator.to11DigtString(0));
 					h.setPaymentCategorty("C");
 					h.setStartTime(LocalDateTime.now());
 					h.setTimeSecs(100);
@@ -138,19 +154,27 @@ public class Issue220 extends ExecutableCommand {
 					h.setDf(0);
 					List<History> list = new ArrayList<History>(n);
 					for (int i = 0; i < n; i++) {
-						h.setCallerPhoneNumber(phoneNumberGenerator.getPhoneNumber(basePhoneNumber - i));
+						h.setCallerPhoneNumber(phoneNumberGenerator.to11DigtString(basePhoneNumber - i));
 						list.add(h.clone());
 					}
 					if (!skipDbAccess) {
-						manager.execute(txOption, () -> {
-							dao.batchInsert(list);
-						});
+						for (;;) {
+							try {
+								manager.execute(txOption, () -> {
+									dao.batchInsert(list);
+								});
+								break;
+							} catch (RuntimeException e) {
+								LOG.debug("Fail to insert", e.getMessage());
+								retryCounter.incrementAndGet();
+							}
+						}
 					}
 					counter += n;
 					LOG.debug("{} records inserted.", counter);
 				}
 			}
-			LOG.debug("End insert task({} records inserted.", counter);
+			LOG.debug("End insert task({} records inserted, retryCounter = {}).", counter, retryCounter.get());
 		}
 	}
 
@@ -175,27 +199,35 @@ public class Issue220 extends ExecutableCommand {
 			try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
 				HistoryDao dao  = manager.getHistoryDao();
 				for (;;) {
-					long basePhoneNumber = remaining.getAndAdd(-RECORDS_PER_COMMIT);
+					long basePhoneNumber = remaining.getAndAdd(-recordsPerCommit);
 					if (basePhoneNumber <= 0) {
 						break;
 					}
-					int n = (int) (basePhoneNumber > RECORDS_PER_COMMIT ? RECORDS_PER_COMMIT : basePhoneNumber);
+					int n = (int) (basePhoneNumber > recordsPerCommit ? recordsPerCommit : basePhoneNumber);
 					List<String> list = new ArrayList<String>(n);
 					for (int i = 0; i < n; i++) {
-						list.add(phoneNumberGenerator.getPhoneNumber(basePhoneNumber - i));
+						list.add(phoneNumberGenerator.to11DigtString(basePhoneNumber - i));
 					}
 					if (!skipDbAccess) {
-						manager.execute(txOption, () -> {
-							for(String phoneNumber: list) {
-								dao.delete(phoneNumber);
+						for (;;) {
+							try {
+								manager.execute(txOption, () -> {
+									for (String phoneNumber : list) {
+										dao.delete(phoneNumber);
+									}
+								});
+								break;
+							} catch (RuntimeException e) {
+								LOG.debug("Fail to delete", e.getMessage());
+								retryCounter.incrementAndGet();
 							}
-						});
+						}
 					}
 					counter += n;
 					LOG.debug("{} records deleteed.", counter);
 				}
 			}
-			LOG.debug("End delete task({} records deleteed.", counter);
+			LOG.debug("End delete task({} records deleteed, retryCounter = {}).", counter, retryCounter.get());
 		}
 	}
 
@@ -203,6 +235,8 @@ public class Issue220 extends ExecutableCommand {
 		private String description;
 		private long start;
 		private long elapsedMillis;
+		private long numberOfRecords;
+		private int retryCount;
 
 		public Record(String description) {
 			this.description = description;
@@ -213,13 +247,15 @@ public class Issue220 extends ExecutableCommand {
 			LOG.info("Start {}.", description);
 		}
 
-		void end() {
+		void end(long n) {
 			elapsedMillis = System.currentTimeMillis() - start;
 			LOG.info("End {}, time = {} sec.", description, elapsedMillis / 1000.0);
+			retryCount = retryCounter.get();
+			numberOfRecords = n;
 		}
 
 		void print() {
-			System.out.println(description + ", " +  elapsedMillis / 1000.0 );
+			System.out.println(description + ", " + numberOfRecords + ", " + elapsedMillis / 1000.0  + "," + retryCount);
 		}
 	}
 }
