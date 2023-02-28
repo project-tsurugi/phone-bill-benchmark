@@ -37,4 +37,5 @@ public interface HistoryDao {
 		throw new RuntimeException();
 	}
 
+	int count();
 }

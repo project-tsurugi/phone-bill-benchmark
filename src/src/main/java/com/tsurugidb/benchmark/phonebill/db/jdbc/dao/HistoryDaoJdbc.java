@@ -276,4 +276,20 @@ public class HistoryDaoJdbc implements HistoryDao {
 		}
 		return list;
 	}
+
+	@Override
+	public int count() {
+		Connection conn = manager.getConnection();
+		try (Statement stmt = conn.createStatement();
+				ResultSet rs = stmt.executeQuery("select count(*) from history");) {
+			if (rs.next()) {
+				int c = rs.getInt(1);
+				return c;
+			} else {
+				return 0;
+			}
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+	}
 }
