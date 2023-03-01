@@ -1,8 +1,17 @@
 # データサイズ
 
+## データサイズの測定
+
 現状ではTsurguiにテーブル単位のデータサイズを取得する機能がない。
 データサイズを示す指標として、PostgreSQLに同等のテーブルを作成し、
 同内容のデータを投入したときのテーブルサイズを用いる。
+
+行数とデータサイズの測定に使用するクエリは以下の通り
+
+```
+select count(*) from table_name;
+select pg_size_pretty(pg_total_relation_size('table_name'));
+```
 
 ## CBのデータサイズ
 
@@ -22,3 +31,4 @@
   * small -> small(70M)
   * medium -> medium(700M)
   * large -> large(7G)
+
