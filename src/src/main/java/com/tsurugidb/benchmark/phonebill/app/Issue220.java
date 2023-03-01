@@ -1,5 +1,7 @@
 package com.tsurugidb.benchmark.phonebill.app;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,8 +28,7 @@ import com.tsurugidb.benchmark.phonebill.testdata.PhoneNumberGenerator;
 public class Issue220 extends ExecutableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(Issue220.class);
 
-
-	private static final int[] THREAD_COUNTS = { 1, 4, 16, 64 };
+	private static final int[] THREAD_COUNTS = { 1};
 	private static final TxOption OCC  =  TxOption.ofOCC(1, TxLabel.TEST);
 	private static final TxOption LTX = TxOption.ofLTX(1, TxLabel.TEST, Table.HISTORY);
 
@@ -35,6 +36,7 @@ public class Issue220 extends ExecutableCommand {
 	private AtomicInteger retryCounter;
 	private static int recordsPerCommit;
 	private List<Record> records = new ArrayList<>();
+	private boolean LOGGING_DETAIL_TIME_INFO = true;
 
 
 	public static void main(String[] args) throws Exception {
@@ -139,6 +141,7 @@ public class Issue220 extends ExecutableCommand {
 
 			try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
 				HistoryDao dao  = manager.getHistoryDao();
+				Timer timer = new Timer("INSERT", txOption == LTX ? "LTX" : "OCC");
 				for (;;) {
 					long basePhoneNumber = remaining.getAndAdd(-recordsPerCommit);
 					if (basePhoneNumber <= 0) {
@@ -161,8 +164,13 @@ public class Issue220 extends ExecutableCommand {
 						for (;;) {
 							try {
 								manager.execute(txOption, () -> {
+									timer.setStartTx();
 									dao.batchInsert(list);
+									timer.setStartCommit();
+
 								});
+								timer.setEndCommit();
+								timer.writeLog();
 								break;
 							} catch (RuntimeException e) {
 								LOG.debug("Fail to insert", e.getMessage());
@@ -198,6 +206,7 @@ public class Issue220 extends ExecutableCommand {
 
 			try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
 				HistoryDao dao  = manager.getHistoryDao();
+				Timer timer = new Timer("DELETE", txOption == LTX ? "LTX" : "OCC");
 				for (;;) {
 					long basePhoneNumber = remaining.getAndAdd(-recordsPerCommit);
 					if (basePhoneNumber <= 0) {
@@ -212,10 +221,14 @@ public class Issue220 extends ExecutableCommand {
 						for (;;) {
 							try {
 								manager.execute(txOption, () -> {
+									timer.setStartTx();
 									for (String phoneNumber : list) {
 										dao.delete(phoneNumber);
 									}
+									timer.setStartCommit();
 								});
+								timer.setEndCommit();
+								timer.writeLog();
 								break;
 							} catch (RuntimeException e) {
 								LOG.debug("Fail to delete", e.getMessage());
@@ -256,6 +269,43 @@ public class Issue220 extends ExecutableCommand {
 
 		void print() {
 			System.out.println(description + ", " + numberOfRecords + ", " + elapsedMillis / 1000.0  + "," + retryCount);
+		}
+	}
+
+	private static class Timer {
+		String queryType;
+		String txOption;
+
+		Instant startTx = null;
+		Instant startCommit = null;
+		Instant endCommit = null;
+
+		public void setStartTx() {
+			LOG.debug("setStartTx called");
+			startTx = Instant.now();
+		}
+
+		public Timer(String queryType, String txOption) {
+			this.queryType = queryType;
+			this.txOption = txOption;
+		}
+
+		public void setStartCommit() {
+			LOG.debug("setStartCommit called");
+			startCommit = Instant.now();
+		}
+
+		public void setEndCommit() {
+			LOG.debug("setEndCommit called");
+			endCommit = Instant.now();
+		}
+
+		public void writeLog() {
+			Duration d1 = Duration.between(startTx, startCommit);
+			Duration d2 = Duration.between(startCommit, endCommit);
+			LOG.debug("TIME INFO: {}\t{}\t{}\t{}", queryType, txOption,
+					d1.toSeconds() * 1000 * 1000 + d1.toNanos() / 1000,
+					d2.toSeconds() * 1000 * 1000 + d2.toNanos() / 1000);
 		}
 	}
 }
