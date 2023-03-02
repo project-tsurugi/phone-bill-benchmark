@@ -190,7 +190,7 @@ class IceaxeUtilsTest {
 	private static class TestSession extends TsurugiSession  {
 
 		public TestSession(TsurugiSession session) {
-			super(session.getSessionInfo() , null, null);
+			super(session.getSessionInfo() , null);
 		}
 
 		@Override

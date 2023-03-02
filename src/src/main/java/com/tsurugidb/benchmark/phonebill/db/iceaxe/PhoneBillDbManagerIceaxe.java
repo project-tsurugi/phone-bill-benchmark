@@ -22,7 +22,9 @@ import com.tsurugidb.benchmark.phonebill.db.iceaxe.dao.HistoryDaoIceaxe;
 import com.tsurugidb.iceaxe.TsurugiConnector;
 import com.tsurugidb.iceaxe.session.TgSessionInfo;
 import com.tsurugidb.iceaxe.session.TsurugiSession;
+import com.tsurugidb.iceaxe.transaction.TgCommitType;
 import com.tsurugidb.iceaxe.transaction.TsurugiTransaction;
+import com.tsurugidb.iceaxe.transaction.event.TsurugiTransactionEventListener;
 import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionException;
 import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionRetryOverIOException;
 import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionRuntimeException;
@@ -162,21 +164,35 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
         return transactionThreadLocal.get();
     }
 
-    @Override
-    public void commit(Consumer<TsurugiTransaction> listener) {
-        if (listener != null) {
-            var transaction = getCurrentTransaction();
-            transaction.addCommitListener(listener);
-        }
-    }
-
+	@Override
+	public void commit(Consumer<TsurugiTransaction> listener) {
+		if (listener != null) {
+			var transaction = getCurrentTransaction();
+			transaction.addEventListener(new TsurugiTransactionEventListener() {
+				@Override
+				public void commitEnd(TsurugiTransaction transaction, TgCommitType commitType, Throwable occurred) {
+					if (occurred == null) {
+						listener.accept(transaction);
+					}
+				}
+			});
+		}
+	}
 
     @Override
     public void rollback(Consumer<TsurugiTransaction> listener) {
-        var transaction = getCurrentTransaction();
-        if (listener != null) {
-            transaction.addRollbackListener(listener);
-        }
+		var transaction = getCurrentTransaction();
+		if (listener != null) {
+			transaction.addEventListener(new TsurugiTransactionEventListener() {
+				@Override
+				public void rollbackEnd(TsurugiTransaction transaction, Throwable occurred) {
+					if (occurred == null) {
+						listener.accept(transaction);
+					}
+				}
+			});
+
+		}
         try {
             transaction.rollback();
         } catch (IOException e) {

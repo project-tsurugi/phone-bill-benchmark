@@ -293,7 +293,7 @@ caller.phone.number.distribution=LOGNORMAL
 
 * master.insert.thread.count
   * 契約テーブルを追加するスレッドのスレッド数。 
-* master.insert.reccrds.per.min
+* master.insert.records.per.min
   * 各スレッドが1分h間に何回、契約テーブルにレコードを追加する処理を規定します。
   * -1を指定すると連続で契約テーブルにレコードを追加します。
   * 1回の追加処理で、1レコードを追加します。1レコードの更新処理が1トランザクションになります。

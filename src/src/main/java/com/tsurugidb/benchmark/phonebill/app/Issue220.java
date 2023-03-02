@@ -27,7 +27,7 @@ public class Issue220 extends ExecutableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(Issue220.class);
 
 
-	private static final int[] THREAD_COUNTS = { 1, 4, 16, 64 };
+	private static final int[] THREAD_COUNTS = { 64, 16, 4, 1 };
 	private static final TxOption OCC  =  TxOption.ofOCC(1, TxLabel.TEST);
 	private static final TxOption LTX = TxOption.ofLTX(1, TxLabel.TEST, Table.HISTORY);
 
@@ -59,7 +59,6 @@ public class Issue220 extends ExecutableCommand {
 		}
 
 		// スレッド数、TxOptionを変えて複数回実行する
-		long base = config.numberOfHistoryRecords;
 		for (int threadCount : THREAD_COUNTS) {
 //			config.numberOfHistoryRecords = base * threadCount;
 			execute(config, threadCount, () -> {
@@ -110,7 +109,7 @@ public class Issue220 extends ExecutableCommand {
 			LOG.info("History table has {} records.", c);
 		}
 		// レポート出力
-		System.out.println("Type, Option, NumberOfRecords, Threads, Time(sec), RetryCount");
+		System.out.println("Type, Option,Threads ,NumberOfRecords , Time(sec), RetryCount");
 		records.sort((r1, r2) -> r1.description.compareTo(r2.description));
 		for (Record r: records) {
 			r.print();
