@@ -13,3 +13,6 @@
 [ipc_endpoint]
     database_name=phone-bill
     threads=80
+
+[fdw]
+    name=phone-bill
