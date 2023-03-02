@@ -82,12 +82,6 @@ public class Issue220 extends ExecutableCommand {
 //			}, "Delete, NO_DB");
 		}
 
-		// レポート出力
-		System.out.println("Type, Option, NumberOfRecords, Threads, Time(sec), RetryCount");
-		records.sort((r1, r2) -> r1.description.compareTo(r2.description));
-		for (Record record: records) {
-			record.print();
-		}
 	}
 
 	public void execute(Config config, int threadCount, Supplier<Runnable> supplier, String description)
@@ -114,6 +108,12 @@ public class Issue220 extends ExecutableCommand {
 				return  dao.count();
 			});
 			LOG.info("History table has {} records.", c);
+		}
+		// レポート出力
+		System.out.println("Type, Option, NumberOfRecords, Threads, Time(sec), RetryCount");
+		records.sort((r1, r2) -> r1.description.compareTo(r2.description));
+		for (Record r: records) {
+			r.print();
 		}
 	}
 
