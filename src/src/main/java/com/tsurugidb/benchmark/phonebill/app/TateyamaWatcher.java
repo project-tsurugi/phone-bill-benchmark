@@ -77,7 +77,9 @@ public class TateyamaWatcher implements Runnable  {
 			if(!Files.exists(PROC)) {
 				return -1;
 			}
-			procDirs = Files.list(PROC).filter(p -> p.getFileName().toString().matches("^\\d+$") && Files.isDirectory(p)).collect(Collectors.toList());
+			procDirs = Files.list(PROC).filter(
+					p -> (p.getFileName() == null ? false : p.toString().matches("^\\d+$")) && Files.isDirectory(p))
+					.collect(Collectors.toList());
 		} catch (IOException e) {
 			LOG.warn("IOError", e);
 			return -1;
@@ -91,7 +93,8 @@ public class TateyamaWatcher implements Runnable  {
 					continue;
 				}
 				if (Files.readString(cmdline).contains(SERVER_NAME)) {
-					return Integer.valueOf(dir.getFileName().toString());
+					Path p = dir.getFileName();
+					return p == null ? -1 : Integer.parseInt(p.toString());
 				}
 			} catch (IOException e) {
 				// cmdlineを読み取れない => 他のユーザのプロセス or 存在しないプロセス => 無視する

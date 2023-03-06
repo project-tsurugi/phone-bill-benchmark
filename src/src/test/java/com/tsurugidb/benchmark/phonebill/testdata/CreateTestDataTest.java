@@ -3,6 +3,7 @@ package com.tsurugidb.benchmark.phonebill.testdata;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -64,12 +65,12 @@ class CreateTestDataTest extends AbstractJdbcTestCase {
 		Map<Key, History> actualMap = getHistories().stream()
 				.collect(Collectors.toMap(h -> h.getKey(), Function.identity()));
 
-		for(Key key: expectMap.keySet()) {
-			History expect = expectMap.get(key);
-			History actual = actualMap.get(key);
+		for(Entry<Key, History> entry: expectMap.entrySet()) {
+			History expect = entry.getValue();
+			History actual = actualMap.get(entry.getKey());
 			assertNotNull(expect);
 			System.out.println(expect);
-			assertNotNull(actual, "key = " + key);
+			assertNotNull(actual, "key = " + entry);
 			assertEquals(expect, actual);
 		}
 
