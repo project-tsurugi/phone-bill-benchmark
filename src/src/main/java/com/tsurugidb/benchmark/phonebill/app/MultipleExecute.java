@@ -14,6 +14,9 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,27 +53,40 @@ public class MultipleExecute extends ExecutableCommand {
 
 	@Override
 	public void execute(List<ConfigInfo> configInfos) throws Exception {
-		for (ConfigInfo info : configInfos) {
-			Config config = info.config;
-			LOG.info("Using config {} " + System.lineSeparator() + "--- " + System.lineSeparator() + config
-					+ System.lineSeparator() + "---", info.configPath.toAbsolutePath().toString());
-			if (config.dbmsType == DbmsType.ICEAXE) {
-				dbiInit();
+		ExecutorService service = Executors.newFixedThreadPool(1);
+		try {
+			for (ConfigInfo info : configInfos) {
+				Config config = info.config;
+				LOG.info("Using config {} " + System.lineSeparator() + "--- " + System.lineSeparator() + config
+						+ System.lineSeparator() + "---", info.configPath.toAbsolutePath().toString());
+				TateyamaWatcher task = null;
+				Future<?> future = null;;
+				if (config.dbmsType == DbmsType.ICEAXE) {
+					dbiInit();
+					task = new TateyamaWatcher();
+					future = service.submit(task);
+				}
+				new CreateTable().execute(config);
+				new CreateTestData().execute(config);
+				Record record = new Record(config);
+				records.add(record);
+				record.start();
+				PhoneBill phoneBill = new PhoneBill();
+				phoneBill.execute(config);
+				record.finish(phoneBill.getTryCount(), phoneBill.getAbortCount());
+				record.setNumberOfDiffrence(checkResult(config));
+				if (config.dbmsType == DbmsType.ICEAXE) {
+					task.stop();
+					future.get();
+					record.setMemInfo(task.getVsz(), task.getRss());
+				}
+				writeResult(config);
+				PhoneBillDbManager.reportNotClosed();
 			}
-			new CreateTable().execute(config);
-			new CreateTestData().execute(config);
-			Record record = new Record(config);
-			records.add(record);
-			record.start();
-			PhoneBill phoneBill = new PhoneBill();
-			phoneBill.execute(config);
-			record.finish(phoneBill.getTryCount(), phoneBill.getAbortCount());
-			record.setNumberOfDiffrence(checkResult(config));
-			writeResult(config);
-			PhoneBillDbManager.reportNotClosed();
+		} finally {
+			service.shutdown();
 		}
 	}
-
 
 	/**
 	 * 環境変数"DB_INIT_CMD"が設定されている場合、環境変数で指定されたコマンドを実行する
@@ -102,6 +118,10 @@ public class MultipleExecute extends ExecutableCommand {
 			throw new RuntimeException(msg);
 		}
 	}
+
+
+
+
 
 	/**
 	 * 結果をCSVに出力する
@@ -183,6 +203,9 @@ public class MultipleExecute extends ExecutableCommand {
 		private int tryCount = 0;
 		private int abortCount = 0;
 		private int numberOfDiffrence = 0;
+		private long vsz = -1;
+		private long rss = -1;
+
 
 		public Record(Config config) {
 			this.option = config.transactionOption;
@@ -207,6 +230,14 @@ public class MultipleExecute extends ExecutableCommand {
 		public void setNumberOfDiffrence(int num) {
 			numberOfDiffrence = num;
 		}
+
+
+		public void setMemInfo(long vsz, long rss) {
+			this.vsz = vsz;
+			this.rss = rss;
+		}
+
+
 
 		private String getParamString() {
 			StringBuilder builder = new StringBuilder();
@@ -239,11 +270,15 @@ public class MultipleExecute extends ExecutableCommand {
 			builder.append(abortCount);
 			builder.append(",");
 			builder.append(numberOfDiffrence);
+			builder.append(",");
+			builder.append(vsz == -1 ? "-" : vsz / 1024 / 1024 / 1024);
+			builder.append(",");
+			builder.append(rss == -1 ? "-" : rss / 1024 / 1024 / 1024);
 			return builder.toString();
 		}
 
 		public static String header() {
-			return "dbmsType, option, scope, threadCount, elapsedSeconds, tryCount, abortCount, diffrence";
+			return "dbmsType, option, scope, threadCount, elapsedSeconds, tryCount, abortCount, diffrence, vsz(GB), rss(GB)";
 		}
 
 	}
