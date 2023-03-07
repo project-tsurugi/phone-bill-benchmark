@@ -32,9 +32,9 @@ public class TateyamaWatcher implements Runnable  {
 
 		int pid = findServerPid();
 		if (pid == -1) {
-			throw new RuntimeException("Cannot found tateyama-server");
+			LOG.error("Unable to locate tateyama-server. Terminating TateyamaWatcher.");
+			return;
 		}
-		LOG.info("Found tateyama-server pid = {}", pid);
 		Path path = PROC.resolve(Integer.toString(pid)).resolve("status");
 
 
@@ -72,29 +72,38 @@ public class TateyamaWatcher implements Runnable  {
 	 * @return サーバのプロセスID、見つからなかったときは -1
 	 */
 	private int findServerPid() {
+		String me = System.getProperty("user.name");
+
 		List<Path> procDirs = null;
 		try {
 			if(!Files.exists(PROC)) {
+				LOG.debug("Directory not found: {}", PROC.toString());
 				return -1;
 			}
-			procDirs = Files.list(PROC).filter(
-					p -> (p.getFileName() == null ? false : p.toString().matches("^\\d+$")) && Files.isDirectory(p))
-					.collect(Collectors.toList());
+			procDirs = Files.list(PROC).filter(p -> Files.isDirectory(p)).collect(Collectors.toList());
+			LOG.debug("{} directories found in {}", procDirs.size(), PROC.toString());
 		} catch (IOException e) {
 			LOG.warn("IOError", e);
 			return -1;
 		}
 		for (Path dir: procDirs) {
 			Path cmdline = dir.resolve("cmdline");
+			LOG.trace("Checking direcory: {}", dir.toAbsolutePath().toString());
 			try {
-				UserPrincipal owner = Files.getOwner(cmdline);
-				if (!owner.getName().equals(System.getProperty("user.name"))) {
-					// オーナが他のユーザのプロセスは無視する
+				if (!Files.readString(cmdline).contains(SERVER_NAME)) {
 					continue;
 				}
-				if (Files.readString(cmdline).contains(SERVER_NAME)) {
-					Path p = dir.getFileName();
-					return p == null ? -1 : Integer.parseInt(p.toString());
+				Path p = dir.getFileName();
+				int pid =  p == null ? -1 : Integer.parseInt(p.toString());
+				if (pid == -1) {
+					continue;
+				}
+				UserPrincipal owner = Files.getOwner(cmdline);
+				if (!owner.getName().equals(me)) {
+					LOG.info("Found tateyama-server pid = {}, bad owner is not {}", pid, me);
+				} else {
+					LOG.info("Found tateyama-server pid = {}", pid);
+					return pid;
 				}
 			} catch (IOException e) {
 				// cmdlineを読み取れない => 他のユーザのプロセス or 存在しないプロセス => 無視する
