@@ -49,6 +49,7 @@ public class Issue220 extends ExecutableCommand {
 		LOG.info("Number of history records = {}, records per an commit = {}", config.numberOfHistoryRecords,
 				recordsPerCommit);
 
+
 		// テーブルの作成
 		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
 			Ddl ddl = manager.getDdl();
@@ -58,9 +59,10 @@ public class Issue220 extends ExecutableCommand {
 			});
 		}
 
+
+
 		// スレッド数、TxOptionを変えて複数回実行する
 		for (int threadCount : THREAD_COUNTS) {
-//			config.numberOfHistoryRecords = base * threadCount;
 			execute(config, threadCount, () -> {
 				return new InsertTask(config, OCC, false);
 			}, "Insert, OCC");
@@ -73,18 +75,15 @@ public class Issue220 extends ExecutableCommand {
 			execute(config, threadCount, () -> {
 				return new DeleteTask(config, LTX, false);
 			}, "Delete, LTX");
-//			execute(config, threadCount, () -> {
-//				return new InsertTask(config, null, true);
-//			}, "Insert, NO_DB");
-//			execute(config, threadCount, () -> {
-//				return new DeleteTask(config, null, true);
-//			}, "Delete, NO_DB");
 		}
+
 
 	}
 
 	public void execute(Config config, int threadCount, Supplier<Runnable> supplier, String description)
 			throws InterruptedException, ExecutionException {
+
+
 		Record record = new Record(description + ", T" + String.format("%02d", threadCount));
 		record.start();
 		records.add(record);
@@ -96,11 +95,17 @@ public class Issue220 extends ExecutableCommand {
 			Future<?> f = service.submit(supplier.get());
 			futures.add(f);
 		}
+		TateyamaWatcher tateyamaWatcher = new TateyamaWatcher();
+		Future<?> futureTateyamaWatchter = service.submit(tateyamaWatcher);
+
+
 		service.shutdown();
 		for(Future<?> f: futures) {
 			f.get();
 		}
-		record.end(config.numberOfHistoryRecords);
+		tateyamaWatcher.stop();
+		futureTateyamaWatchter.get();
+		record.end(config.numberOfHistoryRecords, tateyamaWatcher);
 		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
 			HistoryDao dao = manager.getHistoryDao();
 			int c = manager.execute(LTX, () -> {
@@ -109,7 +114,7 @@ public class Issue220 extends ExecutableCommand {
 			LOG.info("History table has {} records.", c);
 		}
 		// レポート出力
-		System.out.println("Type, Option,Threads ,NumberOfRecords , Time(sec), RetryCount");
+		System.out.println("Type, Option,Threads ,NumberOfRecords , Time(sec), RetryCount, VSZ, RSS");
 		records.sort((r1, r2) -> r1.description.compareTo(r2.description));
 		for (Record r: records) {
 			r.print();
@@ -235,6 +240,8 @@ public class Issue220 extends ExecutableCommand {
 		private long start;
 		private long elapsedMillis;
 		private long numberOfRecords;
+		private String vsz;
+		private String rss;
 		private int retryCount;
 
 		public Record(String description) {
@@ -246,15 +253,24 @@ public class Issue220 extends ExecutableCommand {
 			LOG.info("Start {}.", description);
 		}
 
-		void end(long n) {
+		void end(long n, TateyamaWatcher tateyamaWatcher) {
 			elapsedMillis = System.currentTimeMillis() - start;
 			LOG.info("End {}, time = {} sec.", description, elapsedMillis / 1000.0);
 			retryCount = retryCounter.get();
 			numberOfRecords = n;
+			vsz = convertToGB(tateyamaWatcher.getVsz());
+			rss = convertToGB(tateyamaWatcher.getRss());
 		}
 
+
 		void print() {
-			System.out.println(description + ", " + numberOfRecords + ", " + elapsedMillis / 1000.0  + "," + retryCount);
+			System.out.println(description + ", " + numberOfRecords + ", " + elapsedMillis / 1000.0 + "," + retryCount
+					+ ", " + vsz + ", " + rss);
 		}
+	}
+
+	private static String convertToGB(long bytes) {
+	    double gb = (double) bytes / (1024 * 1024 * 1024);
+	    return String.format("%.1fGB", gb);
 	}
 }
