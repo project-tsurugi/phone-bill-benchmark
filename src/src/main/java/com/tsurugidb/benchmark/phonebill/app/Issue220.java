@@ -2,7 +2,6 @@ package com.tsurugidb.benchmark.phonebill.app;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -25,12 +24,12 @@ import com.tsurugidb.benchmark.phonebill.db.dao.Ddl;
 import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
-import com.tsurugidb.benchmark.phonebill.testdata.PhoneNumberGenerator;
+import com.tsurugidb.benchmark.phonebill.testdata.CreateTestData;
 
 public class Issue220 extends ExecutableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(Issue220.class);
 
-	private static boolean LOGGING_DETAIL_TIME_INFO = true;
+	private static boolean LOGGING_DETAIL_TIME_INFO = false;
 	private static final int[] THREAD_COUNTS = { 64, 16 };
 	private static final TxOption OCC  =  TxOption.ofOCC(1, TxLabel.TEST);
 	private static final TxOption LTX = TxOption.ofLTX(1, TxLabel.TEST, Table.HISTORY);
@@ -40,6 +39,7 @@ public class Issue220 extends ExecutableCommand {
 	private static int recordsPerCommit;
 	private List<Record> records = new ArrayList<>();
 	private static String threadLabel = "";
+	private List<History> histories;;
 
 
 	public static void main(String[] args) throws Exception {
@@ -54,6 +54,17 @@ public class Issue220 extends ExecutableCommand {
 		LOG.info("Number of history records = {}, records per an commit = {}", config.numberOfHistoryRecords,
 				recordsPerCommit);
 
+		// テストデータを作成
+		Config newConfig = config.clone();
+		newConfig.maxNumberOfLinesHistoryCsv = 10000;
+		new CreateTestData().execute(newConfig);
+		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
+			HistoryDao dao = manager.getHistoryDao();
+			histories = manager.execute(OCC, () -> {
+				return dao.getHistories();
+			});
+		}
+
 
 		// テーブルの作成
 		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
@@ -65,18 +76,16 @@ public class Issue220 extends ExecutableCommand {
 			});
 		}
 
-
-
 		// スレッド数、TxOptionを変えて複数回実行する
 		for (int i = 0; i < 1; i++) {
 			for (int threadCount : THREAD_COUNTS) {
 				threadLabel = String.format("T%02d", threadCount);
-			execute(config, threadCount, () -> {
-				return new InsertTask(config, OCC, false);
-			}, "Insert, OCC");
-			execute(config, threadCount, () -> {
-				return new DeleteTask(config, OCC, false);
-			}, "Delete, OCC");
+				execute(config, threadCount, () -> {
+					return new InsertTask(config, OCC, false);
+				}, "Insert, OCC");
+				execute(config, threadCount, () -> {
+					return new DeleteTask(config, OCC, false);
+				}, "Delete, OCC");
 				execute(config, threadCount, () -> {
 					return new InsertTask(config, LTX, false);
 				}, "Insert, LTX");
@@ -137,14 +146,12 @@ public class Issue220 extends ExecutableCommand {
 
 
 	private class InsertTask implements Runnable {
-		private Config config;
 		private TxOption txOption;
 		private boolean skipDbAccess;
 		private PhoneBillDbManager manager;
 
 
 		public InsertTask(Config config, TxOption txOption, boolean skipDbAccess) {
-			this.config = config;
 			this.txOption = txOption;
 			this.skipDbAccess = skipDbAccess;
 			manager = PhoneBillDbManager.createPhoneBillDbManager(config);
@@ -161,8 +168,6 @@ public class Issue220 extends ExecutableCommand {
 			long counter = 0;
 			LOG.debug("Start insert task");
 
-			PhoneNumberGenerator phoneNumberGenerator = new PhoneNumberGenerator(config);
-
 			try  {
 				HistoryDao dao  = manager.getHistoryDao();
 				Timer timer = new Timer("INSERT", txOption == LTX ? "LTX" : "OCC");
@@ -172,16 +177,9 @@ public class Issue220 extends ExecutableCommand {
 						break;
 					}
 					int n = (int) (basePhoneNumber > recordsPerCommit ? recordsPerCommit : basePhoneNumber);
-					History h = new History();
-					h.setRecipientPhoneNumber(phoneNumberGenerator.to11DigtString(0));
-					h.setPaymentCategorty("C");
-					h.setStartTime(LocalDateTime.now());
-					h.setTimeSecs(100);
-					h.setCharge(0);
-					h.setDf(0);
 					List<History> list = new ArrayList<History>(n);
-					for (int i = 0; i < n; i++) {
-						h.setCallerPhoneNumber(phoneNumberGenerator.to11DigtString(basePhoneNumber - i));
+					for (int i = 1; i <= n; i++) {
+						History h = histories.get((int)basePhoneNumber -i);
 						list.add(h.clone());
 					}
 					if (!skipDbAccess) {
@@ -212,13 +210,11 @@ public class Issue220 extends ExecutableCommand {
 	}
 
 	private class DeleteTask implements Runnable {
-		private Config config;
 		private TxOption txOption;
 		private boolean skipDbAccess;
 		private PhoneBillDbManager manager;
 
 		public DeleteTask(Config config, TxOption txOption, boolean skipDbAccess) {
-			this.config = config;
 			this.txOption = txOption;
 			this.skipDbAccess = skipDbAccess;
 			manager = PhoneBillDbManager.createPhoneBillDbManager(config);
@@ -234,8 +230,6 @@ public class Issue220 extends ExecutableCommand {
 			long counter = 0;
 			LOG.debug("Start delete task");
 
-			PhoneNumberGenerator phoneNumberGenerator = new PhoneNumberGenerator(config);
-
 			try  {
 				HistoryDao dao  = manager.getHistoryDao();
 				Timer timer = new Timer("DELETE", txOption == LTX ? "LTX" : "OCC");
@@ -245,17 +239,17 @@ public class Issue220 extends ExecutableCommand {
 						break;
 					}
 					int n = (int) (basePhoneNumber > recordsPerCommit ? recordsPerCommit : basePhoneNumber);
-					List<String> list = new ArrayList<String>(n);
-					for (int i = 0; i < n; i++) {
-						list.add(phoneNumberGenerator.to11DigtString(basePhoneNumber - i));
+					List<History> list = new ArrayList<>(n);
+					for (int i = 1; i <= n; i++) {
+						list.add(histories.get((int)basePhoneNumber - i));
 					}
 					if (!skipDbAccess) {
 						for (;;) {
 							try {
 								manager.execute(txOption, () -> {
 									timer.setStartTx();
-									for (String phoneNumber : list) {
-										dao.delete(phoneNumber);
+									for (History h : list) {
+										dao.delete(h);
 									}
 									timer.setStartCommit();
 								});

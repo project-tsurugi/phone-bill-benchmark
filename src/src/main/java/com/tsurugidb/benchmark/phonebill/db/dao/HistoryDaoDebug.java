@@ -94,4 +94,10 @@ public class HistoryDaoDebug implements HistoryDao {
 	public int count() {
 		return dao.count();
 	}
+
+
+	@Override
+	public int delete(History h) {
+		return dao.delete(h);
+	}
 }

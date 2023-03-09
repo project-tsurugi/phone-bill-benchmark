@@ -260,6 +260,19 @@ public class HistoryDaoJdbc implements HistoryDao {
 	}
 
 	@Override
+	public int delete(History h) {
+		Connection conn = manager.getConnection();
+		String sql = "delete from history where  caller_phone_number = ? and start_time = ?";
+		try (PreparedStatement ps = conn.prepareStatement(sql)) {
+			ps.setString(1, h.getCallerPhoneNumber());
+			ps.setTimestamp(2, h.getStartTime());
+			return ps.executeUpdate();
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@Override
 	public List<String> getAllPhoneNumbers() {
 		Connection conn = manager.getConnection();
 		List<String> list = new ArrayList<>();

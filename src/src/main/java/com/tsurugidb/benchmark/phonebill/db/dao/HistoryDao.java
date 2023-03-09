@@ -30,6 +30,8 @@ public interface HistoryDao {
 
 	int delete(String phoneNumber);
 
+	int delete(History h);
+
 	List<String> getAllPhoneNumbers();
 
 	// RuntimeExceptionを発生させる => UT専用
@@ -38,4 +40,5 @@ public interface HistoryDao {
 	}
 
 	int count();
+
 }

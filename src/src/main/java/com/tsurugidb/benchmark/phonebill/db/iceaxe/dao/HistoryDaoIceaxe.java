@@ -226,6 +226,18 @@ public class HistoryDaoIceaxe implements HistoryDao {
 		return utils.executeAndGetCount(ps, phoneNumber);
 	}
 
+	@Override
+	public int delete(History h) {
+		String sql = "delete from history where caller_phone_number = :caller_phone_number and start_time = :start_time and payment_categorty = :payment_categorty";
+
+		TgEntityParameterMapping<History> mapping = TgParameterMapping.of(History.class)
+				.add("caller_phone_number", TgDataType.CHARACTER, History::getCallerPhoneNumber)
+				.add("payment_categorty", TgDataType.CHARACTER, History::getPaymentCategorty)
+				.add("start_time", TgDataType.DATE_TIME, History::getStartTimeAsLocalDateTime);
+		var ps = utils.createPreparedStatement(sql, mapping);
+		return utils.executeAndGetCount(ps, h);
+	}
+
 
 	@Override
 	public List<String> getAllPhoneNumbers() {

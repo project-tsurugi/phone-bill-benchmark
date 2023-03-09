@@ -385,7 +385,7 @@ class HistoryDaoJdbcTest extends AbstractJdbcTestCase {
 	}
 
 	@Test
-	final void testDelete() {
+	final void testDeleteString() {
 		HistoryDao dao = getManager().getHistoryDao();
 		Set<History> actualSet;
 
@@ -412,6 +412,32 @@ class HistoryDaoJdbcTest extends AbstractJdbcTestCase {
 		// 複数件delete
 		assertEquals(2, dao.delete("002"));
 		set.removeAll(Arrays.asList(h21, h22));
+		actualSet = new HashSet<History>(dao.getHistories());
+		assertEquals(set, actualSet);
+	}
+
+	@Test
+	final void testDeleteHistory() {
+		HistoryDao dao = getManager().getHistoryDao();
+		Set<History> actualSet;
+
+		// テーブルに5レコード追加
+		History h1 = History.create("001", "456", "C", "2022-01-10 15:15:28.312", 5, 2, 0);
+		History h21 = History.create("002", "456", "C", "2022-01-10 15:15:28.313", 5, null, 0);
+		History h22 = History.create("002", "456", "C", "2022-01-10 15:15:28.314", 5, 2, 1);
+		History h3 = History.create("003", "456", "C", "2022-01-05 00:00:00.000", 5, 2, 0);
+		History h4 = History.create("004", "459", "C", "2022-01-10 15:15:28.312", 3, null, 1);
+
+		Set<History> set = new HashSet<>(Arrays.asList(h1, h21, h22,  h3, h4));
+		dao.batchInsert(set);
+
+		// インサートされた値の確認
+		actualSet = new HashSet<History>(dao.getHistories());
+		assertEquals(set, actualSet);
+
+		// 1件delete
+		assertEquals(1, dao.delete(h3));
+		set.remove(h3);
 		actualSet = new HashSet<History>(dao.getHistories());
 		assertEquals(set, actualSet);
 	}
