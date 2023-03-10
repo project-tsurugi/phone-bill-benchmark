@@ -20,10 +20,8 @@ import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.TxLabel;
 import com.tsurugidb.benchmark.phonebill.db.TxOption;
 import com.tsurugidb.benchmark.phonebill.db.TxOption.Table;
-import com.tsurugidb.benchmark.phonebill.db.dao.ContractDao;
 import com.tsurugidb.benchmark.phonebill.db.dao.Ddl;
 import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
-import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
 import com.tsurugidb.benchmark.phonebill.testdata.PhoneNumberGenerator;
 
@@ -61,7 +59,6 @@ public class Issue220 extends ExecutableCommand {
 			manager.execute(TxOption.of(), () -> {
 				ddl.dropTables();
 				ddl.createHistoryTable();
-				ddl.createContractsTable();
 			});
 		}
 
@@ -71,12 +68,12 @@ public class Issue220 extends ExecutableCommand {
 		for (int i = 0; i < 1; i++) {
 			for (int threadCount : THREAD_COUNTS) {
 				threadLabel = String.format("T%02d", threadCount);
-			execute(config, threadCount, () -> {
-				return new InsertTask(config, OCC, false);
-			}, "Insert, OCC");
-			execute(config, threadCount, () -> {
-				return new DeleteTask(config, OCC, false);
-			}, "Delete, OCC");
+//			execute(config, threadCount, () -> {
+//				return new InsertTask(config, OCC, false);
+//			}, "Insert, OCC");
+//			execute(config, threadCount, () -> {
+//				return new DeleteTask(config, OCC, false);
+//			}, "Delete, OCC");
 				execute(config, threadCount, () -> {
 					return new InsertTask(config, LTX, false);
 				}, "Insert, LTX");
@@ -92,18 +89,14 @@ public class Issue220 extends ExecutableCommand {
 
 
 		Record record = new Record(description + ", T" + String.format("%02d", threadCount));
+		record.start();
+		records.add(record);
 		remaining = new AtomicLong(config.numberOfHistoryRecords);
 		retryCounter = new AtomicInteger(0);
 		ExecutorService service = Executors.newFixedThreadPool(threadCount);
 		List<Future<?>> futures = new ArrayList<>(threadCount);
-		List<Runnable> tasks = new ArrayList<>(threadCount);
 		for (int i = 0; i < threadCount; i++) {
-			tasks.add(supplier.get());
-		}
-		record.start();
-		records.add(record);
-		for (int i = 0; i < threadCount; i++) {
-			Future<?> f = service.submit(tasks.get(i));
+			Future<?> f = service.submit(supplier.get());
 			futures.add(f);
 		}
 		TateyamaWatcher tateyamaWatcher = new TateyamaWatcher();
@@ -124,8 +117,6 @@ public class Issue220 extends ExecutableCommand {
 			});
 			LOG.info("History table has {} records.", c);
 		}
-
-		PhoneBillDbManager.reportNotClosed();
 		// レポート出力
 		System.out.println("Type, Option,Threads ,NumberOfRecords , Time(sec), RetryCount, VSZ, RSS");
 		records.sort((r1, r2) -> r1.description.compareTo(r2.description));
@@ -140,20 +131,11 @@ public class Issue220 extends ExecutableCommand {
 		private Config config;
 		private TxOption txOption;
 		private boolean skipDbAccess;
-		private PhoneBillDbManager manager;
-
 
 		public InsertTask(Config config, TxOption txOption, boolean skipDbAccess) {
 			this.config = config;
 			this.txOption = txOption;
 			this.skipDbAccess = skipDbAccess;
-			manager = PhoneBillDbManager.createPhoneBillDbManager(config);
-			ContractDao dao =  manager.getContractDao();
-			manager.execute(OCC, () -> {
-				List<Contract>list = dao.getContracts();
-				LOG.debug("contract has {} records.", list.size());
-			});
-
 		}
 
 		@Override
@@ -163,7 +145,7 @@ public class Issue220 extends ExecutableCommand {
 
 			PhoneNumberGenerator phoneNumberGenerator = new PhoneNumberGenerator(config);
 
-			try  {
+			try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
 				HistoryDao dao  = manager.getHistoryDao();
 				Timer timer = new Timer("INSERT", txOption == LTX ? "LTX" : "OCC");
 				for (;;) {
@@ -204,10 +186,8 @@ public class Issue220 extends ExecutableCommand {
 					counter += n;
 					LOG.debug("{} records inserted.", counter);
 				}
-			} finally {
-				manager.close();
 			}
-//			LOG.debug("End insert task({} records inserted, retryCounter = {}).", counter, retryCounter.get());
+			LOG.debug("End insert task({} records inserted, retryCounter = {}).", counter, retryCounter.get());
 		}
 	}
 
@@ -215,18 +195,11 @@ public class Issue220 extends ExecutableCommand {
 		private Config config;
 		private TxOption txOption;
 		private boolean skipDbAccess;
-		private PhoneBillDbManager manager;
 
 		public DeleteTask(Config config, TxOption txOption, boolean skipDbAccess) {
 			this.config = config;
 			this.txOption = txOption;
 			this.skipDbAccess = skipDbAccess;
-			manager = PhoneBillDbManager.createPhoneBillDbManager(config);
-			ContractDao dao =  manager.getContractDao();
-			manager.execute(OCC, () -> {
-				List<Contract>list = dao.getContracts();
-				LOG.debug("contract has {} records.", list.size());
-			});
 		}
 
 		@Override
@@ -236,7 +209,7 @@ public class Issue220 extends ExecutableCommand {
 
 			PhoneNumberGenerator phoneNumberGenerator = new PhoneNumberGenerator(config);
 
-			try  {
+			try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
 				HistoryDao dao  = manager.getHistoryDao();
 				Timer timer = new Timer("DELETE", txOption == LTX ? "LTX" : "OCC");
 				for (;;) {
@@ -268,10 +241,8 @@ public class Issue220 extends ExecutableCommand {
 						}
 					}
 					counter += n;
-//					LOG.debug("{} records deleteed.", counter);
+					LOG.debug("{} records deleteed.", counter);
 				}
-			} finally {
-				manager.close();
 			}
 			LOG.debug("End delete task({} records deleteed, retryCounter = {}).", counter, retryCounter.get());
 		}
@@ -361,4 +332,5 @@ public class Issue220 extends ExecutableCommand {
 			}
 		}
 	}
+
 }
