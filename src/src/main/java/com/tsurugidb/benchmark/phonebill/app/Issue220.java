@@ -30,7 +30,7 @@ public class Issue220 extends ExecutableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(Issue220.class);
 
 	private static boolean LOGGING_DETAIL_TIME_INFO = false;
-	private static final int[] THREAD_COUNTS = { 64, 16 };
+	private static final int[] THREAD_COUNTS = { 64, 16, 4, 1 };
 	private static final TxOption OCC  =  TxOption.ofOCC(1, TxLabel.TEST);
 	private static final TxOption LTX = TxOption.ofLTX(1, TxLabel.TEST, Table.HISTORY);
 
@@ -103,7 +103,7 @@ public class Issue220 extends ExecutableCommand {
 		Record record = new Record(description + ", T" + String.format("%02d", threadCount));
 		remaining = new AtomicLong(config.numberOfHistoryRecords);
 		retryCounter = new AtomicInteger(0);
-		ExecutorService service = Executors.newFixedThreadPool(threadCount);
+		ExecutorService service = Executors.newFixedThreadPool(threadCount + 1); // +1 はtateyamaWatcherの分
 		List<Future<?>> futures = new ArrayList<>(threadCount);
 		List<Runnable> tasks = new ArrayList<>(threadCount);
 		for (int i = 0; i < threadCount; i++) {
