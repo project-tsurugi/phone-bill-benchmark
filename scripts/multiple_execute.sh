@@ -15,8 +15,12 @@ BIN_DIR=$(cd $(dirname $0); pwd)
 
 sed "s!log_location=.*!log_location=$TSURUGI_LOG_DIR!" $BIN_DIR/etc/phone-bill.ini.template > $BIN_DIR/etc/phone-bill.ini
 
+ext=`date "+%Y%m%d-%H%M%S"`.log
 export DB_INIT_CMD=$BIN_DIR/tinit.sh
-export JAVA_OPTS="$JAVA_OPTS -Dcom.tsurugidb.tsubakuro.jniverify=false -Dlogback.configurationFile=$BIN_DIR/etc/logback.xml -Dlogfile=$LOG_DIR/multiple-exec-`date "+%Y%m%d_%H%M%S"`.log"
+export JAVA_OPTS="$JAVA_OPTS -Dcom.tsurugidb.tsubakuro.jniverify=false \
+ -Dlogback.configurationFile=$BIN_DIR/etc/logback.xml \
+ -Dlog.summary=$LOG_DIR/summary-$ext \
+ -Dlog.detail=$LOG_DIR/detail-$ext"
 
 $INSTALL_DIR/phone-bill/bin/run MultipleExecute "$@"
 
