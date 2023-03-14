@@ -1,6 +1,8 @@
 package com.tsurugidb.benchmark.phonebill.app.billing;
 
 import java.sql.Date;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -80,7 +82,7 @@ public class CalculationTask implements Callable<Exception> {
 		// TODO スレッド終了時にトランザクションが終了してしまうが、すべてのスレッドの処理終了を待って
 		// commit or rollbackするようにしたい。
 		LOG.info("Calculation task started.");
-
+		Timer timer = new Timer(txOption);
 
 		if (config.transactionScope == TransactionScope.CONTRACT) {
 			while (continueLoop()) {
@@ -88,28 +90,25 @@ public class CalculationTask implements Callable<Exception> {
 				if (target == null) {
 					continue;
 				}
+				String phoneNumber = target.getContract().getPhoneNumber();
 				LOG.debug(queue.getStatus());
 				TransactionId tid = new TransactionId();
 				try {
-					AtomicInteger tryInThisTx = new AtomicInteger(0);
-					LOG.debug("Start calculation for  contract: {}.", target.getContract());
 					manager.execute(txOption, () -> {
-						tryInThisTx.incrementAndGet();
 						tryCounter.incrementAndGet();
 						tid.set(manager.getTransactionId());
-						LOG.debug("Transaction started, tid = {}, txOption = {}, key = {}, tryCount = {}", tid, txOption,
-								target.getContract().getPhoneNumber(), tryInThisTx);
+						timer.setStartTx(tid, phoneNumber);
 						calculator.doCalc(target);
+						timer.setStartCommit(phoneNumber);
 					});
-					abortCounter.addAndGet(tryInThisTx.get() - 1);
 					queue.success(target);
-					LOG.debug("Transaction completed, tid = {}, contract = {}.", tid, target.getContract());
+					timer.setEndCommit(phoneNumber);
 					nCalculated++;
 				} catch (RuntimeException e) {
 					abortCounter.incrementAndGet();
 					queue.revert(target);
 					PhoneBillDbManager.addRetringExceptions(e);
-					LOG.debug("Transaction aborted, tid = {}, contract = {}.", tid, target.getContract(), e);
+					timer.setAbort(phoneNumber, e);
 					if (!(e instanceof RetryOverRuntimeException)) {
 						LOG.debug("Calculation task aborted.", e);
 						return e;
@@ -129,8 +128,7 @@ public class CalculationTask implements Callable<Exception> {
 				try {
 					manager.execute(txOption, () -> {
 						tid.set(manager.getTransactionId());
-						LOG.debug("Transaction started, tid = {}, txOption = {}, tryCount = {}", tid, txOption,
-								tryCounter, manager.getTransactionId());
+						timer.setStartTx(tid, "-");
 						tryCounter.incrementAndGet();
 						calculator.doCalc(firstTarget);
 						while (abortRequested.get() == false) {
@@ -144,16 +142,17 @@ public class CalculationTask implements Callable<Exception> {
 							tryCounter.incrementAndGet();
 							calculator.doCalc(target);
 						}
+						timer.setStartCommit("-");
 					});
 					nCalculated += list.size();
-					LOG.debug("Transaction completed, tid = {}, contract = {}.", tid, getPhoneNumbers(list));
+					timer.setEndCommit("-");
 					queue.success(list);
 				} catch (RuntimeException e) {
 					abortCounter.incrementAndGet();
 					PhoneBillDbManager.addRetringExceptions(e);
 					// 処理対象をキューに戻す
 					queue.revert(list);
-					LOG.debug("Transaction aborted, tid = {}, contract = {}.", tid, getPhoneNumbers(list));
+					timer.setAbort("-", e);
 					if (!(e instanceof RetryOverRuntimeException)) {
 						LOG.error("Calculation task aborting by exception.", e);
 						return e;
@@ -264,5 +263,60 @@ public class CalculationTask implements Callable<Exception> {
 	 */
 	TxOption getTxOption() {
 		return txOption;
+	}
+
+	private static class Timer {
+		private TransactionId tid;
+		private TxOption txOption;
+
+		private Instant startTx = null;
+		private Instant startCommit = null;
+		private Instant endTx = null;
+
+		public Timer(TxOption txOption) {
+			this.txOption = txOption;
+		}
+
+		public void setStartTx(TransactionId tid, String phoneNumber) {
+			this.tid = tid;
+			LOG.debug("Transaction starting, tid = {}, txOption = {}, key = {}", tid, txOption, phoneNumber);
+			startTx = Instant.now();
+			startCommit = null;
+			endTx = null;
+		}
+
+		public void setStartCommit(String phoneNumber) {
+			LOG.debug("Transaction committing, tid = {}, txOption = {}, key = {}", tid, txOption, phoneNumber);
+			startCommit = Instant.now();
+		}
+
+		public void setEndCommit(String phoneNumber) {
+			LOG.debug("Transaction completed, tid = {}, txOption = {}, key = {}", tid, txOption, phoneNumber);
+			endTx = Instant.now();
+			Duration d1 = Duration.between(startTx, startCommit);
+			Duration d2 = Duration.between(startCommit, endTx);
+			LOG.debug("TIME INFO: tid = {}, exec time = {}, commit time = {}", tid,
+					d1.toSeconds() * 1000 * 1000 + d1.toNanos() / 1000, // Durationをマイクロ秒で表示
+					d2.toSeconds() * 1000 * 1000 + d2.toNanos() / 1000); // Durationをマイクロ秒で表示
+		}
+
+		public void setAbort(String phoneNumber, RuntimeException e) {
+			LOG.debug("Transaction aborted, tid = {}, txOption = {}, key = {}, exception = {}", tid, txOption, phoneNumber, e.getMessage());
+			endTx = Instant.now();
+			if (startCommit == null) {
+				Duration d1 = Duration.between(startTx, endTx);
+				LOG.debug("TIME INFO: tid = {}, exec to abort time = {}, commit time = {}", tid,
+						d1.toSeconds() * 1000 * 1000 + d1.toNanos() / 1000, // Durationをマイクロ秒で表示
+						"-");
+
+			} else {
+				Duration d1 = Duration.between(startTx, startCommit);
+				Duration d2 = Duration.between(startCommit, endTx);
+				LOG.debug("TIME INFO: tid = {}, exec time = {}, commit to abort time = {}", tid,
+						d1.toSeconds() * 1000 * 1000 + d1.toNanos() / 1000, // Durationをマイクロ秒で表示
+						d2.toSeconds() * 1000 * 1000 + d2.toNanos() / 1000); // Durationをマイクロ秒で表示
+
+			}
+		}
 	}
 }
