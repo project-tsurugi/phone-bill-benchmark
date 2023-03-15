@@ -3,6 +3,9 @@ package com.tsurugidb.benchmark.phonebill.app.billing;
 import java.sql.Date;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -93,16 +96,17 @@ public class CalculationTask implements Callable<Exception> {
 				String phoneNumber = target.getContract().getPhoneNumber();
 				LOG.debug(queue.getStatus());
 				TransactionId tid = new TransactionId();
+				AtomicInteger records = new AtomicInteger(0);
 				try {
 					manager.execute(txOption, () -> {
 						tryCounter.incrementAndGet();
 						tid.set(manager.getTransactionId());
 						timer.setStartTx(tid, phoneNumber);
-						calculator.doCalc(target);
+						records.addAndGet(calculator.doCalc(target));
 						timer.setStartCommit(phoneNumber);
 					});
 					queue.success(target);
-					timer.setEndCommit(phoneNumber);
+					timer.setEndCommit(phoneNumber, records.get());
 					nCalculated++;
 				} catch (RuntimeException e) {
 					abortCounter.incrementAndGet();
@@ -126,6 +130,7 @@ public class CalculationTask implements Callable<Exception> {
 				list.add(firstTarget);
 				TransactionId tid = new TransactionId();
 				try {
+					AtomicInteger recores = new AtomicInteger(0);
 					manager.execute(txOption, () -> {
 						tid.set(manager.getTransactionId());
 						timer.setStartTx(tid, "-");
@@ -140,12 +145,12 @@ public class CalculationTask implements Callable<Exception> {
 							LOG.debug(queue.getStatus());
 							list.add(target);
 							tryCounter.incrementAndGet();
-							calculator.doCalc(target);
+							recores.addAndGet(calculator.doCalc(target));
 						}
 						timer.setStartCommit("-");
 					});
 					nCalculated += list.size();
-					timer.setEndCommit("-");
+					timer.setEndCommit("-", recores.get());
 					queue.success(list);
 				} catch (RuntimeException e) {
 					abortCounter.incrementAndGet();
@@ -216,13 +221,14 @@ public class CalculationTask implements Callable<Exception> {
 		 * 料金計算のメインロジック
 		 *
 		 * @param target
+		 * @return 更新したレコード数
 		 */
-		void doCalc(CalculationTarget target);
+		int doCalc(CalculationTarget target);
 	}
 
 	protected class CalculatorImpl implements Calculator {
 		@Override
-		public void doCalc(CalculationTarget target) {
+		public int doCalc(CalculationTarget target) {
 			LOG.debug("Start calculation for  contract: {}.", target.getContract());
 
 			Contract contract = target.getContract();
@@ -240,6 +246,7 @@ public class CalculationTask implements Callable<Exception> {
 			}
 			historyDao.batchUpdate(histories);
 			updateBilling(contract, billingCalculator, target.getStart());
+			return histories.size() + 1; // +1はupdateBillingの分
 		}
 	}
 
@@ -266,6 +273,8 @@ public class CalculationTask implements Callable<Exception> {
 	}
 
 	private static class Timer {
+		private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm:ss.SSS");
+
 		private TransactionId tid;
 		private TxOption txOption;
 
@@ -290,12 +299,15 @@ public class CalculationTask implements Callable<Exception> {
 			startCommit = Instant.now();
 		}
 
-		public void setEndCommit(String phoneNumber) {
-			LOG.debug("Transaction completed, tid = {}, txOption = {}, key = {}", tid, txOption, phoneNumber);
+		public void setEndCommit(String phoneNumber, int records) {
+			LOG.debug("Transaction completed, tid = {}, txOption = {}, key = {}, update/insert records = {}", tid,
+					txOption, phoneNumber, records);
 			endTx = Instant.now();
 			Duration d1 = Duration.between(startTx, startCommit);
 			Duration d2 = Duration.between(startCommit, endTx);
-			LOG.debug("TIME INFO: tid = {}, exec time = {}, commit time = {}", tid,
+			LOG.debug(
+					"TIME INFO: tx start timestamp = {}, tid = {}, update/insert records = {}, exec time = {}, commit time = {}",
+					TIME_FMT.format(LocalDateTime.ofInstant(startTx, ZoneId.systemDefault())), tid, records,
 					d1.toSeconds() * 1000 * 1000 + d1.toNanos() / 1000, // Durationをマイクロ秒で表示
 					d2.toSeconds() * 1000 * 1000 + d2.toNanos() / 1000); // Durationをマイクロ秒で表示
 		}

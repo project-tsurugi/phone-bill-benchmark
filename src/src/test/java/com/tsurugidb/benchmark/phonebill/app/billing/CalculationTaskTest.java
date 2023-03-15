@@ -438,7 +438,7 @@ class CalculationTaskTest extends AbstractJdbcTestCase {
 		RetryOverRuntimeException retriableException = new RetryOverRuntimeException();
 
 		@Override
-		public void doCalc(CalculationTarget target) {
+		public int doCalc(CalculationTarget target) {
 			callCount++;
 			if (callCount == countThrowsException) {
 				throw runtimeException;
@@ -454,6 +454,7 @@ class CalculationTaskTest extends AbstractJdbcTestCase {
 					throw new RuntimeException(e);
 				}
 			}
+			return 1;
 		}
 	}
 }
