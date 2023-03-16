@@ -32,6 +32,8 @@ public interface HistoryDao {
 
 	List<String> getAllPhoneNumbers();
 
+	long count();
+
 	// RuntimeExceptionを発生させる => UT専用
 	default void throwRuntimeException() {
 		throw new RuntimeException();

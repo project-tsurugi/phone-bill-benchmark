@@ -523,4 +523,23 @@ class HistoryDaoIceaxeTest {
 		}).stream().collect(Collectors.toSet()));
 	}
 
+	@Test
+	final void testCount() {
+		// 履歴が空のとき
+
+		assertEquals(0l, testTools.execute(dao::count));
+
+		// 履歴が複数存在するとき
+		testTools.insertToHistory("Phone-0001", "Phone-0008", "C", "2020-10-31 23:59:59.999", 30, null, 0);
+		testTools.insertToHistory("Phone-0001", "Phone-0008", "C", "2020-11-01 00:00:00.000", 30, null, 0);
+		testTools.insertToHistory("Phone-0001", "Phone-0008", "C", "2021-11-15 12:12:12.000", 90, null, 1);
+		assertEquals(3l, testTools.execute(dao::count));
+
+		testTools.insertToHistory("Phone-0001", "Phone-0008", "C", "2020-11-30 23:59:59.999", 90, null, 0);
+		testTools.insertToHistory("Phone-0001", "Phone-0008", "C", "2020-12-01 00:00:00.000", 30, null, 0);
+		testTools.insertToHistory("Phone-0005", "Phone-0001", "C", "2020-11-10 00:00:00.000", 25, null, 0);
+		testTools.insertToHistory("Phone-0005", "Phone-0008", "R", "2020-11-30 00:00:00.000", 30, null, 0);
+		assertEquals(7l, testTools.execute(dao::count));
+	}
+
 }

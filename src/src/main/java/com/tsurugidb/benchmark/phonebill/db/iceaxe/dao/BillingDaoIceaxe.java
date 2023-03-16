@@ -70,4 +70,10 @@ public class BillingDaoIceaxe implements BillingDao {
 		return utils.execute(ps);
 	}
 
+	@Override
+	public int delete() {
+		String sql = "delete from billing";
+		var ps = utils.createPreparedStatement(sql);
+		return utils.executeAndGetCount(ps);
+	}
 }

@@ -234,4 +234,11 @@ public class HistoryDaoIceaxe implements HistoryDao {
 		var list = utils.execute(ps);
 		return list.stream().map(r -> r.getCharacter("caller_phone_number")).collect(Collectors.toList());
 	}
+
+	@Override
+	public long count() {
+		var ps = utils.createPreparedQuery("select count(*) as cnt from history");
+		List<TsurugiResultEntity> list = utils.execute(ps);
+		return list.get(0).findInt8("cnt").orElse(0L);
+	}
 }

@@ -12,6 +12,7 @@ public interface ContractDao {
 	int[] batchInsert(Collection<Contract> contracts);
 	int insert(Contract contract);
 	int update(Contract contract);
+	long count();
 	List<Contract> getContracts(String phoneNumber);
 	List<Contract> getContracts(Date start, Date end);
 	List<Contract> getContracts();
