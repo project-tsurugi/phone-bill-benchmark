@@ -1,6 +1,5 @@
 package com.tsurugidb.benchmark.phonebill.db.oracle.dao;
 
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -13,12 +12,12 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public class DdlOracle extends DdlJdbc {
 	private Config config;
-	private Connection conn;
+	private PhoneBillDbManagerJdbc manager;
 
 	public DdlOracle(PhoneBillDbManagerJdbc manager, Config config) {
 		super(manager);
-		conn = manager.getConnection();
 		this.config = config;
+		this.manager = manager;
 	}
 
 	@Override
@@ -117,7 +116,7 @@ public class DdlOracle extends DdlJdbc {
 	@Override
 	public boolean tableExists(String tableName) {
 		String sql = "SELECT table_name FROM dba_tables WHERE table_name = ?";
-		try (PreparedStatement ps = conn.prepareStatement(sql)) {
+		try (PreparedStatement ps = manager.getConnection().prepareStatement(sql)) {
 			ps.setString(1, tableName.toUpperCase());
 			try (ResultSet rs = ps.executeQuery()) {
 				return rs.next();
