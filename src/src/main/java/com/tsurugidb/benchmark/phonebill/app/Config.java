@@ -928,5 +928,28 @@ public class Config implements Cloneable {
 		LTX
 	}
 
+	/**
+	 * このConfigがオンラインアプリを含むかを返す
+	 *
+	 * @return
+	 */
+	public boolean hasOnlineApp() {
+		if (masterInsertReccrdsPerMin != 0 && masterInsertThreadCount > 0) {
+			return true;
+		}
+		if (masterUpdateRecordsPerMin != 0 && masterUpdateThreadCount > 0) {
+			return true;
+		}
+
+		if (historyInsertTransactionPerMin != 0 && historyInsertThreadCount > 0) {
+			return true;
+		}
+		if (historyUpdateRecordsPerMin != 0 && historyUpdateThreadCount > 0) {
+			return true;
+		}
+
+		return false;
+	}
+
 
 }

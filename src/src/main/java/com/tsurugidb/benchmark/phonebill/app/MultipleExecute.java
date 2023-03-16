@@ -29,6 +29,7 @@ import com.tsurugidb.benchmark.phonebill.app.billing.PhoneBill;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.TxLabel;
 import com.tsurugidb.benchmark.phonebill.db.TxOption;
+import com.tsurugidb.benchmark.phonebill.db.dao.Ddl;
 import com.tsurugidb.benchmark.phonebill.db.entity.Billing;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
 import com.tsurugidb.benchmark.phonebill.testdata.CreateTestData;
@@ -55,6 +56,7 @@ public class MultipleExecute extends ExecutableCommand {
 	public void execute(List<ConfigInfo> configInfos) throws Exception {
 		ExecutorService service = Executors.newFixedThreadPool(1);
 		try {
+			boolean prevConfigHasOnlineApp = false;
 			for (ConfigInfo info : configInfos) {
 				Config config = info.config;
 				LOG.info("Using config {} " + System.lineSeparator() + "--- " + System.lineSeparator() + config
@@ -66,8 +68,7 @@ public class MultipleExecute extends ExecutableCommand {
 					task = new TateyamaWatcher();
 					future = service.submit(task);
 				}
-				new CreateTable().execute(config);
-				new CreateTestData().execute(config);
+				initTestData(config, prevConfigHasOnlineApp);
 				Record record = new Record(config);
 				records.add(record);
 				record.start();
@@ -81,12 +82,57 @@ public class MultipleExecute extends ExecutableCommand {
 					record.setMemInfo(task.getVsz(), task.getRss());
 				}
 				writeResult(config);
+				prevConfigHasOnlineApp = config.hasOnlineApp();
 				PhoneBillDbManager.reportNotClosed();
 			}
 		} finally {
 			service.shutdown();
 		}
 	}
+
+	/**
+	 * テストデータを初期化する
+	 *
+	 * @param config
+	 * @param prevConfigHasOnlineApp
+	 * @throws Exception
+	 */
+	public void initTestData(Config config, boolean prevConfigHasOnlineApp) throws Exception {
+		if (prevConfigHasOnlineApp || needCreateTestData(config)) {
+			LOG.info("Starting test data generation.");
+			new CreateTable().execute(config);
+			new CreateTestData().execute(config);
+			LOG.info("Test data generation has finished.");
+		} else {
+			LOG.info("Starting test data update.");
+			try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
+				manager.getHistoryDao().updateChargeNull();
+				manager.getBillingDao().delete();
+				LOG.info("Test data update has finished.");
+			}
+		}
+	}
+
+	public boolean needCreateTestData(Config config) {
+		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
+			// テーブルの存在確認
+			Ddl ddl = manager.getDdl();
+			if (!ddl.tableExists("billing") || !ddl.tableExists("contracts") || !ddl.tableExists("history")) {
+				return true;
+			}
+			if (manager.getHistoryDao().count() != config.numberOfHistoryRecords) {
+				return true;
+			}
+			if (manager.getContractDao().count() != config.numberOfContractsRecords) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+
+
+
 
 	/**
 	 * 環境変数"DB_INIT_CMD"が設定されている場合、環境変数で指定されたコマンドを実行する
