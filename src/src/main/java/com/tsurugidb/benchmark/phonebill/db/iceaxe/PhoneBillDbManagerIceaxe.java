@@ -20,7 +20,7 @@ import com.tsurugidb.benchmark.phonebill.db.iceaxe.dao.ContractDaoIceaxe;
 import com.tsurugidb.benchmark.phonebill.db.iceaxe.dao.DdlIceaxe;
 import com.tsurugidb.benchmark.phonebill.db.iceaxe.dao.HistoryDaoIceaxe;
 import com.tsurugidb.iceaxe.TsurugiConnector;
-import com.tsurugidb.iceaxe.session.TgSessionInfo;
+import com.tsurugidb.iceaxe.session.TgSessionOption;
 import com.tsurugidb.iceaxe.session.TsurugiSession;
 import com.tsurugidb.iceaxe.transaction.TgCommitType;
 import com.tsurugidb.iceaxe.transaction.TsurugiTransaction;
@@ -41,10 +41,10 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
 	public PhoneBillDbManagerIceaxe(Config config) {
 		this.config = config;
 		var endpoint = config.url;
-        var connector = TsurugiConnector.createConnector(endpoint);
+        var connector = TsurugiConnector.of(endpoint);
         try {
-            var info = TgSessionInfo.of();
-            this.session = connector.createSession(info);
+            var sessionOption = TgSessionOption.of();
+            this.session = connector.createSession(sessionOption);
             session.setConnectTimeout(30, TimeUnit.SECONDS);
             this.transactionManager = session.createTransactionManager();
         } catch (IOException e) {

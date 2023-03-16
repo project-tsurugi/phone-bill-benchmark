@@ -8,11 +8,11 @@ import com.tsurugidb.benchmark.phonebill.db.dao.BillingDao;
 import com.tsurugidb.benchmark.phonebill.db.entity.Billing;
 import com.tsurugidb.benchmark.phonebill.db.iceaxe.IceaxeUtils;
 import com.tsurugidb.benchmark.phonebill.db.iceaxe.PhoneBillDbManagerIceaxe;
-import com.tsurugidb.iceaxe.result.TgResultMapping;
-import com.tsurugidb.iceaxe.statement.TgDataType;
-import com.tsurugidb.iceaxe.statement.TgParameterList;
-import com.tsurugidb.iceaxe.statement.TgParameterMapping;
-import com.tsurugidb.iceaxe.statement.TgVariableList;
+import com.tsurugidb.iceaxe.sql.TgDataType;
+import com.tsurugidb.iceaxe.sql.parameter.TgBindParameters;
+import com.tsurugidb.iceaxe.sql.parameter.TgBindVariables;
+import com.tsurugidb.iceaxe.sql.parameter.TgParameterMapping;
+import com.tsurugidb.iceaxe.sql.result.TgResultMapping;
 
 public class BillingDaoIceaxe implements BillingDao {
 	private final IceaxeUtils utils;
@@ -37,14 +37,14 @@ public class BillingDaoIceaxe implements BillingDao {
 				+ ":metered_charge, "
 				+ ":billing_amount, "
 				+ ":batch_exec_id)";
-		TgParameterMapping<Billing> param = TgParameterMapping.of(Billing.class)
-				.add("phone_number", TgDataType.CHARACTER, Billing::getPhoneNumber)
+		TgParameterMapping<Billing> parameterMapping = TgParameterMapping.of(Billing.class)
+				.add("phone_number", TgDataType.STRING, Billing::getPhoneNumber)
 				.add("target_month", TgDataType.DATE, Billing::getTargetMonthAsLocalDate)
-				.add("basic_charge", TgDataType.INT4, Billing::getBasicCharge)
-				.add("metered_charge", TgDataType.INT4, Billing::getMeteredCharge)
-				.add("billing_amount", TgDataType.INT4, Billing::getBillingAmount)
-				.add("batch_exec_id", TgDataType.CHARACTER, Billing::getBatchExecId);
-		var ps = utils.createPreparedStatement(sql, param);
+				.add("basic_charge", TgDataType.INT, Billing::getBasicCharge)
+				.add("metered_charge", TgDataType.INT, Billing::getMeteredCharge)
+				.add("billing_amount", TgDataType.INT, Billing::getBillingAmount)
+				.add("batch_exec_id", TgDataType.STRING, Billing::getBatchExecId);
+		var ps = utils.createPreparedStatement(sql, parameterMapping);
 		return utils.executeAndGetCount(ps, billing);
 	}
 
@@ -53,18 +53,18 @@ public class BillingDaoIceaxe implements BillingDao {
 		String sql = "delete from billing where target_month = :target_month";
 		LocalDate localDate = targetMonth.toLocalDate();
 
-		var variable = TgVariableList.of().date("target_month");
-		var ps = utils.createPreparedStatement(sql, TgParameterMapping.of(variable));
-		var param = TgParameterList.of().add("target_month", localDate);
-		return utils.executeAndGetCount(ps, param);
+		var variables = TgBindVariables.of().addDate("target_month");
+		var ps = utils.createPreparedStatement(sql, TgParameterMapping.of(variables));
+		var parameter = TgBindParameters.of().add("target_month", localDate);
+		return utils.executeAndGetCount(ps, parameter);
 	}
 
 	@Override
 	public List<Billing> getBillings() {
-		var resultMapping = TgResultMapping.of(Billing::new).character("phone_number", Billing::setPhoneNumber)
-				.date("target_month", Billing::setTargetMonth).int4("basic_charge", Billing::setBasicCharge)
-				.int4("metered_charge", Billing::setMeteredCharge).int4("billing_amount", Billing::setBillingAmount)
-				.character("batch_exec_id", Billing::setBatchExecId);
+		var resultMapping = TgResultMapping.of(Billing::new).addString("phone_number", Billing::setPhoneNumber)
+				.addDate("target_month", Billing::setTargetMonth).addInt("basic_charge", Billing::setBasicCharge)
+				.addInt("metered_charge", Billing::setMeteredCharge).addInt("billing_amount", Billing::setBillingAmount)
+				.addString("batch_exec_id", Billing::setBatchExecId);
 		String sql = "select phone_number, target_month, basic_charge, metered_charge, billing_amount, batch_exec_id from billing";
 		var ps = utils.createPreparedQuery(sql, resultMapping);
 		return utils.execute(ps);
