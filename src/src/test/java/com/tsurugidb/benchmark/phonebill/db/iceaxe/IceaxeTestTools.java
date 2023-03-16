@@ -77,8 +77,8 @@ public class IceaxeTestTools implements Closeable {
 		try {
 			var opt = session.findTableMetadata(tableName);
 			return opt.isPresent();
-		} catch (IOException e1) {
-			throw new RuntimeException();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
 		}
 	}
 

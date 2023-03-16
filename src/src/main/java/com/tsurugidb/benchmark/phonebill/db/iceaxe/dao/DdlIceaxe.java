@@ -125,4 +125,14 @@ public class DdlIceaxe implements Ddl {
             throw new TsurugiTransactionRuntimeException(e);
         }
 	}
+
+	@Override
+	public boolean tableExists(String tableName) {
+		try {
+			var opt = manager.getSession().findTableMetadata(tableName);
+			return opt.isPresent();
+		} catch (IOException e) {
+            throw new UncheckedIOException(e);
+		}
+	}
 }
