@@ -1,6 +1,6 @@
 package com.tsurugidb.benchmark.phonebill.db.iceaxe;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -13,6 +13,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
+import com.tsurugidb.benchmark.phonebill.db.TxOption;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
 import com.tsurugidb.iceaxe.session.TsurugiSession;
 import com.tsurugidb.iceaxe.sql.TsurugiSqlPreparedQuery;
@@ -86,42 +87,44 @@ class IceaxeUtilsTest {
 
 	@Test
 	final void testExecute() {
-		assertThrows(UncheckedIOException.class,
-				() -> utils.execute(new TsurugiSqlQuery<TsurugiResultEntity>(session, null, null) {
-					@Override
-					public TsurugiQueryResult<TsurugiResultEntity> execute(TsurugiTransaction transaction)
-							throws IOException, TsurugiTransactionException {
-						throw IO_EXCEPTION;
-					}
-				}));
-		assertThrows(TsurugiTransactionRuntimeException.class,
-				() -> utils.execute(new TsurugiSqlQuery<TsurugiResultEntity>(session, null, null) {
-					@Override
-					public TsurugiQueryResult<TsurugiResultEntity> execute(TsurugiTransaction transaction)
-							throws IOException, TsurugiTransactionException {
-						throw TSURUGI_TRANSACTION_EXCEPTION;
-					}
-				}));
+		manager.execute(TxOption.of(), () -> {
+			assertThrows(UncheckedIOException.class,
+					() -> utils.execute(new TsurugiSqlQuery<TsurugiResultEntity>(session, null, null) {
+						@Override
+						public TsurugiQueryResult<TsurugiResultEntity> execute(TsurugiTransaction transaction)
+								throws IOException, TsurugiTransactionException {
+							throw IO_EXCEPTION;
+						}
+					}));
+			assertThrows(TsurugiTransactionRuntimeException.class,
+					() -> utils.execute(new TsurugiSqlQuery<TsurugiResultEntity>(session, null, null) {
+						@Override
+						public TsurugiQueryResult<TsurugiResultEntity> execute(TsurugiTransaction transaction)
+								throws IOException, TsurugiTransactionException {
+							throw TSURUGI_TRANSACTION_EXCEPTION;
+						}
+					}));
 
-		assertThrows(UncheckedIOException.class, () -> utils
-				.execute(new TsurugiSqlPreparedQuery<TgBindParameters, History>(session, null, null, null, null) {
+			assertThrows(UncheckedIOException.class, () -> utils
+					.execute(new TsurugiSqlPreparedQuery<TgBindParameters, History>(session, null, null, null, null) {
 
-					@Override
-					public TsurugiQueryResult<History> execute(TsurugiTransaction transaction, TgBindParameters parameter)
-							throws IOException, TsurugiTransactionException {
-						throw IO_EXCEPTION;
-					}
-				}, null));
+						@Override
+						public TsurugiQueryResult<History> execute(TsurugiTransaction transaction,
+								TgBindParameters parameter) throws IOException, TsurugiTransactionException {
+							throw IO_EXCEPTION;
+						}
+					}, null));
 
-		assertThrows(TsurugiTransactionRuntimeException.class, () -> utils
-				.execute(new TsurugiSqlPreparedQuery<TgBindParameters, History>(session, null, null, null, null) {
+			assertThrows(TsurugiTransactionRuntimeException.class, () -> utils
+					.execute(new TsurugiSqlPreparedQuery<TgBindParameters, History>(session, null, null, null, null) {
 
-					@Override
-					public TsurugiQueryResult<History> execute(TsurugiTransaction transaction, TgBindParameters parameter)
-							throws IOException, TsurugiTransactionException {
-						throw TSURUGI_TRANSACTION_EXCEPTION;
-					}
-				}, null));
+						@Override
+						public TsurugiQueryResult<History> execute(TsurugiTransaction transaction,
+								TgBindParameters parameter) throws IOException, TsurugiTransactionException {
+							throw TSURUGI_TRANSACTION_EXCEPTION;
+						}
+					}, null));
+		});
 	}
 
 	@Test

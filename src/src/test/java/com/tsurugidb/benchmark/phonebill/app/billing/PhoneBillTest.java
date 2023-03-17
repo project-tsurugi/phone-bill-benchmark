@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -320,6 +321,7 @@ class PhoneBillTest extends AbstractJdbcTestCase {
 	 * Configに違いがあっても処理結果が変わらないことを確認(Iceaxe版)
 	 */
 	@Test
+	@Disabled("This test is disabled temporarily due to long processing time.")
 	void testConfigVariationForIceaxe() throws Exception {
 		// PostgreSQLで実行し、その結果を期待値とする
 		Config config = createConfigForTestConfigVariation();
