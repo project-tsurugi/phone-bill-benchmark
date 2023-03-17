@@ -1,6 +1,6 @@
 package com.tsurugidb.benchmark.phonebill.db.iceaxe;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -14,17 +14,17 @@ import org.junit.jupiter.api.Test;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
-import com.tsurugidb.iceaxe.result.TgEntityResultMapping;
-import com.tsurugidb.iceaxe.result.TgResultMapping;
-import com.tsurugidb.iceaxe.result.TsurugiResultEntity;
-import com.tsurugidb.iceaxe.result.TsurugiResultSet;
 import com.tsurugidb.iceaxe.session.TsurugiSession;
-import com.tsurugidb.iceaxe.statement.TgParameterList;
-import com.tsurugidb.iceaxe.statement.TgParameterMapping;
-import com.tsurugidb.iceaxe.statement.TsurugiPreparedStatementQuery0;
-import com.tsurugidb.iceaxe.statement.TsurugiPreparedStatementQuery1;
-import com.tsurugidb.iceaxe.statement.TsurugiPreparedStatementUpdate0;
-import com.tsurugidb.iceaxe.statement.TsurugiPreparedStatementUpdate1;
+import com.tsurugidb.iceaxe.sql.TsurugiSqlPreparedQuery;
+import com.tsurugidb.iceaxe.sql.TsurugiSqlPreparedStatement;
+import com.tsurugidb.iceaxe.sql.TsurugiSqlQuery;
+import com.tsurugidb.iceaxe.sql.TsurugiSqlStatement;
+import com.tsurugidb.iceaxe.sql.parameter.TgBindParameters;
+import com.tsurugidb.iceaxe.sql.parameter.TgParameterMapping;
+import com.tsurugidb.iceaxe.sql.result.TgResultMapping;
+import com.tsurugidb.iceaxe.sql.result.TsurugiQueryResult;
+import com.tsurugidb.iceaxe.sql.result.TsurugiResultEntity;
+import com.tsurugidb.iceaxe.sql.result.mapping.TgEntityResultMapping;
 import com.tsurugidb.iceaxe.transaction.TsurugiTransaction;
 import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionException;
 import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionRuntimeException;
@@ -80,44 +80,44 @@ class IceaxeUtilsTest {
 	final void testCreatePreparedQuery() {
 		assertThrows(UncheckedIOException.class, () -> utils.createPreparedQuery(null));
 		assertThrows(UncheckedIOException.class, () -> utils.createPreparedQuery(null, (TgEntityResultMapping<History>)null));
-		assertThrows(UncheckedIOException.class, () -> utils.createPreparedQuery(null, (TgParameterMapping<TgParameterList>)null));
+		assertThrows(UncheckedIOException.class, () -> utils.createPreparedQuery(null, (TgParameterMapping<TgBindParameters>)null));
 		assertThrows(UncheckedIOException.class, () -> utils.createPreparedQuery(null, null, null));
 	}
 
 	@Test
 	final void testExecute() {
 		assertThrows(UncheckedIOException.class,
-				() -> utils.execute(new TsurugiPreparedStatementQuery0<TsurugiResultEntity>(session, null, null) {
+				() -> utils.execute(new TsurugiSqlQuery<TsurugiResultEntity>(session, null, null) {
 					@Override
-					public TsurugiResultSet<TsurugiResultEntity> execute(TsurugiTransaction transaction)
+					public TsurugiQueryResult<TsurugiResultEntity> execute(TsurugiTransaction transaction)
 							throws IOException, TsurugiTransactionException {
 						throw IO_EXCEPTION;
 					}
 				}));
 		assertThrows(TsurugiTransactionRuntimeException.class,
-				() -> utils.execute(new TsurugiPreparedStatementQuery0<TsurugiResultEntity>(session, null, null) {
+				() -> utils.execute(new TsurugiSqlQuery<TsurugiResultEntity>(session, null, null) {
 					@Override
-					public TsurugiResultSet<TsurugiResultEntity> execute(TsurugiTransaction transaction)
+					public TsurugiQueryResult<TsurugiResultEntity> execute(TsurugiTransaction transaction)
 							throws IOException, TsurugiTransactionException {
 						throw TSURUGI_TRANSACTION_EXCEPTION;
 					}
 				}));
 
 		assertThrows(UncheckedIOException.class, () -> utils
-				.execute(new TsurugiPreparedStatementQuery1<TgParameterList, History>(session, null, null, null, null) {
+				.execute(new TsurugiSqlPreparedQuery<TgBindParameters, History>(session, null, null, null, null) {
 
 					@Override
-					public TsurugiResultSet<History> execute(TsurugiTransaction transaction, TgParameterList parameter)
+					public TsurugiQueryResult<History> execute(TsurugiTransaction transaction, TgBindParameters parameter)
 							throws IOException, TsurugiTransactionException {
 						throw IO_EXCEPTION;
 					}
 				}, null));
 
 		assertThrows(TsurugiTransactionRuntimeException.class, () -> utils
-				.execute(new TsurugiPreparedStatementQuery1<TgParameterList, History>(session, null, null, null, null) {
+				.execute(new TsurugiSqlPreparedQuery<TgBindParameters, History>(session, null, null, null, null) {
 
 					@Override
-					public TsurugiResultSet<History> execute(TsurugiTransaction transaction, TgParameterList parameter)
+					public TsurugiQueryResult<History> execute(TsurugiTransaction transaction, TgBindParameters parameter)
 							throws IOException, TsurugiTransactionException {
 						throw TSURUGI_TRANSACTION_EXCEPTION;
 					}
@@ -131,42 +131,42 @@ class IceaxeUtilsTest {
 
 		manager.transaction = new TsurugiTransaction(session, null, null) {
 			@Override
-		    public <P> int executeAndGetCount(TsurugiPreparedStatementUpdate1<P> ps, P parameter) throws IOException, TsurugiTransactionException {
+		    public <P> int executeAndGetCount(TsurugiSqlPreparedStatement<P> ps, P parameter) throws IOException, TsurugiTransactionException {
 				throw IO_EXCEPTION;
 		    }
 
 			@Override
-		    public int executeAndGetCount(TsurugiPreparedStatementUpdate0 ps) throws IOException, TsurugiTransactionException {
+		    public int executeAndGetCount(TsurugiSqlStatement ps) throws IOException, TsurugiTransactionException {
 				throw IO_EXCEPTION;
 			}
 		};
 		assertThrows(UncheckedIOException.class,
-				() -> utils.executeAndGetCount((TsurugiPreparedStatementUpdate0) null));
+				() -> utils.executeAndGetCount((TsurugiSqlStatement) null));
 		assertThrows(UncheckedIOException.class,
-				() -> utils.executeAndGetCount((TsurugiPreparedStatementUpdate1<History>) null, (History) null));
+				() -> utils.executeAndGetCount((TsurugiSqlPreparedStatement<History>) null, (History) null));
 		assertThrows(UncheckedIOException.class,
-				() -> utils.executeAndGetCount((TsurugiPreparedStatementUpdate1<History>) null, list));
+				() -> utils.executeAndGetCount((TsurugiSqlPreparedStatement<History>) null, list));
 
 		manager.transaction = new TsurugiTransaction(session, null, null) {
 			@Override
-			public <P> int executeAndGetCount(TsurugiPreparedStatementUpdate1<P> ps, P parameter)
+			public <P> int executeAndGetCount(TsurugiSqlPreparedStatement<P> ps, P parameter)
 					throws IOException, TsurugiTransactionException {
 				throw TSURUGI_TRANSACTION_EXCEPTION;
 			}
 
 			@Override
-			public int executeAndGetCount(TsurugiPreparedStatementUpdate0 ps)
+			public int executeAndGetCount(TsurugiSqlStatement ps)
 					throws IOException, TsurugiTransactionException {
 				throw TSURUGI_TRANSACTION_EXCEPTION;
 			}
 
 		};
 		assertThrows(TsurugiTransactionRuntimeException.class,
-				() -> utils.executeAndGetCount((TsurugiPreparedStatementUpdate0) null));
+				() -> utils.executeAndGetCount((TsurugiSqlStatement) null));
 		assertThrows(TsurugiTransactionRuntimeException.class,
-				() -> utils.executeAndGetCount((TsurugiPreparedStatementUpdate1<History>) null, (History) null));
+				() -> utils.executeAndGetCount((TsurugiSqlPreparedStatement<History>) null, (History) null));
 		assertThrows(TsurugiTransactionRuntimeException.class,
-				() -> utils.executeAndGetCount((TsurugiPreparedStatementUpdate1<History>) null, list));
+				() -> utils.executeAndGetCount((TsurugiSqlPreparedStatement<History>) null, list));
 	}
 
 	private static class TestManager extends PhoneBillDbManagerIceaxe {
@@ -190,31 +190,31 @@ class IceaxeUtilsTest {
 	private static class TestSession extends TsurugiSession  {
 
 		public TestSession(TsurugiSession session) {
-			super(session.getSessionInfo() , null);
+			super(null, session.getSessionOption());
 		}
 
 		@Override
-	    public <P> TsurugiPreparedStatementUpdate1<P> createPreparedStatement(String sql, TgParameterMapping<P> parameterMapping) throws IOException {
+	    public <P> TsurugiSqlPreparedStatement<P> createStatement(String sql, TgParameterMapping<P> parameterMapping) throws IOException {
 	        throw new IOException();
 	    }
 
 		@Override
-		public TsurugiPreparedStatementUpdate0 createPreparedStatement(String sql) throws IOException {
+		public TsurugiSqlStatement createStatement(String sql) throws IOException {
 	        throw new IOException();
 		}
 
 		@Override
-	    public <R> TsurugiPreparedStatementQuery0<R> createPreparedQuery(String sql, TgResultMapping<R> resultMapping) throws IOException {
+	    public <R> TsurugiSqlQuery<R> createQuery(String sql, TgResultMapping<R> resultMapping) throws IOException {
 	        throw new IOException();
 	    }
 
 		@Override
-	    public <P> TsurugiPreparedStatementQuery1<P, TsurugiResultEntity> createPreparedQuery(String sql, TgParameterMapping<P> parameterMapping) throws IOException {
+	    public <P> TsurugiSqlPreparedQuery<P, TsurugiResultEntity> createQuery(String sql, TgParameterMapping<P> parameterMapping) throws IOException {
 	        throw new IOException();
 	    }
 
 		@Override
-	    public <P, R> TsurugiPreparedStatementQuery1<P, R> createPreparedQuery(String sql, TgParameterMapping<P> parameterMapping, TgResultMapping<R> resultMapping) throws IOException {
+	    public <P, R> TsurugiSqlPreparedQuery<P, R> createQuery(String sql, TgParameterMapping<P> parameterMapping, TgResultMapping<R> resultMapping) throws IOException {
 	        throw new IOException();
 	    }
 	}

@@ -7,7 +7,6 @@ import java.util.Optional;
 import com.tsurugidb.benchmark.phonebill.db.dao.Ddl;
 import com.tsurugidb.benchmark.phonebill.db.iceaxe.PhoneBillDbManagerIceaxe;
 import com.tsurugidb.iceaxe.metadata.TgTableMetadata;
-import com.tsurugidb.iceaxe.session.TsurugiSession;
 import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionException;
 import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionRuntimeException;
 
@@ -116,9 +115,8 @@ public class DdlIceaxe implements Ddl {
 	}
 
 	private void execute(String sql) {
-		TsurugiSession session = manager.getSession();
-        try (var ps = session.createPreparedStatement(sql)) {
-            manager.getCurrentTransaction().executeAndGetCount(ps);
+        try {
+            manager.getCurrentTransaction().executeDdl(sql);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         } catch (TsurugiTransactionException e) {
