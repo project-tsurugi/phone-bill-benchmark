@@ -19,14 +19,13 @@ import com.tsurugidb.benchmark.phonebill.db.entity.Billing;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
 import com.tsurugidb.benchmark.phonebill.util.DateUtils;
-import com.tsurugidb.iceaxe.result.TgResultMapping;
-import com.tsurugidb.iceaxe.result.TsurugiResultEntity;
 import com.tsurugidb.iceaxe.session.TsurugiSession;
-import com.tsurugidb.iceaxe.statement.TgDataType;
-import com.tsurugidb.iceaxe.statement.TgParameterList;
-import com.tsurugidb.iceaxe.statement.TgParameterMapping;
-import com.tsurugidb.iceaxe.statement.TgVariable;
-import com.tsurugidb.iceaxe.statement.TgVariableList;
+import com.tsurugidb.iceaxe.sql.TgDataType;
+import com.tsurugidb.iceaxe.sql.parameter.TgBindParameters;
+import com.tsurugidb.iceaxe.sql.parameter.TgBindVariable;
+import com.tsurugidb.iceaxe.sql.parameter.TgParameterMapping;
+import com.tsurugidb.iceaxe.sql.result.TgResultMapping;
+import com.tsurugidb.iceaxe.sql.result.TsurugiResultEntity;
 import com.tsurugidb.iceaxe.transaction.TsurugiTransaction;
 import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionException;
 import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionRuntimeException;
@@ -92,11 +91,11 @@ public class IceaxeTestTools implements Closeable {
 	public long countRecords(String tableName) {
 		String sql = "select count(*) as cnt from " + tableName;
 		return (long) execute(() ->{
-			try (var ps = session.createPreparedQuery(sql)) {
+			try (var ps = session.createQuery(sql)) {
 				TsurugiTransaction transaction = manager.getCurrentTransaction();
 				List<TsurugiResultEntity> list = transaction.executeAndGetList(ps);
 				if (list.size() == 1) {
-					return (Long) list.get(0).getInt8("cnt");
+					return list.get(0).getLong("cnt");
 				}
 				assert false;
 			} catch (IOException e) {
@@ -127,15 +126,15 @@ public class IceaxeTestTools implements Closeable {
 
 
 		execute(() -> {
-			var callerPhoneNumber = TgVariable.ofCharacter("caller_phone_number");
-			var recipientPhoneNumber = TgVariable.ofCharacter("recipient_phone_number");
-			var paymentCategorty = TgVariable.ofCharacter("payment_categorty");
-			var startTime = TgVariable.ofDateTime("start_time");
-			var timeSecs = TgVariable.ofInt4("time_secs");
-			var charge = TgVariable.ofInt4("charge");
-			var df = TgVariable.ofInt4("df");
+			var callerPhoneNumber = TgBindVariable.ofString("caller_phone_number");
+			var recipientPhoneNumber = TgBindVariable.ofString("recipient_phone_number");
+			var paymentCategorty = TgBindVariable.ofString("payment_categorty");
+			var startTime = TgBindVariable.ofDateTime("start_time");
+			var timeSecs = TgBindVariable.ofInt("time_secs");
+			var charge = TgBindVariable.ofInt("charge");
+			var df = TgBindVariable.ofInt("df");
 
-			TgVariableList variableList = TgVariableList.of(
+			var parameterMapping = TgParameterMapping.of(
 					callerPhoneNumber,
 					recipientPhoneNumber,
 					paymentCategorty,
@@ -143,8 +142,8 @@ public class IceaxeTestTools implements Closeable {
 					timeSecs,
 					charge,
 					df);
-			try (var ps = session.createPreparedStatement(sql, TgParameterMapping.of(variableList))) {
-				TgParameterList param = TgParameterList.of(
+			try (var ps = session.createStatement(sql, parameterMapping)) {
+				TgBindParameters parameter = TgBindParameters.of(
 						callerPhoneNumber.bind(caller_phone_number),
 						recipientPhoneNumber.bind(recipient_phone_number),
 						paymentCategorty.bind(payment_categorty),
@@ -152,7 +151,7 @@ public class IceaxeTestTools implements Closeable {
 						timeSecs.bind(time_secs),
 						charge.bind(_charge),
 						df.bind(_df));
-				manager.getCurrentTransaction().executeAndGetCount(ps, param);
+				manager.getCurrentTransaction().executeAndGetCount(ps, parameter);
 			} catch (IOException e) {
 				throw new UncheckedIOException(e);
 			} catch (TsurugiTransactionException e) {
@@ -197,13 +196,13 @@ public class IceaxeTestTools implements Closeable {
 	public void insertToContracts(Collection<Contract> contracts) {
 		String sql = "insert into contracts(" + "phone_number," + "start_date," + "end_date," + "charge_rule"
 				+ ") values(:phone_number, :start_date, :end_date, :charge_rule)";
-		TgParameterMapping<Contract> param = TgParameterMapping.of(Contract.class)
-				.add("phone_number", TgDataType.CHARACTER, Contract::getPhoneNumber)
+		var parameterMapping = TgParameterMapping.of(Contract.class)
+				.add("phone_number", TgDataType.STRING, Contract::getPhoneNumber)
 				.add("start_date", TgDataType.DATE, Contract::getStartDateAsLocalDate)
 				.add("end_date", TgDataType.DATE, Contract::getEndDateAsLocalDate)
-				.add("charge_rule", TgDataType.CHARACTER, Contract::getRule);
+				.add("charge_rule", TgDataType.STRING, Contract::getRule);
 		execute(() -> {
-			try (var ps = session.createPreparedStatement(sql, param)) {
+			try (var ps = session.createStatement(sql, parameterMapping)) {
 				for(Contract c: contracts) {
 					manager.getCurrentTransaction().executeAndGetCount(ps, c);
 				}
@@ -235,16 +234,16 @@ public class IceaxeTestTools implements Closeable {
 				+ ":metered_charge, "
 				+ ":billing_amount, "
 				+ ":batch_exec_id)";
-		TgParameterMapping<Billing> param = TgParameterMapping.of(Billing.class)
-				.add("phone_number", TgDataType.CHARACTER, Billing::getPhoneNumber)
+		var parameterMapping = TgParameterMapping.of(Billing.class)
+				.add("phone_number", TgDataType.STRING, Billing::getPhoneNumber)
 				.add("target_month", TgDataType.DATE, Billing::getTargetMonthAsLocalDate)
-				.add("basic_charge", TgDataType.INT4, Billing::getBasicCharge)
-				.add("metered_charge", TgDataType.INT4, Billing::getMeteredCharge)
-				.add("billing_amount", TgDataType.INT4, Billing::getBillingAmount)
-				.add("batch_exec_id", TgDataType.CHARACTER, Billing::getBatchExecId);
+				.add("basic_charge", TgDataType.INT, Billing::getBasicCharge)
+				.add("metered_charge", TgDataType.INT, Billing::getMeteredCharge)
+				.add("billing_amount", TgDataType.INT, Billing::getBillingAmount)
+				.add("batch_exec_id", TgDataType.STRING, Billing::getBatchExecId);
 
 		execute(() -> {
-			try (var ps = session.createPreparedStatement(sql, param)) {
+			try (var ps = session.createStatement(sql, parameterMapping)) {
 				for(Billing b: billings) {
 					manager.getCurrentTransaction().executeAndGetCount(ps, b);
 				}
@@ -284,19 +283,17 @@ public class IceaxeTestTools implements Closeable {
 	public List<History> getHistoryList() {
 		var resultMapping =
 				TgResultMapping.of(History::new)
-				.character("caller_phone_number", History::setCallerPhoneNumber)
-				.character("recipient_phone_number", History::setRecipientPhoneNumber)
-				.character("payment_categorty", History::setPaymentCategorty)
-				.dateTime("start_time", History::setStartTime)
-				.int4("time_secs", History::setTimeSecs)
-				.int4("charge", History::setCharge)
-				.int4("df", History::setDf);
+				.addString("caller_phone_number", History::setCallerPhoneNumber)
+				.addString("recipient_phone_number", History::setRecipientPhoneNumber)
+				.addString("payment_categorty", History::setPaymentCategorty)
+				.addDateTime("start_time", History::setStartTime)
+				.addInt("time_secs", History::setTimeSecs)
+				.addInt("charge", History::setCharge)
+				.addInt("df", History::setDf);
 		return execute(() -> {
 			String sql = "select caller_phone_number, recipient_phone_number, payment_categorty, start_time, time_secs, charge, df from history ";
-			try (var ps = session.createPreparedQuery(sql, resultMapping)) {
-				try (var result = ps.execute(manager.getCurrentTransaction())) {
-					return result.getRecordList();
-				}
+			try (var ps = session.createQuery(sql, resultMapping)) {
+			    return manager.getCurrentTransaction().executeAndGetList(ps);
 			} catch (IOException e) {
 				throw new UncheckedIOException(e);
 			} catch (TsurugiTransactionException e) {
@@ -322,15 +319,15 @@ public class IceaxeTestTools implements Closeable {
 	public List<Billing> getBillingList() {
 		var resultMapping =
 				TgResultMapping.of(Billing::new)
-				.character("phone_number", Billing::setPhoneNumber)
-				.date("target_month", Billing::setTargetMonth)
-				.int4("basic_charge", Billing::setBasicCharge)
-				.int4("metered_charge", Billing::setMeteredCharge)
-				.int4("billing_amount", Billing::setBillingAmount)
-				.character("batch_exec_id", Billing::setBatchExecId);
+				.addString("phone_number", Billing::setPhoneNumber)
+				.addDate("target_month", Billing::setTargetMonth)
+				.addInt("basic_charge", Billing::setBasicCharge)
+				.addInt("metered_charge", Billing::setMeteredCharge)
+				.addInt("billing_amount", Billing::setBillingAmount)
+				.addString("batch_exec_id", Billing::setBatchExecId);
 		return execute(() -> {
 			String sql = "select phone_number, target_month, basic_charge, metered_charge, billing_amount, batch_exec_id from billing";
-			try (var ps = session.createPreparedQuery(sql, resultMapping)) {
+			try (var ps = session.createQuery(sql, resultMapping)) {
 				try (var result = ps.execute(manager.getCurrentTransaction())) {
 					return result.getRecordList();
 				}
@@ -364,15 +361,13 @@ public class IceaxeTestTools implements Closeable {
 
 		var resultMapping =
 				TgResultMapping.of(Contract::new)
-				.character("phone_number", Contract::setPhoneNumber)
-				.date("start_date", Contract::setStartDate)
-				.date("end_date", Contract::setEndDate)
-				.character("charge_rule", Contract::setRule);
+				.addString("phone_number", Contract::setPhoneNumber)
+				.addDate("start_date", Contract::setStartDate)
+				.addDate("end_date", Contract::setEndDate)
+				.addString("charge_rule", Contract::setRule);
 		return execute(() -> {
-			try (var ps = session.createPreparedQuery(sql, resultMapping)) {
-				try (var result = ps.execute(manager.getCurrentTransaction())) {
-					return result.getRecordList();
-				}
+			try (var ps = session.createQuery(sql, resultMapping)) {
+				return manager.getCurrentTransaction().executeAndGetList(ps);
 			} catch (IOException e) {
 				throw new UncheckedIOException(e);
 			} catch (TsurugiTransactionException e) {
@@ -398,7 +393,7 @@ public class IceaxeTestTools implements Closeable {
 	 */
 	public void execute(String sql) {
 		execute(() -> {
-			try (var ps = session.createPreparedStatement(sql)) {
+			try (var ps = session.createStatement(sql)) {
 				TsurugiTransaction transaction = manager.getCurrentTransaction();
 				transaction.executeAndGetCount(ps);
 			} catch (IOException e) {

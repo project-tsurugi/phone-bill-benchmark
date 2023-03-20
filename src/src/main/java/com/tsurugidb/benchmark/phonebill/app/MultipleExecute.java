@@ -29,6 +29,7 @@ import com.tsurugidb.benchmark.phonebill.app.billing.PhoneBill;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.TxLabel;
 import com.tsurugidb.benchmark.phonebill.db.TxOption;
+import com.tsurugidb.benchmark.phonebill.db.TxOption.Table;
 import com.tsurugidb.benchmark.phonebill.db.dao.Ddl;
 import com.tsurugidb.benchmark.phonebill.db.entity.Billing;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
@@ -106,8 +107,10 @@ public class MultipleExecute extends ExecutableCommand {
 		} else {
 			LOG.info("Starting test data update.");
 			try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
-				manager.getHistoryDao().updateChargeNull();
-				manager.getBillingDao().delete();
+				manager.execute(TxOption.ofLTX(0, TxLabel.BATCH_INITIALIZE, Table.BILLING, Table.HISTORY), () -> {
+					manager.getHistoryDao().updateChargeNull();
+					manager.getBillingDao().delete();
+				});
 				LOG.info("Test data update has finished.");
 			}
 		}
@@ -120,10 +123,16 @@ public class MultipleExecute extends ExecutableCommand {
 			if (!ddl.tableExists("billing") || !ddl.tableExists("contracts") || !ddl.tableExists("history")) {
 				return true;
 			}
-			if (manager.getHistoryDao().count() != config.numberOfHistoryRecords) {
+			long countHistory = manager.execute(TxOption.of(), () -> {
+				return manager.getHistoryDao().count();
+			});
+			if (countHistory != config.numberOfHistoryRecords) {
 				return true;
 			}
-			if (manager.getContractDao().count() != config.numberOfContractsRecords) {
+			long countContracts = manager.execute(TxOption.of(), () -> {
+				return manager.getContractDao().count();
+			});
+			if (countContracts != config.numberOfContractsRecords) {
 				return true;
 			}
 		}

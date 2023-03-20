@@ -9,14 +9,14 @@ import com.tsurugidb.benchmark.phonebill.db.dao.ContractDao;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.db.iceaxe.IceaxeUtils;
 import com.tsurugidb.benchmark.phonebill.db.iceaxe.PhoneBillDbManagerIceaxe;
-import com.tsurugidb.iceaxe.result.TgEntityResultMapping;
-import com.tsurugidb.iceaxe.result.TgResultMapping;
-import com.tsurugidb.iceaxe.result.TsurugiResultEntity;
-import com.tsurugidb.iceaxe.statement.TgDataType;
-import com.tsurugidb.iceaxe.statement.TgParameterList;
-import com.tsurugidb.iceaxe.statement.TgParameterMapping;
-import com.tsurugidb.iceaxe.statement.TgVariableList;
-import com.tsurugidb.iceaxe.statement.TsurugiPreparedStatementUpdate1;
+import com.tsurugidb.iceaxe.sql.TgDataType;
+import com.tsurugidb.iceaxe.sql.TsurugiSqlPreparedStatement;
+import com.tsurugidb.iceaxe.sql.parameter.TgBindParameters;
+import com.tsurugidb.iceaxe.sql.parameter.TgBindVariables;
+import com.tsurugidb.iceaxe.sql.parameter.TgParameterMapping;
+import com.tsurugidb.iceaxe.sql.result.TgResultMapping;
+import com.tsurugidb.iceaxe.sql.result.TsurugiResultEntity;
+import com.tsurugidb.iceaxe.sql.result.mapping.TgEntityResultMapping;
 
 public class ContractDaoIceaxe implements ContractDao {
 	// TODO tsurugiがis not nullを使えないため、nullの代わりにLocalDate.MAXを使用している => is not nullサポート後にnullを使用するように変更する
@@ -29,24 +29,24 @@ public class ContractDaoIceaxe implements ContractDao {
 
 	private static final TgEntityResultMapping<Contract> RESULT_MAPPING =
 			TgResultMapping.of(Contract::new)
-			.character("phone_number", Contract::setPhoneNumber)
-			.date("start_date", Contract::setStartDate)
-			.date("end_date", Contract::setEndDate)
-			.character("charge_rule", Contract::setRule);
+			.addString("phone_number", Contract::setPhoneNumber)
+			.addDate("start_date", Contract::setStartDate)
+			.addDate("end_date", Contract::setEndDate)
+			.addString("charge_rule", Contract::setRule);
 
 	private static final TgParameterMapping<Contract> PARAMETER_MAPPING = TgParameterMapping.of(Contract.class)
-			.add("phone_number", TgDataType.CHARACTER, Contract::getPhoneNumber)
+			.add("phone_number", TgDataType.STRING, Contract::getPhoneNumber)
 			.add("start_date", TgDataType.DATE, Contract::getStartDateAsLocalDate)
 			.add("end_date", TgDataType.DATE, Contract::getEndDateAsLocalDate)
-			.add("charge_rule", TgDataType.CHARACTER, Contract::getRule);
+			.add("charge_rule", TgDataType.STRING, Contract::getRule);
 
-	private TsurugiPreparedStatementUpdate1<Contract> createInsertPs() {
+	private TsurugiSqlPreparedStatement<Contract> createInsertPs() {
 		String sql = "insert into contracts(phone_number, start_date, end_date, charge_rule) "
 				+ "values(:phone_number, :start_date, :end_date, :charge_rule)";
 		return utils.createPreparedStatement(sql, PARAMETER_MAPPING);
 	}
 
-	private TsurugiPreparedStatementUpdate1<Contract> createUpdatePs() {
+	private TsurugiSqlPreparedStatement<Contract> createUpdatePs() {
 		String sql = "update contracts set end_date = :end_date, charge_rule = :charge_rule"
 				+ " where phone_number = :phone_number and start_date = :start_date";
 		return utils.createPreparedStatement(sql, PARAMETER_MAPPING);
@@ -72,10 +72,10 @@ public class ContractDaoIceaxe implements ContractDao {
 	@Override
 	public List<Contract> getContracts(String phoneNumber) {
 		String sql = "select start_date, end_date, charge_rule from contracts where phone_number = :phone_number order by start_date";
-		var variable = TgVariableList.of().character("phone_number");
-		var ps = utils.createPreparedQuery(sql, TgParameterMapping.of(variable));
-		var param = TgParameterList.of().add("phone_number", phoneNumber);
-		var list = utils.execute(ps, param);
+		var variables = TgBindVariables.of().addString("phone_number");
+		var ps = utils.createPreparedQuery(sql, TgParameterMapping.of(variables));
+		var parameter = TgBindParameters.of().add("phone_number", phoneNumber);
+		var list = utils.execute(ps, parameter);
 		return list.stream().map(r -> createContract(phoneNumber, r)).collect(Collectors.toList());
 	}
 
@@ -89,7 +89,7 @@ public class ContractDaoIceaxe implements ContractDao {
 		c.setPhoneNumber(phoneNumber);
 		c.setStartDate(r.getDate("start_date"));
 		c.setEndDate(r.getDateOrNull("end_date"));
-		c.setRule(r.getCharacterOrNull("charge_rule"));
+		c.setRule(r.getStringOrNull("charge_rule"));
 		return c;
 	}
 
@@ -102,10 +102,10 @@ public class ContractDaoIceaxe implements ContractDao {
 		String sql = "select phone_number, start_date, end_date, charge_rule"
 				+ " from contracts where start_date <= :start_date and end_date >= :end_date"
 				+ " order by phone_number";
-		var variable = TgVariableList.of().date("start_date").date("end_date");
-		var ps = utils.createPreparedQuery(sql, TgParameterMapping.of(variable), RESULT_MAPPING);
-		var param = TgParameterList.of().add("end_date", start.toLocalDate() ).add("start_date", end.toLocalDate());
-		return utils.execute(ps, param);
+		var variables = TgBindVariables.of().addDate("start_date").addDate("end_date");
+		var ps = utils.createPreparedQuery(sql, TgParameterMapping.of(variables), RESULT_MAPPING);
+		var parameter = TgBindParameters.of().add("end_date", start.toLocalDate() ).add("start_date", end.toLocalDate());
+		return utils.execute(ps, parameter);
 	}
 
 	@Override
@@ -120,12 +120,12 @@ public class ContractDaoIceaxe implements ContractDao {
 		String sql = "select phone_number from contracts order by phone_number";
 		var ps = utils.createPreparedQuery(sql);
 		var list = utils.execute(ps);
-		return list.stream().map(r -> r.getCharacter("phone_number")).collect(Collectors.toList());
+		return list.stream().map(r -> r.getString("phone_number")).collect(Collectors.toList());
 	}
 	@Override
 	public long count() {
 		var ps = utils.createPreparedQuery("select count(*) as cnt from contracts");
 		List<TsurugiResultEntity> list = utils.execute(ps);
-		return list.get(0).findInt8("cnt").orElse(0L);
+		return list.get(0).findLong("cnt").orElse(0L);
 	}
 }

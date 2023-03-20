@@ -9,16 +9,17 @@ import com.tsurugidb.benchmark.phonebill.db.TxOption;
 import com.tsurugidb.benchmark.phonebill.db.dao.Ddl;
 
 class MultipleExecuteTest {
+	private static final String ICEAXE_CONFIG_PATH = "src/test/config/iceaxe.properties";
 
 	@Test
 	final void testNeedCreateTestData() throws Exception {
-		// 次の条件のうち一つでも満たせなければfalse
-		// history, contracts, billingの3テーブルが存在する
-		// テーブルの行数と、configの行数が一致する
+		// デフォルトのDB(PostgreSQLでのテスト
+		testNeedCreateTestDataSub(Config.getConfig());
+		// Iceaxeでのテスト
+		testNeedCreateTestDataSub(Config.getConfig(ICEAXE_CONFIG_PATH));
+	}
 
-
-
-		Config config = Config.getConfig();
+	private void testNeedCreateTestDataSub(Config config) throws Exception {
 		Config testConfig = config.clone();
 		new CreateTable().execute(config);
 
@@ -61,7 +62,6 @@ class MultipleExecuteTest {
 		assertTrue(multipleExecute.needCreateTestData(testConfig));
 		testConfig.numberOfHistoryRecords = 0;
 		assertFalse(multipleExecute.needCreateTestData(testConfig));
-
 	}
 
 }
