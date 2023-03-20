@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.db.TxLabel;
+import com.tsurugidb.benchmark.phonebill.db.TxOption.Table;
 import com.tsurugidb.benchmark.phonebill.db.dao.ContractDao;
 import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.online.AbstractOnlineApp;
@@ -88,5 +89,11 @@ class OnlineAppClientTest {
 		public TxLabel getTxLabel() {
 			return TxLabel.TEST;
 		}
+
+		@Override
+		public Table getWritePreserveTable() {
+			return Table.HISTORY;
+		}
+
 	}
 }

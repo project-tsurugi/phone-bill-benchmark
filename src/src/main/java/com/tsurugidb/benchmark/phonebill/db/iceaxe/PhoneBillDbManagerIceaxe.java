@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.NoSuchElementException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -106,27 +107,27 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
             transactionManager.execute(setting, transaction -> {
                 transactionThreadLocal.set(transaction);
                 try {
-                	countup(txOption, BEGIN_TX);
+                	countup(txOption, CounterName.BEGIN_TX);
                     runnable.run();
-                	countup(txOption, TRY_COMMIT);
+                	countup(txOption, CounterName.TRY_COMMIT);
                 } finally {
                     transactionThreadLocal.remove();
                 }
             });
         } catch (IOException e) {
-            countup(txOption, ABORTED);
+            countup(txOption, CounterName.ABORTED);
         	if (isRetriable(e)) {
             	throw new RetryOverRuntimeException(e);
         	}
             throw new UncheckedIOException(e);
         } catch (RuntimeException e) {
-            countup(txOption, ABORTED);
+            countup(txOption, CounterName.ABORTED);
         	if (isRetriable(e)) {
             	throw new RetryOverRuntimeException(e);
         	}
         	throw e;
         }
-        countup(txOption, SUCCESS);
+        countup(txOption, CounterName.SUCCESS);
     }
 
     @Override
@@ -136,9 +137,9 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
             return transactionManager.execute(setting, transaction -> {
                 transactionThreadLocal.set(transaction);
                 try {
-                	countup(txOption, BEGIN_TX);
+                	countup(txOption, CounterName.BEGIN_TX);
                     var ret =  supplier.get();
-                	countup(txOption, TRY_COMMIT);
+                	countup(txOption, CounterName.TRY_COMMIT);
                 	return ret;
 
                 } finally {
@@ -146,13 +147,13 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
                 }
             });
         } catch (IOException e) {
-            countup(txOption, ABORTED);
+            countup(txOption, CounterName.ABORTED);
         	if (isRetriable(e)) {
             	throw new RetryOverRuntimeException(e);
         	}
             throw new UncheckedIOException(e);
         } catch (RuntimeException e) {
-            countup(txOption, ABORTED);
+            countup(txOption, CounterName.ABORTED);
         	if (isRetriable(e)) {
             	throw new RetryOverRuntimeException(e);
         	}
@@ -245,4 +246,20 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
 		return false;
 	}
 
+	/**
+	 * 指定のTxOption, カウンタ名のカウンタをカウントアップpする
+	 *
+	 * @param option
+	 * @param name
+	 */
+	@Override
+	public void countup(TxOption option, CounterName name) {
+		CounterKey key = option.getCounterKey(name);
+		AtomicInteger counter = ccounterMap.get(key);
+		if (counter == null) {
+			counter = new AtomicInteger(0);
+			ccounterMap.put(key, counter);
+		}
+		counter.incrementAndGet();
+	}
 }

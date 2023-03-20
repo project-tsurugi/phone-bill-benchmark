@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -27,6 +28,8 @@ import com.tsurugidb.benchmark.phonebill.app.Config.TransactionOption;
 import com.tsurugidb.benchmark.phonebill.app.Config.TransactionScope;
 import com.tsurugidb.benchmark.phonebill.app.billing.PhoneBill;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
+import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager.CounterKey;
+import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager.CounterName;
 import com.tsurugidb.benchmark.phonebill.db.TxLabel;
 import com.tsurugidb.benchmark.phonebill.db.TxOption;
 import com.tsurugidb.benchmark.phonebill.db.TxOption.Table;
@@ -46,6 +49,7 @@ public class MultipleExecute extends ExecutableCommand {
 	private List<Record> records = new ArrayList<>();
 	private Set<History> expectedHistories;
 	private Set<Billing> expectedBillings;
+	private String onlineAppReport = "# Online Application Report \n\n";
 
 	public static void main(String[] args) throws Exception {
 		MultipleExecute threadBench = new MultipleExecute();
@@ -83,6 +87,10 @@ public class MultipleExecute extends ExecutableCommand {
 					record.setMemInfo(task.getVsz(), task.getRss());
 				}
 				writeResult(config);
+				if (config.hasOnlineApp()) {
+					writeOnlineAppReport(config);
+				}
+
 				prevConfigHasOnlineApp = config.hasOnlineApp();
 				PhoneBillDbManager.reportNotClosed();
 			}
@@ -140,9 +148,6 @@ public class MultipleExecute extends ExecutableCommand {
 	}
 
 
-
-
-
 	/**
 	 * 環境変数"DB_INIT_CMD"が設定されている場合、環境変数で指定されたコマンドを実行する
 	 *
@@ -175,9 +180,6 @@ public class MultipleExecute extends ExecutableCommand {
 	}
 
 
-
-
-
 	/**
 	 * 結果をCSVに出力する
 	 *
@@ -191,6 +193,101 @@ public class MultipleExecute extends ExecutableCommand {
 			records.stream().forEach(r -> pw.println(r.toString()));
 		}
 	}
+
+	/**
+	 * オンラインアプリのレポートを出力する
+	 *
+	 * @param config
+	 * @param record
+	 */
+	private void writeOnlineAppReport(Config config) {
+		// ex: ICEAXE-OCC-
+		String title = config.dbmsType.name() + "-" + config.transactionOption + "-" + config.transactionScope + "-T"
+				+ config.threadCount;
+		Path outputPath = Paths.get(config.csvDir).resolve("online-app.md");
+		try {
+			LOG.debug("Creating an online application report for {}", title);
+			String newReport = createOnlineAppReport(config, title);
+			LOG.debug("Online application report: {}", newReport);
+			onlineAppReport = onlineAppReport + newReport;
+			LOG.debug("Writing online application reports to {}", outputPath.toAbsolutePath().toString());
+			Files.writeString(outputPath, onlineAppReport);
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
+		}
+	}
+
+
+
+
+	/**
+	 * オンラインアプリのレポートを出力する
+	 *  </p>
+	 *  出力サンプル
+	 *
+	 *  <pre>
+	 *  ICEAXE-OCC-CONTRACT-T16
+	 *	| application    | Threads | tpm/thread | records/tx | succ | abandoned  retry | occ-try | occ-abort | occ-succ | ltx-try | ltx-abort | ltx-succ |
+	 *	|----------------|---------|------------|------------|------|------------------|---------|-----------|----------|---------|-----------|----------|
+	 *	| master insert  | 10      | 20         | 1          | 314  | 0                | 628     | 628       | 0        | 314     | 0         | 0        |
+	 *	| master update  | 10      | 20         | 1          | 151  | 92               | 151     | 151       | 50       | 91      | 91        | 0        |
+	 *	| history insert | 10      | 20         | 100        | 65   | 0                | 65      | 200       | 200      | 0       | 0         | 0        |
+	 *	| history update | 10      | 20         | 1          | 358  | 25               | 358     | 716       | 0        | 358     | 0         | 358      |
+	 * </pre>
+	 *
+	 * @param config
+	 * @param title
+	 * @return
+	 */
+	String createOnlineAppReport(Config config, String title) {
+		StringBuilder sb = new StringBuilder();
+
+		// タイトル
+		sb.append("# " + title + "\n\n");
+
+		// ヘッダ
+		sb.append("| application    | Threads | tpm/thread | records/tx | succ | abandoned  retry | occ-try | occ-abort | occ-succ | ltx-try | ltx-abort | ltx-succ |\n");
+		sb.append("|----------------|--------:|-----------:|-----------:|-----:|-----------------:|--------:|----------:|---------:|--------:|----------:|---------:|\n");
+
+
+		// master insert
+		OnlineAppRecord masterInsert = new OnlineAppRecord();
+		masterInsert.application = "master insert";
+		masterInsert.threads = config.masterInsertThreadCount;
+		masterInsert.tpmTthread = config.masterInsertRecordsPerMin;
+		masterInsert.recordsTx = 1;
+		masterInsert.setCounterValues(TxLabel.MASTER_INSERT_APP);
+		sb.append(masterInsert.toString());
+
+		// master update
+		OnlineAppRecord masterUpdate = new OnlineAppRecord();
+		masterUpdate.application = "master update";
+		masterUpdate.threads = config.masterUpdateThreadCount;
+		masterUpdate.tpmTthread = config.masterUpdateRecordsPerMin;
+		masterUpdate.recordsTx = 1;
+		masterUpdate.setCounterValues(TxLabel.MASTER_UPDATE_APP);
+		sb.append(masterUpdate.toString());
+
+		// history insert
+		OnlineAppRecord historyInsert = new OnlineAppRecord();
+		historyInsert.application = "history insert";
+		historyInsert.threads = config.historyInsertThreadCount;
+		historyInsert.tpmTthread = config.historyInsertTransactionPerMin;
+		historyInsert.recordsTx = config.historyInsertRecordsPerTransaction;
+		historyInsert.setCounterValues(TxLabel.HISTORY_INSERT_APP);
+		sb.append(historyInsert.toString());
+
+		// history update
+		OnlineAppRecord historyUpdate = new OnlineAppRecord();
+		historyUpdate.application = "history update";
+		historyUpdate.threads = config.historyUpdateThreadCount;
+		historyUpdate.tpmTthread = config.historyUpdateRecordsPerMin;
+		historyUpdate.recordsTx = 1;
+		historyUpdate.setCounterValues(TxLabel.HISTORY_UPDATE_APP);
+		sb.append(historyUpdate.toString());
+		return sb.toString();
+	}
+
 
 	private int checkResult(Config config) {
 		int n = 0;
@@ -318,7 +415,7 @@ public class MultipleExecute extends ExecutableCommand {
 			builder.append(",");
 			builder.append(threadCount);
 			builder.append(",");
-			builder.append(elapsedMillis/1000.0);
+			builder.append(String.format("%.3f", elapsedMillis / 1000.0));
 			builder.append(",");
 			builder.append(tryCount);
 			builder.append(",");
@@ -326,15 +423,74 @@ public class MultipleExecute extends ExecutableCommand {
 			builder.append(",");
 			builder.append(numberOfDiffrence);
 			builder.append(",");
-			builder.append(vsz == -1 ? "-" : vsz / 1024 / 1024 / 1024);
+			builder.append(vsz == -1 ? "-" : String.format("%.1f", vsz / 1024f / 1024f / 1024f));
 			builder.append(",");
-			builder.append(rss == -1 ? "-" : rss / 1024 / 1024 / 1024);
+			builder.append(rss == -1 ? "-" : String.format("%.1f", rss / 1024f / 1024f / 1024f));
 			return builder.toString();
 		}
 
 		public static String header() {
 			return "dbmsType, option, scope, threadCount, elapsedSeconds, tryCount, abortCount, diffrence, vsz(GB), rss(GB)";
 		}
+	}
 
+
+	private static class OnlineAppRecord {
+		String application;
+		int threads;
+		int tpmTthread;
+		int recordsTx;
+		int succ;
+		int abandonedRtry;
+		int occTry;
+		int occAbort;
+		int occSucc;
+		int ltxTry;
+		int ltxAbort;
+		int ltxSucc;
+
+		void setCounterValues(TxLabel txLabel) {
+			abandonedRtry = PhoneBillDbManager.getCounter(CounterKey.of(txLabel, CounterName.ABANDONED_RETRY));
+			occTry = PhoneBillDbManager.getCounter(CounterKey.of(txLabel, CounterName.OCC_TRY));
+			occAbort = PhoneBillDbManager.getCounter(CounterKey.of(txLabel, CounterName.OCC_ABORT));
+			occSucc = PhoneBillDbManager.getCounter(CounterKey.of(txLabel, CounterName.OCC_SUCC));
+			ltxTry = PhoneBillDbManager.getCounter(CounterKey.of(txLabel, CounterName.LTX_TRY));
+			ltxAbort = PhoneBillDbManager.getCounter(CounterKey.of(txLabel, CounterName.LTX_ABORT));
+			ltxSucc = PhoneBillDbManager.getCounter(CounterKey.of(txLabel, CounterName.LTX_SUCC));;
+			succ = occSucc + ltxSucc;
+		}
+
+
+		@Override
+		public String toString() {
+			StringBuilder sb = new StringBuilder();
+			sb.append("|");
+			sb.append(application);
+			sb.append("|");
+			sb.append(threads);
+			sb.append("|");
+			sb.append(tpmTthread);
+			sb.append("|");
+			sb.append(recordsTx);
+			sb.append("|");
+			sb.append(succ);
+			sb.append("|");
+			sb.append(abandonedRtry);
+			sb.append("|");
+			sb.append(occTry);
+			sb.append("|");
+			sb.append(occAbort);
+			sb.append("|");
+			sb.append(occSucc);
+			sb.append("|");
+			sb.append(ltxTry);
+			sb.append("|");
+			sb.append(ltxAbort);
+			sb.append("|");
+			sb.append(ltxSucc);
+			sb.append("|");
+			sb.append("\n");
+			return sb.toString();
+		}
 	}
 }

@@ -14,6 +14,7 @@ import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.TxLabel;
 import com.tsurugidb.benchmark.phonebill.db.TxOption;
+import com.tsurugidb.benchmark.phonebill.db.TxOption.Table;
 import com.tsurugidb.benchmark.phonebill.db.dao.ContractDao;
 import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
@@ -174,5 +175,10 @@ public class HistoryInsertApp extends AbstractOnlineApp {
 	@Override
 	public TxLabel getTxLabel() {
 		return TxLabel.HISTORY_INSERT_APP;
+	}
+
+	@Override
+	public Table getWritePreserveTable() {
+		return Table.HISTORY;
 	}
 }

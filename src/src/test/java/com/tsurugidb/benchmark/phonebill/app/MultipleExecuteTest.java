@@ -2,6 +2,10 @@ package com.tsurugidb.benchmark.phonebill.app;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
@@ -64,4 +68,30 @@ class MultipleExecuteTest {
 		assertFalse(multipleExecute.needCreateTestData(testConfig));
 	}
 
+
+	@Test
+	final void testCreateOnlineAppReport() throws IOException {
+		Config config = Config.getConfig();
+		MultipleExecute execute = new MultipleExecute();
+		String report = execute.createOnlineAppReport(config, "Example");
+
+		List<String> lines = splitToLines(report);
+		assertEquals(8, lines.size());
+		assertEquals("# Example", lines.get(0));
+		assertEquals("", lines.get(1));
+		assertEquals("| application    | Threads | tpm/thread | records/tx | succ | abandoned  retry | occ-try | occ-abort | occ-succ | ltx-try | ltx-abort | ltx-succ |", lines.get(2));
+
+		assertEquals("|----------------|--------:|-----------:|-----------:|-----:|-----------------:|--------:|----------:|---------:|--------:|----------:|---------:|", lines.get(3));
+		assertEquals("|master insert|1|0|1|0|0|0|0|0|0|0|0|", lines.get(4));
+		assertEquals("|master update|1|0|1|0|0|0|0|0|0|0|0|", lines.get(5));
+		assertEquals("|history insert|1|0|1|0|0|0|0|0|0|0|0|", lines.get(6));
+		assertEquals("|history update|1|0|1|0|0|0|0|0|0|0|0|", lines.get(7));
+
+	}
+
+
+	List<String> splitToLines(String str) {
+		return Arrays.asList(str.split("\r\n|\r|\n"));
+
+	}
 }

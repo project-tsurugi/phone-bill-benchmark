@@ -267,7 +267,7 @@ class ConfigTest {
 
 		/* オンラインアプリケーションに関するパラメータ */
 		assertEquals(0, config.masterUpdateRecordsPerMin);
-		assertEquals(0, config.masterInsertReccrdsPerMin);
+		assertEquals(0, config.masterInsertRecordsPerMin);
 		assertEquals(0, config.historyUpdateRecordsPerMin);
 		assertEquals(0, config.historyInsertTransactionPerMin);
 		assertEquals(1, config.historyInsertRecordsPerTransaction);
@@ -338,7 +338,7 @@ class ConfigTest {
 
 		/* オンラインアプリケーションに関するパラメータ */
 		assertEquals(50, config.masterUpdateRecordsPerMin);
-		assertEquals(20, config.masterInsertReccrdsPerMin);
+		assertEquals(20, config.masterInsertRecordsPerMin);
 		assertEquals(15, config.historyUpdateRecordsPerMin);
 		assertEquals(40, config.historyInsertTransactionPerMin);
 		assertEquals(300, config.historyInsertRecordsPerTransaction);
@@ -474,7 +474,7 @@ class ConfigTest {
 		config.masterUpdateThreadCount = 0;
 		config.historyInsertThreadCount = 0;
 		config.historyUpdateThreadCount = 0;
-		config.masterInsertReccrdsPerMin = 1;
+		config.masterInsertRecordsPerMin = 1;
 		config.masterUpdateRecordsPerMin = 1;
 		config.historyInsertTransactionPerMin = 1;
 		config.historyUpdateRecordsPerMin = 1;
@@ -485,7 +485,7 @@ class ConfigTest {
 		config.masterUpdateThreadCount = 1;
 		config.historyInsertThreadCount = 1;
 		config.historyUpdateThreadCount = 1;
-		config.masterInsertReccrdsPerMin = 0;
+		config.masterInsertRecordsPerMin = 0;
 		config.masterUpdateRecordsPerMin = 0;
 		config.historyInsertTransactionPerMin = 0;
 		config.historyUpdateRecordsPerMin = 0;
@@ -494,28 +494,28 @@ class ConfigTest {
 
 		// 1つだけオンラインアプリが動くケース
 
-		config.masterInsertReccrdsPerMin = 1;
+		config.masterInsertRecordsPerMin = 1;
 		config.masterUpdateRecordsPerMin = 0;
 		config.historyInsertTransactionPerMin = 0;
 		config.historyUpdateRecordsPerMin = 0;
 		config.historyInsertRecordsPerTransaction = 0;
 		assertTrue(config.hasOnlineApp());
 
-		config.masterInsertReccrdsPerMin = 0;
+		config.masterInsertRecordsPerMin = 0;
 		config.masterUpdateRecordsPerMin = 1;
 		config.historyInsertTransactionPerMin = 0;
 		config.historyUpdateRecordsPerMin = 0;
 		config.historyInsertRecordsPerTransaction = 0;
 		assertTrue(config.hasOnlineApp());
 
-		config.masterInsertReccrdsPerMin = 0;
+		config.masterInsertRecordsPerMin = 0;
 		config.masterUpdateRecordsPerMin = 0;
 		config.historyInsertTransactionPerMin = 1;
 		config.historyUpdateRecordsPerMin = 0;
 		config.historyInsertRecordsPerTransaction = 0;
 		assertTrue(config.hasOnlineApp());
 
-		config.masterInsertReccrdsPerMin = 0;
+		config.masterInsertRecordsPerMin = 0;
 		config.masterUpdateRecordsPerMin = 0;
 		config.historyInsertTransactionPerMin = 0;
 		config.historyUpdateRecordsPerMin = 1;
@@ -524,7 +524,7 @@ class ConfigTest {
 
 		// historyInsertRecordsPerTransactionが結果に影響しない
 
-		config.masterInsertReccrdsPerMin = 0;
+		config.masterInsertRecordsPerMin = 0;
 		config.masterUpdateRecordsPerMin = 0;
 		config.historyInsertTransactionPerMin = 0;
 		config.historyUpdateRecordsPerMin = 1;
@@ -533,7 +533,7 @@ class ConfigTest {
 
 		// 全てのオンラインアプリを動かす
 
-		config.masterInsertReccrdsPerMin = 1;
+		config.masterInsertRecordsPerMin = 1;
 		config.masterUpdateRecordsPerMin = 1;
 		config.historyInsertTransactionPerMin = 1;
 		config.historyUpdateRecordsPerMin = 1;
@@ -541,7 +541,7 @@ class ConfigTest {
 		assertTrue(config.hasOnlineApp());
 
 		// 全てのオンラインアプリを連続実行
-		config.masterInsertReccrdsPerMin = -1;
+		config.masterInsertRecordsPerMin = -1;
 		config.masterUpdateRecordsPerMin = -1;
 		config.historyInsertTransactionPerMin = -1;
 		config.historyUpdateRecordsPerMin = -1;

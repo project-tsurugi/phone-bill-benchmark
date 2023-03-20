@@ -180,7 +180,7 @@ class PhoneBillDbManagerTest extends AbstractPhoneBillDbManagerTest {
 		testInstanceOf(PhoneBillDbManagerIceaxe.class,getConfigIceaxe());
 	}
 
-	private void testInstanceOf(Class clazz, Config config) {
+	private void testInstanceOf(Class<?> clazz, Config config) {
 		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
 			assertEquals(clazz, manager.getClass());
 		}

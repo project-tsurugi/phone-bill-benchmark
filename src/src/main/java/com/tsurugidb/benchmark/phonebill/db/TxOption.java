@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager.CounterKey;
+import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager.CounterName;
 import com.tsurugidb.iceaxe.transaction.manager.TgTmSetting;
 import com.tsurugidb.iceaxe.transaction.option.TgTxOption;
 import com.tsurugidb.iceaxe.transaction.option.TgTxOptionLtx;
@@ -43,7 +44,7 @@ public class TxOption {
 	/**
 	 * CounterKeyのキャッシュ
 	 */
-	private Map<String, CounterKey> counterkeyCache = new HashMap<>();
+	private Map<CounterName, CounterKey> counterkeyCache = new HashMap<>();
 
 
 	private TxOption(int retryCountLmit, TxLabel label, TgTxOption option) {
@@ -136,7 +137,7 @@ public class TxOption {
 	 * @param name
 	 * @return
 	 */
-	public CounterKey getCounterKey(String name) {
+	public CounterKey getCounterKey(CounterName name) {
 		CounterKey key = counterkeyCache.get(name);
 		if (key == null) {
 			key = new CounterKey(label, name);

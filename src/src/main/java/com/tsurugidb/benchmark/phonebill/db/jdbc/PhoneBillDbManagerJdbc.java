@@ -105,14 +105,14 @@ public abstract class PhoneBillDbManagerJdbc extends PhoneBillDbManager {
 	public void execute(TxOption txOption, Runnable runnable) {
 		for (int tryCount = 0;; tryCount++) {
 			try {
-            	countup(txOption, BEGIN_TX);
+            	countup(txOption, CounterName.BEGIN_TX);
 				runnable.run();
-            	countup(txOption, TRY_COMMIT);
+            	countup(txOption, CounterName.TRY_COMMIT);
 				commit();
-		        countup(txOption, SUCCESS);
+		        countup(txOption, CounterName.SUCCESS);
 				break;
 			} catch (Throwable e) {
-	            countup(txOption, ABORTED);
+	            countup(txOption, CounterName.ABORTED);
 				try {
 					rollback();
 				} catch (Throwable t) {
@@ -134,14 +134,14 @@ public abstract class PhoneBillDbManagerJdbc extends PhoneBillDbManager {
 	public <T> T execute(TxOption txOption, Supplier<T> supplier) {
 		for (int tryCount = 0;; tryCount++) {
 			try {
-            	countup(txOption, BEGIN_TX);
+            	countup(txOption, CounterName.BEGIN_TX);
 				T r = supplier.get();
-            	countup(txOption, TRY_COMMIT);
+            	countup(txOption, CounterName.TRY_COMMIT);
 				commit();
-		        countup(txOption, SUCCESS);
+		        countup(txOption, CounterName.SUCCESS);
 				return r;
 			} catch (Throwable e) {
-	            countup(txOption, ABORTED);
+	            countup(txOption, CounterName.ABORTED);
 				try {
 					rollback();
 				} catch (Throwable t) {

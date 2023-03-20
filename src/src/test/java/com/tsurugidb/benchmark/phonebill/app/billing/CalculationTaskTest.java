@@ -21,6 +21,7 @@ import com.tsurugidb.benchmark.phonebill.app.Config.TransactionScope;
 import com.tsurugidb.benchmark.phonebill.app.CreateTable;
 import com.tsurugidb.benchmark.phonebill.app.billing.CalculationTask.Calculator;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
+import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager.CounterName;
 import com.tsurugidb.benchmark.phonebill.db.RetryOverRuntimeException;
 import com.tsurugidb.benchmark.phonebill.db.entity.Billing;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
@@ -158,13 +159,13 @@ class CalculationTaskTest extends AbstractJdbcTestCase {
 			assertEquals(0, abortCounter.get());
 
 			assertEquals(0,
-					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(PhoneBillDbManager.BEGIN_TX)));
+					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(CounterName.BEGIN_TX)));
 			assertEquals(0,
-					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(PhoneBillDbManager.TRY_COMMIT)));
+					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(CounterName.TRY_COMMIT)));
 			assertEquals(0,
-					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(PhoneBillDbManager.ABORTED)));
+					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(CounterName.ABORTED)));
 			assertEquals(0,
-					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(PhoneBillDbManager.SUCCESS)));
+					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(CounterName.SUCCESS)));
 
 
 			// Queueに処理対象の契約が1つだけ含まれているケース
@@ -179,13 +180,13 @@ class CalculationTaskTest extends AbstractJdbcTestCase {
 			assertEquals(0, abortCounter.get());
 
 			assertEquals(1,
-					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(PhoneBillDbManager.BEGIN_TX)));
+					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(CounterName.BEGIN_TX)));
 			assertEquals(1,
-					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(PhoneBillDbManager.TRY_COMMIT)));
+					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(CounterName.TRY_COMMIT)));
 			assertEquals(0,
-					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(PhoneBillDbManager.ABORTED)));
+					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(CounterName.ABORTED)));
 			assertEquals(1,
-					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(PhoneBillDbManager.SUCCESS)));
+					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(CounterName.SUCCESS)));
 
 			// Queueに処理対象の契約が複数含まれているケース
 			PhoneBillDbManager.initCounter();
@@ -200,13 +201,13 @@ class CalculationTaskTest extends AbstractJdbcTestCase {
 			assertEquals(0, abortCounter.get());
 
 			assertEquals(config.transactionScope == TransactionScope.CONTRACT ? 3 : 1,
-					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(PhoneBillDbManager.BEGIN_TX)));
+					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(CounterName.BEGIN_TX)));
 			assertEquals(config.transactionScope == TransactionScope.CONTRACT ? 3 : 1,
-					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(PhoneBillDbManager.TRY_COMMIT)));
+					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(CounterName.TRY_COMMIT)));
 			assertEquals(0,
-					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(PhoneBillDbManager.ABORTED)));
+					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(CounterName.ABORTED)));
 			assertEquals(config.transactionScope == TransactionScope.CONTRACT ? 3 : 1,
-					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(PhoneBillDbManager.SUCCESS)));
+					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(CounterName.SUCCESS)));
 
 			// リトライ可能ではないExceptionがスローされるケース
 			PhoneBillDbManager.initCounter();
@@ -224,13 +225,13 @@ class CalculationTaskTest extends AbstractJdbcTestCase {
 			assertEquals(config.transactionScope == TransactionScope.CONTRACT ? 2 : 3, queue.size());
 
 			assertEquals(config.transactionScope == TransactionScope.CONTRACT ? 2 : 1,
-					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(PhoneBillDbManager.BEGIN_TX)));
+					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(CounterName.BEGIN_TX)));
 			assertEquals(config.transactionScope == TransactionScope.CONTRACT ? 1 : 0,
-					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(PhoneBillDbManager.TRY_COMMIT)));
+					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(CounterName.TRY_COMMIT)));
 			assertEquals(1,
-					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(PhoneBillDbManager.ABORTED)));
+					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(CounterName.ABORTED)));
 			assertEquals(config.transactionScope == TransactionScope.CONTRACT ? 1 : 0,
-					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(PhoneBillDbManager.SUCCESS)));
+					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(CounterName.SUCCESS)));
 
 			// Exception発生後に再度実行する
 			assertNull(task.call());
@@ -239,13 +240,13 @@ class CalculationTaskTest extends AbstractJdbcTestCase {
 			assertEquals(1, abortCounter.get());
 
 			assertEquals(config.transactionScope == TransactionScope.CONTRACT ? 4 : 2,
-					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(PhoneBillDbManager.BEGIN_TX)));
+					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(CounterName.BEGIN_TX)));
 			assertEquals(config.transactionScope == TransactionScope.CONTRACT ? 3 : 1,
-					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(PhoneBillDbManager.TRY_COMMIT)));
+					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(CounterName.TRY_COMMIT)));
 			assertEquals(1,
-					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(PhoneBillDbManager.ABORTED)));
+					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(CounterName.ABORTED)));
 			assertEquals(config.transactionScope == TransactionScope.CONTRACT ? 3 : 1,
-					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(PhoneBillDbManager.SUCCESS)));
+					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(CounterName.SUCCESS)));
 
 
 			// リトライ可能なExceptionがスローされるケース
@@ -264,13 +265,13 @@ class CalculationTaskTest extends AbstractJdbcTestCase {
 			assertEquals(2, abortCounter.get());
 
 			assertEquals(config.transactionScope == TransactionScope.CONTRACT ? 4 : 2,
-					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(PhoneBillDbManager.BEGIN_TX)));
+					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(CounterName.BEGIN_TX)));
 			assertEquals(config.transactionScope == TransactionScope.CONTRACT ? 3 : 1,
-					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(PhoneBillDbManager.TRY_COMMIT)));
+					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(CounterName.TRY_COMMIT)));
 			assertEquals(1,
-					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(PhoneBillDbManager.ABORTED)));
+					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(CounterName.ABORTED)));
 			assertEquals(config.transactionScope == TransactionScope.CONTRACT ? 3 : 1,
-					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(PhoneBillDbManager.SUCCESS)));
+					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(CounterName.SUCCESS)));
 
 
 			// 処理開始前にAbortが要求されたケース
@@ -289,13 +290,13 @@ class CalculationTaskTest extends AbstractJdbcTestCase {
 			assertEquals(2, abortCounter.get());
 
 			assertEquals(0,
-					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(PhoneBillDbManager.BEGIN_TX)));
+					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(CounterName.BEGIN_TX)));
 			assertEquals(0,
-					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(PhoneBillDbManager.TRY_COMMIT)));
+					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(CounterName.TRY_COMMIT)));
 			assertEquals(0,
-					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(PhoneBillDbManager.ABORTED)));
+					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(CounterName.ABORTED)));
 			assertEquals(0,
-					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(PhoneBillDbManager.SUCCESS)));
+					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(CounterName.SUCCESS)));
 
 
 			// 処理中にAbortが要求されたケース
@@ -328,13 +329,13 @@ class CalculationTaskTest extends AbstractJdbcTestCase {
 			assertEquals(2, tryCounter.get());
 
 			assertEquals(config.transactionScope == TransactionScope.CONTRACT ? 2 : 1,
-					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(PhoneBillDbManager.BEGIN_TX)));
+					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(CounterName.BEGIN_TX)));
 			assertEquals(config.transactionScope == TransactionScope.CONTRACT ? 1 : 0,
-					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(PhoneBillDbManager.TRY_COMMIT)));
+					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(CounterName.TRY_COMMIT)));
 			assertEquals(0,
-					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(PhoneBillDbManager.ABORTED)));
+					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(CounterName.ABORTED)));
 			assertEquals(config.transactionScope == TransactionScope.CONTRACT ? 1 : 0,
-					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(PhoneBillDbManager.SUCCESS)));
+					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(CounterName.SUCCESS)));
 
 			abortRequested.set(true);
 			calculator.endWait.countDown(); // 処理を継続する
@@ -346,13 +347,13 @@ class CalculationTaskTest extends AbstractJdbcTestCase {
 			assertEquals(2, tryCounter.get());
 
 			assertEquals(config.transactionScope == TransactionScope.CONTRACT ? 2 : 1,
-					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(PhoneBillDbManager.BEGIN_TX)));
+					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(CounterName.BEGIN_TX)));
 			assertEquals(config.transactionScope == TransactionScope.CONTRACT ? 2 : 1,
-					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(PhoneBillDbManager.TRY_COMMIT)));
+					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(CounterName.TRY_COMMIT)));
 			assertEquals(0,
-					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(PhoneBillDbManager.ABORTED)));
+					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(CounterName.ABORTED)));
 			assertEquals(config.transactionScope == TransactionScope.CONTRACT ? 2 : 1,
-					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(PhoneBillDbManager.SUCCESS)));
+					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(CounterName.SUCCESS)));
 			calculator = null;
 
 
@@ -378,13 +379,13 @@ class CalculationTaskTest extends AbstractJdbcTestCase {
 			assertEquals(3, tryCounter.get());
 
 			assertEquals(config.transactionScope == TransactionScope.CONTRACT ? 3 : 2,
-					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(PhoneBillDbManager.BEGIN_TX)));
+					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(CounterName.BEGIN_TX)));
 			assertEquals(config.transactionScope == TransactionScope.CONTRACT ? 3 : 2,
-					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(PhoneBillDbManager.TRY_COMMIT)));
+					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(CounterName.TRY_COMMIT)));
 			assertEquals(0,
-					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(PhoneBillDbManager.ABORTED)));
+					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(CounterName.ABORTED)));
 			assertEquals(config.transactionScope == TransactionScope.CONTRACT ? 3 : 2,
-					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(PhoneBillDbManager.SUCCESS)));
+					PhoneBillDbManager.getCounter(task.getTxOption().getCounterKey(CounterName.SUCCESS)));
 
 
 			long elapsed = System.currentTimeMillis() - start;
