@@ -130,7 +130,7 @@ public class CalculationTask implements Callable<Exception> {
 				list.add(firstTarget);
 				TransactionId tid = new TransactionId();
 				try {
-					AtomicInteger recores = new AtomicInteger(0);
+					AtomicInteger records = new AtomicInteger(0);
 					manager.execute(txOption, () -> {
 						tid.set(manager.getTransactionId());
 						timer.setStartTx(tid, "-");
@@ -145,12 +145,12 @@ public class CalculationTask implements Callable<Exception> {
 							LOG.debug(queue.getStatus());
 							list.add(target);
 							tryCounter.incrementAndGet();
-							recores.addAndGet(calculator.doCalc(target));
+							records.addAndGet(calculator.doCalc(target));
 						}
 						timer.setStartCommit("-");
 					});
 					nCalculated += list.size();
-					timer.setEndCommit("-", recores.get());
+					timer.setEndCommit("-", records.get());
 					queue.success(list);
 				} catch (RuntimeException e) {
 					abortCounter.incrementAndGet();
