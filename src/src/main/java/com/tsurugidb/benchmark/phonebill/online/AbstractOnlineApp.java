@@ -173,7 +173,7 @@ public abstract class AbstractOnlineApp implements Runnable{
 			} catch (RuntimeException e) {
 				manager.countup(txOption, isOcc ? CounterName.OCC_ABORT : CounterName.LTX_ABORT);
 				PhoneBillDbManager.addRetringExceptions(e);
-				LOG.debug("Tx aborted by caught an exception ", e.getMessage());
+				LOG.debug("Tx aborted by caught an exception: {}", e.getMessage());
 				continue;
 			}
 		}

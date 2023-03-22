@@ -226,7 +226,8 @@ public class MultipleExecute extends ExecutableCommand {
 	 *  出力サンプル
 	 *
 	 *  <pre>
-	 *  ICEAXE-OCC-CONTRACT-T16
+	 *  ## ICEAXE-OCC-CONTRACT-T16
+	 *
 	 *	| application    | Threads | tpm/thread | records/tx | succ | abandoned  retry | occ-try | occ-abort | occ-succ | ltx-try | ltx-abort | ltx-succ |
 	 *	|----------------|---------|------------|------------|------|------------------|---------|-----------|----------|---------|-----------|----------|
 	 *	| master insert  | 10      | 20         | 1          | 314  | 0                | 628     | 628       | 0        | 314     | 0         | 0        |
@@ -243,7 +244,7 @@ public class MultipleExecute extends ExecutableCommand {
 		StringBuilder sb = new StringBuilder();
 
 		// タイトル
-		sb.append("# " + title + "\n\n");
+		sb.append("## " + title + "\n\n");
 
 		// ヘッダ
 		sb.append("| application    | Threads | tpm/thread | records/tx | succ | abandoned  retry | occ-try | occ-abort | occ-succ | ltx-try | ltx-abort | ltx-succ |\n");
