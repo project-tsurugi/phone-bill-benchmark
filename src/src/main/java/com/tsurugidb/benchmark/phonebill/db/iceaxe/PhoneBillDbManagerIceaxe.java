@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.NoSuchElementException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -244,22 +243,5 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
 			t = t.getCause();
 		}
 		return false;
-	}
-
-	/**
-	 * 指定のTxOption, カウンタ名のカウンタをカウントアップpする
-	 *
-	 * @param option
-	 * @param name
-	 */
-	@Override
-	public void countup(TxOption option, CounterName name) {
-		CounterKey key = option.getCounterKey(name);
-		AtomicInteger counter = ccounterMap.get(key);
-		if (counter == null) {
-			counter = new AtomicInteger(0);
-			ccounterMap.put(key, counter);
-		}
-		counter.incrementAndGet();
 	}
 }

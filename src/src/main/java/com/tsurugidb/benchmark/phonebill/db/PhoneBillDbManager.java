@@ -192,9 +192,14 @@ public abstract class PhoneBillDbManager implements Closeable {
 	 * @param option
 	 * @param name
 	 */
-	public void countup(TxOption option, CounterName name ) {
-		// カウンタを使用するかしないかは、DBMSに依存する。
-		// デフォルトではカウントを使用ない。
+	public final void countup(TxOption option, CounterName name ) {
+		CounterKey key = option.getCounterKey(name);
+		AtomicInteger counter = ccounterMap.get(key);
+		if (counter == null) {
+			counter = new AtomicInteger(0);
+			ccounterMap.put(key, counter);
+		}
+		counter.incrementAndGet();
 	}
 
 
