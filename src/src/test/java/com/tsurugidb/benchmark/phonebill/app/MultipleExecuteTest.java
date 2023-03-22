@@ -77,7 +77,7 @@ class MultipleExecuteTest {
 
 		List<String> lines = splitToLines(report);
 		assertEquals(8, lines.size());
-		assertEquals("# Example", lines.get(0));
+		assertEquals("## Example", lines.get(0));
 		assertEquals("", lines.get(1));
 		assertEquals("| application    | Threads | tpm/thread | records/tx | succ | abandoned  retry | occ-try | occ-abort | occ-succ | ltx-try | ltx-abort | ltx-succ |", lines.get(2));
 
