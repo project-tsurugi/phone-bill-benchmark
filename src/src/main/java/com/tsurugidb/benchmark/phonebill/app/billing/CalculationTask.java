@@ -308,8 +308,8 @@ public class CalculationTask implements Callable<Exception> {
 			LOG.debug(
 					"TIME INFO: tx start timestamp = {}, tid = {}, update/insert records = {}, exec time = {}, commit time = {}",
 					TIME_FMT.format(LocalDateTime.ofInstant(startTx, ZoneId.systemDefault())), tid, records,
-					d1.toSeconds() * 1000 * 1000 + d1.toNanos() / 1000, // Durationをマイクロ秒で表示
-					d2.toSeconds() * 1000 * 1000 + d2.toNanos() / 1000); // Durationをマイクロ秒で表示
+					d1.toNanos() / 1000, // Durationをマイクロ秒で表示
+					d2.toNanos() / 1000); // Durationをマイクロ秒で表示
 		}
 
 		public void setAbort(String phoneNumber, RuntimeException e) {
@@ -325,8 +325,8 @@ public class CalculationTask implements Callable<Exception> {
 				Duration d1 = Duration.between(startTx, startCommit);
 				Duration d2 = Duration.between(startCommit, endTx);
 				LOG.debug("TIME INFO: tid = {}, exec time = {}, commit to abort time = {}", tid,
-						d1.toSeconds() * 1000 * 1000 + d1.toNanos() / 1000, // Durationをマイクロ秒で表示
-						d2.toSeconds() * 1000 * 1000 + d2.toNanos() / 1000); // Durationをマイクロ秒で表示
+						d1.toNanos() / 1000, // Durationをマイクロ秒で表示
+						d2.toNanos() / 1000); // Durationをマイクロ秒で表示
 
 			}
 		}
