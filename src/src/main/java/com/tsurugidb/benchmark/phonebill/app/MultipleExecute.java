@@ -358,6 +358,7 @@ public class MultipleExecute extends ExecutableCommand {
 		private int numberOfDiffrence = 0;
 		private long vsz = -1;
 		private long rss = -1;
+		private boolean hasOnlineApp;
 
 
 		public Record(Config config) {
@@ -366,6 +367,7 @@ public class MultipleExecute extends ExecutableCommand {
 			this.isolationLevel = config.isolationLevel;
 			this.threadCount = config.threadCount;
 			this.dbmsType = config.dbmsType;
+			this.hasOnlineApp = config.hasOnlineApp();
 		}
 
 		public void start() {
@@ -416,6 +418,8 @@ public class MultipleExecute extends ExecutableCommand {
 			builder.append(",");
 			builder.append(threadCount);
 			builder.append(",");
+			builder.append(hasOnlineApp ? "Yes" : "No");
+			builder.append(",");
 			builder.append(String.format("%.3f", elapsedMillis / 1000.0));
 			builder.append(",");
 			builder.append(tryCount);
@@ -431,7 +435,7 @@ public class MultipleExecute extends ExecutableCommand {
 		}
 
 		public static String header() {
-			return "dbmsType, option, scope, threadCount, elapsedSeconds, tryCount, abortCount, diffrence, vsz(GB), rss(GB)";
+			return "dbmsType, option, scope, threadCount, online app, elapsedSeconds, tryCount, abortCount, diffrence, vsz(GB), rss(GB)";
 		}
 	}
 
