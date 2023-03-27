@@ -1,6 +1,6 @@
 package com.tsurugidb.benchmark.phonebill.db.iceaxe.dao;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -26,7 +26,7 @@ import com.tsurugidb.benchmark.phonebill.db.entity.History;
 import com.tsurugidb.benchmark.phonebill.db.iceaxe.IceaxeTestTools;
 import com.tsurugidb.benchmark.phonebill.db.iceaxe.PhoneBillDbManagerIceaxe;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.PhoneBillDbManagerJdbc;
-import com.tsurugidb.iceaxe.result.TgResultMapping;
+import com.tsurugidb.iceaxe.sql.result.TgResultMapping;
 import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionException;
 import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionRuntimeException;
 
@@ -166,7 +166,7 @@ public class JoinTest extends AbstractJdbcTestCase {
 	}
 
 	@Test
-	@Disabled // 2022/09/01 現在正しくどすあしない => ps.execute()で固まる。
+	@Disabled // 2022/09/01 現在正しく動作しない => ps.execute()で固まる。
 	public void testIceaxe() {
 		prepareIceaxe();
 		assertEquals(histories, iceaxeTestTools.getHistorySet());
@@ -180,18 +180,18 @@ public class JoinTest extends AbstractJdbcTestCase {
 
 		var resultMapping =
 				TgResultMapping.of(History::new)
-				.character("caller_phone_number", History::setCallerPhoneNumber)
-				.character("recipient_phone_number", History::setRecipientPhoneNumber)
-				.character("payment_categorty", History::setPaymentCategorty)
-				.dateTime("start_time", History::setStartTime)
-				.int4("time_secs", History::setTimeSecs)
-				.int4("charge", History::setCharge)
-				.int4("df", History::setDf);
+				.addString("caller_phone_number", History::setCallerPhoneNumber)
+				.addString("recipient_phone_number", History::setRecipientPhoneNumber)
+				.addString("payment_categorty", History::setPaymentCategorty)
+				.addDateTime("start_time", History::setStartTime)
+				.addInt("time_secs", History::setTimeSecs)
+				.addInt("charge", History::setCharge)
+				.addInt("df", History::setDf);
 
 		PhoneBillDbManagerIceaxe manager = iceaxeTestTools.getManager();
 
 		List<History> actual = iceaxeTestTools.execute(() -> {
-			try (var ps = manager.getSession().createPreparedQuery(sql, resultMapping)) {
+			try (var ps = manager.getSession().createQuery(sql, resultMapping)) {
 				try (var result = ps.execute(manager.getCurrentTransaction())) {
 					return result.getRecordList();
 				} catch (TsurugiTransactionException e) {

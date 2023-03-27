@@ -119,7 +119,7 @@ public class PhoneBill extends ExecutableCommand {
 				list.add(task);
 			}
 		}
-		if (config.masterInsertThreadCount > 0 && config.masterInsertReccrdsPerMin != 0) {
+		if (config.masterInsertThreadCount > 0 && config.masterInsertRecordsPerMin != 0) {
 			for (int i = 0; i < config.masterInsertThreadCount; i++) {
 				AbstractOnlineApp task = new MasterInsertApp(config, new Random(random.nextInt()), accessor);
 				task.setName(i);

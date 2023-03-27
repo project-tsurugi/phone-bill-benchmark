@@ -75,6 +75,10 @@ test {
     if (project.hasProperty("url.replace")) {
         systemProperty "url.replace", project.getProperty("url.replace")
     }
+    if (project.hasProperty("com.tsurugidb.tsubakuro.jniverify")) {
+        systemProperty "com.tsurugidb.tsubakuro.jniverify",project.getProperty("com.tsurugidb.tsubakuro.jniverify")
+    }
+
 }
 
 

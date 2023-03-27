@@ -5,15 +5,15 @@ import java.io.UncheckedIOException;
 import java.util.Collection;
 import java.util.List;
 
-import com.tsurugidb.iceaxe.result.TgEntityResultMapping;
-import com.tsurugidb.iceaxe.result.TsurugiResultEntity;
 import com.tsurugidb.iceaxe.session.TsurugiSession;
-import com.tsurugidb.iceaxe.statement.TgParameterList;
-import com.tsurugidb.iceaxe.statement.TgParameterMapping;
-import com.tsurugidb.iceaxe.statement.TsurugiPreparedStatementQuery0;
-import com.tsurugidb.iceaxe.statement.TsurugiPreparedStatementQuery1;
-import com.tsurugidb.iceaxe.statement.TsurugiPreparedStatementUpdate0;
-import com.tsurugidb.iceaxe.statement.TsurugiPreparedStatementUpdate1;
+import com.tsurugidb.iceaxe.sql.TsurugiSqlPreparedQuery;
+import com.tsurugidb.iceaxe.sql.TsurugiSqlPreparedStatement;
+import com.tsurugidb.iceaxe.sql.TsurugiSqlQuery;
+import com.tsurugidb.iceaxe.sql.TsurugiSqlStatement;
+import com.tsurugidb.iceaxe.sql.parameter.TgBindParameters;
+import com.tsurugidb.iceaxe.sql.parameter.TgParameterMapping;
+import com.tsurugidb.iceaxe.sql.result.TsurugiResultEntity;
+import com.tsurugidb.iceaxe.sql.result.mapping.TgEntityResultMapping;
 import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionException;
 import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionRuntimeException;
 
@@ -29,61 +29,61 @@ public class IceaxeUtils {
 		this.session = manager.getSession();
 	}
 
-	public <T> TsurugiPreparedStatementUpdate1<T> createPreparedStatement(String sql,
+	public <T> TsurugiSqlPreparedStatement<T> createPreparedStatement(String sql,
 			TgParameterMapping<T> parameterMapping) {
 		try {
-			return session.createPreparedStatement(sql, parameterMapping);
+			return session.createStatement(sql, parameterMapping);
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}
 	}
 
-	public TsurugiPreparedStatementUpdate0 createPreparedStatement(String sql) {
+	public TsurugiSqlStatement createPreparedStatement(String sql) {
 		try {
-			return session.createPreparedStatement(sql);
+			return session.createStatement(sql);
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}
 	}
 
 
-	public TsurugiPreparedStatementQuery0<TsurugiResultEntity> createPreparedQuery(String sql) {
+	public TsurugiSqlQuery<TsurugiResultEntity> createPreparedQuery(String sql) {
 		try {
-			return session.createPreparedQuery(sql);
+			return session.createQuery(sql);
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}
 	}
 
-	public <T> TsurugiPreparedStatementQuery0<T> createPreparedQuery(String sql, TgEntityResultMapping<T> resultMapping) {
+	public <T> TsurugiSqlQuery<T> createPreparedQuery(String sql, TgEntityResultMapping<T> resultMapping) {
 		try {
-			return session.createPreparedQuery(sql, resultMapping);
+			return session.createQuery(sql, resultMapping);
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}
 	}
 
-	public <T> TsurugiPreparedStatementQuery1<TgParameterList, T> createPreparedQuery(String sql,
-			TgParameterMapping<TgParameterList> parameterMapping, TgEntityResultMapping<T> resultMapping) {
+	public <T> TsurugiSqlPreparedQuery<TgBindParameters, T> createPreparedQuery(String sql,
+			TgParameterMapping<TgBindParameters> parameterMapping, TgEntityResultMapping<T> resultMapping) {
 		try {
-			return session.createPreparedQuery(sql, parameterMapping, resultMapping);
+			return session.createQuery(sql, parameterMapping, resultMapping);
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}
 	}
 
-	public TsurugiPreparedStatementQuery1<TgParameterList, TsurugiResultEntity> createPreparedQuery(String sql,
-			TgParameterMapping<TgParameterList> parameterMapping) {
+	public TsurugiSqlPreparedQuery<TgBindParameters, TsurugiResultEntity> createPreparedQuery(String sql,
+			TgParameterMapping<TgBindParameters> parameterMapping) {
 		try {
-			return session.createPreparedQuery(sql, parameterMapping);
+			return session.createQuery(sql, parameterMapping);
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}
 	}
 
-	public int executeAndGetCount(TsurugiPreparedStatementUpdate0 ps) {
+	public int executeAndGetCount(TsurugiSqlStatement ps) {
 		try (ps){
-			return ps.executeAndGetCount(manager.getCurrentTransaction());
+			return manager.getCurrentTransaction().executeAndGetCount(ps);
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		} catch (TsurugiTransactionException e) {
@@ -91,9 +91,9 @@ public class IceaxeUtils {
 		}
 	}
 
-	public <T> int executeAndGetCount(TsurugiPreparedStatementUpdate1<T> ps, T t) {
+	public <T> int executeAndGetCount(TsurugiSqlPreparedStatement<T> ps, T t) {
 		try (ps){
-			return ps.executeAndGetCount(manager.getCurrentTransaction(), t);
+			return manager.getCurrentTransaction().executeAndGetCount(ps, t);
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		} catch (TsurugiTransactionException e) {
@@ -101,12 +101,12 @@ public class IceaxeUtils {
 		}
 	}
 
-	public <T> int[] executeAndGetCount(TsurugiPreparedStatementUpdate1<T> ps, Collection<T> c) {
+	public <T> int[] executeAndGetCount(TsurugiSqlPreparedStatement<T> ps, Collection<T> c) {
 		int[] ret = new int[c.size()];
 		try (ps) {
 			int i = 0;
 			for (T t: c) {
-				ret[i++] = ps.executeAndGetCount(manager.getCurrentTransaction(), t);
+				ret[i++] = manager.getCurrentTransaction().executeAndGetCount(ps, t);
 			}
 			return ret;
 		} catch (IOException e) {
@@ -116,9 +116,9 @@ public class IceaxeUtils {
 		}
 	}
 
-	public <T> List<T> execute(TsurugiPreparedStatementQuery0<T> ps) {
-		try (ps; var result = ps.execute(manager.getCurrentTransaction())) {
-				return result.getRecordList();
+	public <T> List<T> execute(TsurugiSqlQuery<T> ps) {
+		try (ps) {
+			return manager.getCurrentTransaction().executeAndGetList(ps);
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		} catch (TsurugiTransactionException e) {
@@ -126,9 +126,9 @@ public class IceaxeUtils {
 		}
 	}
 
-	public <T> List<T> execute(TsurugiPreparedStatementQuery1<TgParameterList, T> ps, TgParameterList param) {
-		try (ps; var result = ps.execute(manager.getCurrentTransaction(), param)) {
-			return result.getRecordList();
+	public <T> List<T> execute(TsurugiSqlPreparedQuery<TgBindParameters, T> ps, TgBindParameters parameter) {
+		try (ps) {
+			return manager.getCurrentTransaction().executeAndGetList(ps, parameter);
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		} catch (TsurugiTransactionException e) {

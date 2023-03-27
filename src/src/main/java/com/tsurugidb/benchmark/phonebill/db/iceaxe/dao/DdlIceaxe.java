@@ -7,7 +7,6 @@ import java.util.Optional;
 import com.tsurugidb.benchmark.phonebill.db.dao.Ddl;
 import com.tsurugidb.benchmark.phonebill.db.iceaxe.PhoneBillDbManagerIceaxe;
 import com.tsurugidb.iceaxe.metadata.TgTableMetadata;
-import com.tsurugidb.iceaxe.session.TsurugiSession;
 import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionException;
 import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionRuntimeException;
 
@@ -50,7 +49,7 @@ public class DdlIceaxe implements Ddl {
 					+ "time_secs int not null," 					// 通話時間(秒)
 					+ "charge int," 								// 料金
 					+ "df int not null," 							// 論理削除フラグ
-					+ "primary key (caller_phone_number, start_time)"
+					+ "primary key (caller_phone_number, payment_categorty, start_time)"
 					+ ")";
 			execute(create_table);
 		}
@@ -116,13 +115,22 @@ public class DdlIceaxe implements Ddl {
 	}
 
 	private void execute(String sql) {
-		TsurugiSession session = manager.getSession();
-        try (var ps = session.createPreparedStatement(sql)) {
-            ps.executeAndGetCount(manager.getCurrentTransaction());
+        try {
+            manager.getCurrentTransaction().executeDdl(sql);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         } catch (TsurugiTransactionException e) {
             throw new TsurugiTransactionRuntimeException(e);
         }
+	}
+
+	@Override
+	public boolean tableExists(String tableName) {
+		try {
+			var opt = manager.getSession().findTableMetadata(tableName);
+			return opt.isPresent();
+		} catch (IOException e) {
+            throw new UncheckedIOException(e);
+		}
 	}
 }

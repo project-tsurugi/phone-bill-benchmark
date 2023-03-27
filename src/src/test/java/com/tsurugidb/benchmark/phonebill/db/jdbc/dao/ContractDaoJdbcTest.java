@@ -241,4 +241,15 @@ class ContractDaoJdbcTest extends AbstractJdbcTestCase {
 		assertEquals(Arrays.asList("1", "2", "3", "3", "4", "4"), actualt);
 	}
 
+	@Test
+	final void testCount() {
+		ContractDao dao = getManager().getContractDao();
+
+		// テーブルが空の時
+		assertEquals(0L, dao.count());
+
+		// テーブルにレコード追加
+		dao.batchInsert(Arrays.asList(C20, C30, C40, C31, C10, C41));
+		assertEquals(6L, dao.count());
+	}
 }

@@ -28,9 +28,7 @@ public abstract class ExecutableCommand {
 		List<ConfigInfo> configInfos = new ArrayList<>(args.length);
 		for (int i = startPos; i < args.length; i++) {
 			String arg = args[i];
-			ConfigInfo info = new ConfigInfo();
-			info.config = Config.getConfig(arg);
-			info.configPath = Path.of(arg);
+			ConfigInfo info = new ConfigInfo(arg);
 			configInfos.add(info);
 		}
 		return configInfos;
@@ -38,6 +36,10 @@ public abstract class ExecutableCommand {
 
 
 	protected static class ConfigInfo {
+		public ConfigInfo(String pathString) throws IOException {
+			this.configPath = Path.of(pathString);
+			this.config = Config.getConfig(pathString);
+		}
 		Path configPath;
 		Config config;
 	}

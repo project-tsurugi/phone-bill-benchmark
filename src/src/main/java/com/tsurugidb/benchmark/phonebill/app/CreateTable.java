@@ -57,14 +57,14 @@ public class CreateTable extends ExecutableCommand{
 	private void deleteHistories(Config config, BlockingQueue<String> queue) throws InterruptedException, ExecutionException {
 		int nThread = config.createTestDataThreadCount;
 		ExecutorService service = Executors.newFixedThreadPool(nThread);
-		List<Task> tasks = Collections.emptyList();
+		List<Task> tasks;
 		List<Future<Boolean>> futures= Collections.emptyList();
 		try {
 			tasks = IntStream.range(0, nThread).mapToObj(i -> new Task(config, queue))
 					.collect(Collectors.toList());
 			futures = tasks.stream().map(t -> service.submit(t)).collect(Collectors.toList());
 		} finally {
-			if (service != null && !service.isTerminated()) {
+			if (!service.isTerminated()) {
 				service.shutdown();
 			}
 			boolean success = true;

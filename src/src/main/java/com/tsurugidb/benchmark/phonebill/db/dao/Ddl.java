@@ -16,6 +16,14 @@ public interface Ddl {
 	}
 
 	/**
+	 * 指定の名称のテーブルの有無を調べる
+	 *
+	 * @param tableName
+	 * @return
+	 */
+	public boolean  tableExists(String tableName);
+
+	/**
 	 * 履歴テーブルを作成する
 	 */
 	public void createHistoryTable();

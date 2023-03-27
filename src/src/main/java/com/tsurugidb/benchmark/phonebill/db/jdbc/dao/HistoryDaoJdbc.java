@@ -278,6 +278,21 @@ public class HistoryDaoJdbc implements HistoryDao {
 	}
 
 	@Override
+	public long count() {
+		Connection conn = manager.getConnection();
+		try (Statement stmt = conn.createStatement();
+				ResultSet rs = stmt.executeQuery("select count(*) from history");) {
+			if (rs.next()) {
+				return rs.getLong(1);
+			} else {
+				return 0;
+			}
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@Override
 	public int delete() {
 		Connection conn = manager.getConnection();
 		String sql = "delete from history";

@@ -1,9 +1,13 @@
 package com.tsurugidb.benchmark.phonebill.app;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.app.ExecutableCommand.ConfigInfo;
 import com.tsurugidb.benchmark.phonebill.app.billing.OnlineApp;
@@ -20,6 +24,8 @@ import com.tsurugidb.benchmark.phonebill.testdata.CreateTestDataCsv;
 import com.tsurugidb.benchmark.phonebill.testdata.TestDataStatistics;
 
 public class Main {
+    private static final Logger LOG = LoggerFactory.getLogger(Main.class);
+
 	private static final Map<String, Command> COMMAND_MAP = new LinkedHashMap<>();
 	static {
 		addCommand("CreateTable", "Create tables", CreateTable.class, ArgType.CONFIG);
@@ -68,6 +74,16 @@ public class Main {
 			return;
 		}
 
+		try {
+			exec(args, command);
+		} catch (Exception e) {
+			LOG.debug("Caught an unexpected Exception, exiting.", e);
+			throw e;
+		}
+	}
+
+	public static void exec(String[] args, Command command) throws AssertionError, InstantiationException,
+			IllegalAccessException, InvocationTargetException, NoSuchMethodException, IOException, Exception {
 		ExecutableCommand executableCommand;
 		if (command.clazz == null) {
 			throw new AssertionError();

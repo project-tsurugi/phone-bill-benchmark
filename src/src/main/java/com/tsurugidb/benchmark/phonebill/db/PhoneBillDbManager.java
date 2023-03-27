@@ -46,14 +46,7 @@ public abstract class PhoneBillDbManager implements Closeable {
     private static final Logger LOG = LoggerFactory.getLogger(PhoneBillDbManager.class);
 
     // カウンタを格納するmap
-    private static final Map<CounterKey, AtomicInteger> ccounterMap = new ConcurrentHashMap<>();
-
-    // カウンタの名称
-	public static final String BEGIN_TX = "BEGIN_TX";
-	public static final String TRY_COMMIT = "TRY_COMMIT";
-	public static final String SUCCESS = "SUCCESS";
-	public static final String ABORTED = "ABORTED";
-
+    protected static final Map<CounterKey, AtomicInteger> ccounterMap = new ConcurrentHashMap<>();
 
 	// リトライするExceptionを集計するためのコレクション
 
@@ -193,7 +186,13 @@ public abstract class PhoneBillDbManager implements Closeable {
 	}
 
 
-	protected  final void countup(TxOption option, String name ) {
+	/**
+	 * 指定のTxOption, カウンタ名のカウンタをカウントアップする
+	 *
+	 * @param option
+	 * @param name
+	 */
+	public final void countup(TxOption option, CounterName name ) {
 		CounterKey key = option.getCounterKey(name);
 		AtomicInteger counter = ccounterMap.get(key);
 		if (counter == null) {
@@ -202,6 +201,7 @@ public abstract class PhoneBillDbManager implements Closeable {
 		}
 		counter.incrementAndGet();
 	}
+
 
 
 
@@ -232,7 +232,7 @@ public abstract class PhoneBillDbManager implements Closeable {
 	/**
 	 * counterMapで使用するキー
 	 */
-	static class CounterKey {
+	public static class CounterKey {
 		/**
 		 * トランザクションのラベル
 		 */
@@ -240,7 +240,7 @@ public abstract class PhoneBillDbManager implements Closeable {
 		/**
 		 * カウンタの名称
 		 */
-		String name;
+		CounterName name;
 
 
 		/**
@@ -249,9 +249,13 @@ public abstract class PhoneBillDbManager implements Closeable {
 		 * @param label
 		 * @param name
 		 */
-		CounterKey(TxLabel label, String name) {
+		CounterKey(TxLabel label, CounterName name) {
 			this.label = label;
 			this.name = name;
+		}
+
+		public static CounterKey of(TxLabel label, CounterName name) {
+			return new CounterKey(label, name);
 		}
 
 
@@ -275,14 +279,30 @@ public abstract class PhoneBillDbManager implements Closeable {
 			CounterKey other = (CounterKey) obj;
 			if (label != other.label)
 				return false;
-			if (name == null) {
-				if (other.name != null)
-					return false;
-			} else if (!name.equals(other.name))
+			if (name != other.name)
 				return false;
 			return true;
 		}
 	}
+
+	public static enum CounterName {
+		// For DB Manager
+		BEGIN_TX,
+		TRY_COMMIT,
+		SUCCESS,
+		ABORTED,
+
+		// For Online App
+		OCC_TRY,
+		OCC_ABORT,
+		OCC_SUCC,
+		LTX_TRY,
+		LTX_ABORT,
+		LTX_SUCC,
+		ABANDONED_RETRY
+	}
+
+
 
 	/**
 	 * カウンタのレポートを作成する
@@ -291,14 +311,11 @@ public abstract class PhoneBillDbManager implements Closeable {
 	 */
 	public static String createCounterReport() {
 		// 使用されているラベルととカウンタ名をリストアップ
-		final Set<String> counterNames = new LinkedHashSet<>();
-		counterNames.add(BEGIN_TX);
-		counterNames.add(TRY_COMMIT);
-		counterNames.add(ABORTED);
-		counterNames.add(SUCCESS);
-		for(CounterKey key: ccounterMap.keySet()) {
-			counterNames.add(key.name);
-		}
+		final Set<CounterName> counterNames = new LinkedHashSet<>();
+		counterNames.add(CounterName.BEGIN_TX);
+		counterNames.add(CounterName.TRY_COMMIT);
+		counterNames.add(CounterName.ABORTED);
+		counterNames.add(CounterName.SUCCESS);
 		final List<TxLabel> labels = ccounterMap.keySet().stream().map(k -> k.label).distinct().sorted()
 				.collect(Collectors.toList());
 
@@ -306,11 +323,11 @@ public abstract class PhoneBillDbManager implements Closeable {
 		final ByteArrayOutputStream bos = new ByteArrayOutputStream();
 		try (PrintStream ps = new PrintStream(bos, true, StandardCharsets.UTF_8)) {
 			// ヘッダを生成
-			ps.println("TX_LABELS," + String.join(",", counterNames));
+			ps.println("TX_LABELS," + String.join(",", counterNames.stream().map(cn -> cn.name()).collect(Collectors.toList())));
 			// 本体
 			for(TxLabel label: labels) {
 				ps.print(label);
-				for (String countrName: counterNames) {
+				for (CounterName countrName: counterNames) {
 					CounterKey key = new CounterKey(label, countrName);
 					AtomicInteger c = ccounterMap.get(key);
 					ps.print(',');
@@ -366,7 +383,7 @@ public abstract class PhoneBillDbManager implements Closeable {
 	 */
 	public static void reportNotClosed() {
 		if (stackTraceMap.isEmpty()) {
-			LOG.error("No leak has been discovered.");
+			LOG.debug("No leak has been discovered.");
 			return;
 		}
 		for(String stackTrace: stackTraceMap.values()) {

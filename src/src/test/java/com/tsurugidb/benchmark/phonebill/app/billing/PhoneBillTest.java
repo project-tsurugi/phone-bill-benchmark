@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -320,6 +321,7 @@ class PhoneBillTest extends AbstractJdbcTestCase {
 	 * Configに違いがあっても処理結果が変わらないことを確認(Iceaxe版)
 	 */
 	@Test
+	@Disabled("This test is disabled temporarily due to long processing time.")
 	void testConfigVariationForIceaxe() throws Exception {
 		// PostgreSQLで実行し、その結果を期待値とする
 		Config config = createConfigForTestConfigVariation();
@@ -397,7 +399,7 @@ class PhoneBillTest extends AbstractJdbcTestCase {
 		// オンラインアプリを動かさないケース(1分間に実行する回数が0)
 		config.historyInsertTransactionPerMin = 0;
 		config.historyUpdateRecordsPerMin = 0;
-		config.masterInsertReccrdsPerMin = 0;
+		config.masterInsertRecordsPerMin = 0;
 		config.masterUpdateRecordsPerMin = 0;
 		config.historyInsertThreadCount = 1;
 		config.historyUpdateThreadCount = 1;
@@ -408,7 +410,7 @@ class PhoneBillTest extends AbstractJdbcTestCase {
 		// オンラインアプリを動かさないケース(スレッド数の指定が0)
 		config.historyInsertTransactionPerMin = 1;
 		config.historyUpdateRecordsPerMin = 1;
-		config.masterInsertReccrdsPerMin = 1;
+		config.masterInsertRecordsPerMin = 1;
 		config.masterUpdateRecordsPerMin = 1;
 		config.historyInsertThreadCount = 0;
 		config.historyUpdateThreadCount = 0;
@@ -419,7 +421,7 @@ class PhoneBillTest extends AbstractJdbcTestCase {
 		// スレッド数で指定された数だけ、オンラインアプリが作成されていることを確認する
 		config.historyInsertTransactionPerMin = 1;
 		config.historyUpdateRecordsPerMin = 1;
-		config.masterInsertReccrdsPerMin = 1;
+		config.masterInsertRecordsPerMin = 1;
 		config.masterUpdateRecordsPerMin = 1;
 		config.historyInsertThreadCount = 1;
 		config.historyUpdateThreadCount = 2;

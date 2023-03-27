@@ -2,8 +2,9 @@
     log_location=/* Replace with appropriate path. */
 
 [sql]
+    prepare_phone_bill_tables=true
     lazy_worker=false
-    thread_pool_size=64
+    thread_pool_size=80
 
 [stream_endpoint]
     port=12345
@@ -11,4 +12,7 @@
 
 [ipc_endpoint]
     database_name=phone-bill
-    threads=64
+    threads=80
+
+[fdw]
+    name=phone-bill

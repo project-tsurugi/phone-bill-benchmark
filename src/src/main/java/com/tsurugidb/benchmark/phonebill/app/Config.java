@@ -173,8 +173,8 @@ public class Config implements Cloneable {
 	/**
 	 * 1分間に追加する1スレッドあたりのマスタのレコード数
 	 */
-	public int masterInsertReccrdsPerMin;
-	private static final String MASTER_INSERT_RECCRDS_PER_MIN = "master.insert.reccrds.per.min";
+	public int masterInsertRecordsPerMin;
+	private static final String MASTER_INSERT_RECCRDS_PER_MIN = "master.insert.records.per.min";
 
 	/**
 	 * 1分間に更新する1スレッドあたりの通話履歴レコード数
@@ -467,7 +467,7 @@ public class Config implements Cloneable {
 		masterUpdateRecordsPerMin = getInt(MASTER_UPDATE_RECORDS_PER_MIN, 0);
 		masterUpdateThreadCount = getInt(MASTER_UPDATE_THREAD_COUNT, 1);
 
-		masterInsertReccrdsPerMin = getInt(MASTER_INSERT_RECCRDS_PER_MIN, 0);
+		masterInsertRecordsPerMin = getInt(MASTER_INSERT_RECCRDS_PER_MIN, 0);
 		masterInsertThreadCount = getInt(MASTER_INSERT_THREAD_COUNT, 1);
 
 		historyUpdateRecordsPerMin = getInt(HISTORY_UPDATE_RECORDS_PER_MIN, 0);
@@ -832,7 +832,7 @@ public class Config implements Cloneable {
 		sb.append(String.format(commentFormat, "オンラインアプリケーションに関するパラメータ"));
 		sb.append(String.format(format, MASTER_UPDATE_RECORDS_PER_MIN, masterUpdateRecordsPerMin));
 		sb.append(String.format(format, MASTER_UPDATE_THREAD_COUNT, masterUpdateThreadCount));
-		sb.append(String.format(format, MASTER_INSERT_RECCRDS_PER_MIN, masterInsertReccrdsPerMin));
+		sb.append(String.format(format, MASTER_INSERT_RECCRDS_PER_MIN, masterInsertRecordsPerMin));
 		sb.append(String.format(format, MASTER_INSERT_THREAD_COUNT, masterInsertThreadCount));
 		sb.append(String.format(format, HISTORY_UPDATE_RECORDS_PER_MIN, historyUpdateRecordsPerMin));
 		sb.append(String.format(format, HISTORY_UPDATE_THREAD_COUNT, historyUpdateThreadCount));
@@ -926,6 +926,29 @@ public class Config implements Cloneable {
 	public static enum TransactionOption {
 		OCC,
 		LTX
+	}
+
+	/**
+	 * このConfigがオンラインアプリを含むかを返す
+	 *
+	 * @return
+	 */
+	public boolean hasOnlineApp() {
+		if (masterInsertRecordsPerMin != 0 && masterInsertThreadCount > 0) {
+			return true;
+		}
+		if (masterUpdateRecordsPerMin != 0 && masterUpdateThreadCount > 0) {
+			return true;
+		}
+
+		if (historyInsertTransactionPerMin != 0 && historyInsertThreadCount > 0) {
+			return true;
+		}
+		if (historyUpdateRecordsPerMin != 0 && historyUpdateThreadCount > 0) {
+			return true;
+		}
+
+		return false;
 	}
 
 
