@@ -293,11 +293,6 @@ public class Config implements Cloneable {
 	public  TransactionOption transactionOption;
 	private static final String TRANSACTION_OPTION = "transaction.option";
 
-
-	public boolean usePreparedTables;
-	public static final String USE_PREPARED_TABLES = "use.prepared.tables";
-
-
 	/**
 	 * SQL*Loaderのパス
 	 */
@@ -491,7 +486,6 @@ public class Config implements Cloneable {
 
 		// Iceaxe固有のパラメータ
 		transactionOption = getTransactionOption(TRANSACTION_OPTION, TransactionOption.OCC);
-		usePreparedTables = getBoolean(USE_PREPARED_TABLES, false);
 
 		// その他のパラメータ
 		randomSeed = getInt(RANDOM_SEED, 0);
@@ -858,7 +852,6 @@ public class Config implements Cloneable {
 		sb.append(String.format(format, ORACLE_CREATE_INDEX_OPTION, oracleCreateIndexOption));
 		sb.append(String.format(commentFormat, "Iceaxe固有のパラメータ"));
 		sb.append(String.format(format, TRANSACTION_OPTION, transactionOption));
-		sb.append(String.format(format, USE_PREPARED_TABLES, usePreparedTables));
 		sb.append(String.format(commentFormat, "その他のパラメータ"));
 		sb.append(String.format(format, RANDOM_SEED, randomSeed));
 		sb.append(String.format(format, TRANSACTION_SCOPE, transactionScope));

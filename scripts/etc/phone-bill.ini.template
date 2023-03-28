@@ -2,7 +2,6 @@
     log_location=/* Replace with appropriate path. */
 
 [sql]
-    prepare_phone_bill_tables=true
     lazy_worker=false
     thread_pool_size=80
 
