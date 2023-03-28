@@ -500,29 +500,33 @@ class PhoneBillDbManagerJdbcTest extends  AbstractPhoneBillDbManagerTest{
 	@Test
 	void testCloseThoresSQLException() throws Exception {
 		Config config = Config.getConfig();
-		PhoneBillDbManagerJdbc manager = (PhoneBillDbManagerJdbc) PhoneBillDbManager
-				.createPhoneBillDbManager(config, SessionHoldingType.THREAD_LOCAL);
-		// リフレクションを使用してコネクションのリストを取得
-		Field field = PhoneBillDbManagerJdbc.class.getDeclaredField("connectionList");
-		field.setAccessible(true);
-		@SuppressWarnings("unchecked")
-		List<Connection> list = (List<Connection>) field.get(manager);
+		try (PhoneBillDbManagerJdbc manager = (PhoneBillDbManagerJdbc) PhoneBillDbManager
+				.createPhoneBillDbManager(config, SessionHoldingType.THREAD_LOCAL)) {
+			// リフレクションを使用してコネクションのリストを取得
+			Field field = PhoneBillDbManagerJdbc.class.getDeclaredField("connectionList");
+			field.setAccessible(true);
+			@SuppressWarnings("unchecked")
+			List<Connection> list = (List<Connection>) field.get(manager);
+			for(Connection conn: list) {
+				conn.close();
+			}
+			// クローズ時にSQLExceptionをスローするテスト用のコネクションをセット
+			list.clear();
+			SQLException sqlException = new SQLException();
+			list.add(new ConnectionForTestClose(sqlException));
+			list.add(new ConnectionForTestClose(sqlException));
+			list.add(new ConnectionForTestClose(sqlException));
 
-		// クローズ時にSQLExceptionをスローするテスト用のコネクションをセット
-		list.clear();
-		SQLException sqlException = new SQLException();
-		list.add(new ConnectionForTestClose(sqlException));
-		list.add(new ConnectionForTestClose(sqlException));
-		list.add(new ConnectionForTestClose(sqlException));
+			// 指定のSQLExceptionをラップ下RuntimeExceptionがスローされることを確認
+			RuntimeException e = assertThrows(RuntimeException.class, () -> manager.close());
+			assertEquals(sqlException, e.getCause());
 
-		// 指定のSQLExceptionをラップ下RuntimeExceptionがスローされることを確認
-		RuntimeException e = assertThrows(RuntimeException.class, ()-> manager.close());
-		assertEquals(sqlException, e.getCause());
-
-		// すべてのコネクションのcloseが呼ばれていることを確認
-		for(Connection conn: list) {
-			ConnectionForTestClose c = (ConnectionForTestClose) conn;
-			assertTrue(c.closeCalleed);
+			// すべてのコネクションのcloseが呼ばれていることを確認
+			for (Connection conn : list) {
+				ConnectionForTestClose c = (ConnectionForTestClose) conn;
+				assertTrue(c.closeCalleed);
+			}
+			list.clear();
 		}
 	}
 
