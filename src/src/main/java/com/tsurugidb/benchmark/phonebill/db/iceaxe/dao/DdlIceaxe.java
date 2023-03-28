@@ -52,6 +52,9 @@ public class DdlIceaxe implements Ddl {
 					+ "primary key (caller_phone_number, payment_categorty, start_time)"
 					+ ")";
 			execute(create_table);
+			execute("create index idx_hst on history(df)");
+			execute("create index idx_st on history(start_time)");
+			execute("create index idx_rp on history(recipient_phone_number, start_time)");
 		}
 	}
 
@@ -83,7 +86,7 @@ public class DdlIceaxe implements Ddl {
 
 	@Override
 	public void createIndexes() {
-//      TODO 現在create indexに未対応
+//      TODO 現在create indexは、テーブルが空の時のみ実行可能なので、create tableと同時に実行する
 //		execute("create index history(df)");
 //		execute("create index idx_st on history(start_time)");
 //		execute("create index idx_rp on history(recipient_phone_number, start_time)");
