@@ -134,6 +134,7 @@ public abstract class AbstractOnlineApp implements Runnable{
 		if (occSuccess) {
 			return;
 		}
+		manager.countup(occ, CounterName.OCC_ABANDONED_RETRY);
 		if (ltx == null) {
 			ltx = TxOption.ofLTX(0, getTxLabel(), getWritePreserveTable());
 		}
@@ -141,7 +142,7 @@ public abstract class AbstractOnlineApp implements Runnable{
 		if (ltxSuccess) {
 			return;
 		}
-		manager.countup(ltx, CounterName.ABANDONED_RETRY);
+		manager.countup(ltx, CounterName.LTX_ABANDONED_RETRY);
 		return;
 	}
 

@@ -222,18 +222,18 @@ public class MultipleExecute extends ExecutableCommand {
 
 	/**
 	 * オンラインアプリのレポートを出力する
-	 *  </p>
-	 *  出力サンプル
+	 * </p>
+	 * 出力サンプル
 	 *
-	 *  <pre>
-	 *  ## ICEAXE-OCC-CONTRACT-T16
+	 * <pre>
+	 * ## ICEAXE-OCC-CONTRACT-T1
 	 *
-	 *	| application    | Threads | tpm/thread | records/tx | succ | abandoned  retry | occ-try | occ-abort | occ-succ | ltx-try | ltx-abort | ltx-succ |
-	 *	|----------------|---------|------------|------------|------|------------------|---------|-----------|----------|---------|-----------|----------|
-	 *	| master insert  | 10      | 20         | 1          | 314  | 0                | 628     | 628       | 0        | 314     | 0         | 0        |
-	 *	| master update  | 10      | 20         | 1          | 151  | 92               | 151     | 151       | 50       | 91      | 91        | 0        |
-	 *	| history insert | 10      | 20         | 100        | 65   | 0                | 65      | 200       | 200      | 0       | 0         | 0        |
-	 *	| history update | 10      | 20         | 1          | 358  | 25               | 358     | 716       | 0        | 358     | 0         | 358      |
+	 * | application    | Threads | tpm/thread | records/tx | succ | occ-try | occ-abort | occ-succ | occ abandoned retry | ltx-try | ltx-abort | ltx-succ |ltx abandoned retry|
+	 * |----------------|--------:|-----------:|-----------:|-----:|--------:|----------:|---------:|--------------------:|--------:|----------:|---------:|------------------:|
+	 * |master insert|1|-1|1|10137|10137|0|10137|0|0|0|0|0|
+	 * |master update|1|-1|1|3747|3747|0|3747|0|0|0|0|0|
+	 * |history insert|1|-1|100|354|382|42|340|14|18|4|14|0|
+	 * |history update|1|-1|1|798|986|207|779|19|19|0|19|0|
 	 * </pre>
 	 *
 	 * @param config
@@ -247,8 +247,8 @@ public class MultipleExecute extends ExecutableCommand {
 		sb.append("## " + title + "\n\n");
 
 		// ヘッダ
-		sb.append("| application    | Threads | tpm/thread | records/tx | succ | abandoned  retry | occ-try | occ-abort | occ-succ | ltx-try | ltx-abort | ltx-succ |\n");
-		sb.append("|----------------|--------:|-----------:|-----------:|-----:|-----------------:|--------:|----------:|---------:|--------:|----------:|---------:|\n");
+		sb.append("| application    | Threads | tpm/thread | records/tx | succ | occ-try | occ-abort | occ-succ | occ<br>abandoned<br>retry | ltx-try | ltx-abort | ltx-succ |ltx<br>abandoned<br>retry|\n");
+		sb.append("|----------------|--------:|-----------:|-----------:|-----:|--------:|----------:|---------:|--------------------------:|--------:|----------:|---------:|------------------------:|\n");
 
 
 		// master insert
@@ -446,22 +446,24 @@ public class MultipleExecute extends ExecutableCommand {
 		int tpmTthread;
 		int recordsTx;
 		int succ;
-		int abandonedRtry;
 		int occTry;
 		int occAbort;
 		int occSucc;
+		int occAbandonedRtry;
 		int ltxTry;
 		int ltxAbort;
 		int ltxSucc;
+		int ltxAbandonedRtry;
 
 		void setCounterValues(TxLabel txLabel) {
-			abandonedRtry = PhoneBillDbManager.getCounter(CounterKey.of(txLabel, CounterName.ABANDONED_RETRY));
 			occTry = PhoneBillDbManager.getCounter(CounterKey.of(txLabel, CounterName.OCC_TRY));
 			occAbort = PhoneBillDbManager.getCounter(CounterKey.of(txLabel, CounterName.OCC_ABORT));
 			occSucc = PhoneBillDbManager.getCounter(CounterKey.of(txLabel, CounterName.OCC_SUCC));
+			occAbandonedRtry = PhoneBillDbManager.getCounter(CounterKey.of(txLabel, CounterName.OCC_ABANDONED_RETRY));
 			ltxTry = PhoneBillDbManager.getCounter(CounterKey.of(txLabel, CounterName.LTX_TRY));
 			ltxAbort = PhoneBillDbManager.getCounter(CounterKey.of(txLabel, CounterName.LTX_ABORT));
 			ltxSucc = PhoneBillDbManager.getCounter(CounterKey.of(txLabel, CounterName.LTX_SUCC));;
+			ltxAbandonedRtry = PhoneBillDbManager.getCounter(CounterKey.of(txLabel, CounterName.LTX_ABANDONED_RETRY));
 			succ = occSucc + ltxSucc;
 		}
 
@@ -480,19 +482,21 @@ public class MultipleExecute extends ExecutableCommand {
 			sb.append("|");
 			sb.append(succ);
 			sb.append("|");
-			sb.append(abandonedRtry);
-			sb.append("|");
 			sb.append(occTry);
 			sb.append("|");
 			sb.append(occAbort);
 			sb.append("|");
 			sb.append(occSucc);
 			sb.append("|");
+			sb.append(occAbandonedRtry);
+			sb.append("|");
 			sb.append(ltxTry);
 			sb.append("|");
 			sb.append(ltxAbort);
 			sb.append("|");
 			sb.append(ltxSucc);
+			sb.append("|");
+			sb.append(ltxAbandonedRtry);
 			sb.append("|");
 			sb.append("\n");
 			return sb.toString();

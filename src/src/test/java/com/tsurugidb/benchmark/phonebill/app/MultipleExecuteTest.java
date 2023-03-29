@@ -79,13 +79,13 @@ class MultipleExecuteTest {
 		assertEquals(8, lines.size());
 		assertEquals("## Example", lines.get(0));
 		assertEquals("", lines.get(1));
-		assertEquals("| application    | Threads | tpm/thread | records/tx | succ | abandoned  retry | occ-try | occ-abort | occ-succ | ltx-try | ltx-abort | ltx-succ |", lines.get(2));
+		assertEquals("| application    | Threads | tpm/thread | records/tx | succ | occ-try | occ-abort | occ-succ | occ<br>abandoned<br>retry | ltx-try | ltx-abort | ltx-succ |ltx<br>abandoned<br>retry|", lines.get(2));
 
-		assertEquals("|----------------|--------:|-----------:|-----------:|-----:|-----------------:|--------:|----------:|---------:|--------:|----------:|---------:|", lines.get(3));
-		assertEquals("|master insert|1|0|1|0|0|0|0|0|0|0|0|", lines.get(4));
-		assertEquals("|master update|1|0|1|0|0|0|0|0|0|0|0|", lines.get(5));
-		assertEquals("|history insert|1|0|1|0|0|0|0|0|0|0|0|", lines.get(6));
-		assertEquals("|history update|1|0|1|0|0|0|0|0|0|0|0|", lines.get(7));
+		assertEquals("|----------------|--------:|-----------:|-----------:|-----:|--------:|----------:|---------:|--------------------------:|--------:|----------:|---------:|------------------------:|", lines.get(3));
+		assertEquals("|master insert|1|0|1|0|0|0|0|0|0|0|0|0|", lines.get(4));
+		assertEquals("|master update|1|0|1|0|0|0|0|0|0|0|0|0|", lines.get(5));
+		assertEquals("|history insert|1|0|1|0|0|0|0|0|0|0|0|0|", lines.get(6));
+		assertEquals("|history update|1|0|1|0|0|0|0|0|0|0|0|0|", lines.get(7));
 
 	}
 

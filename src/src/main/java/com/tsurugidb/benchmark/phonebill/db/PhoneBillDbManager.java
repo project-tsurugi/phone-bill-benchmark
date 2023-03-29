@@ -296,10 +296,11 @@ public abstract class PhoneBillDbManager implements Closeable {
 		OCC_TRY,
 		OCC_ABORT,
 		OCC_SUCC,
+		OCC_ABANDONED_RETRY,
 		LTX_TRY,
 		LTX_ABORT,
 		LTX_SUCC,
-		ABANDONED_RETRY
+		LTX_ABANDONED_RETRY
 	}
 
 
