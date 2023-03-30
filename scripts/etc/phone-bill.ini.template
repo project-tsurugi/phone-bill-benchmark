@@ -3,7 +3,7 @@
 
 [sql]
     lazy_worker=false
-    thread_pool_size=80
+    thread_pool_size=$TSURUGI_THREAD_SIZE
 
 [stream_endpoint]
     port=12345
@@ -11,7 +11,7 @@
 
 [ipc_endpoint]
     database_name=phone-bill
-    threads=80
+    threads=$TSURUGI_THREAD_SIZE
 
 [fdw]
     name=phone-bill

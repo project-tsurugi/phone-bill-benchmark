@@ -7,7 +7,6 @@ BIN_DIR=$(cd $(dirname $0); pwd)
 
 # kill oltp server
 
-sed "s!log_location=.*!log_location=$TSURUGI_LOG_DIR!" $BIN_DIR/etc/phone-bill.ini.template > $BIN_DIR/etc/phone-bill.ini
 $TSURUGI_DIR/bin/oltp kill --conf=$BIN_DIR/etc/phone-bill.ini -timeout 0 && true
 rm -rf  $TSURUGI_LOG_DIR
 

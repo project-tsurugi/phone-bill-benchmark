@@ -13,7 +13,6 @@ BIN_DIR=$(cd $(dirname $0); pwd)
 
 # execute phone-bill
 
-sed "s!log_location=.*!log_location=$TSURUGI_LOG_DIR!" $BIN_DIR/etc/phone-bill.ini.template > $BIN_DIR/etc/phone-bill.ini
 
 ext=`date "+%Y%m%d-%H%M%S"`.log
 export DB_INIT_CMD=$BIN_DIR/tinit.sh
