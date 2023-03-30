@@ -49,7 +49,7 @@ skip.database.access=false
 # スレッドに関するパラメータ
 thread.count=16
 shared.connection=false
-create.test.data.thread.count=64
+create.test.data.thread.count=16
 
 # CSVに関するパラメータ
 csv.dir=/tmp
