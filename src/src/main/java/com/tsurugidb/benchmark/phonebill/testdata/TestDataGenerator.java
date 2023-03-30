@@ -289,10 +289,10 @@ public class TestDataGenerator {
 	 *
 	 * @throws IOException
 	 */
-	public void generateHistoryToDb(PhoneBillDbManager manager) {
+	public void generateHistoryToDb(Config config) {
 		List<Params> paramsList = createParamsList();
 		for(Params params: paramsList) {
-			params.historyWriter = new DaoHistoryWriter(manager);
+			params.historyWriter = new DaoHistoryWriter(config);
 		}
 		generateHistory(paramsList);
 	}
@@ -539,21 +539,26 @@ public class TestDataGenerator {
 		PhoneBillDbManager manager;
 		HistoryDao historyDao;
 		List<History> histories = null;
+		Config config;
 
-		public DaoHistoryWriter(PhoneBillDbManager manager) {
-			this.manager = manager;
-			historyDao = manager.getHistoryDao();
+		public DaoHistoryWriter(Config  config) {
+			this.config = config;
 		}
 
 		@Override
 		void init() throws IOException {
 			histories = new ArrayList<History>(SQL_BATCH_EXEC_SIZE);
+			manager = PhoneBillDbManager.createPhoneBillDbManager(config);
+			historyDao = manager.getHistoryDao();
 		}
 
 		@Override
 		void cleanup() throws IOException {
 			if (histories.size() != 0) {
 				insertHistories();
+			}
+			if (manager != null) {
+				manager.close();
 			}
 		}
 

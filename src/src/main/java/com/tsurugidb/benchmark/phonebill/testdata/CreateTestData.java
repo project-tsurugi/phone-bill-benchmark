@@ -56,7 +56,7 @@ public class CreateTestData extends ExecutableCommand {
 
 			// 通話履歴のテストデータを作成
 			startTime = System.currentTimeMillis();
-			generator.generateHistoryToDb(manager);
+			generator.generateHistoryToDb(config);
 			elapsedTime = System.currentTimeMillis() - startTime;
 			format = "%,d records generated to history table in %,.3f sec ";
 			LOG.info(String.format(format, config.numberOfHistoryRecords, elapsedTime / 1000d));
