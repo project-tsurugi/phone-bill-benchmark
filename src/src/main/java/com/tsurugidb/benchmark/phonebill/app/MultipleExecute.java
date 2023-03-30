@@ -60,14 +60,14 @@ public class MultipleExecute extends ExecutableCommand {
 	@Override
 	public void execute(List<ConfigInfo> configInfos) throws Exception {
 		ExecutorService service = Executors.newFixedThreadPool(1);
+		TateyamaWatcher task = null;
+		Future<?> future = null;
 		try {
 			boolean prevConfigHasOnlineApp = false;
 			for (ConfigInfo info : configInfos) {
 				Config config = info.config;
 				LOG.info("Using config {} " + System.lineSeparator() + "--- " + System.lineSeparator() + config
 						+ System.lineSeparator() + "---", info.configPath.toAbsolutePath().toString());
-				TateyamaWatcher task = null;
-				Future<?> future = null;;
 				if (config.dbmsType == DbmsType.ICEAXE) {
 					dbiInit();
 					task = new TateyamaWatcher();
@@ -95,6 +95,12 @@ public class MultipleExecute extends ExecutableCommand {
 				PhoneBillDbManager.reportNotClosed();
 			}
 		} finally {
+			if (task != null) {
+				task.stop();
+			}
+			if (future != null) {
+				future.get();
+			}
 			service.shutdown();
 		}
 	}
