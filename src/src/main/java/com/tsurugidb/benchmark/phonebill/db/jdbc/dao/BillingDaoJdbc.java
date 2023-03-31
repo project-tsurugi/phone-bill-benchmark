@@ -74,4 +74,15 @@ public class BillingDaoJdbc implements BillingDao {
 		return list;
 	}
 
+	@Override
+	public int delete() {
+		Connection conn = manager.getConnection();
+		String sql = "delete from billing";
+		try (PreparedStatement ps = conn.prepareStatement(sql)) {
+			return ps.executeUpdate();
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 }

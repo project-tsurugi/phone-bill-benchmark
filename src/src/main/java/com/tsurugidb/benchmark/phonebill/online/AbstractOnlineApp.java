@@ -14,8 +14,10 @@ import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
+import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager.CounterName;
 import com.tsurugidb.benchmark.phonebill.db.TxLabel;
 import com.tsurugidb.benchmark.phonebill.db.TxOption;
+import com.tsurugidb.benchmark.phonebill.db.TxOption.Table;
 import com.tsurugidb.benchmark.phonebill.db.dao.ContractDao;
 import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 
@@ -86,12 +88,25 @@ public abstract class AbstractOnlineApp implements Runnable{
 	private Config config;
 
 
+	/**
+	 * OCCのTxOption
+	 */
+	private TxOption occ;
+
+	/**
+	 * LTXのTxOption
+	 */
+	private TxOption ltx;
+
+
+
 	public AbstractOnlineApp(int execPerMin, Config config, Random random) {
 		this.execPerMin = execPerMin;
 		this.random = random;
 		this.config = config;
 		skipDatabaseAccess = config.skipDatabaseAccess;
 		setName(0);
+
 	}
 
 	/**
@@ -112,27 +127,58 @@ public abstract class AbstractOnlineApp implements Runnable{
 	 * @param manager
 	 */
 	final void exec(PhoneBillDbManager manager) {
+		if (occ == null) {
+			occ = TxOption.ofOCC(0, getTxLabel());
+		}
+		boolean occSuccess =	exec(manager, occ, 3, true);
+		if (occSuccess) {
+			return;
+		}
+		manager.countup(occ, CounterName.OCC_ABANDONED_RETRY);
+		if (ltx == null) {
+			ltx = TxOption.ofLTX(0, getTxLabel(), getWritePreserveTable());
+		}
+		boolean ltxSuccess = 	exec(manager, ltx, 3, false);
+		if (ltxSuccess) {
+			return;
+		}
+		manager.countup(ltx, CounterName.LTX_ABANDONED_RETRY);
+		return;
+	}
+
+	/**
+	 * 指定のDbManager, TxOption, リトライ回数で実行する
+	 *
+	 * @param manager
+	 * @param maxTry
+	 * @param txOption
+	 * @return リトライしても成功しない場合false、成功した場合true、終了要求により終了する場合true
+	 */
+	private boolean exec(PhoneBillDbManager manager, TxOption txOption, int maxTry, boolean isOcc) {
 		HistoryDao historyDao = manager.getHistoryDao();
 		ContractDao contractDao = manager.getContractDao();
-
-		for (;;) { // 処理に成功するまで無限にリトライする
+		for (int i = 0; i < maxTry; i++) {
 			if (terminationRequested.get()) {
-				return;
+				return true;
 			}
 			try {
-				manager.execute(TxOption.ofOCC(0, getTxLabel()), () -> {
+				manager.execute(txOption, () -> {
+					manager.countup(txOption, isOcc ? CounterName.OCC_TRY : CounterName.LTX_TRY);
 					createData(contractDao, historyDao);
 					if (!skipDatabaseAccess) {
 						updateDatabase(contractDao, historyDao);
 					}
 				});
-				break;
+				manager.countup(txOption, isOcc ? CounterName.OCC_SUCC : CounterName.LTX_SUCC);
+				return true;
 			} catch (RuntimeException e) {
+				manager.countup(txOption, isOcc ? CounterName.OCC_ABORT : CounterName.LTX_ABORT);
 				PhoneBillDbManager.addRetringExceptions(e);
-				LOG.info("Caught exception, retrying... ", e);
+				LOG.debug("Tx aborted by caught an exception: {}", e.getMessage());
 				continue;
 			}
 		}
+		return false;
 	}
 
 	/**
@@ -284,4 +330,13 @@ public abstract class AbstractOnlineApp implements Runnable{
 	 * @return
 	 */
 	public abstract TxLabel getTxLabel();
+
+
+	/**
+	 * オンラインアプリが書き込むテーブルを返す
+	 *
+	 * @return
+	 */
+	public abstract Table getWritePreserveTable();
 }
+

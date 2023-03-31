@@ -28,6 +28,7 @@ public class TateyamaWatcher implements Runnable  {
 
 	@Override
 	public void run() {
+		Thread.currentThread().setName("TateyamaWatcher");
 		final NumberFormat fmt = NumberFormat.getNumberInstance(Locale.US);
 
 		int pid = findServerPid();

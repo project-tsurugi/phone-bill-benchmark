@@ -377,4 +377,15 @@ class ContractDaoIceaxeTest {
 		});
 		assertEquals(Arrays.asList("1", "2", "3", "3", "4", "4"), actualt);
 	}
+
+
+	@Test
+	final void testCount() {
+		// テーブルが空の時
+		assertEquals(0L, testTools.execute(dao::count));
+
+		// テーブルにレコード追加
+		testTools.insertToContracts(C20, C30, C40, C31, C10, C41);
+		assertEquals(6L, testTools.execute(dao::count));
+	}
 }

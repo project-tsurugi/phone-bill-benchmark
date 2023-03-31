@@ -136,11 +136,12 @@ public class GenerateHistoryTask implements Callable<Result> {
 				History h = createHistoryRecord();
 				historyWriter.write(h);
 			}
-			historyWriter.cleanup();
 		} catch (RuntimeException e) {
 			result.success = false;
 			result.e = e;
 			LOG.debug("end task id =" + taskId + " with error", e);
+		} finally {
+			historyWriter.cleanup();
 		}
 		LOG.debug("end task id = " + taskId);
 		return result;

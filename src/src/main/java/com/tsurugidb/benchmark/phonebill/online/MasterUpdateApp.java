@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.Config.DbmsType;
 import com.tsurugidb.benchmark.phonebill.db.TxLabel;
+import com.tsurugidb.benchmark.phonebill.db.TxOption.Table;
 import com.tsurugidb.benchmark.phonebill.db.dao.ContractDao;
 import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
@@ -199,5 +200,10 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 	@Override
 	public TxLabel getTxLabel() {
 		return TxLabel.MASTER_UPDATE_APP;
+	}
+
+	@Override
+	public Table getWritePreserveTable() {
+		return Table.CONTRACTS;
 	}
 }

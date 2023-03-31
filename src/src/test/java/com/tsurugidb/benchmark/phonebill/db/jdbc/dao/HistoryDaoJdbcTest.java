@@ -466,4 +466,24 @@ class HistoryDaoJdbcTest extends AbstractJdbcTestCase {
 		assertEquals(expect, new HashSet<>(dao.getAllPhoneNumbers()));
 	}
 
+	@Test
+	final void testCount() throws SQLException {
+		HistoryDao dao = getManager().getHistoryDao();
+
+		// 履歴が空のとき
+		assertEquals(0L,  dao.count());
+
+		// 履歴が複数存在するとき
+		insertToHistory("Phone-0001", "Phone-0008", "C", "2020-10-31 23:59:59.999", 30,  0);
+		insertToHistory("Phone-0001", "Phone-0008", "C", "2020-11-01 00:00:00.000", 30,  0);
+		insertToHistory("Phone-0001", "Phone-0008", "C", "2021-11-15 12:12:12.000", 90,  1);
+		assertEquals(3L,  dao.count());
+
+		insertToHistory("Phone-0001", "Phone-0008", "C", "2020-11-30 23:59:59.999", 90,  0);
+		insertToHistory("Phone-0001", "Phone-0008", "C", "2020-12-01 00:00:00.000", 30,  0);
+		insertToHistory("Phone-0005", "Phone-0001", "C", "2020-11-10 00:00:00.000", 25,  0);
+		insertToHistory("Phone-0005", "Phone-0008", "R", "2020-11-30 00:00:00.000", 30,  0);
+		assertEquals(7L,  dao.count());
+
+	}
 }

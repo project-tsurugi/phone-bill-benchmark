@@ -44,7 +44,7 @@ public class RunOnlineApp extends ExecutableCommand {
 	public void execute(Config config) throws Exception {
 		int[] threadCounts = {1, 2, 4, 8, 16, 32, 64, 128, 256};
 		for (int threadCount: threadCounts ) {
-			config.masterInsertReccrdsPerMin = -1;
+			config.masterInsertRecordsPerMin = -1;
 			config.masterUpdateRecordsPerMin = -1;
 			config.historyInsertRecordsPerTransaction = 10000;
 			config.historyInsertTransactionPerMin = -1;

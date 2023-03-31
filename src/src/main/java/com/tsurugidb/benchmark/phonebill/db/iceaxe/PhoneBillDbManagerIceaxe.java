@@ -20,7 +20,7 @@ import com.tsurugidb.benchmark.phonebill.db.iceaxe.dao.ContractDaoIceaxe;
 import com.tsurugidb.benchmark.phonebill.db.iceaxe.dao.DdlIceaxe;
 import com.tsurugidb.benchmark.phonebill.db.iceaxe.dao.HistoryDaoIceaxe;
 import com.tsurugidb.iceaxe.TsurugiConnector;
-import com.tsurugidb.iceaxe.session.TgSessionInfo;
+import com.tsurugidb.iceaxe.session.TgSessionOption;
 import com.tsurugidb.iceaxe.session.TsurugiSession;
 import com.tsurugidb.iceaxe.transaction.TgCommitType;
 import com.tsurugidb.iceaxe.transaction.TsurugiTransaction;
@@ -41,10 +41,10 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
 	public PhoneBillDbManagerIceaxe(Config config) {
 		this.config = config;
 		var endpoint = config.url;
-        var connector = TsurugiConnector.createConnector(endpoint);
+        var connector = TsurugiConnector.of(endpoint);
         try {
-            var info = TgSessionInfo.of();
-            this.session = connector.createSession(info);
+            var sessionOption = TgSessionOption.of();
+            this.session = connector.createSession(sessionOption);
             session.setConnectTimeout(30, TimeUnit.SECONDS);
             this.transactionManager = session.createTransactionManager();
         } catch (IOException e) {
@@ -106,27 +106,27 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
             transactionManager.execute(setting, transaction -> {
                 transactionThreadLocal.set(transaction);
                 try {
-                	countup(txOption, BEGIN_TX);
+                	countup(txOption, CounterName.BEGIN_TX);
                     runnable.run();
-                	countup(txOption, TRY_COMMIT);
+                	countup(txOption, CounterName.TRY_COMMIT);
                 } finally {
                     transactionThreadLocal.remove();
                 }
             });
         } catch (IOException e) {
-            countup(txOption, ABORTED);
+            countup(txOption, CounterName.ABORTED);
         	if (isRetriable(e)) {
             	throw new RetryOverRuntimeException(e);
         	}
             throw new UncheckedIOException(e);
         } catch (RuntimeException e) {
-            countup(txOption, ABORTED);
+            countup(txOption, CounterName.ABORTED);
         	if (isRetriable(e)) {
             	throw new RetryOverRuntimeException(e);
         	}
         	throw e;
         }
-        countup(txOption, SUCCESS);
+        countup(txOption, CounterName.SUCCESS);
     }
 
     @Override
@@ -136,9 +136,9 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
             return transactionManager.execute(setting, transaction -> {
                 transactionThreadLocal.set(transaction);
                 try {
-                	countup(txOption, BEGIN_TX);
+                	countup(txOption, CounterName.BEGIN_TX);
                     var ret =  supplier.get();
-                	countup(txOption, TRY_COMMIT);
+                	countup(txOption, CounterName.TRY_COMMIT);
                 	return ret;
 
                 } finally {
@@ -146,13 +146,13 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
                 }
             });
         } catch (IOException e) {
-            countup(txOption, ABORTED);
+            countup(txOption, CounterName.ABORTED);
         	if (isRetriable(e)) {
             	throw new RetryOverRuntimeException(e);
         	}
             throw new UncheckedIOException(e);
         } catch (RuntimeException e) {
-            countup(txOption, ABORTED);
+            countup(txOption, CounterName.ABORTED);
         	if (isRetriable(e)) {
             	throw new RetryOverRuntimeException(e);
         	}
@@ -244,5 +244,4 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
 		}
 		return false;
 	}
-
 }

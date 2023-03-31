@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.db.TxLabel;
+import com.tsurugidb.benchmark.phonebill.db.TxOption.Table;
 import com.tsurugidb.benchmark.phonebill.db.dao.ContractDao;
 import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
@@ -32,7 +33,7 @@ public class MasterInsertApp extends AbstractOnlineApp {
     private Contract contract;
 
 	public MasterInsertApp(Config config, Random random, ContractBlockInfoAccessor accessor) throws IOException {
-		super(config.masterInsertReccrdsPerMin, config, random);
+		super(config.masterInsertRecordsPerMin, config, random);
 		testDataGenerator = new TestDataGenerator(config, new Random(config.randomSeed), accessor);
 	}
 
@@ -51,5 +52,10 @@ public class MasterInsertApp extends AbstractOnlineApp {
 	@Override
 	public TxLabel getTxLabel() {
 		return TxLabel.MASTER_INSERT_APP;
+	}
+
+	@Override
+	public Table getWritePreserveTable() {
+		return Table.CONTRACTS;
 	}
 }

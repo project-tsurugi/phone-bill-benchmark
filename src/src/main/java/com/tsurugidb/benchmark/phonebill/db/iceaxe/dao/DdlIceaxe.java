@@ -7,7 +7,6 @@ import java.util.Optional;
 import com.tsurugidb.benchmark.phonebill.db.dao.Ddl;
 import com.tsurugidb.benchmark.phonebill.db.iceaxe.PhoneBillDbManagerIceaxe;
 import com.tsurugidb.iceaxe.metadata.TgTableMetadata;
-import com.tsurugidb.iceaxe.session.TsurugiSession;
 import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionException;
 import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionRuntimeException;
 
@@ -19,11 +18,9 @@ import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionRuntimeExcep
  */
 public class DdlIceaxe implements Ddl {
 	private final PhoneBillDbManagerIceaxe manager;
-	private final boolean usePreparedTables;
 
 	public DdlIceaxe(PhoneBillDbManagerIceaxe phoneBillDbManagerIceaxe) {
 		this.manager = phoneBillDbManagerIceaxe;
-		this.usePreparedTables = manager.getConfig().usePreparedTables;
 	}
 
 	@Override
@@ -34,26 +31,25 @@ public class DdlIceaxe implements Ddl {
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}
-		if (opt.isPresent() && !(usePreparedTables && tableName.equalsIgnoreCase("history"))) {
+		if (opt.isPresent()) {
 			execute("drop table " + tableName);
 		}
 	}
 
 	@Override
 	public void createHistoryTable() {
-		if (!usePreparedTables) {
-			String create_table = "create table history ("
-					+ "caller_phone_number varchar(15) not null," 		// 発信者電話番号
-					+ "recipient_phone_number varchar(15) not null," 	// 受信者電話番号
-					+ "payment_categorty char(1) not null," 			// 料金区分
-					+ "start_time timestamp not null,"			 		// 通話開始時刻
-					+ "time_secs int not null," 					// 通話時間(秒)
-					+ "charge int," 								// 料金
-					+ "df int not null," 							// 論理削除フラグ
-					+ "primary key (caller_phone_number, payment_categorty, start_time)"
-					+ ")";
-			execute(create_table);
-		}
+		String create_table = "create table history (" + "caller_phone_number varchar(15) not null," // 発信者電話番号
+				+ "recipient_phone_number varchar(15) not null," // 受信者電話番号
+				+ "payment_categorty char(1) not null," // 料金区分
+				+ "start_time timestamp not null," // 通話開始時刻
+				+ "time_secs int not null," // 通話時間(秒)
+				+ "charge int," // 料金
+				+ "df int not null," // 論理削除フラグ
+				+ "primary key (caller_phone_number, payment_categorty, start_time)" + ")";
+		execute(create_table);
+		execute("create index idx_hst on history(df)");
+		execute("create index idx_st on history(start_time)");
+		execute("create index idx_rp on history(recipient_phone_number, payment_categorty, start_time)");
 	}
 
 	public void createContractsTable() {
@@ -84,7 +80,7 @@ public class DdlIceaxe implements Ddl {
 
 	@Override
 	public void createIndexes() {
-//      TODO 現在create indexに未対応
+//      TODO 現在create indexは、テーブルが空の時のみ実行可能なので、create tableと同時に実行する
 //		execute("create index history(df)");
 //		execute("create index idx_st on history(start_time)");
 //		execute("create index idx_rp on history(recipient_phone_number, start_time)");
@@ -116,13 +112,22 @@ public class DdlIceaxe implements Ddl {
 	}
 
 	private void execute(String sql) {
-		TsurugiSession session = manager.getSession();
-        try (var ps = session.createPreparedStatement(sql)) {
-            manager.getCurrentTransaction().executeAndGetCount(ps);
+        try {
+            manager.getCurrentTransaction().executeDdl(sql);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         } catch (TsurugiTransactionException e) {
             throw new TsurugiTransactionRuntimeException(e);
         }
+	}
+
+	@Override
+	public boolean tableExists(String tableName) {
+		try {
+			var opt = manager.getSession().findTableMetadata(tableName);
+			return opt.isPresent();
+		} catch (IOException e) {
+            throw new UncheckedIOException(e);
+		}
 	}
 }

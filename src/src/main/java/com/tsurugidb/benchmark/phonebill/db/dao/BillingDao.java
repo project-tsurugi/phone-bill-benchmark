@@ -10,6 +10,8 @@ public interface BillingDao {
 
 	public int insert(Billing billing);
 	public int delete(Date targetMonth);
+	public int delete();
 	public List<Billing> getBillings();
+
 
 }

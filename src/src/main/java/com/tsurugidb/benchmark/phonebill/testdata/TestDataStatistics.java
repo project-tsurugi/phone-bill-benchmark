@@ -40,7 +40,7 @@ public class TestDataStatistics extends ExecutableCommand {
 			generator.generateContractsToDb(manager);
 
 			// 通話履歴のテストデータを作成
-			generator.generateHistoryToDb(manager);
+			generator.generateHistoryToDb(config);
 		}
 
 		// 統計情報を出力

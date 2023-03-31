@@ -5,6 +5,7 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -176,4 +177,18 @@ public class ContractDaoJdbc implements ContractDao {
 		return list;
 	}
 
+	@Override
+	public long count() {
+		Connection conn = manager.getConnection();
+		try (Statement stmt = conn.createStatement();
+				ResultSet rs = stmt.executeQuery("select count(*) from contracts");) {
+			if (rs.next()) {
+				return rs.getLong(1);
+			} else {
+				return 0;
+			}
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+	}
 }

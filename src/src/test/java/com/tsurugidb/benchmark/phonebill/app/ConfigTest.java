@@ -263,11 +263,10 @@ class ConfigTest {
 
 		/* Iceaxe固有のパラメータ */
 		assertEquals(TransactionOption.OCC	, config.transactionOption);
-		assertEquals(false, config.usePreparedTables);
 
 		/* オンラインアプリケーションに関するパラメータ */
 		assertEquals(0, config.masterUpdateRecordsPerMin);
-		assertEquals(0, config.masterInsertReccrdsPerMin);
+		assertEquals(0, config.masterInsertRecordsPerMin);
 		assertEquals(0, config.historyUpdateRecordsPerMin);
 		assertEquals(0, config.historyInsertTransactionPerMin);
 		assertEquals(1, config.historyInsertRecordsPerTransaction);
@@ -330,7 +329,6 @@ class ConfigTest {
 
 		/* Iceaxe固有のパラメータ */
 		assertEquals(TransactionOption.LTX	, config.transactionOption);
-		assertEquals(true, config.usePreparedTables);
 
 		/* CSVに関するパラメータ */
 		assertEquals("/tmp/csv", config.csvDir);
@@ -338,7 +336,7 @@ class ConfigTest {
 
 		/* オンラインアプリケーションに関するパラメータ */
 		assertEquals(50, config.masterUpdateRecordsPerMin);
-		assertEquals(20, config.masterInsertReccrdsPerMin);
+		assertEquals(20, config.masterInsertRecordsPerMin);
 		assertEquals(15, config.historyUpdateRecordsPerMin);
 		assertEquals(40, config.historyInsertTransactionPerMin);
 		assertEquals(300, config.historyInsertRecordsPerTransaction);
@@ -463,5 +461,89 @@ class ConfigTest {
 				() -> Config.getConfig(UNKNOWN_DISTRIBUTION_FUNCTION_TYPE));
 		assertEquals("Unknown distribution function type: BAD_FUNCTION, only 'UNIFORM' or 'LOGNORMAL' are supported.",
 				e.getMessage());
+	}
+
+	@Test
+	public void tesHhasOnlineApp() throws Exception {
+		Config config = Config.getConfig();
+
+		// スレッド数 or perMinのどちらかが0だとオンラインアプリは動かない
+		config.masterInsertThreadCount = 0;
+		config.masterUpdateThreadCount = 0;
+		config.historyInsertThreadCount = 0;
+		config.historyUpdateThreadCount = 0;
+		config.masterInsertRecordsPerMin = 1;
+		config.masterUpdateRecordsPerMin = 1;
+		config.historyInsertTransactionPerMin = 1;
+		config.historyUpdateRecordsPerMin = 1;
+		config.historyInsertRecordsPerTransaction = 1;
+		assertFalse(config.hasOnlineApp());
+
+		config.masterInsertThreadCount = 1;
+		config.masterUpdateThreadCount = 1;
+		config.historyInsertThreadCount = 1;
+		config.historyUpdateThreadCount = 1;
+		config.masterInsertRecordsPerMin = 0;
+		config.masterUpdateRecordsPerMin = 0;
+		config.historyInsertTransactionPerMin = 0;
+		config.historyUpdateRecordsPerMin = 0;
+		config.historyInsertRecordsPerTransaction = 1;
+		assertFalse(config.hasOnlineApp());
+
+		// 1つだけオンラインアプリが動くケース
+
+		config.masterInsertRecordsPerMin = 1;
+		config.masterUpdateRecordsPerMin = 0;
+		config.historyInsertTransactionPerMin = 0;
+		config.historyUpdateRecordsPerMin = 0;
+		config.historyInsertRecordsPerTransaction = 0;
+		assertTrue(config.hasOnlineApp());
+
+		config.masterInsertRecordsPerMin = 0;
+		config.masterUpdateRecordsPerMin = 1;
+		config.historyInsertTransactionPerMin = 0;
+		config.historyUpdateRecordsPerMin = 0;
+		config.historyInsertRecordsPerTransaction = 0;
+		assertTrue(config.hasOnlineApp());
+
+		config.masterInsertRecordsPerMin = 0;
+		config.masterUpdateRecordsPerMin = 0;
+		config.historyInsertTransactionPerMin = 1;
+		config.historyUpdateRecordsPerMin = 0;
+		config.historyInsertRecordsPerTransaction = 0;
+		assertTrue(config.hasOnlineApp());
+
+		config.masterInsertRecordsPerMin = 0;
+		config.masterUpdateRecordsPerMin = 0;
+		config.historyInsertTransactionPerMin = 0;
+		config.historyUpdateRecordsPerMin = 1;
+		config.historyInsertRecordsPerTransaction = 0;
+		assertTrue(config.hasOnlineApp());
+
+		// historyInsertRecordsPerTransactionが結果に影響しない
+
+		config.masterInsertRecordsPerMin = 0;
+		config.masterUpdateRecordsPerMin = 0;
+		config.historyInsertTransactionPerMin = 0;
+		config.historyUpdateRecordsPerMin = 1;
+		config.historyInsertRecordsPerTransaction = 1;
+		assertTrue(config.hasOnlineApp());
+
+		// 全てのオンラインアプリを動かす
+
+		config.masterInsertRecordsPerMin = 1;
+		config.masterUpdateRecordsPerMin = 1;
+		config.historyInsertTransactionPerMin = 1;
+		config.historyUpdateRecordsPerMin = 1;
+		config.historyInsertRecordsPerTransaction = 1;
+		assertTrue(config.hasOnlineApp());
+
+		// 全てのオンラインアプリを連続実行
+		config.masterInsertRecordsPerMin = -1;
+		config.masterUpdateRecordsPerMin = -1;
+		config.historyInsertTransactionPerMin = -1;
+		config.historyUpdateRecordsPerMin = -1;
+		config.historyInsertRecordsPerTransaction = 1;
+		assertTrue(config.hasOnlineApp());
 	}
 }

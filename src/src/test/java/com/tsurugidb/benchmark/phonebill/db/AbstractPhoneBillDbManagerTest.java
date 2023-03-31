@@ -74,8 +74,8 @@ public class AbstractPhoneBillDbManagerTest extends AbstractJdbcTestCase {
 		TestDataGenerator generator = new TestDataGenerator(config, new Random(seed), accessor);
 		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
 			generator.generateContractsToDb(manager);
-			generator.generateHistoryToDb(manager);
 		}
+		generator.generateHistoryToDb(config);
 	}
 
 	protected static synchronized PhoneBillDbManagerJdbc getManagerOracle() {

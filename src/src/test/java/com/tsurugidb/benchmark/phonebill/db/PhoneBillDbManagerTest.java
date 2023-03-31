@@ -174,12 +174,15 @@ class PhoneBillDbManagerTest extends AbstractPhoneBillDbManagerTest {
 
 	@Test
 	void testCreatePhoneBillDbManager() throws IOException {
-		assertEquals(PhoneBillDbManagerOracle.class, PhoneBillDbManager.createPhoneBillDbManager(getConfigOracle()).getClass());
-		assertEquals(PhoneBillDbManagerPostgresql.class,
-				PhoneBillDbManager.createPhoneBillDbManager(getConfigPostgresql()).getClass());
-		assertEquals(PhoneBillDbManagerPostgresqlNoBatchUpdate.class,
-				PhoneBillDbManager.createPhoneBillDbManager(getConfigPostgresqlNoBatchUpdate()).getClass());
-		assertEquals(PhoneBillDbManagerIceaxe.class,
-				PhoneBillDbManager.createPhoneBillDbManager(getConfigIceaxe()).getClass());
+		testInstanceOf(PhoneBillDbManagerOracle.class, getConfigOracle());
+		testInstanceOf(PhoneBillDbManagerPostgresql.class,getConfigPostgresql());
+		testInstanceOf(PhoneBillDbManagerPostgresqlNoBatchUpdate.class,getConfigPostgresqlNoBatchUpdate());
+		testInstanceOf(PhoneBillDbManagerIceaxe.class,getConfigIceaxe());
+	}
+
+	private void testInstanceOf(Class<?> clazz, Config config) {
+		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
+			assertEquals(clazz, manager.getClass());
+		}
 	}
 }

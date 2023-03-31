@@ -51,4 +51,9 @@ public class ContractDaoDebug implements ContractDao {
 	public List<String> getAllPhoneNumbers() {
 		return dao.getAllPhoneNumbers();
 	}
+
+	@Override
+	public long count() {
+		return dao.count();
+	}
 }

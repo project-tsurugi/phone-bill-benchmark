@@ -119,7 +119,7 @@ public class PhoneBill extends ExecutableCommand {
 				list.add(task);
 			}
 		}
-		if (config.masterInsertThreadCount > 0 && config.masterInsertReccrdsPerMin != 0) {
+		if (config.masterInsertThreadCount > 0 && config.masterInsertRecordsPerMin != 0) {
 			for (int i = 0; i < config.masterInsertThreadCount; i++) {
 				AbstractOnlineApp task = new MasterInsertApp(config, new Random(random.nextInt()), accessor);
 				task.setName(i);
@@ -212,13 +212,15 @@ public class PhoneBill extends ExecutableCommand {
 				CalculationTask task = new CalculationTask(queue, managerForTask, config, batchExecId, abortRequested, tryCounter, abortCounter);
 				futures.add(service.submit(task));
 			}
-
+		} catch (Exception e) {
+			abortRequested.set(true);
+			throw e;
 
 		} finally {
 			if (service != null && !service.isTerminated()) {
 				service.shutdown();
 			}
-			cleanup(futures, managers, abortRequested);
+			cleanup(futures, managers);
 		}
 		elapsedTime = System.currentTimeMillis() - startTime;
 		String format = "Billings calculated in %,.3f sec ";
@@ -239,8 +241,7 @@ public class PhoneBill extends ExecutableCommand {
 	 * @param abortRequested
 	 * @throws Exception
 	 */
-	private void cleanup(Set<Future<Exception>> futures, List<PhoneBillDbManager> managers,
-			AtomicBoolean abortRequested) throws Exception {
+	private void cleanup(Set<Future<Exception>> futures, List<PhoneBillDbManager> managers) throws Exception {
 		Exception cause = null;
 		while (!futures.isEmpty()) {
 			try {

@@ -1,14 +1,21 @@
 package com.tsurugidb.benchmark.phonebill.db.postgresql.dao;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
 import com.tsurugidb.benchmark.phonebill.db.jdbc.PhoneBillDbManagerJdbc;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.dao.DdlJdbc;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public class DdlPostgresql extends DdlJdbc {
+	private Connection conn;
 
 	public DdlPostgresql(PhoneBillDbManagerJdbc manager) {
 		super(manager);
+		conn = manager.getConnection();
 	}
 
 	public void createHistoryTable() {
@@ -100,5 +107,18 @@ public class DdlPostgresql extends DdlJdbc {
 	@Override
 	public void dropTable(String tableName) {
 		execute("drop table if exists " + tableName);
+	}
+
+	@Override
+	public boolean tableExists(String tableName) {
+		String sql = "SELECT table_name FROM information_schema.tables WHERE table_name = ?";
+		try (PreparedStatement ps = conn.prepareStatement(sql)) {
+			ps.setString(1, tableName);
+			try (ResultSet rs = ps.executeQuery()) {
+				return rs.next();
+			}
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
 	}
 }

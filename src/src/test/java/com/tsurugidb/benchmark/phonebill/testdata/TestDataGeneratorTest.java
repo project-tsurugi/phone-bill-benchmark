@@ -274,7 +274,7 @@ class TestDataGeneratorTest extends AbstractJdbcTestCase {
 		TestDataGenerator g1 = new TestDataGenerator(config, new Random(config.randomSeed), accessor);
 		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
 			g1.generateContractsToDb(manager); // accessorの初期化のため契約データを作成する
-			g1.generateHistoryToDb(manager);
+			g1.generateHistoryToDb(config);
 		}
 
 		Path expectedFilePath = tempDir.resolve("history.db").toAbsolutePath();

@@ -153,4 +153,33 @@ class DdlIceaxeTest {
 		fail("まだ実装されていません"); // TODO
 	}
 
+	@Test
+	final void testTableExists() {
+		testTools.execute(ddl::dropTables);
+		assertFalse(ddl.tableExists("history"));
+		assertFalse(ddl.tableExists("contracts"));
+		assertFalse(ddl.tableExists("billing"));
+
+		testTools.execute(() -> {
+			ddl.createBillingTable();
+		});
+		assertFalse(ddl.tableExists("history"));
+		assertFalse(ddl.tableExists("contracts"));
+		assertTrue(ddl.tableExists("billing"));
+
+		testTools.execute(() -> {
+			ddl.createContractsTable();
+		});
+		assertFalse(ddl.tableExists("history"));
+		assertTrue(ddl.tableExists("contracts"));
+		assertTrue(ddl.tableExists("billing"));
+
+		testTools.execute(() -> {
+			ddl.createHistoryTable();
+		});
+		assertTrue(ddl.tableExists("history"));
+		assertTrue(ddl.tableExists("contracts"));
+		assertTrue(ddl.tableExists("billing"));
+	}
+
 }

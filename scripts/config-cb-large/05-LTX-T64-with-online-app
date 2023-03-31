@@ -35,13 +35,13 @@ isolation.level=READ_COMMITTED
 dbms.type=ICEAXE
 
 # オンラインアプリケーションに関するパラメータ
-master.update.records.per.min=100
+master.update.records.per.min=-1
 master.update.thread.count=1
-master.insert.records.per.min=100
+master.insert.records.per.min=-1
 master.insert.thread.count=1
-history.update.records.per.min=100
+history.update.records.per.min=-1
 history.update.thread.count=1
-history.insert.transaction.per.min=100
+history.insert.transaction.per.min=-1
 history.insert.records.per.transaction=100
 history.insert.thread.count=1
 skip.database.access=false
@@ -49,7 +49,7 @@ skip.database.access=false
 # スレッドに関するパラメータ
 thread.count=64
 shared.connection=false
-create.test.data.thread.count=64
+create.test.data.thread.count=16
 
 # CSVに関するパラメータ
 csv.dir=/tmp
@@ -62,7 +62,6 @@ oracle.sql.loader.sid=
 oracle.create.index.option=nologging parallel 32
 # Iceaxe固有のパラメータ
 transaction.option=LTX
-use.prepared.tables=true
 # その他のパラメータ
 random.seed=0
 transaction.scope=WHOLE

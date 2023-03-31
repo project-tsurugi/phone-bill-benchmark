@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.db.TxLabel;
+import com.tsurugidb.benchmark.phonebill.db.TxOption.Table;
 import com.tsurugidb.benchmark.phonebill.db.dao.ContractDao;
 import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract.Key;
@@ -124,4 +125,8 @@ public class HistoryUpdateApp extends AbstractOnlineApp {
 		return TxLabel.HISTORY_UPDATE_APP;
 	}
 
+	@Override
+	public Table getWritePreserveTable() {
+		return Table.HISTORY;
+	}
 }

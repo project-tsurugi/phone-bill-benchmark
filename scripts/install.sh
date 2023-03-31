@@ -2,6 +2,8 @@
 
 
 cd `dirname $0`
+
+BIN_DIR=$(cd $(dirname $0); pwd)
 source env.sh
 
 cd ../src

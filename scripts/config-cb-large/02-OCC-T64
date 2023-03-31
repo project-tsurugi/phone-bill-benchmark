@@ -49,7 +49,7 @@ skip.database.access=false
 # スレッドに関するパラメータ
 thread.count=64
 shared.connection=false
-create.test.data.thread.count=64
+create.test.data.thread.count=16
 
 # CSVに関するパラメータ
 csv.dir=/tmp
@@ -62,7 +62,6 @@ oracle.sql.loader.sid=
 oracle.create.index.option=nologging parallel 32
 # Iceaxe固有のパラメータ
 transaction.option=OCC
-use.prepared.tables=true
 # その他のパラメータ
 random.seed=0
 transaction.scope=CONTRACT

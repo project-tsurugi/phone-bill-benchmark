@@ -83,7 +83,6 @@ public class HistoryDaoDebug implements HistoryDao {
 		return dao.delete(phoneNumber);
 	}
 
-
 	@Override
 	public List<String> getAllPhoneNumbers() {
 		return dao.getAllPhoneNumbers();
@@ -91,13 +90,17 @@ public class HistoryDaoDebug implements HistoryDao {
 
 
 	@Override
+	public int delete(History h) {
+		return dao.delete(h);
+	}
+
+	@Override
 	public int count() {
 		return dao.count();
 	}
 
-
 	@Override
-	public int delete(History h) {
-		return dao.delete(h);
+	public int delete() {
+		return dao.delete();
 	}
 }
