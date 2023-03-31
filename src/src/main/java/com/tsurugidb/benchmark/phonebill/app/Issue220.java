@@ -30,7 +30,7 @@ public class Issue220 extends ExecutableCommand {
     private static final Logger LOG = LoggerFactory.getLogger(Issue220.class);
 
 	private static boolean LOGGING_DETAIL_TIME_INFO = false;
-	private static final int[] THREAD_COUNTS = { 64, 16, 4, 1 };
+	private static final int[] THREAD_COUNTS = { 64, 16, 4};
 	private static final TxOption OCC  =  TxOption.ofOCC(1, TxLabel.TEST);
 	private static final TxOption LTX = TxOption.ofLTX(1, TxLabel.TEST, Table.HISTORY);
 
@@ -86,12 +86,12 @@ public class Issue220 extends ExecutableCommand {
 				execute(config, threadCount, () -> {
 					return new DeleteTask(config, OCC, false);
 				}, "Delete, OCC");
-				execute(config, threadCount, () -> {
-					return new InsertTask(config, LTX, false);
-				}, "Insert, LTX");
-				execute(config, threadCount, () -> {
-					return new DeleteTask(config, LTX, false);
-				}, "Delete, LTX");
+//				execute(config, threadCount, () -> {
+//					return new InsertTask(config, LTX, false);
+//				}, "Insert, LTX");
+//				execute(config, threadCount, () -> {
+//					return new DeleteTask(config, LTX, false);
+//				}, "Delete, LTX");
 			}
 		}
 	}

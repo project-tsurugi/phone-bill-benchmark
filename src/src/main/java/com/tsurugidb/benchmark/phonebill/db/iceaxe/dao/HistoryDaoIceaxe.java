@@ -54,6 +54,7 @@ public class HistoryDaoIceaxe implements HistoryDao {
 	}
 
 
+
 	@Override
 	public int[] batchInsert(Collection<History> histories) {
 		var ps = createInsertPs();
@@ -66,17 +67,26 @@ public class HistoryDaoIceaxe implements HistoryDao {
 		return utils.executeAndGetCount(ps, h);
 	}
 
-	private TsurugiSqlPreparedStatement<History> createInsertPs() {
-		String sql = "insert into history(caller_phone_number, recipient_phone_number, payment_categorty, start_time, time_secs, charge, df) "
-				+ "values(:caller_phone_number, :recipient_phone_number, :payment_categorty, :start_time, :time_secs, :charge, :df)";
-		return utils.createPreparedStatement(sql, PARAMETER_MAPPING);
+
+	private TsurugiSqlPreparedStatement<History> insertPs = null;
+	private synchronized TsurugiSqlPreparedStatement<History> createInsertPs() {
+		if (insertPs == null || insertPs.isClosed()) {
+			String sql = "insert into history(caller_phone_number, recipient_phone_number, payment_categorty, start_time, time_secs, charge, df) "
+					+ "values(:caller_phone_number, :recipient_phone_number, :payment_categorty, :start_time, :time_secs, :charge, :df)";
+			insertPs = utils.createPreparedStatement(sql, PARAMETER_MAPPING);
+		}
+		return insertPs;
 	}
 
-	private TsurugiSqlPreparedStatement<History> createUpdatePs() {
-		String sql = "update history"
-				+ " set recipient_phone_number = :recipient_phone_number, time_secs = :time_secs, charge = :charge, df = :df"
-				+ " where caller_phone_number = :caller_phone_number and payment_categorty = :payment_categorty and start_time = :start_time";
-		return utils.createPreparedStatement(sql, PARAMETER_MAPPING);
+	private TsurugiSqlPreparedStatement<History> updatePs = null;
+	private synchronized TsurugiSqlPreparedStatement<History> createUpdatePs() {
+		if (updatePs == null || updatePs.isClosed()) {
+			String sql = "update history"
+					+ " set recipient_phone_number = :recipient_phone_number, time_secs = :time_secs, charge = :charge, df = :df"
+					+ " where caller_phone_number = :caller_phone_number and payment_categorty = :payment_categorty and start_time = :start_time";
+			updatePs = utils.createPreparedStatement(sql, PARAMETER_MAPPING);
+		}
+		return updatePs;
 	}
 
 	@Override
