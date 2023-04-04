@@ -40,7 +40,7 @@ import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionRuntimeExcep
 public class HistoryDaoIceaxeSurrogateKey implements HistoryDao {
 	private final IceaxeUtils utils;
 	private final PhoneBillDbManagerIceaxeSurrogateKey manager;
-	static volatile AtomicLong sidCounter = null;
+	private static volatile AtomicLong sidCounter = null;
 
 	private static final TgEntityResultMapping<History> RESULT_MAPPING =
 			TgResultMapping.of(History::new)
@@ -297,6 +297,29 @@ public class HistoryDaoIceaxeSurrogateKey implements HistoryDao {
 		String sql = "delete from history";
 		var ps = utils.createPreparedStatement(sql);
 		return utils.executeAndGetCount(ps);
+	}
+
+	/**
+	 * sidCounterにnullをセット(UT専用)
+	 */
+	static void setSidCounterNull() {
+		sidCounter = null;
+	}
+
+	/**
+	 * sidCounterに指定の値をセット(UT専用)
+	 */
+	static void setSidCounter(long val) {
+		sidCounter = new AtomicLong(val);
+	}
+
+	/**
+	 * sidCounterの値を取得する(UT専用)
+	 *
+	 * @return
+	 */
+	static long getSidCounter() {
+		return sidCounter.get();
 	}
 
 }

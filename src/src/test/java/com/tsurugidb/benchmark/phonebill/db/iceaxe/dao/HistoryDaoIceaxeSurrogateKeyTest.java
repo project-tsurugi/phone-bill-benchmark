@@ -10,7 +10,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterAll;
@@ -62,7 +61,7 @@ class HistoryDaoIceaxeSurrogateKeyTest {
 		testTools.execute(() -> ddl.dropTable("contracts"));
 		testTools.execute(ddl::createHistoryTable);
 		testTools.execute(ddl::createContractsTable);
-		HistoryDaoIceaxeSurrogateKey.sidCounter = new AtomicLong(0);
+		HistoryDaoIceaxeSurrogateKey.setSidCounter(0);
 	}
 
 	@AfterEach
@@ -75,30 +74,30 @@ class HistoryDaoIceaxeSurrogateKeyTest {
 
 		// テーブルが空の時
 		HistoryDaoIceaxeSurrogateKey.initSidCounter(iceaxeUtils, manager);
-		assertEquals(0L, HistoryDaoIceaxeSurrogateKey.sidCounter.get());
+		assertEquals(0L, HistoryDaoIceaxeSurrogateKey.getSidCounter());
 
 		// 初期化は最初の一回だけ
 		testTools.insertToHistoryWsk(5L, "Phone-0001", "Phone-0008", "C", "2020-10-31 23:59:59.999", 30, null, 0);
 		HistoryDaoIceaxeSurrogateKey.initSidCounter(iceaxeUtils, manager);
-		assertEquals(0L, HistoryDaoIceaxeSurrogateKey.sidCounter.get());
+		assertEquals(0L, HistoryDaoIceaxeSurrogateKey.getSidCounter());
 
 		// 一度クリアして現在の値で
-		HistoryDaoIceaxeSurrogateKey.sidCounter = null;
+		HistoryDaoIceaxeSurrogateKey.setSidCounterNull();
 		HistoryDaoIceaxeSurrogateKey.initSidCounter(iceaxeUtils, manager);
-		assertEquals(5L, HistoryDaoIceaxeSurrogateKey.sidCounter.get());
+		assertEquals(5L, HistoryDaoIceaxeSurrogateKey.getSidCounter());
 
 		// 複数レコード存在するケース
 		testTools.insertToHistoryWsk(1L, "Phone-0001", "Phone-0008", "C", "2020-11-01 00:00:00.000", 30, null, 0);
 		testTools.insertToHistoryWsk(2L, "Phone-0001", "Phone-0008", "C", "2021-11-15 12:12:12.000", 90, null, 1);
-		HistoryDaoIceaxeSurrogateKey.sidCounter = null;
+		HistoryDaoIceaxeSurrogateKey.setSidCounterNull();
 		HistoryDaoIceaxeSurrogateKey.initSidCounter(iceaxeUtils, manager);
-		assertEquals(5L, HistoryDaoIceaxeSurrogateKey.sidCounter.get());
+		assertEquals(5L, HistoryDaoIceaxeSurrogateKey.getSidCounter());
 
 		testTools.insertToHistoryWsk(3L, "Phone-0001", "Phone-0008", "C", "2020-11-30 23:59:59.999", 90, null, 0);
 		testTools.insertToHistoryWsk(9L, "Phone-0001", "Phone-0008", "C", "2020-12-01 00:00:00.000", 30, null, 0);
-		HistoryDaoIceaxeSurrogateKey.sidCounter = null;
+		HistoryDaoIceaxeSurrogateKey.setSidCounterNull();
 		HistoryDaoIceaxeSurrogateKey.initSidCounter(iceaxeUtils, manager);
-		assertEquals(9L, HistoryDaoIceaxeSurrogateKey.sidCounter.get());
+		assertEquals(9L, HistoryDaoIceaxeSurrogateKey.getSidCounter());
 	}
 
 	@Test

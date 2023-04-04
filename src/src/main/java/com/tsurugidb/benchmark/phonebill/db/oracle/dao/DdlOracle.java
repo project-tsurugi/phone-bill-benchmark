@@ -3,6 +3,7 @@ package com.tsurugidb.benchmark.phonebill.db.oracle.dao;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Locale;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.PhoneBillDbManagerJdbc;
@@ -117,7 +118,7 @@ public class DdlOracle extends DdlJdbc {
 	public boolean tableExists(String tableName) {
 		String sql = "SELECT table_name FROM dba_tables WHERE table_name = ?";
 		try (PreparedStatement ps = manager.getConnection().prepareStatement(sql)) {
-			ps.setString(1, tableName.toUpperCase());
+			ps.setString(1, tableName.toUpperCase(Locale.JAPANESE));
 			try (ResultSet rs = ps.executeQuery()) {
 				return rs.next();
 			}

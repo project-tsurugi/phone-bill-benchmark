@@ -212,7 +212,7 @@ public class PhoneBill extends ExecutableCommand {
 				CalculationTask task = new CalculationTask(queue, managerForTask, config, batchExecId, abortRequested, tryCounter, abortCounter);
 				futures.add(service.submit(task));
 			}
-		} catch (Exception e) {
+		} catch (RuntimeException e) {
 			abortRequested.set(true);
 			throw e;
 
