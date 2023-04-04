@@ -160,11 +160,105 @@ public class IceaxeTestTools implements Closeable {
 		});
 	}
 
+	/**
+	 * サロゲートキー付きの履歴テーブルにレコードを追加する
+	 *
+	 * @param histories
+	 */
+	public void insertToHistoryWsk(History... histories) {
+		insertToHistoryWsk(Arrays.asList(histories));
+	}
+
+	/**
+	 * サロゲートキー付きの契約テーブルにレコードを追加する(start_timeを文字列で指定)
+	 *
+	 * @param caller_phone_number
+	 * @param recipient_phone_number
+	 * @param payment_categorty
+	 * @param start_time
+	 * @param time_secs
+	 * @param _charge
+	 * @param _df
+	 */
+	public void insertToHistoryWsk(long _sid, String caller_phone_number, String recipient_phone_number, String payment_categorty,
+			String start_time, int time_secs, Integer _charge, int _df) {
+		insertToHistoryWsk(_sid, caller_phone_number, recipient_phone_number, payment_categorty,
+				DateUtils.toTimestamp(start_time), time_secs, _charge, _df);
+	}
+
+	/**
+	 * サロゲートキー付きの履歴テーブルにレコードを追加する
+	 *
+	 * @param caller_phone_number 発信者電話番号
+	 * @param recipient_phone_number 受信者電話番号
+	 * @param payment_categorty	料金区分
+	 * @param start_time 通話開始時刻
+	 * @param time_secs 通話時間
+	 * @param df 論理削除フラグ
+	 */
+	public void insertToHistoryWsk(long _sid, String caller_phone_number, String recipient_phone_number, String payment_categorty,
+			Timestamp start_time, int time_secs, Integer _charge, int _df) {
+		String sql = "insert into history(sid, caller_phone_number, recipient_phone_number, payment_categorty, start_time, time_secs, charge, df) "
+				+ "values(:sid, :caller_phone_number, :recipient_phone_number, :payment_categorty, :start_time, :time_secs, :charge, :df)";
+
+
+		execute(() -> {
+			var sid = TgBindVariable.ofLong("sid");
+			var callerPhoneNumber = TgBindVariable.ofString("caller_phone_number");
+			var recipientPhoneNumber = TgBindVariable.ofString("recipient_phone_number");
+			var paymentCategorty = TgBindVariable.ofString("payment_categorty");
+			var startTime = TgBindVariable.ofDateTime("start_time");
+			var timeSecs = TgBindVariable.ofInt("time_secs");
+			var charge = TgBindVariable.ofInt("charge");
+			var df = TgBindVariable.ofInt("df");
+
+			var parameterMapping = TgParameterMapping.of(
+					sid,
+					callerPhoneNumber,
+					recipientPhoneNumber,
+					paymentCategorty,
+					startTime,
+					timeSecs,
+					charge,
+					df);
+			try (var ps = session.createStatement(sql, parameterMapping)) {
+				TgBindParameters parameter = TgBindParameters.of(
+						sid.bind(_sid),
+						callerPhoneNumber.bind(caller_phone_number),
+						recipientPhoneNumber.bind(recipient_phone_number),
+						paymentCategorty.bind(payment_categorty),
+						startTime.bind(start_time.toLocalDateTime()),
+						timeSecs.bind(time_secs),
+						charge.bind(_charge),
+						df.bind(_df));
+				manager.getCurrentTransaction().executeAndGetCount(ps, parameter);
+			} catch (IOException e) {
+				throw new UncheckedIOException(e);
+			} catch (TsurugiTransactionException e) {
+				throw new TsurugiTransactionRuntimeException(e);
+			}
+		});
+	}
+
+
+	/**
+	 * 契約テーブルにレコードを追加する(start_timeを文字列で指定)
+	 *
+	 * @param caller_phone_number
+	 * @param recipient_phone_number
+	 * @param payment_categorty
+	 * @param start_time
+	 * @param time_secs
+	 * @param _charge
+	 * @param _df
+	 */
 	public void insertToHistory(String caller_phone_number, String recipient_phone_number, String payment_categorty,
 			String start_time, int time_secs, Integer _charge, int _df) {
 		insertToHistory(caller_phone_number, recipient_phone_number, payment_categorty,
 				DateUtils.toTimestamp(start_time), time_secs, _charge, _df);
 	}
+
+
 
 	/**
 	 * 履歴テーブルにレコードを追加する
@@ -187,6 +281,17 @@ public class IceaxeTestTools implements Closeable {
 		}
 	}
 
+	/**
+	 * 履歴テーブルにレコードを追加する
+
+	 * @param histories
+	 */
+	public void insertToHistoryWsk(Collection<History> histories) {
+		for(History h: histories) {
+			insertToHistoryWsk(h.getSid(), h.getCallerPhoneNumber(), h.getRecipientPhoneNumber(), h.getPaymentCategorty(),
+					h.getStartTime(), h.getTimeSecs(), h.getCharge(), h.getDf());
+		}
+	}
 
 	/**
 	 * 契約テーブルにレコードを追加する
@@ -276,6 +381,43 @@ public class IceaxeTestTools implements Closeable {
 
 
 	/**
+	 * サロゲートキー付きの履歴テーブルの全レコードのリストを取得する。
+	 *
+	 * @return
+	 */
+	public List<History> getHistoryListWsk() {
+		var resultMapping =
+				TgResultMapping.of(History::new)
+				.addLong("sid", History::setSid)
+				.addString("caller_phone_number", History::setCallerPhoneNumber)
+				.addString("recipient_phone_number", History::setRecipientPhoneNumber)
+				.addString("payment_categorty", History::setPaymentCategorty)
+				.addDateTime("start_time", History::setStartTime)
+				.addInt("time_secs", History::setTimeSecs)
+				.addInt("charge", History::setCharge)
+				.addInt("df", History::setDf);
+		return execute(() -> {
+			String sql = "select sid, caller_phone_number, recipient_phone_number, payment_categorty, start_time, time_secs, charge, df from history ";
+			try (var ps = session.createQuery(sql, resultMapping)) {
+			    return manager.getCurrentTransaction().executeAndGetList(ps);
+			} catch (IOException e) {
+				throw new UncheckedIOException(e);
+			} catch (TsurugiTransactionException e) {
+				throw new TsurugiTransactionRuntimeException(e);
+			}
+		});
+	}
+
+	/**
+	 * 履歴テーブルの全レコードのセットのセットを取得する。
+
+	 * @return
+	 */
+	public Set<History> getHistorySet() {
+		return new HashSet<>(getHistoryList());
+	}
+
+	/**
 	 * 履歴テーブルの全レコードのリストを取得する。
 	 *
 	 * @return
@@ -303,13 +445,15 @@ public class IceaxeTestTools implements Closeable {
 	}
 
 	/**
-	 * 履歴テーブルの全レコードのセットのセットを取得する。
-
+	 * サロゲートキー付きの履歴テーブルの全レコードのセットのセットを取得する。
+	 *
 	 * @return
 	 */
-	public Set<History> getHistorySet() {
-		return new HashSet<>(getHistoryList());
+	public Set<History> getHistorySetWsk() {
+		return new HashSet<>(getHistoryListWsk());
 	}
+
+
 
 	/**
 	 * 請求テーブルの全レコードのリストを取得する

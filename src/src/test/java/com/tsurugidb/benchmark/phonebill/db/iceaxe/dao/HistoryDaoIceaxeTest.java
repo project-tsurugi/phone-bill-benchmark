@@ -19,6 +19,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
+import com.tsurugidb.benchmark.phonebill.app.CreateTable;
 import com.tsurugidb.benchmark.phonebill.app.billing.CalculationTarget;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
@@ -36,6 +37,7 @@ class HistoryDaoIceaxeTest {
 	@BeforeAll
 	static void setUpBeforeClass() throws Exception {
 		Config config = Config.getConfig(ICEAXE_CONFIG_PATH);
+		new CreateTable().execute(config);
 		testTools = new IceaxeTestTools(config);
 		manager = testTools.getManager();
 		dao = (HistoryDaoIceaxe) manager.getHistoryDao();

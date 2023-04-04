@@ -34,6 +34,7 @@ import com.tsurugidb.benchmark.phonebill.db.dao.ContractDao;
 import com.tsurugidb.benchmark.phonebill.db.dao.Ddl;
 import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.iceaxe.PhoneBillDbManagerIceaxe;
+import com.tsurugidb.benchmark.phonebill.db.iceaxe.PhoneBillDbManagerIceaxeSurrogateKey;
 import com.tsurugidb.benchmark.phonebill.db.oracle.PhoneBillDbManagerOracle;
 import com.tsurugidb.benchmark.phonebill.db.postgresql.PhoneBillDbManagerPostgresql;
 import com.tsurugidb.benchmark.phonebill.db.postgresql.PhoneBillDbManagerPostgresqlNoBatchUpdate;
@@ -158,6 +159,9 @@ public abstract class PhoneBillDbManager implements Closeable {
 			break;
 		case ICEAXE:
 			dbManager = new PhoneBillDbManagerIceaxe(config);
+			break;
+		case ICEAXE_SURROGATE_KEY:
+			dbManager = new PhoneBillDbManagerIceaxeSurrogateKey(config);
 			break;
 		}
 		LOG.debug("using " + dbManager.getClass().getSimpleName());

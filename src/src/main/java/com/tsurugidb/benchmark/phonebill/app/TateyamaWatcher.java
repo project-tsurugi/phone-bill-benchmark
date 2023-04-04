@@ -56,6 +56,7 @@ public class TateyamaWatcher implements Runnable  {
 			}
 			LOG.debug("tateyama-server memory info: VSZ = {} bytes, RSS = {} bytes", fmt.format(vsz), fmt.format(rss));
 			if (stopRequested.get()) {
+				LOG.debug("Stop requested for TateyamaWatcher");
 				break;
 			}
 			try {

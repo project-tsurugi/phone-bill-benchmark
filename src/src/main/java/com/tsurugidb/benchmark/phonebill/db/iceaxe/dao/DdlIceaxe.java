@@ -111,7 +111,7 @@ public class DdlIceaxe implements Ddl {
 		createBillingTable();
 	}
 
-	private void execute(String sql) {
+	protected void execute(String sql) {
         try {
             manager.getCurrentTransaction().executeDdl(sql);
         } catch (IOException e) {

@@ -1,6 +1,6 @@
 package com.tsurugidb.benchmark.phonebill.db.iceaxe.dao;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -109,6 +109,9 @@ public class JoinTest extends AbstractJdbcTestCase {
 	@AfterAll
 	protected static void tearDownAfterClass2() throws Exception {
 		iceaxeTestTools.close();
+		if (managerPostgresql != null) {
+			managerPostgresql.close();
+		}
 	}
 
 
