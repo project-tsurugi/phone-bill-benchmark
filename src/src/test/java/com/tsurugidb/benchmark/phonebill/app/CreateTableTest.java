@@ -25,7 +25,6 @@ import com.tsurugidb.benchmark.phonebill.db.jdbc.PhoneBillDbManagerJdbc;
 
 class CreateTableTest extends AbstractJdbcTestCase {
 	private static final String ORACLE_CONFIG_PATH = "src/test/config/oracle.properties";
-	private static final String ICEAXE_CONFIG_PATH = "src/test/config/iceaxe-mini.properties";
 
 	@Test
 	void test() throws SQLException, IOException {
