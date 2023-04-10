@@ -13,7 +13,7 @@ input_file="$1"
 filename=$(basename "$input_file")
 directory=$(dirname "$input_file")
 filename="${filename%.*}"
-output_file=`pwd`/$filename.png
+output_file=$directory/$filename.png
 
 # テンポラリディレクトリを作成する
 tempdir=$(mktemp -d)
@@ -37,11 +37,10 @@ BEGIN { OFS="," ; print "label", "timestamp", "TID", "nRecords", "exec time(us)"
 ' "$input_file" > $tempdir/csv
 
 labels=`cut -d ',' -f 1 $tempdir/csv | tail -n +2 | sort -u | grep OCC | grep -v online`
-
-echo ume
-
 echo $labels
-
+if [ -z "$labels" ] ; then
+  exit 0
+fi
 
 plotcmd="plot"
 sp=" "
