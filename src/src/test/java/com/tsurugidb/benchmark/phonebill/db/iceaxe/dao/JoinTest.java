@@ -74,7 +74,7 @@ public class JoinTest extends AbstractJdbcTestCase {
 	// テスト対象のSQL
 
 	private String SQL = "select h.caller_phone_number, h.recipient_phone_number, "
-			+ " h.payment_categorty, h.start_time, h.time_secs, h.charge, h.df from history h"
+			+ " h.payment_category, h.start_time, h.time_secs, h.charge, h.df from history h"
 			+ " inner join contracts c on c.phone_number = h.caller_phone_number"
 			+ " where c.start_date < h.start_time and h.start_time < c.end_date + 1"
 			+ " and c.phone_number = '001' "
@@ -175,7 +175,7 @@ public class JoinTest extends AbstractJdbcTestCase {
 		assertEquals(histories, iceaxeTestTools.getHistorySet());
 		assertEquals(contracts, iceaxeTestTools.getContractSet());
 		String sql = "select h.caller_phone_number, h.recipient_phone_number, "
-				+ " h.payment_categorty, h.start_time, h.time_secs, h.charge, h.df from history h"
+				+ " h.payment_category, h.start_time, h.time_secs, h.charge, h.df from history h"
 				+ " inner join contracts c on c.phone_number = h.caller_phone_number"
 				+ " where c.start_date < h.start_time and h.start_time < c.end_date + 1"
 				+ " and c.phone_number = '001' "
@@ -185,7 +185,7 @@ public class JoinTest extends AbstractJdbcTestCase {
 				TgResultMapping.of(History::new)
 				.addString("caller_phone_number", History::setCallerPhoneNumber)
 				.addString("recipient_phone_number", History::setRecipientPhoneNumber)
-				.addString("payment_categorty", History::setPaymentCategorty)
+				.addString("payment_category", History::setPaymentCategorty)
 				.addDateTime("start_time", History::setStartTime)
 				.addInt("time_secs", History::setTimeSecs)
 				.addInt("charge", History::setCharge)

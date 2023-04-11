@@ -132,7 +132,7 @@ public class LoadTestDataCsvToOracle extends ExecutableCommand {
 			ps.println("(");
 			ps.println("  caller_phone_number,");
 			ps.println("  recipient_phone_number,");
-			ps.println("  payment_categorty,");
+			ps.println("  payment_category,");
 			ps.println("  start_time,");
 			ps.println("  time_secs,");
 			ps.println("  charge,");

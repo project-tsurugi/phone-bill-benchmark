@@ -112,7 +112,7 @@ public abstract class AbstractJdbcTestCase {
 	private List<History> getHistories(Statement stmt) throws SQLException {
 		List<History> list = new ArrayList<History>();
 		String sql = "select caller_phone_number, recipient_phone_number,"
-				+ " payment_categorty, start_time,time_secs,charge, df"
+				+ " payment_category, start_time,time_secs,charge, df"
 				+ " from history order by caller_phone_number, start_time";
 		try (ResultSet rs = stmt.executeQuery(sql)) {
 			while (rs.next()) {
@@ -135,13 +135,13 @@ public abstract class AbstractJdbcTestCase {
 
 
 
-	protected History toHistory(String caller_phone_number, String recipient_phone_number, String payment_categorty,
+	protected History toHistory(String caller_phone_number, String recipient_phone_number, String payment_category,
 			String start_time, int time_secs, Integer charge,
 			int df) {
 		History history = new History();
 		history.setCallerPhoneNumber(caller_phone_number);
 		history.setRecipientPhoneNumber(recipient_phone_number);
-		history.setPaymentCategorty(payment_categorty);
+		history.setPaymentCategorty(payment_category);
 		history.setStartTime(DateUtils.toTimestamp(start_time));
 		history.setTimeSecs(time_secs);
 		history.setCharge(charge);
@@ -246,19 +246,19 @@ public abstract class AbstractJdbcTestCase {
 	 *
 	 * @param caller_phone_number 発信者電話番号
 	 * @param recipient_phone_number 受信者電話番号
-	 * @param payment_categorty	料金区分
+	 * @param payment_category	料金区分
 	 * @param start_time 通話開始時刻
 	 * @param time_secs 通話時間
 	 * @param df 論理削除フラグ
 	 * @throws SQLException
 	 */
-	protected void insertToHistory(String caller_phone_number, String recipient_phone_number, String payment_categorty, String start_time, Integer time_secs, int df)
+	protected void insertToHistory(String caller_phone_number, String recipient_phone_number, String payment_category, String start_time, Integer time_secs, int df)
 			throws SQLException {
-		String sql = "insert into history(caller_phone_number, recipient_phone_number, payment_categorty, start_time, time_secs, charge, df) values(?, ?, ?, ?, ?, ?, ?)";
+		String sql = "insert into history(caller_phone_number, recipient_phone_number, payment_category, start_time, time_secs, charge, df) values(?, ?, ?, ?, ?, ?, ?)";
 		try (PreparedStatement ps = getConn().prepareStatement(sql)) {
 			ps.setString(1, caller_phone_number);
 			ps.setString(2, recipient_phone_number);
-			ps.setString(3, payment_categorty);
+			ps.setString(3, payment_category);
 			ps.setTimestamp(4, DateUtils.toTimestamp(start_time));
 			ps.setInt(5, time_secs);
 			ps.setNull(6, Types.INTEGER);

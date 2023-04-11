@@ -33,7 +33,7 @@ public class HistoryDaoIceaxe implements HistoryDao {
 			TgResultMapping.of(History::new)
 			.addString("caller_phone_number", History::setCallerPhoneNumber)
 			.addString("recipient_phone_number", History::setRecipientPhoneNumber)
-			.addString("payment_categorty", History::setPaymentCategorty)
+			.addString("payment_category", History::setPaymentCategorty)
 			.addDateTime("start_time", History::setStartTime)
 			.addInt("time_secs", History::setTimeSecs)
 			.addInt("charge", History::setCharge)
@@ -42,7 +42,7 @@ public class HistoryDaoIceaxe implements HistoryDao {
 	private static final TgParameterMapping<History> PARAMETER_MAPPING = TgParameterMapping.of(History.class)
 			.add("caller_phone_number", TgDataType.STRING, History::getCallerPhoneNumber)
 			.add("recipient_phone_number", TgDataType.STRING, History::getRecipientPhoneNumber)
-			.add("payment_categorty", TgDataType.STRING, History::getPaymentCategorty)
+			.add("payment_category", TgDataType.STRING, History::getPaymentCategorty)
 			.add("start_time", TgDataType.DATE_TIME, History::getStartTimeAsLocalDateTime)
 			.add("time_secs", TgDataType.INT, History::getTimeSecs)
 			.add("charge", TgDataType.INT, History::getCharge).add("df", TgDataType.INT, History::getDf);
@@ -66,15 +66,15 @@ public class HistoryDaoIceaxe implements HistoryDao {
 	}
 
 	private TsurugiSqlPreparedStatement<History> createInsertPs() {
-		String sql = "insert into history(caller_phone_number, recipient_phone_number, payment_categorty, start_time, time_secs, charge, df) "
-				+ "values(:caller_phone_number, :recipient_phone_number, :payment_categorty, :start_time, :time_secs, :charge, :df)";
+		String sql = "insert into history(caller_phone_number, recipient_phone_number, payment_category, start_time, time_secs, charge, df) "
+				+ "values(:caller_phone_number, :recipient_phone_number, :payment_category, :start_time, :time_secs, :charge, :df)";
 		return utils.createPreparedStatement(sql, PARAMETER_MAPPING);
 	}
 
 	private TsurugiSqlPreparedStatement<History> createUpdatePs() {
 		String sql = "update history"
 				+ " set recipient_phone_number = :recipient_phone_number, time_secs = :time_secs, charge = :charge, df = :df"
-				+ " where caller_phone_number = :caller_phone_number and payment_categorty = :payment_categorty and start_time = :start_time";
+				+ " where caller_phone_number = :caller_phone_number and payment_category = :payment_category and start_time = :start_time";
 		return utils.createPreparedStatement(sql, PARAMETER_MAPPING);
 	}
 
@@ -128,7 +128,7 @@ public class HistoryDaoIceaxe implements HistoryDao {
 		}
 
 		LocalDate endDate = list.get(0).getDate("end_date");
-		String sql2 = "select caller_phone_number, recipient_phone_number, payment_categorty, start_time,"
+		String sql2 = "select caller_phone_number, recipient_phone_number, payment_category, start_time,"
 				+ " time_secs, charge, df from history where start_time >= :start_date and start_time < :end_date"
 				+ " and caller_phone_number = :phone_number";
 		var variable2 = TgBindVariables.of().addString("phone_number").addDateTime("start_date").addDateTime("end_date");
@@ -147,7 +147,7 @@ public class HistoryDaoIceaxe implements HistoryDao {
 	 */
 	public List<History> getHistoriesOrg(Key key) {
 		String sql = "select"
-				+ " h.caller_phone_number, h.recipient_phone_number, h.payment_categorty, h.start_time, h.time_secs,"
+				+ " h.caller_phone_number, h.recipient_phone_number, h.payment_category, h.start_time, h.time_secs,"
 				+ " h.charge, h.df" + " from history h"
 				+ " inner join contracts c on c.phone_number = h.caller_phone_number"
 				+ " where c.start_date < h.start_time and" + " (h.start_time < c.end_date + "
@@ -173,23 +173,23 @@ public class HistoryDaoIceaxe implements HistoryDao {
 //		TODO 現状のTsurugiはorを使った検索で意図したようにセカンダリインデックスを使用しないので二つのQueryに分けて
 //		実行している。この問題が解決したら元のqueryに戻す。
 //
-//		String sql = "select caller_phone_number, recipient_phone_number, payment_categorty, start_time, time_secs,"
+//		String sql = "select caller_phone_number, recipient_phone_number, payment_category, start_time, time_secs,"
 //				+ " charge, df" + " from history "
 //				+ "where start_time >= :start and start_time < :end"
-//				+ " and ((caller_phone_number = :caller_phone_number  and payment_categorty = 'C') "
-//				+ "  or (recipient_phone_number = :recipient_phone_number and payment_categorty = 'R'))"
+//				+ " and ((caller_phone_number = :caller_phone_number  and payment_category = 'C') "
+//				+ "  or (recipient_phone_number = :recipient_phone_number and payment_category = 'R'))"
 //				+ " and df = 0";
 
 
 
-		String sql1 = "select caller_phone_number, recipient_phone_number, payment_categorty, start_time, time_secs,"
+		String sql1 = "select caller_phone_number, recipient_phone_number, payment_category, start_time, time_secs,"
 				+ " charge, df" + " from history "
 				+ "where start_time >= :start and start_time < :end"
-				+ " and recipient_phone_number = :recipient_phone_number and payment_categorty = 'R' and df = 0";
-		String sql2 = "select caller_phone_number, recipient_phone_number, payment_categorty, start_time, time_secs,"
+				+ " and recipient_phone_number = :recipient_phone_number and payment_category = 'R' and df = 0";
+		String sql2 = "select caller_phone_number, recipient_phone_number, payment_category, start_time, time_secs,"
 				+ " charge, df" + " from history "
 				+ "where start_time >= :start and start_time < :end"
-				+ " and caller_phone_number = :caller_phone_number  and payment_categorty = 'C' and df = 0";
+				+ " and caller_phone_number = :caller_phone_number  and payment_category = 'C' and df = 0";
 		var variable1 = TgBindVariables.of().addDateTime("start").addDateTime("end").addString("recipient_phone_number")
 				.addString("recipient_phone_number");
 		var variable2 = TgBindVariables.of().addDateTime("start").addDateTime("end").addString("caller_phone_number")
@@ -211,7 +211,7 @@ public class HistoryDaoIceaxe implements HistoryDao {
 
 	@Override
 	public List<History> getHistories() {
-		String sql = "select caller_phone_number, recipient_phone_number, payment_categorty, start_time, time_secs, charge, df from history";
+		String sql = "select caller_phone_number, recipient_phone_number, payment_category, start_time, time_secs, charge, df from history";
 		var ps = utils.createPreparedQuery(sql, RESULT_MAPPING);
 		return utils.execute(ps);
 	}
