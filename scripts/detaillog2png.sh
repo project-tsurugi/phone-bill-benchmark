@@ -40,6 +40,7 @@ set +e
 labels=`cut -d ',' -f 1 $tempdir/csv | tail -n +2 | sort -u | grep OCC | grep -v online`
 echo $labels
 if [ -z "$labels" ] ; then
+  rm -r "$tempdir"
   exit 0
 fi
 set -e
