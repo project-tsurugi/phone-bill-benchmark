@@ -8,7 +8,7 @@
 * 通話履歴
   - 発信者電話番号(PK)
   - 受信者電話番号
-  - 料金区分(発信者負担、受信社負担)
+  - 料金区分(発信者負担、受信社負担)(PK)
   - 通話開始時刻(PK)
   - 通話時間
   - 通話料金
@@ -32,44 +32,43 @@
 
 通話履歴
 ```
-create table history(
-    caller_phone_number varchar(15) not null,
-    recipient_phone_number varchar(15) not null,
-    payment_categorty char(1) not null,
-    start_time timestamp not null,
-    time_secs integer not null,
-    charge integer,
-    df integer not null,
-    constraint history_pkey primary key(caller_phone_number, start_time)
-)
-create index idx_df on history(df)
-create index idx_st on history(start_time)
-create index idx_rp on history(recipient_phone_number, start_time)
+create table history (
+  caller_phone_number varchar(15) not null, 
+  recipient_phone_number varchar(15) not null, 
+  payment_category char(1) not null, 
+  start_time timestamp not null, 
+  time_secs int not null, 
+  charge int, 
+  df int not null, 
+  primary key (caller_phone_number, payment_category, start_time)
+);
+create index idx_hst on history(df);
+create index idx_st on history(start_time);
+create index idx_rp on history(recipient_phone_number, payment_category, start_time);
 ```
 
 契約マスタ
 ```
-create table contracts(
+create table contracts (
     phone_number varchar(15) not null,
     start_date date not null,
     end_date date,
     charge_rule varchar(255) not null,
-    primary key(phone_number, start_date)
-)
-
+    primary key (phone_number, start_date)
+);
 ```
 
 月額利用料金
 ```
-create table billing(
+create table billing (
     phone_number varchar(15) not null,
     target_month date not null,
-    basic_charge integer not null,
-    metered_charge integer not null,
-    billing_amount integer not null,
+    basic_charge int not null,
+    metered_charge int not null,
+    billing_amount int not null,
     batch_exec_id varchar(36) not null,
-    constraint billing_pkey primary key(target_month, phone_number, batch_exec_id)
-)
+    primary key(target_month, phone_number, batch_exec_id)
+);
 ```
 
 
@@ -95,15 +94,42 @@ create table billing(
 
 * パラメータとして料金計算対象の年月が与えられる
 * 月額料金テーブルから、料金計算対象の年月のレコードを削除する
+```
+delete from billing where target_month = 料金計算対象の年月
+```
+
 * 契約マスタから、当該年月に有効な契約があるレコードを抽出する
+```
+select phone_number, start_date, end_date, charge_rule
+from contracts
+where start_date <= 当該年月の最終日 and (end_date is null or end_date >= 当該年月の初日)
+order by phone_number
+```
+
 * 抽出した各レコードに対して以下の処理を繰り返す
   - 通話履歴テーブルから、料金計算対象のレコードの値を取り出す
    * 発信者電話番号が契約マスタの電話番号で同じで、料金区分が発信者負担
    * 受信者電話番号が契約マスタの電話番号で同じで、料金区分が受信者負担
    * 通話開始時刻が、契約マスタの契約開始日～契約終了日の間
+```
+select caller_phone_number, recipient_phone_number, payment_category, start_time, time_secs, charge, df
+from history
+where start_time >= 当該年月の初日 and start_time < 当該年月の最終日
+and ((caller_phone_number = 発信者電話番号 and payment_category = 発信者負担) or 
+  (recipient_phone_number = 受信者電話番号 and payment_category = 受信者負担))
+and df = 0
+```
   - 料金計算ルール(後述)に従い料金を計算し、通信履歴テーブルの通話料金を更新する(UPDATE)
+```
+update history
+set recipient_phone_number = ?, time_secs = ?, charge = ?, df = ?
+where caller_phone_number = ? and payment_category = ? and start_time = ?
+```
   - 料金計算ルール(後述)に従い、月額利用料金を更新する(INSERT)
-
+```
+insert into billing(phone_number, target_month, basic_charge, metered_charge, billing_amount, batch_exec_id)
+values(?, ?, ?, ?, ?, ?)
+```
 
 ## 料金計算ルール
 
@@ -169,4 +195,4 @@ create table billing(
 * 料金計算ルールについて
   * 現状の実装では、1種類の料金計算ルールのみを適用
   * 料金計算ルールのバリエーションはアプリケーション側の負荷を高める意図で仕様を作成した。
-  * 料金計算をDBMSの外で実行するかいぎり料金計算のバリエーションが増えてもDBへの負荷は変わらない
+  * 料金計算をDBMSの外で実行するかぎり料金計算のバリエーションが増えてもDBへの負荷は変わらない
