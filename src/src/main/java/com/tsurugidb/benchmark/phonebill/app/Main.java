@@ -28,6 +28,7 @@ public class Main {
 
 	private static final Map<String, Command> COMMAND_MAP = new LinkedHashMap<>();
 	static {
+		addCommand("Issue106", "Create tables", Issue106.class, ArgType.CONFIG);
 		addCommand("CreateTable", "Create tables", CreateTable.class, ArgType.CONFIG);
 		addCommand("CreateTestData", "Create test data to database.", CreateTestData.class, ArgType.CONFIG);
 		addCommand("PhoneBill", "Execute phone bill batch with online applications.", PhoneBill.class, ArgType.CONFIG);
