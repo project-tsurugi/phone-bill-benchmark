@@ -40,16 +40,16 @@ public class DdlIceaxe implements Ddl {
 	public void createHistoryTable() {
 		String create_table = "create table history (" + "caller_phone_number varchar(15) not null," // 発信者電話番号
 				+ "recipient_phone_number varchar(15) not null," // 受信者電話番号
-				+ "payment_categorty char(1) not null," // 料金区分
+				+ "payment_category char(1) not null," // 料金区分
 				+ "start_time timestamp not null," // 通話開始時刻
 				+ "time_secs int not null," // 通話時間(秒)
 				+ "charge int," // 料金
 				+ "df int not null," // 論理削除フラグ
-				+ "primary key (caller_phone_number, payment_categorty, start_time)" + ")";
+				+ "primary key (caller_phone_number, payment_category, start_time)" + ")";
 		execute(create_table);
 		execute("create index idx_hst on history(df)");
 		execute("create index idx_st on history(start_time)");
-		execute("create index idx_rp on history(recipient_phone_number, payment_categorty, start_time)");
+		execute("create index idx_rp on history(recipient_phone_number, payment_category, start_time)");
 	}
 
 	public void createContractsTable() {
@@ -111,7 +111,7 @@ public class DdlIceaxe implements Ddl {
 		createBillingTable();
 	}
 
-	private void execute(String sql) {
+	protected void execute(String sql) {
         try {
             manager.getCurrentTransaction().executeDdl(sql);
         } catch (IOException e) {

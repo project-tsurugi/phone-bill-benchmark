@@ -8,6 +8,11 @@ import com.tsurugidb.benchmark.phonebill.util.DateUtils;
 
 public class History implements Cloneable{
 	/**
+	 * SID サロゲートキーを使用しない場合は常に0が入る。
+	 */
+	private long sid = 0;
+
+	/**
 	 * 発信者電話番号
 	 */
 	private String callerPhoneNumber;
@@ -45,7 +50,9 @@ public class History implements Cloneable{
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		builder.append("History [callerPhoneNumber=");
+		builder.append("History [sid=");
+		builder.append(sid);
+		builder.append(", callerPhoneNumber=");
 		builder.append(callerPhoneNumber);
 		builder.append(", recipientPhoneNumber=");
 		builder.append(recipientPhoneNumber);
@@ -72,6 +79,7 @@ public class History implements Cloneable{
 		result = prime * result + df;
 		result = prime * result + ((paymentCategorty == null) ? 0 : paymentCategorty.hashCode());
 		result = prime * result + ((recipientPhoneNumber == null) ? 0 : recipientPhoneNumber.hashCode());
+		result = prime * result + (int) (sid ^ (sid >>> 32));
 		result = prime * result + (int) (startTime ^ (startTime >>> 32));
 		result = prime * result + timeSecs;
 		return result;
@@ -107,6 +115,8 @@ public class History implements Cloneable{
 			if (other.recipientPhoneNumber != null)
 				return false;
 		} else if (!recipientPhoneNumber.equals(other.recipientPhoneNumber))
+			return false;
+		if (sid != other.sid)
 			return false;
 		if (startTime != other.startTime)
 			return false;
@@ -202,6 +212,13 @@ public class History implements Cloneable{
 		this.df = df;
 	}
 
+	public long getSid() {
+		return sid;
+	}
+
+	public void setSid(long sid) {
+		this.sid = sid;
+	}
 
 	/**
 	 * HistoryのPK
@@ -267,5 +284,4 @@ public class History implements Cloneable{
 		h.df = df;
 		return h;
 	}
-
 }

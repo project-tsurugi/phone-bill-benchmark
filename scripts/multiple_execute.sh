@@ -21,6 +21,9 @@ export JAVA_OPTS="$JAVA_OPTS -Dcom.tsurugidb.tsubakuro.jniverify=false \
  -Dlog.summary=$LOG_DIR/summary-$ext \
  -Dlog.detail=$LOG_DIR/detail-$ext"
 
+ln -sf $LOG_DIR/summary-$ext $LOG_DIR/summary.log
+ln -sf $LOG_DIR/detail-$ext $LOG_DIR/detail.log
+
 $INSTALL_DIR/phone-bill/bin/run MultipleExecute "$@"
 
 

@@ -91,7 +91,7 @@ public class HistoryDaoJdbc implements HistoryDao {
 		PreparedStatement ps = manager.getConnection().prepareStatement("insert into history("
 		+ "caller_phone_number,"
 		+ "recipient_phone_number,"
-		+ "payment_categorty,"
+		+ "payment_category,"
 		+ "start_time,"
 		+ "time_secs,"
 		+ "charge,"
@@ -164,7 +164,7 @@ public class HistoryDaoJdbc implements HistoryDao {
 		PreparedStatement ps = manager.getConnection().prepareStatement(
 				"update history"
 				+ " set recipient_phone_number = ?,time_secs = ?, charge = ?, df = ?"
-				+ " where caller_phone_number = ? and payment_categorty = ?  and start_time = ?");
+				+ " where caller_phone_number = ? and payment_category = ?  and start_time = ?");
 		return ps;
 	}
 
@@ -173,7 +173,7 @@ public class HistoryDaoJdbc implements HistoryDao {
 	@Override
 	public List<History> getHistories(Key key) {
 		Connection conn = manager.getConnection();
-		String sql = "select" + " h.caller_phone_number, h.recipient_phone_number, h.payment_categorty, h.start_time, h.time_secs,"
+		String sql = "select" + " h.caller_phone_number, h.recipient_phone_number, h.payment_category, h.start_time, h.time_secs,"
 				+ " h.charge, h.df" + " from history h"
 				+ " inner join contracts c on c.phone_number = h.caller_phone_number"
 				+ " where c.start_date <= h.start_time and" + " (h.start_time < c.end_date + 1"
@@ -192,11 +192,11 @@ public class HistoryDaoJdbc implements HistoryDao {
 		Contract contract = target.getContract();
 		Date start = target.getStart();
 		Date end = target.getEnd();
-		String sql = "select caller_phone_number, recipient_phone_number, payment_categorty, start_time, time_secs,"
+		String sql = "select caller_phone_number, recipient_phone_number, payment_category, start_time, time_secs,"
 				+ " charge, df" + " from history "
 				+ "where start_time >= ? and start_time < ?"
-				+ " and ((caller_phone_number = ? and payment_categorty = 'C') "
-				+ "  or (recipient_phone_number = ? and payment_categorty = 'R'))"
+				+ " and ((caller_phone_number = ? and payment_category = 'C') "
+				+ "  or (recipient_phone_number = ? and payment_category = 'R'))"
 				+ " and df = 0";
 
 		try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -212,7 +212,7 @@ public class HistoryDaoJdbc implements HistoryDao {
 
 	public List<History> getHistories() {
 		Connection conn = manager.getConnection();
-		String sql = "select caller_phone_number, recipient_phone_number, payment_categorty, start_time, time_secs,"
+		String sql = "select caller_phone_number, recipient_phone_number, payment_category, start_time, time_secs,"
 				+ " charge, df" + " from history ";
 		try (PreparedStatement ps = conn.prepareStatement(sql)) {
 			return createHistoriesLlist(ps);

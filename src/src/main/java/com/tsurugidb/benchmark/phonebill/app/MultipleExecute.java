@@ -68,7 +68,7 @@ public class MultipleExecute extends ExecutableCommand {
 				Config config = info.config;
 				LOG.info("Using config {} " + System.lineSeparator() + "--- " + System.lineSeparator() + config
 						+ System.lineSeparator() + "---", info.configPath.toAbsolutePath().toString());
-				if (config.dbmsType == DbmsType.ICEAXE) {
+				if (config.dbmsType.isTsurugi()) {
 					dbiInit();
 					task = new TateyamaWatcher();
 					future = service.submit(task);
@@ -81,9 +81,11 @@ public class MultipleExecute extends ExecutableCommand {
 				phoneBill.execute(config);
 				record.finish(phoneBill.getTryCount(), phoneBill.getAbortCount());
 				record.setNumberOfDiffrence(checkResult(config));
-				if (config.dbmsType == DbmsType.ICEAXE) {
+				if (config.dbmsType.isTsurugi()) {
+					LOG.info("Sending a request to stop TateyamaWatcher.");
 					task.stop();
 					future.get();
+					LOG.info("TateyamaWatcher was stopped.");
 					record.setMemInfo(task.getVsz(), task.getRss());
 				}
 				writeResult(config);
@@ -300,11 +302,13 @@ public class MultipleExecute extends ExecutableCommand {
 		int n = 0;
 		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
 			Set<History> histories = manager.execute(TxOption.ofRTX(0, TxLabel.CHECK_RESULT), () -> {
-				return new HashSet<>(manager.getHistoryDao().getHistories());
+				List<History> list =manager.getHistoryDao().getHistories();
+				list.stream().forEach(h -> h.setSid(0)); // sidは比較対象でないので0をセット
+				return new HashSet<>(list);
 			});
 			Set<Billing> billings = manager.execute(TxOption.ofRTX(0, TxLabel.CHECK_RESULT), () -> {
 				List<Billing> list = manager.getBillingDao().getBillings();
-				list.stream().forEachOrdered(b -> b.setBatchExecId(null)); // batchExecIdは比較対象でないのでnullをセット
+				list.stream().forEach(b -> b.setBatchExecId(null)); // batchExecIdは比較対象でないのでnullをセット
 				return new HashSet<>(list);
 			});
 			if (expectedHistories == null) {
@@ -405,7 +409,7 @@ public class MultipleExecute extends ExecutableCommand {
 			builder.append("dbmsType=");
 			builder.append(dbmsType);
 			builder.append(", option=");
-			builder.append(dbmsType == DbmsType.ICEAXE ? option : isolationLevel);
+			builder.append(dbmsType.isTsurugi() ? option : isolationLevel);
 			builder.append(", scope=");
 			builder.append(scope);
 			builder.append(", threadCount=");
@@ -418,7 +422,7 @@ public class MultipleExecute extends ExecutableCommand {
 			StringBuilder builder = new StringBuilder();
 			builder.append(dbmsType);
 			builder.append(",");
-			builder.append(dbmsType == DbmsType.ICEAXE ? option : isolationLevel);
+			builder.append(dbmsType.isTsurugi() ? option : isolationLevel);
 			builder.append(",");
 			builder.append(scope);
 			builder.append(",");
