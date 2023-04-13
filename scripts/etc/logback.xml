@@ -10,6 +10,25 @@
     </encoder>
   </appender>
 
+  <appender name="DETAIL-ONLINE"
+    class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>${log.detail.online}</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+      <fileNamePattern>${log.detail.online}_%i</fileNamePattern>
+      <minIndex>1</minIndex>
+      <maxIndex>2</maxIndex>
+    </rollingPolicy>
+    <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+      <maxFileSize>1MB</maxFileSize>
+    </triggeringPolicy>
+    <append>true</append>
+    <encoder>
+      <pattern>
+        %d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n
+     </pattern>
+    </encoder>
+  </appender>
+
   <appender name="SUMMARY"
     class="ch.qos.logback.core.FileAppender">
     <file>${log.summary}</file>
@@ -35,6 +54,15 @@
     <level>ERROR</level>
     </filter>
   </appender>
+
+  <logger name="com.tsurugidb.benchmark.phonebill.online" level="info">
+    <appender-ref ref="SUMMARY" />
+    <appender-ref ref="STDOUT" />
+  </logger>
+
+  <logger name="com.tsurugidb.benchmark.phonebill.online" level="debug" additivity="false">
+    <appender-ref ref="DETAIL-ONLINE" />
+  </logger>
 
   <root level="DETAIL">
     <appender-ref ref="SUMMARY" />
