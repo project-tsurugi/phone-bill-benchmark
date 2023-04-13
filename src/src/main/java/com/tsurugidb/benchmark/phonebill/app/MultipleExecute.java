@@ -32,7 +32,6 @@ import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager.CounterKey;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager.CounterName;
 import com.tsurugidb.benchmark.phonebill.db.TxLabel;
 import com.tsurugidb.benchmark.phonebill.db.TxOption;
-import com.tsurugidb.benchmark.phonebill.db.TxOption.Table;
 import com.tsurugidb.benchmark.phonebill.db.dao.Ddl;
 import com.tsurugidb.benchmark.phonebill.db.entity.Billing;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
@@ -115,21 +114,10 @@ public class MultipleExecute extends ExecutableCommand {
 	 * @throws Exception
 	 */
 	public void initTestData(Config config, boolean prevConfigHasOnlineApp) throws Exception {
-		if (prevConfigHasOnlineApp || needCreateTestData(config)) {
-			LOG.info("Starting test data generation.");
-			new CreateTable().execute(config);
-			new CreateTestData().execute(config);
-			LOG.info("Test data generation has finished.");
-		} else {
-			LOG.info("Starting test data update.");
-			try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
-				manager.execute(TxOption.ofLTX(0, TxLabel.BATCH_INITIALIZE, Table.BILLING, Table.HISTORY), () -> {
-					manager.getHistoryDao().updateChargeNull();
-					manager.getBillingDao().delete();
-				});
-				LOG.info("Test data update has finished.");
-			}
-		}
+		LOG.info("Starting test data generation.");
+		new CreateTable().execute(config);
+		new CreateTestData().execute(config);
+		LOG.info("Test data generation has finished.");
 	}
 
 	public boolean needCreateTestData(Config config) {
