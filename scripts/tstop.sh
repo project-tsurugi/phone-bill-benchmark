@@ -7,7 +7,7 @@ BIN_DIR=$(cd $(dirname $0); pwd)
 
 # kill oltp server
 
-$TSURUGI_DIR/bin/oltp shutdown --conf=$BIN_DIR/etc/phone-bill.ini && true
+time $TSURUGI_DIR/bin/oltp shutdown --conf=$BIN_DIR/etc/phone-bill.ini && true
 
 
 
