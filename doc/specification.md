@@ -173,25 +173,64 @@ values(?, ?, ?, ?, ?, ?)
 
 サンプルバッチ実行中に以下の4種のオンラインアプリケーションを実行する。
 
-* 契約マスタ更新
-  - 既存の契約マスタを更新する
-    - 契約終了日を削除
-    - 契約終了日を設定
-* 契約マスタ追加
-  - 契約マスタにレコードを追加する
-* 通話履歴更新
-  - 既存の通話履歴を更新する
-    - 通話時間を変更する
-    - 論理削除する
-* 通話履歴追加
-  - 通話履歴にレコードを追加する
+###  契約マスタ更新
+* 指定の電話番号の契約を取得する   
+```
+select start_date, end_date, charge_rule
+from contracts 
+where phone_number = 電話番号 order by start_date
+```
+* 複数のレコードが選択された場合ランダムに1レコード選択し値を書き換えて書き戻す
+  - 契約終了日を削除
+  - 契約終了日を設定
 
-パラメータによりオンラインアプリケーションの負荷を変更できる。さいだいで毎秒1000万件の処理が可能。
-毎秒1000万件は、オンラインアプリケーションがDBに十分な負荷を与えるために必要な値として設定した値。
+```
+update contracts set end_date = 契約終了日, charge_rule = 料金計算ルール 
+where phone_number = 電話番号 and start_date = 契約開始日
+```
+
+### 契約マスタ追加
+
+* 契約マスタにレコードを追加する
+```
+insert into contracts(phone_number, start_date, end_date, charge_rule) 
+values(電話番号, 契約開始日, 契約終了日, 料金計算ルール)
+```
+
+
+### 通話履歴更新
+
+* ランダムに契約を選択(DBアクセスしない)
+  * 電話番号と契約開始日
+* 指定の契約に紐づく通話履歴を取得する
+```
+select end_date 
+from contracts 
+where phone_number = 電話番号 and start_date = 契約開始日
+
+select caller_phone_number, recipient_phone_number, payment_category, start_time,	time_secs, charge, df 
+from history 
+where start_time >= 契約開始日 and start_time < 契約終了日 and caller_phone_number = 電話番号
+```
+* 取得した通話履歴からランダムに選択した1レコードを更新する
+  - 通話時間を変更する
+  - 論理削除する
+```
+update history
+set recipient_phone_number = 受信者電話番号, time_secs = 通話時間, charge = 通話時間, df = 論理削除フラグ
+where caller_phone_number = 発信者電話番号 and payment_category = 料金区分 and start_time = 通話開始時刻
+```
+
+
+### 通話履歴追加
+* 通話履歴にレコードを追加する
+```
+insert into history(caller_phone_number, recipient_phone_number, payment_category, start_time, time_secs, charge, df)
+values(発信者電話番号, 受信者電話番号, 料金区分, 通話開始時刻, 通話時間, 通話料金, 論理削除フラグ)
+```
 
 ## 現状の実装について
-
-* バッチ、オンラインアプリケーションともに、Java + JDBCで記述
+* バッチ、オンラインアプリケーションともに、Java + JDBC/ Java + Iceaxeで記述
 * 料金計算ルールについて
   * 現状の実装では、1種類の料金計算ルールのみを適用
   * 料金計算ルールのバリエーションはアプリケーション側の負荷を高める意図で仕様を作成した。
