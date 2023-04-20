@@ -119,6 +119,9 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
             	throw new RetryOverRuntimeException(e);
         	}
             throw new UncheckedIOException(e);
+        } catch (InterruptedException e) {
+            countup(txOption, CounterName.ABORTED);
+            throw new RuntimeException(e);
         } catch (RuntimeException e) {
             countup(txOption, CounterName.ABORTED);
         	if (isRetriable(e)) {
@@ -151,6 +154,9 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
             	throw new RetryOverRuntimeException(e);
         	}
             throw new UncheckedIOException(e);
+        } catch (InterruptedException e) {
+            countup(txOption, CounterName.ABORTED);
+            throw new RuntimeException(e);
         } catch (RuntimeException e) {
             countup(txOption, CounterName.ABORTED);
         	if (isRetriable(e)) {
@@ -197,6 +203,8 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
             transaction.rollback();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         } catch (TsurugiTransactionException e) {
             throw new TsurugiTransactionRuntimeException(e);
         }
@@ -208,6 +216,8 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
             session.close();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -223,7 +233,7 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
 		try {
 			String txId = getCurrentTransaction().getTransactionId();
 			return txId;
-		} catch (NoSuchElementException | IOException e) {
+		} catch (NoSuchElementException | IOException | InterruptedException e) {
 			return "none";
 		}
 	}

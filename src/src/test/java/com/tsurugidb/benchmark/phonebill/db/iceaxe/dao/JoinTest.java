@@ -202,6 +202,8 @@ public class JoinTest extends AbstractJdbcTestCase {
 				}
 			} catch (IOException e) {
 				throw new UncheckedIOException(e);
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
 			}
 		});
 		assertEquals(EXPECTED, actual);
