@@ -102,6 +102,8 @@ public class HistoryDaoIceaxeSurrogateKey implements HistoryDao {
 			return ret;
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
+		} catch (InterruptedException e) {
+			throw new RuntimeException(e);
 		} catch (TsurugiTransactionException e) {
 			throw new TsurugiTransactionRuntimeException(e);
 		}

@@ -35,6 +35,8 @@ public class IceaxeUtils {
 			return session.createStatement(sql, parameterMapping);
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
+		} catch (InterruptedException e) {
+			throw new RuntimeException(e);
 		}
 	}
 
@@ -69,6 +71,8 @@ public class IceaxeUtils {
 			return session.createQuery(sql, parameterMapping, resultMapping);
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
+		} catch (InterruptedException e) {
+			throw new RuntimeException(e);
 		}
 	}
 
@@ -78,6 +82,8 @@ public class IceaxeUtils {
 			return session.createQuery(sql, parameterMapping);
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
+		} catch (InterruptedException e) {
+			throw new RuntimeException(e);
 		}
 	}
 
@@ -86,6 +92,8 @@ public class IceaxeUtils {
 			return manager.getCurrentTransaction().executeAndGetCount(ps);
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
+		} catch (InterruptedException e) {
+			throw new RuntimeException(e);
 		} catch (TsurugiTransactionException e) {
 			throw new TsurugiTransactionRuntimeException(e);
 		}
@@ -96,6 +104,8 @@ public class IceaxeUtils {
 			return manager.getCurrentTransaction().executeAndGetCount(ps, t);
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
+		} catch (InterruptedException e) {
+			throw new RuntimeException(e);
 		} catch (TsurugiTransactionException e) {
 			throw new TsurugiTransactionRuntimeException(e);
 		}
@@ -111,6 +121,8 @@ public class IceaxeUtils {
 			return ret;
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
+		} catch (InterruptedException e) {
+			throw new RuntimeException(e);
 		} catch (TsurugiTransactionException e) {
 			throw new TsurugiTransactionRuntimeException(e);
 		}
@@ -121,6 +133,8 @@ public class IceaxeUtils {
 			return manager.getCurrentTransaction().executeAndGetList(ps);
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
+		} catch (InterruptedException e) {
+			throw new RuntimeException(e);
 		} catch (TsurugiTransactionException e) {
 			throw new TsurugiTransactionRuntimeException(e);
 		}
@@ -131,6 +145,8 @@ public class IceaxeUtils {
 			return manager.getCurrentTransaction().executeAndGetList(ps, parameter);
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
+		} catch (InterruptedException e) {
+			throw new RuntimeException(e);
 		} catch (TsurugiTransactionException e) {
 			throw new TsurugiTransactionRuntimeException(e);
 		}

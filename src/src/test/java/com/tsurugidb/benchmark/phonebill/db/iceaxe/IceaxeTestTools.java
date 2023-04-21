@@ -76,7 +76,7 @@ public class IceaxeTestTools implements Closeable {
 		try {
 			var opt = session.findTableMetadata(tableName);
 			return opt.isPresent();
-		} catch (IOException e) {
+		} catch (IOException | InterruptedException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -100,6 +100,8 @@ public class IceaxeTestTools implements Closeable {
 				assert false;
 			} catch (IOException e) {
 				throw new UncheckedIOException(e);
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
 			} catch (TsurugiTransactionException e) {
 				throw new TsurugiTransactionRuntimeException(e);
 			}
@@ -154,6 +156,8 @@ public class IceaxeTestTools implements Closeable {
 				manager.getCurrentTransaction().executeAndGetCount(ps, parameter);
 			} catch (IOException e) {
 				throw new UncheckedIOException(e);
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
 			} catch (TsurugiTransactionException e) {
 				throw new TsurugiTransactionRuntimeException(e);
 			}
@@ -234,6 +238,8 @@ public class IceaxeTestTools implements Closeable {
 				manager.getCurrentTransaction().executeAndGetCount(ps, parameter);
 			} catch (IOException e) {
 				throw new UncheckedIOException(e);
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
 			} catch (TsurugiTransactionException e) {
 				throw new TsurugiTransactionRuntimeException(e);
 			}
@@ -313,6 +319,8 @@ public class IceaxeTestTools implements Closeable {
 				}
 			} catch (IOException e) {
 				throw new UncheckedIOException(e);
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
 			} catch (TsurugiTransactionException e) {
 				throw new TsurugiTransactionRuntimeException(e);
 			}
@@ -354,6 +362,8 @@ public class IceaxeTestTools implements Closeable {
 				}
 			} catch (IOException e) {
 				throw new UncheckedIOException(e);
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
 			} catch (TsurugiTransactionException e) {
 				throw new TsurugiTransactionRuntimeException(e);
 			}
@@ -402,6 +412,8 @@ public class IceaxeTestTools implements Closeable {
 			    return manager.getCurrentTransaction().executeAndGetList(ps);
 			} catch (IOException e) {
 				throw new UncheckedIOException(e);
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
 			} catch (TsurugiTransactionException e) {
 				throw new TsurugiTransactionRuntimeException(e);
 			}
@@ -438,6 +450,8 @@ public class IceaxeTestTools implements Closeable {
 			    return manager.getCurrentTransaction().executeAndGetList(ps);
 			} catch (IOException e) {
 				throw new UncheckedIOException(e);
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
 			} catch (TsurugiTransactionException e) {
 				throw new TsurugiTransactionRuntimeException(e);
 			}
@@ -477,6 +491,8 @@ public class IceaxeTestTools implements Closeable {
 				}
 			} catch (IOException e) {
 				throw new UncheckedIOException(e);
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
 			} catch (TsurugiTransactionException e) {
 				throw new TsurugiTransactionRuntimeException(e);
 			}
@@ -514,6 +530,8 @@ public class IceaxeTestTools implements Closeable {
 				return manager.getCurrentTransaction().executeAndGetList(ps);
 			} catch (IOException e) {
 				throw new UncheckedIOException(e);
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
 			} catch (TsurugiTransactionException e) {
 				throw new TsurugiTransactionRuntimeException(e);
 			}
@@ -542,6 +560,8 @@ public class IceaxeTestTools implements Closeable {
 				transaction.executeAndGetCount(ps);
 			} catch (IOException e) {
 				throw new UncheckedIOException(e);
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
 			} catch (TsurugiTransactionException e) {
 				throw new TsurugiTransactionRuntimeException(e);
 			}
