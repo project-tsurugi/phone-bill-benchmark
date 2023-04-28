@@ -82,7 +82,7 @@ public class MultipleExecute extends ExecutableCommand {
 				record.finish(phoneBill.getTryCount(), phoneBill.getAbortCount());
 				record.setNumberOfDiffrence(checkResult(config));
 				if (config.dbmsType.isTsurugi()) {
-					LOG.info("Sending a request to stop  TateyamaWatcher.");
+					LOG.info("Sending a request to stop TateyamaWatcher.");
 					task.stop();
 					future.get();
 					LOG.info("TateyamaWatcher was stopped.");

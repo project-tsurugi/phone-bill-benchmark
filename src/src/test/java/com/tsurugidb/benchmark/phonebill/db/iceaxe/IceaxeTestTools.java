@@ -76,7 +76,7 @@ public class IceaxeTestTools implements Closeable {
 		try {
 			var opt = session.findTableMetadata(tableName);
 			return opt.isPresent();
-		} catch (IOException e) {
+		} catch (IOException | InterruptedException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -100,6 +100,8 @@ public class IceaxeTestTools implements Closeable {
 				assert false;
 			} catch (IOException e) {
 				throw new UncheckedIOException(e);
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
 			} catch (TsurugiTransactionException e) {
 				throw new TsurugiTransactionRuntimeException(e);
 			}
@@ -114,21 +116,21 @@ public class IceaxeTestTools implements Closeable {
 	 *
 	 * @param caller_phone_number 発信者電話番号
 	 * @param recipient_phone_number 受信者電話番号
-	 * @param payment_categorty	料金区分
+	 * @param payment_category	料金区分
 	 * @param start_time 通話開始時刻
 	 * @param time_secs 通話時間
 	 * @param df 論理削除フラグ
 	 */
-	public void insertToHistory(String caller_phone_number, String recipient_phone_number, String payment_categorty,
+	public void insertToHistory(String caller_phone_number, String recipient_phone_number, String payment_category,
 			Timestamp start_time, int time_secs, Integer _charge, int _df) {
-		String sql = "insert into history(caller_phone_number, recipient_phone_number, payment_categorty, start_time, time_secs, charge, df) "
-				+ "values(:caller_phone_number, :recipient_phone_number, :payment_categorty, :start_time, :time_secs, :charge, :df)";
+		String sql = "insert into history(caller_phone_number, recipient_phone_number, payment_category, start_time, time_secs, charge, df) "
+				+ "values(:caller_phone_number, :recipient_phone_number, :payment_category, :start_time, :time_secs, :charge, :df)";
 
 
 		execute(() -> {
 			var callerPhoneNumber = TgBindVariable.ofString("caller_phone_number");
 			var recipientPhoneNumber = TgBindVariable.ofString("recipient_phone_number");
-			var paymentCategorty = TgBindVariable.ofString("payment_categorty");
+			var paymentCategorty = TgBindVariable.ofString("payment_category");
 			var startTime = TgBindVariable.ofDateTime("start_time");
 			var timeSecs = TgBindVariable.ofInt("time_secs");
 			var charge = TgBindVariable.ofInt("charge");
@@ -146,7 +148,7 @@ public class IceaxeTestTools implements Closeable {
 				TgBindParameters parameter = TgBindParameters.of(
 						callerPhoneNumber.bind(caller_phone_number),
 						recipientPhoneNumber.bind(recipient_phone_number),
-						paymentCategorty.bind(payment_categorty),
+						paymentCategorty.bind(payment_category),
 						startTime.bind(start_time.toLocalDateTime()),
 						timeSecs.bind(time_secs),
 						charge.bind(_charge),
@@ -154,6 +156,8 @@ public class IceaxeTestTools implements Closeable {
 				manager.getCurrentTransaction().executeAndGetCount(ps, parameter);
 			} catch (IOException e) {
 				throw new UncheckedIOException(e);
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
 			} catch (TsurugiTransactionException e) {
 				throw new TsurugiTransactionRuntimeException(e);
 			}
@@ -174,15 +178,15 @@ public class IceaxeTestTools implements Closeable {
 	 *
 	 * @param caller_phone_number
 	 * @param recipient_phone_number
-	 * @param payment_categorty
+	 * @param payment_category
 	 * @param start_time
 	 * @param time_secs
 	 * @param _charge
 	 * @param _df
 	 */
-	public void insertToHistoryWsk(long _sid, String caller_phone_number, String recipient_phone_number, String payment_categorty,
+	public void insertToHistoryWsk(long _sid, String caller_phone_number, String recipient_phone_number, String payment_category,
 			String start_time, int time_secs, Integer _charge, int _df) {
-		insertToHistoryWsk(_sid, caller_phone_number, recipient_phone_number, payment_categorty,
+		insertToHistoryWsk(_sid, caller_phone_number, recipient_phone_number, payment_category,
 				DateUtils.toTimestamp(start_time), time_secs, _charge, _df);
 	}
 
@@ -191,22 +195,22 @@ public class IceaxeTestTools implements Closeable {
 	 *
 	 * @param caller_phone_number 発信者電話番号
 	 * @param recipient_phone_number 受信者電話番号
-	 * @param payment_categorty	料金区分
+	 * @param payment_category	料金区分
 	 * @param start_time 通話開始時刻
 	 * @param time_secs 通話時間
 	 * @param df 論理削除フラグ
 	 */
-	public void insertToHistoryWsk(long _sid, String caller_phone_number, String recipient_phone_number, String payment_categorty,
+	public void insertToHistoryWsk(long _sid, String caller_phone_number, String recipient_phone_number, String payment_category,
 			Timestamp start_time, int time_secs, Integer _charge, int _df) {
-		String sql = "insert into history(sid, caller_phone_number, recipient_phone_number, payment_categorty, start_time, time_secs, charge, df) "
-				+ "values(:sid, :caller_phone_number, :recipient_phone_number, :payment_categorty, :start_time, :time_secs, :charge, :df)";
+		String sql = "insert into history(sid, caller_phone_number, recipient_phone_number, payment_category, start_time, time_secs, charge, df) "
+				+ "values(:sid, :caller_phone_number, :recipient_phone_number, :payment_category, :start_time, :time_secs, :charge, :df)";
 
 
 		execute(() -> {
 			var sid = TgBindVariable.ofLong("sid");
 			var callerPhoneNumber = TgBindVariable.ofString("caller_phone_number");
 			var recipientPhoneNumber = TgBindVariable.ofString("recipient_phone_number");
-			var paymentCategorty = TgBindVariable.ofString("payment_categorty");
+			var paymentCategorty = TgBindVariable.ofString("payment_category");
 			var startTime = TgBindVariable.ofDateTime("start_time");
 			var timeSecs = TgBindVariable.ofInt("time_secs");
 			var charge = TgBindVariable.ofInt("charge");
@@ -226,7 +230,7 @@ public class IceaxeTestTools implements Closeable {
 						sid.bind(_sid),
 						callerPhoneNumber.bind(caller_phone_number),
 						recipientPhoneNumber.bind(recipient_phone_number),
-						paymentCategorty.bind(payment_categorty),
+						paymentCategorty.bind(payment_category),
 						startTime.bind(start_time.toLocalDateTime()),
 						timeSecs.bind(time_secs),
 						charge.bind(_charge),
@@ -234,6 +238,8 @@ public class IceaxeTestTools implements Closeable {
 				manager.getCurrentTransaction().executeAndGetCount(ps, parameter);
 			} catch (IOException e) {
 				throw new UncheckedIOException(e);
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
 			} catch (TsurugiTransactionException e) {
 				throw new TsurugiTransactionRuntimeException(e);
 			}
@@ -246,15 +252,15 @@ public class IceaxeTestTools implements Closeable {
 	 *
 	 * @param caller_phone_number
 	 * @param recipient_phone_number
-	 * @param payment_categorty
+	 * @param payment_category
 	 * @param start_time
 	 * @param time_secs
 	 * @param _charge
 	 * @param _df
 	 */
-	public void insertToHistory(String caller_phone_number, String recipient_phone_number, String payment_categorty,
+	public void insertToHistory(String caller_phone_number, String recipient_phone_number, String payment_category,
 			String start_time, int time_secs, Integer _charge, int _df) {
-		insertToHistory(caller_phone_number, recipient_phone_number, payment_categorty,
+		insertToHistory(caller_phone_number, recipient_phone_number, payment_category,
 				DateUtils.toTimestamp(start_time), time_secs, _charge, _df);
 	}
 
@@ -313,6 +319,8 @@ public class IceaxeTestTools implements Closeable {
 				}
 			} catch (IOException e) {
 				throw new UncheckedIOException(e);
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
 			} catch (TsurugiTransactionException e) {
 				throw new TsurugiTransactionRuntimeException(e);
 			}
@@ -354,6 +362,8 @@ public class IceaxeTestTools implements Closeable {
 				}
 			} catch (IOException e) {
 				throw new UncheckedIOException(e);
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
 			} catch (TsurugiTransactionException e) {
 				throw new TsurugiTransactionRuntimeException(e);
 			}
@@ -391,17 +401,19 @@ public class IceaxeTestTools implements Closeable {
 				.addLong("sid", History::setSid)
 				.addString("caller_phone_number", History::setCallerPhoneNumber)
 				.addString("recipient_phone_number", History::setRecipientPhoneNumber)
-				.addString("payment_categorty", History::setPaymentCategorty)
+				.addString("payment_category", History::setPaymentCategorty)
 				.addDateTime("start_time", History::setStartTime)
 				.addInt("time_secs", History::setTimeSecs)
 				.addInt("charge", History::setCharge)
 				.addInt("df", History::setDf);
 		return execute(() -> {
-			String sql = "select sid, caller_phone_number, recipient_phone_number, payment_categorty, start_time, time_secs, charge, df from history ";
+			String sql = "select sid, caller_phone_number, recipient_phone_number, payment_category, start_time, time_secs, charge, df from history ";
 			try (var ps = session.createQuery(sql, resultMapping)) {
 			    return manager.getCurrentTransaction().executeAndGetList(ps);
 			} catch (IOException e) {
 				throw new UncheckedIOException(e);
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
 			} catch (TsurugiTransactionException e) {
 				throw new TsurugiTransactionRuntimeException(e);
 			}
@@ -427,17 +439,19 @@ public class IceaxeTestTools implements Closeable {
 				TgResultMapping.of(History::new)
 				.addString("caller_phone_number", History::setCallerPhoneNumber)
 				.addString("recipient_phone_number", History::setRecipientPhoneNumber)
-				.addString("payment_categorty", History::setPaymentCategorty)
+				.addString("payment_category", History::setPaymentCategorty)
 				.addDateTime("start_time", History::setStartTime)
 				.addInt("time_secs", History::setTimeSecs)
 				.addInt("charge", History::setCharge)
 				.addInt("df", History::setDf);
 		return execute(() -> {
-			String sql = "select caller_phone_number, recipient_phone_number, payment_categorty, start_time, time_secs, charge, df from history ";
+			String sql = "select caller_phone_number, recipient_phone_number, payment_category, start_time, time_secs, charge, df from history ";
 			try (var ps = session.createQuery(sql, resultMapping)) {
 			    return manager.getCurrentTransaction().executeAndGetList(ps);
 			} catch (IOException e) {
 				throw new UncheckedIOException(e);
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
 			} catch (TsurugiTransactionException e) {
 				throw new TsurugiTransactionRuntimeException(e);
 			}
@@ -477,6 +491,8 @@ public class IceaxeTestTools implements Closeable {
 				}
 			} catch (IOException e) {
 				throw new UncheckedIOException(e);
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
 			} catch (TsurugiTransactionException e) {
 				throw new TsurugiTransactionRuntimeException(e);
 			}
@@ -514,6 +530,8 @@ public class IceaxeTestTools implements Closeable {
 				return manager.getCurrentTransaction().executeAndGetList(ps);
 			} catch (IOException e) {
 				throw new UncheckedIOException(e);
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
 			} catch (TsurugiTransactionException e) {
 				throw new TsurugiTransactionRuntimeException(e);
 			}
@@ -542,6 +560,8 @@ public class IceaxeTestTools implements Closeable {
 				transaction.executeAndGetCount(ps);
 			} catch (IOException e) {
 				throw new UncheckedIOException(e);
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
 			} catch (TsurugiTransactionException e) {
 				throw new TsurugiTransactionRuntimeException(e);
 			}

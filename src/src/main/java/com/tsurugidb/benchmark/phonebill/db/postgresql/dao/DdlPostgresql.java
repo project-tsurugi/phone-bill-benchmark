@@ -22,7 +22,7 @@ public class DdlPostgresql extends DdlJdbc {
 		String create_table = "create table history ("
 				+ "caller_phone_number varchar(15) not null," 		// 発信者電話番号
 				+ "recipient_phone_number varchar(15) not null," 	// 受信者電話番号
-				+ "payment_categorty char(1) not null," 			// 料金区分
+				+ "payment_category char(1) not null," 			// 料金区分
 				+ "start_time timestamp not null,"			 		// 通話開始時刻
 				+ "time_secs integer not null," 					// 通話時間(秒)
 				+ "charge integer," 								// 料金
@@ -60,10 +60,10 @@ public class DdlPostgresql extends DdlJdbc {
 		if (createSecondaryIndexes) {
 			executeWithLogging("create index idx_df on history(df)");
 			executeWithLogging("create index idx_st on history(start_time)");
-			executeWithLogging("create index idx_rp on history(recipient_phone_number, payment_categorty, start_time)");
+			executeWithLogging("create index idx_rp on history(recipient_phone_number, payment_category, start_time)");
 		}
 		executeWithLogging(
-				"alter table history add constraint history_pkey primary key (caller_phone_number, payment_categorty, start_time)");
+				"alter table history add constraint history_pkey primary key (caller_phone_number, payment_category, start_time)");
 		executeWithLogging(
 				"alter table contracts add constraint contracts_pkey primary key (phone_number, start_date)");
 		long elapsedTime = System.currentTimeMillis() - startTime;
