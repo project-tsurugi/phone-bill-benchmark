@@ -11,7 +11,7 @@
 
 [ipc_endpoint]
     database_name=phone-bill
-    threads=$TSURUGI_THREAD_SIZE
+    threads=140
 
 [fdw]
     name=phone-bill
