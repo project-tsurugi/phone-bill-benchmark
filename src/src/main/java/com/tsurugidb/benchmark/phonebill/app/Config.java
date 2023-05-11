@@ -343,7 +343,20 @@ public class Config implements Cloneable {
 	public int listenPort;
 	private static final String LISTEN_PORT = "listen.port";
 
-
+	/**
+	 * オンラインアプリのみ実行を指定するフラグ、デフォルト値はfalse
+	 */
+	public boolean onlineOnly;
+	private static final String ONLINE_ONLY = "online.only";
+	
+	/**
+	 * 実行時間の上限、0を指定するとバッチが終了するまで実行する。onlyOnlyがtrueで
+	 * executionTimeLimitが0の場合、オンラインアプリが永遠に動き続ける
+	 */
+	public int execTimeLimitSecs;
+	private static final String EXEC_TIME_LIMIT_SECS = "exec.time.limit.secs";
+	
+	
 	/**
 	 * コンストラクタ.
 	 * <br>
@@ -490,13 +503,15 @@ public class Config implements Cloneable {
 		// その他のパラメータ
 		randomSeed = getInt(RANDOM_SEED, 0);
 		transactionScope = getTransactionScope(TRANSACTION_SCOPE, TransactionScope.WHOLE);
-
+		listenPort = getInt(LISTEN_PORT, 0);
+		onlineOnly = getBoolean(ONLINE_ONLY, false);
+		execTimeLimitSecs = getInt(EXEC_TIME_LIMIT_SECS, 0);
+		
 		// パラメータ間の矛盾のチェック
 		if (transactionScope == TransactionScope.CONTRACT && sharedConnection) {
 			// トランザクションのスコープが契約単位で、コネクション共有は許されない
 			throw new RuntimeException("TransactionScope Contract and sharedConnection cannot be specified at the same time.");
 		}
-		listenPort = getInt(LISTEN_PORT, 0);
 	}
 
 	/**
@@ -856,6 +871,8 @@ public class Config implements Cloneable {
 		sb.append(String.format(format, RANDOM_SEED, randomSeed));
 		sb.append(String.format(format, TRANSACTION_SCOPE, transactionScope));
 		sb.append(String.format(format, LISTEN_PORT, listenPort));
+		sb.append(String.format(format, ONLINE_ONLY, onlineOnly));
+		sb.append(String.format(format, EXEC_TIME_LIMIT_SECS, execTimeLimitSecs));
 		return sb.toString();
 	}
 
