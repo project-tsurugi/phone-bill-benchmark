@@ -279,7 +279,7 @@ caller.phone.number.distribution=LOGNORMAL
   * falseの場合、スレッド毎にコネクションを用意されます
   * 特別な意図がある場合を除き、このパラメータにはfalseを指定してください
     * JDBCドライバはJDBCの仕様によりスレッドセーフです。ただし、ほとんどの実装で複数スレッドによる並列処理ができません。このため、thread.countに2以上の値を指定しても、thread.count=1と比べて性能が向上しません。
-  * shared.connection=falseで、transaction.scope=WHOLEに指定した場合、スレッド毎にトランザクションが分かれるため、厳密にはtransaction.scope=WHOLEが実現できません。shared.connection=trueにするとバッチ処理全体を1トランザックションになります。ただし、
+  * shared.connection=falseで、transaction.scope=WHOLEに指定した場合、スレッド毎にトランザクションが分かれるため、厳密にはtransaction.scope=WHOLEが実現できません。shared.connection=trueにするとバッチ処理全体を1トランザックションになります。
 
 ## オンラインアプリケーションに関するパラメータ 
 
@@ -294,26 +294,26 @@ caller.phone.number.distribution=LOGNORMAL
 * master.insert.thread.count
   * 契約テーブルを追加するスレッドのスレッド数。 
 * master.insert.records.per.min
-  * 各スレッドが1分h間に何回、契約テーブルにレコードを追加する処理を規定します。
+  * 各スレッドが1分間に何回、契約テーブルにレコードを追加するのかを規定します。
   * -1を指定すると連続で契約テーブルにレコードを追加します。
   * 1回の追加処理で、1レコードを追加します。1レコードの更新処理が1トランザクションになります。
   * 追加されたレコードは料金計算バッチの処理対象外です
 
-* history.update.thread.count=1
+* history.update.thread.count
   * historyテーブルを更新するスレッドのスレッド数。 
 * history.update.records.per.min
-  * 各スレッドが1分h間に何回、historyテーブルの更新を行うのかを。
+  * 各スレッドが1分間に何回、historyテーブルの更新を行うのかを規定します。
   * -1を指定すると連続でhistoryテーブルを更新します。
   * 1回の更新処理で、1レコードを更新します。1レコードの更新処理が1トランザクションになります。
   * 更新対象はランダムに選択され、料金計算バッチが処理中の契約レコードが更新される可能性もあります。
 
-* history.insert.thread.count=1
+* history.insert.thread.count
   * historyテーブルを追加するスレッドのスレッド数。 
 * history.insert.transaction.per.min, history.insert.records.per.transaction
-  * 各スレッドが1分h間に何回、historyテーブルにレコードを追加する処理を規定します。
+  * 各スレッドが1分間に何回、historyテーブルにレコードを追加するのかを規定します。
   * -1を指定すると連続でhistoryテーブルにレコードを追加します。
   * 1回の追加処理で、history.insert.records.per.transactionで指定した数のレコードを1トランザクションで追加します。
   * 追加されたレコードは料金計算バッチの処理対象外です
-    * 追加されるレコードの通話開始時刻既存データの通話開始時刻より大きな値になります。
+    * 追加されるレコードの通話開始時刻は既存データの通話開始時刻より大きな値になります。
 
  
