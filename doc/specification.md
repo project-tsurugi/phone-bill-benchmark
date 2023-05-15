@@ -195,7 +195,7 @@ where phone_number = 電話番号 and start_date = 契約開始日
 ```
 insert into contracts(phone_number, start_date, end_date, charge_rule) 
 values(電話番号, 契約開始日, 契約終了日, 料金計算ルール)
-``
+```
 
 
 ### 通話履歴更新
