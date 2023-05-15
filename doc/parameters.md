@@ -7,15 +7,19 @@
 
 ## テストデータ生成に関するパラメータ
 
-* target.month, min.date, max.date
+* min.date, max.date
   * テストデータ生成時、マスタの契約開始日、契約終了日は min.dateからmax.dateの範囲の日次が選ばれます。 
   * テストデータ生成時、通話履歴データの通話開始時刻はmin.dateからmax.dateの範囲の時刻が選ばれます。
 * duplicate.phone.number.rate, expiration.date.rate, no.expiration.date.rate
   * マスタデータを生成時に使用されるパラメータです。
-  * マスタデータの通話開始日、通話終了日のバリエーションを規定します
-  * duplicate.phone.number.rate, expiration.date.rate, no.expiration.date.rate をそれぞれa, b, c, number.of.contracts.recordsをdとき次の式が成り立つように、a, b, cを選択すること推奨します。
-    * d = 2a +  b + c
-  * 処理対象データ量が意図せず変わってしまわないようにnumber.of.contracts.records を変更する際は、上記a, b, cの比率は変更しないようにしてください。
+  * マスタデータの契約始日、契約終了日のバリエーションを規定します
+  * duplicate.phone.number.rate, expiration.date.rate, no.expiration.date.rate をそれぞれa, b, c,とするとマスタデータの作成時、最初の(2a +  b + c)レコードについて、以下のパターンのデータを作成します。
+    * 1つの電話番号にたいして契約終了にがあるレコードを1レコード、契約終了日がないレコードを1レコード、合計2aレコード
+    * 契約終了日があるレコードをbレコード
+    * 契約終了日がないレコードをcレコード  
+  * (2a +  b + c)レコード以降は、 (2a +  b + c)レコードまでに生成した契約始日、契約終了日のバリエーションを繰り返し使用します。
+  * 通常はnumber.of.contracts.recordsの値が(2a +  b + c)と等しくなるように、duplicate.phone.number.rate, expiration.date.rate, no.expiration.date.rateを設定してください。
+  * number.of.contracts.recordsに非常に大きな値を指定するとメモリ不足が原因でテストデータの生成に失敗する可能性があります。このような場合、number.of.contracts.recordsが(2a +  b + c)の整数倍になるようにduplicate.phone.number.rate, expiration.date.rate, no.expiration.date.rateを指定することにより、テストデータ生成時のメモリ使用量を抑制できます。
 * number.of.contracts.records, number.of.history.records それぞれマスタのレコード数、通話履歴のレコード数を表します。
   * テストデータ量と、料金計算バッチの処理データ量を規定するパラメータです。
   * 現状で指定可能な値の上限はInteger.MAX_VALUEです。
