@@ -225,8 +225,8 @@ caller.phone.number.distribution=LOGNORMAL
     * min.dateが月の最初の日でない場合は、min.dateの月はtarget.monthに指定不可
     * 現状パラメータチェックはしていませんが、プログラム設計時のこれを前提としています
   * target.month, min.date, max.dateの値により、計算対象となるデータ量が変化することに注意してください。
-    * min.date～max.dateの間の期間が長いほど、計算対象となるデータは減ります。
-    * target.monthで指定する月が新しいほど、計算対象となるデータが増えます。ただし、通常はベンチマーク結果に影響を与えるほど増加はしません。
+    * min.date～max.dateの間の期間が長くなると、target.monthに含まれるデータの割合が減少する。
+    * target.monthで指定する月が新しいほど契約終了日がない契約が計算対象となる確率は高くなり、計算対象のデータの割合が増加する。
 
 * transaction.scope
   * WHOLE, CONTRACTのどちらかを指定
