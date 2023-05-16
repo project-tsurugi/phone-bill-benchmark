@@ -23,7 +23,7 @@ import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract.Key;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.Duration;
 import com.tsurugidb.benchmark.phonebill.util.DateUtils;
-import com.tsurugidb.benchmark.phonebill.util.RandomStub;
+import com.tsurugidb.benchmark.phonebill.util.TestRandom;
 
 class ContractInfoReaderTest {
 	// TODO: 後から追加したメソッドのテストケースを作成する
@@ -39,9 +39,9 @@ class ContractInfoReaderTest {
 	private ContractBlockInfoAccessorStub accessor = new ContractBlockInfoAccessorStub();
 
 	/**
-	 * Randomのテスト用スタブ;
+	 * テスト用のRandom
 	 */
-	private RandomStub random = new RandomStub();
+	private TestRandom random = new TestRandom();
 
 
 
