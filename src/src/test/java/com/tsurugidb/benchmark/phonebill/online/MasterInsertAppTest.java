@@ -20,7 +20,7 @@ import com.tsurugidb.benchmark.phonebill.testdata.SingleProcessContractBlockMana
 import com.tsurugidb.benchmark.phonebill.testdata.TestDataGenerator;
 import com.tsurugidb.benchmark.phonebill.util.DateUtils;
 
-class MasterInsertAppTest extends AbstractJdbcTestCase {
+class MasterDeleteInsertAppTest extends AbstractJdbcTestCase {
 
 	@Test
 	void test() throws Exception {
@@ -43,11 +43,11 @@ class MasterInsertAppTest extends AbstractJdbcTestCase {
 		}
 		List<Contract> expectedList = getContracts();
 
-		// MasterInsertAppで5レコード生成し、Generatorで生成したレコードと一致することを確認
+		// MasterDeleteInsertAppで5レコード生成し、Generatorで生成したレコードと一致することを確認
 		truncateTable("contracts");
 
 		ContractBlockInfoAccessor accessor2 = new SingleProcessContractBlockManager();
-		MasterInsertApp app = new MasterInsertApp(config, new Random(seed), accessor2);
+		MasterDeleteInsertApp app = new MasterDeleteInsertApp(config, new Random(seed), accessor2);
 		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
 			app.exec(manager);
 			app.exec(manager);

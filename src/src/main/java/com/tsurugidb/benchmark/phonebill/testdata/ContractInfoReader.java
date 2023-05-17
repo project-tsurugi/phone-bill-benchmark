@@ -26,7 +26,7 @@ import com.tsurugidb.benchmark.phonebill.util.DateUtils;
  *     <li></li>
  *     <li>初期契約期間:MasterUpdateAppにより更新される前のTestDataGeneratorにより生成された期間</li>
  *     <li>契約のキー値</li>
- *     <li>MasterInsertAppが生成する履歴の開始時刻に当該契約が有効/無効</li>
+ *     <li>MasterDeleteInsertAppが生成する履歴の開始時刻に当該契約が有効/無効</li>
  *   </ul>
  * </ul>
  * 本クラスはスレッドセーフではない。本クラスを使用する各スレッドが本クラスのインスタンスを
@@ -52,7 +52,7 @@ public class ContractInfoReader {
 	private List<Duration> durationList;
 
 	/**
-	 * 「MasterInsertAppが生成する履歴の開始時刻」に当該契約が有効/無効を表すリスト
+	 * 「MasterDeleteInsertAppが生成する履歴の開始時刻」に当該契約が有効/無効を表すリスト
 	 */
 	private List<Boolean> statusList;
 

@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,12 +36,14 @@ import com.tsurugidb.benchmark.phonebill.db.TxOption.Table;
 import com.tsurugidb.benchmark.phonebill.db.dao.BillingDao;
 import com.tsurugidb.benchmark.phonebill.db.dao.ContractDao;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
+import com.tsurugidb.benchmark.phonebill.db.entity.Contract.Key;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.Duration;
 import com.tsurugidb.benchmark.phonebill.online.AbstractOnlineApp;
 import com.tsurugidb.benchmark.phonebill.online.HistoryInsertApp;
 import com.tsurugidb.benchmark.phonebill.online.HistoryUpdateApp;
-import com.tsurugidb.benchmark.phonebill.online.MasterInsertApp;
+import com.tsurugidb.benchmark.phonebill.online.MasterDeleteInsertApp;
 import com.tsurugidb.benchmark.phonebill.online.MasterUpdateApp;
+import com.tsurugidb.benchmark.phonebill.online.RandomKeySelector;
 import com.tsurugidb.benchmark.phonebill.testdata.ActiveBlockNumberHolder;
 import com.tsurugidb.benchmark.phonebill.testdata.ContractBlockInfoAccessor;
 import com.tsurugidb.benchmark.phonebill.testdata.DbContractBlockInfoInitializer;
@@ -135,6 +138,16 @@ public class PhoneBill extends ExecutableCommand {
             throw new IllegalStateException("Insufficient test data, create test data first.");
         }
 
+        RandomKeySelector<Key> keySelector;
+        try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
+            List<Key> contracts = manager.execute(TxOption.of(), () -> {
+                return manager.getContractDao().getContracts().stream().map(c -> c.getKey())
+                        .collect(Collectors.toList());
+            });
+            keySelector = new RandomKeySelector<>(contracts, random, 0);
+        }
+
+
         List<AbstractOnlineApp> list = new ArrayList<AbstractOnlineApp>();
         if (config.historyInsertThreadCount > 0 && config.historyInsertTransactionPerMin != 0) {
             list.addAll(HistoryInsertApp.createHistoryInsertApps(config, new Random(random.nextInt()), accessor,
@@ -142,21 +155,21 @@ public class PhoneBill extends ExecutableCommand {
         }
         if (config.historyUpdateThreadCount > 0 && config.historyUpdateRecordsPerMin != 0) {
             for (int i = 0; i < config.historyUpdateThreadCount; i++) {
-                AbstractOnlineApp task = new HistoryUpdateApp(config, new Random(random.nextInt()), accessor);
+                AbstractOnlineApp task = new HistoryUpdateApp(config, new Random(random.nextInt()), keySelector);
                 task.setName(i);
                 list.add(task);
             }
         }
         if (config.masterInsertThreadCount > 0 && config.masterDeleteInsertRecordsPerMin != 0) {
             for (int i = 0; i < config.masterInsertThreadCount; i++) {
-                AbstractOnlineApp task = new MasterInsertApp(config, new Random(random.nextInt()), accessor);
+                AbstractOnlineApp task = new MasterDeleteInsertApp(config, new Random(random.nextInt()), accessor);
                 task.setName(i);
                 list.add(task);
             }
         }
         if (config.masterUpdateThreadCount > 0 && config.masterUpdateRecordsPerMin != 0) {
             for (int i = 0; i < config.masterUpdateThreadCount; i++) {
-                AbstractOnlineApp task = new MasterUpdateApp(config, new Random(random.nextInt()), accessor);
+                AbstractOnlineApp task = new MasterUpdateApp(config, new Random(random.nextInt()), keySelector);
                 task.setName(i);
                 list.add(task);
             }

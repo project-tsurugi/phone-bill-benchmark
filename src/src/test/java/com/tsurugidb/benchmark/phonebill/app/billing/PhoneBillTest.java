@@ -30,7 +30,7 @@ import com.tsurugidb.benchmark.phonebill.db.jdbc.Duration;
 import com.tsurugidb.benchmark.phonebill.online.AbstractOnlineApp;
 import com.tsurugidb.benchmark.phonebill.online.HistoryInsertApp;
 import com.tsurugidb.benchmark.phonebill.online.HistoryUpdateApp;
-import com.tsurugidb.benchmark.phonebill.online.MasterInsertApp;
+import com.tsurugidb.benchmark.phonebill.online.MasterDeleteInsertApp;
 import com.tsurugidb.benchmark.phonebill.online.MasterUpdateApp;
 import com.tsurugidb.benchmark.phonebill.testdata.AbstractContractBlockInfoInitializer;
 import com.tsurugidb.benchmark.phonebill.testdata.ContractBlockInfoAccessor;
@@ -433,7 +433,7 @@ class PhoneBillTest extends AbstractJdbcTestCase {
         Map<Class<?>, List<AbstractOnlineApp>> map = new HashMap<>();
         map.put(HistoryInsertApp.class, new ArrayList<AbstractOnlineApp>());
         map.put(HistoryUpdateApp.class, new ArrayList<AbstractOnlineApp>());
-        map.put(MasterInsertApp.class, new ArrayList<AbstractOnlineApp>());
+        map.put(MasterDeleteInsertApp.class, new ArrayList<AbstractOnlineApp>());
         map.put(MasterUpdateApp.class, new ArrayList<AbstractOnlineApp>());
         for(AbstractOnlineApp app: PhoneBill.createOnlineApps(config, accessor)) {
             List<AbstractOnlineApp>	list = map.get(app.getClass());
@@ -443,7 +443,7 @@ class PhoneBillTest extends AbstractJdbcTestCase {
         // 生成されたオンラインアプリの数とnameの確認
         checkAppList(1, "HistoryInsertApp", map.get(HistoryInsertApp.class));
         checkAppList(2, "HistoryUpdateApp", map.get(HistoryUpdateApp.class));
-        checkAppList(3, "MasterInsertApp", map.get(MasterInsertApp.class));
+        checkAppList(3, "MasterDeleteInsertApp", map.get(MasterDeleteInsertApp.class));
         checkAppList(4, "MasterUpdateApp", map.get(MasterUpdateApp.class));
 
         // 契約のブロックが不足してExceptionが発生するケース

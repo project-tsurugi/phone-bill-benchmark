@@ -19,8 +19,8 @@ import com.tsurugidb.benchmark.phonebill.testdata.TestDataGenerator;
  * 指定の頻度で、契約マスタにレコードをインサートするアプリケーション
  *
  */
-public class MasterInsertApp extends AbstractOnlineApp {
-    private static final Logger LOG = LoggerFactory.getLogger(MasterInsertApp.class);
+public class MasterDeleteInsertApp extends AbstractOnlineApp {
+    private static final Logger LOG = LoggerFactory.getLogger(MasterDeleteInsertApp.class);
 
     /**
      * 本アプリケーションが使用するTestDataGenerator
@@ -32,7 +32,7 @@ public class MasterInsertApp extends AbstractOnlineApp {
      */
     private Contract contract;
 
-	public MasterInsertApp(Config config, Random random, ContractBlockInfoAccessor accessor) throws IOException {
+	public MasterDeleteInsertApp(Config config, Random random, ContractBlockInfoAccessor accessor) throws IOException {
 		super(config.masterDeleteInsertRecordsPerMin, config, random);
 		testDataGenerator = new TestDataGenerator(config, new Random(config.randomSeed), accessor);
 	}

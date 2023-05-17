@@ -17,7 +17,7 @@ import com.tsurugidb.benchmark.phonebill.testdata.SingleProcessContractBlockMana
 import com.tsurugidb.benchmark.phonebill.testdata.TestDataGenerator;
 import com.tsurugidb.benchmark.phonebill.util.DateUtils;
 
-class MasterInsertAppIceaxeTest {
+class MasterDeleteInsertAppIceaxeTest {
 	private static String ICEAXE_CONFIG = "src/test/config/iceaxe.properties";
 
 	@Test
@@ -42,11 +42,11 @@ class MasterInsertAppIceaxeTest {
 			}
 			List<Contract> expectedList = testTools.getContractList();
 
-			// MasterInsertAppで5レコード生成し、Generatorで生成したレコードと一致することを確認
+			// MasterDeleteInsertAppで5レコード生成し、Generatorで生成したレコードと一致することを確認
 			testTools.truncateTable("contracts");
 
 			ContractBlockInfoAccessor accessor2 = new SingleProcessContractBlockManager();
-			MasterInsertApp app = new MasterInsertApp(config, new Random(seed), accessor2);
+			MasterDeleteInsertApp app = new MasterDeleteInsertApp(config, new Random(seed), accessor2);
 			try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
 				app.exec(manager);
 				app.exec(manager);
