@@ -44,14 +44,14 @@ public class OnlineAppBench extends ExecutableCommand {
 		manager = PhoneBillDbManager.createPhoneBillDbManager(config);
 		int historyInsertTransactionPerMin = config.historyInsertTransactionPerMin;
 		int historyUpdateRecordsPerMin = config.historyUpdateRecordsPerMin;
-		int masterInsertReccrdsPerMin = config.masterInsertRecordsPerMin;
+		int masterInsertReccrdsPerMin = config.masterDeleteInsertRecordsPerMin;
 		int masterUpdateRecordsPerMin = config.masterUpdateRecordsPerMin;
 		long elapsedTime;
 
 		// オンラインアプリケーションを動かさない場合
 		config.historyInsertTransactionPerMin = 0;
 		config.historyUpdateRecordsPerMin = 0;
-		config.masterInsertRecordsPerMin = 0;
+		config.masterDeleteInsertRecordsPerMin = 0;
 		config.masterUpdateRecordsPerMin = 0;
 		elapsedTime = execBatch(config);
 		LOG.info("No online application, elapsed time = {} ms", elapsedTime);
@@ -59,28 +59,28 @@ public class OnlineAppBench extends ExecutableCommand {
 		// 各オンラインアプリケーションを単独で動かした場合
 		config.historyInsertTransactionPerMin = historyInsertTransactionPerMin;
 		config.historyUpdateRecordsPerMin = 0;
-		config.masterInsertRecordsPerMin = 0;
+		config.masterDeleteInsertRecordsPerMin = 0;
 		config.masterUpdateRecordsPerMin = 0;
 		elapsedTime = execBatch(config);
 		LOG.info("History insert online application, elapsed time = {} ms", elapsedTime);
 
 		config.historyInsertTransactionPerMin = 0;
 		config.historyUpdateRecordsPerMin = historyUpdateRecordsPerMin;
-		config.masterInsertRecordsPerMin = 0;
+		config.masterDeleteInsertRecordsPerMin = 0;
 		config.masterUpdateRecordsPerMin = 0;
 		elapsedTime = execBatch(config);
 		LOG.info("History update online application, elapsed time = {} ms", elapsedTime);
 
 		config.historyInsertTransactionPerMin = 0;
 		config.historyUpdateRecordsPerMin = 0;
-		config.masterInsertRecordsPerMin = masterInsertReccrdsPerMin;
+		config.masterDeleteInsertRecordsPerMin = masterInsertReccrdsPerMin;
 		config.masterUpdateRecordsPerMin = 0;
 		elapsedTime = execBatch(config);
 		LOG.info("Master insert online application, elapsed time = {} ms", elapsedTime);
 
 		config.historyInsertTransactionPerMin = 0;
 		config.historyUpdateRecordsPerMin = 0;
-		config.masterInsertRecordsPerMin = 0;
+		config.masterDeleteInsertRecordsPerMin = 0;
 		config.masterUpdateRecordsPerMin = masterUpdateRecordsPerMin;
 		elapsedTime = execBatch(config);
 		LOG.info("Master update online application, elapsed time = {} ms", elapsedTime);
@@ -88,7 +88,7 @@ public class OnlineAppBench extends ExecutableCommand {
 		// すべてのオンラインアプリケーションを動かした場合
 		config.historyInsertTransactionPerMin = historyInsertTransactionPerMin;
 		config.historyUpdateRecordsPerMin = historyUpdateRecordsPerMin;
-		config.masterInsertRecordsPerMin = historyUpdateRecordsPerMin;
+		config.masterDeleteInsertRecordsPerMin = historyUpdateRecordsPerMin;
 		config.masterUpdateRecordsPerMin = masterUpdateRecordsPerMin;
 		elapsedTime = execBatch(config);
 		LOG.info("All online application, elapsed time = {} ms", elapsedTime);

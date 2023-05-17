@@ -263,7 +263,7 @@ public class MultipleExecute extends ExecutableCommand {
 		OnlineAppRecord masterInsert = new OnlineAppRecord();
 		masterInsert.application = "master insert";
 		masterInsert.threads = config.masterInsertThreadCount;
-		masterInsert.tpmTthread = config.masterInsertRecordsPerMin;
+		masterInsert.tpmTthread = config.masterDeleteInsertRecordsPerMin;
 		masterInsert.recordsTx = 1;
 		masterInsert.setCounterValues(TxLabel.MASTER_INSERT_APP);
 		sb.append(masterInsert.toString());

@@ -126,7 +126,7 @@ dbms.type=POSTGRE_SQL_JDBC
 # オンラインアプリケーションに関するパラメータ
 master.update.records.per.min=0
 master.update.thread.count=1
-master.insert.records.per.min=0
+master.delete.insert.records.per.min=0
 master.insert.thread.count=1
 history.update.records.per.min=0
 history.update.thread.count=1
@@ -234,7 +234,7 @@ listen.port=0
   * 契約マスタの更新頻度、`master.update.thread.count`で指定した各スレッドが1分間にこで指定されたレコード数だけ契約マスタを更新する。-1を指定すると連続で契約マスタを更新する。
 * master.update.thread.count=1
   * 契約マスタを更新するスレッドのスレッド数。 
-* master.insert.records.per.min
+* master.delete.insert.records.per.min
   * 契約マスタの追加頻度、`master.insert.thread.count`で指定した各スレッドが1分間にこで指定されたレコード数だけ契約マスタを追加する。-1を指定すると連続で契約マスタを追加する。
 * master.insert.thread.count=1
   * 契約マスタを追加するスレッドのスレッド数。 

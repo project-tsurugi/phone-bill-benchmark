@@ -33,7 +33,7 @@ public class MasterInsertApp extends AbstractOnlineApp {
     private Contract contract;
 
 	public MasterInsertApp(Config config, Random random, ContractBlockInfoAccessor accessor) throws IOException {
-		super(config.masterInsertRecordsPerMin, config, random);
+		super(config.masterDeleteInsertRecordsPerMin, config, random);
 		testDataGenerator = new TestDataGenerator(config, new Random(config.randomSeed), accessor);
 	}
 
