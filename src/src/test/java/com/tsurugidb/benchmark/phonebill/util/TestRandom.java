@@ -8,12 +8,12 @@ import java.util.Random;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
- * Randomのテスト用スタブ
+ * テスト用のRandomクラス
  * <p>
  * nextInt()が返す値をsetValues()で指定できる。
  */
 @SuppressFBWarnings("SE_NO_SERIALVERSIONID")
-public class RandomStub extends Random {
+public class TestRandom extends Random {
 	Queue<Integer> queue = new LinkedList<>();
 
 	public void setValues(Integer... integers) {
