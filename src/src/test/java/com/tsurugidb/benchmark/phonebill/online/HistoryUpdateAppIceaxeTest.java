@@ -27,14 +27,14 @@ import com.tsurugidb.benchmark.phonebill.testdata.CreateTestData;
 import com.tsurugidb.benchmark.phonebill.testdata.DefaultContractBlockInfoInitializer;
 import com.tsurugidb.benchmark.phonebill.testdata.SingleProcessContractBlockManager;
 import com.tsurugidb.benchmark.phonebill.util.DateUtils;
-import com.tsurugidb.benchmark.phonebill.util.RandomStub;
+import com.tsurugidb.benchmark.phonebill.util.TestRandom;
 
 class HistoryUpdateAppIceaxeTest {
 	private static String ICEAXE_CONFIG = "src/test/config/iceaxe.properties";
 
 	private Config config;
 	private HistoryUpdateApp app;
-	private RandomStub random;
+	private TestRandom random;
 	private ContractBlockInfoAccessor accessor;
 	private IceaxeTestTools testTools;
 
@@ -55,7 +55,7 @@ class HistoryUpdateAppIceaxeTest {
 		// アプリケーションの初期化
 		AbstractContractBlockInfoInitializer initializer = new DefaultContractBlockInfoInitializer(config);
 		accessor = new SingleProcessContractBlockManager(initializer);
-		random = new RandomStub();
+		random = new TestRandom();
 		app = new HistoryUpdateApp(config, random, accessor);
 	}
 

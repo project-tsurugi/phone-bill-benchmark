@@ -21,7 +21,7 @@ import com.tsurugidb.benchmark.phonebill.testdata.ContractBlockInfoAccessor;
 import com.tsurugidb.benchmark.phonebill.testdata.SingleProcessContractBlockManager;
 import com.tsurugidb.benchmark.phonebill.testdata.TestDataGenerator;
 import com.tsurugidb.benchmark.phonebill.util.DateUtils;
-import com.tsurugidb.benchmark.phonebill.util.RandomStub;
+import com.tsurugidb.benchmark.phonebill.util.TestRandom;
 
 class MasterUpdateAppIceaxeTest {
 	private static String ICEAXE_CONFIG = "src/test/config/iceaxe.properties";
@@ -43,7 +43,7 @@ class MasterUpdateAppIceaxeTest {
 			List<Contract> expected = testTools.getContractList();
 
 			// テスト用のオンラインアプリケーションを使用してアプリケーションを初期化する
-			RandomStub random = new RandomStub();
+			TestRandom random = new TestRandom();
 			MasterUpdateApp app = new MasterUpdateApp(config, random, accessor);
 			try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
 
@@ -119,14 +119,14 @@ class MasterUpdateAppIceaxeTest {
 	}
 
 	/**
-	 * n番目の契約の契約終了日が指定の値になるように乱数生成器のスタブに値をセットする。
+	 * n番目の契約の契約終了日が指定の値になるように乱数生成器に値をセットする。
 	 *
 	 * @param random 使用する乱数生成器
 	 * @param n1 何番目の契約か(この契約とおなじ電話番号をもつ契約が更新対象になる
 	 * @param n2 同一の電話番号の契約kのういち何番目の契約を更新対象にするのか
 	 * @param days -> 契約終了日を契約開始日の何日後にするのか、0を指定した場合契約終了日を削除する
 	 */
-	private void setRandomValues(RandomStub random, int n1, int n2, int days) {
+	private void setRandomValues(TestRandom random, int n1, int n2, int days) {
 		int block = 0; // 常に最初のブロックを使用する
 		if (days == 0) {
 			random.setValues(block, n1, n2, 0);
