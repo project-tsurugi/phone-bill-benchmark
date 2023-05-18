@@ -271,7 +271,7 @@ class ConfigTest {
 		assertEquals(0, config.historyInsertTransactionPerMin);
 		assertEquals(1, config.historyInsertRecordsPerTransaction);
 		assertEquals(1, config.masterUpdateThreadCount);
-		assertEquals(1, config.masterInsertThreadCount);
+		assertEquals(1, config.masterDeleteInsertThreadCount);
 		assertEquals(1, config.historyUpdateThreadCount);
 		assertEquals(1, config.historyInsertThreadCount);
 		assertEquals(false, config.skipDatabaseAccess);
@@ -343,7 +343,7 @@ class ConfigTest {
 		assertEquals(40, config.historyInsertTransactionPerMin);
 		assertEquals(300, config.historyInsertRecordsPerTransaction);
 		assertEquals(2, config.masterUpdateThreadCount);
-		assertEquals(3, config.masterInsertThreadCount);
+		assertEquals(3, config.masterDeleteInsertThreadCount);
 		assertEquals(4, config.historyUpdateThreadCount);
 		assertEquals(5, config.historyInsertThreadCount);
 		assertEquals(true, config.skipDatabaseAccess);
@@ -472,7 +472,7 @@ class ConfigTest {
 		Config config = Config.getConfig();
 
 		// スレッド数 or perMinのどちらかが0だとオンラインアプリは動かない
-		config.masterInsertThreadCount = 0;
+		config.masterDeleteInsertThreadCount = 0;
 		config.masterUpdateThreadCount = 0;
 		config.historyInsertThreadCount = 0;
 		config.historyUpdateThreadCount = 0;
@@ -483,7 +483,7 @@ class ConfigTest {
 		config.historyInsertRecordsPerTransaction = 1;
 		assertFalse(config.hasOnlineApp());
 
-		config.masterInsertThreadCount = 1;
+		config.masterDeleteInsertThreadCount = 1;
 		config.masterUpdateThreadCount = 1;
 		config.historyInsertThreadCount = 1;
 		config.historyUpdateThreadCount = 1;

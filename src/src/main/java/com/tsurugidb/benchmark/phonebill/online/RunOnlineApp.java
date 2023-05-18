@@ -54,32 +54,32 @@ public class RunOnlineApp extends ExecutableCommand {
             config.historyInsertTransactionPerMin = -1;
             config.historyUpdateRecordsPerMin = -1;
 
-            config.masterInsertThreadCount = threadCount;
+            config.masterDeleteInsertThreadCount = threadCount;
             config.masterUpdateThreadCount = 0;
             config.historyInsertThreadCount = 0;
             config.historyUpdateThreadCount = 0;
             executeOnlineApps(config);
 
-            config.masterInsertThreadCount = 0;
+            config.masterDeleteInsertThreadCount = 0;
             config.masterUpdateThreadCount = threadCount;
             config.historyInsertThreadCount = 0;
             config.historyUpdateThreadCount = 0;
             executeOnlineApps(config);
 
-            config.masterInsertThreadCount = 0;
+            config.masterDeleteInsertThreadCount = 0;
             config.masterUpdateThreadCount = 0;
             config.historyInsertThreadCount = threadCount;
             config.historyUpdateThreadCount = 0;
             executeOnlineApps(config);
 
-            config.masterInsertThreadCount = 0;
+            config.masterDeleteInsertThreadCount = 0;
             config.masterUpdateThreadCount = 0;
             config.historyInsertThreadCount = 0;
             config.historyUpdateThreadCount = threadCount;
             executeOnlineApps(config);
 
             if (threadCount <= 64) {
-                config.masterInsertThreadCount = threadCount;
+                config.masterDeleteInsertThreadCount = threadCount;
                 config.masterUpdateThreadCount = threadCount;
                 config.historyInsertThreadCount = threadCount;
                 config.historyUpdateThreadCount = threadCount;
@@ -111,7 +111,7 @@ public class RunOnlineApp extends ExecutableCommand {
         }
 
         // MasterDeleteInsertAppの初期化
-        for (int i = 0; i < config.masterInsertThreadCount; i++) {
+        for (int i = 0; i < config.masterDeleteInsertThreadCount; i++) {
             AbstractOnlineApp task = new MasterDeleteInsertApp(config, new Random(random.nextInt()), keySelector);
             task.setName(i);
             MasterDeleteInsertApps.add(task);
@@ -155,7 +155,7 @@ public class RunOnlineApp extends ExecutableCommand {
         }
         // 実行結果の集計
         Result result = new Result();
-        result.masterInsertThreadCount = config.masterInsertThreadCount;
+        result.masterInsertThreadCount = config.masterDeleteInsertThreadCount;
         result.masterUpdateThreadCount = config.masterUpdateThreadCount;
         result.historyInsertThreadCount = config.historyInsertThreadCount;
         result.historyUpdateThreadCount = config.historyUpdateThreadCount;
@@ -192,7 +192,7 @@ public class RunOnlineApp extends ExecutableCommand {
             StringBuilder builder = new StringBuilder();
             builder.append("Result [masterUpdateThreadCount=");
             builder.append(masterUpdateThreadCount);
-            builder.append(", masterInsertThreadCount=");
+            builder.append(", masterDeleteInsertThreadCount=");
             builder.append(masterInsertThreadCount);
             builder.append(", historyUpdateThreadCount=");
             builder.append(historyUpdateThreadCount);

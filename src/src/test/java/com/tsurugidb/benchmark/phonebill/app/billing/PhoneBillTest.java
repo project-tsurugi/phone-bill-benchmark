@@ -259,7 +259,7 @@ class PhoneBillTest extends AbstractJdbcTestCase {
         config.historyInsertThreadCount = 0;
         config.historyUpdateThreadCount = 0;
         config.masterUpdateThreadCount = 0;
-        config.masterInsertThreadCount = 0;
+        config.masterDeleteInsertThreadCount = 0;
         return config;
     }
 
@@ -404,7 +404,7 @@ class PhoneBillTest extends AbstractJdbcTestCase {
         config.masterUpdateRecordsPerMin = 0;
         config.historyInsertThreadCount = 1;
         config.historyUpdateThreadCount = 1;
-        config.masterInsertThreadCount = 1;
+        config.masterDeleteInsertThreadCount = 1;
         config.masterUpdateThreadCount = 1;
         assertEquals(Collections.emptyList(), PhoneBill.createOnlineApps(config, accessor));
 
@@ -415,7 +415,7 @@ class PhoneBillTest extends AbstractJdbcTestCase {
         config.masterUpdateRecordsPerMin = 1;
         config.historyInsertThreadCount = 0;
         config.historyUpdateThreadCount = 0;
-        config.masterInsertThreadCount = 0;
+        config.masterDeleteInsertThreadCount = 0;
         config.masterUpdateThreadCount = 0;
         assertEquals(Collections.emptyList(), PhoneBill.createOnlineApps(config, accessor));
 
@@ -426,7 +426,7 @@ class PhoneBillTest extends AbstractJdbcTestCase {
         config.masterUpdateRecordsPerMin = 1;
         config.historyInsertThreadCount = 1;
         config.historyUpdateThreadCount = 2;
-        config.masterInsertThreadCount = 3;
+        config.masterDeleteInsertThreadCount = 3;
         config.masterUpdateThreadCount = 4;
 
         // オンラインアプリがconfigで指定された数だけ作成されることの確認

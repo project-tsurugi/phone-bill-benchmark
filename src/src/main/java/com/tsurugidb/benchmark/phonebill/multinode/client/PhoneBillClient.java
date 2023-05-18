@@ -44,7 +44,7 @@ public class PhoneBillClient extends ExecutableCommand{
 			// オンラインアプリを動かさないようにconfigを修正する
 			config.historyInsertThreadCount = 0;
 			config.historyUpdateThreadCount = 0;
-			config.masterInsertThreadCount = 0;
+			config.masterDeleteInsertThreadCount = 0;
 			config.masterUpdateThreadCount = 0;
 
 			io.updateStatus(Status.READY, "Waiting.");

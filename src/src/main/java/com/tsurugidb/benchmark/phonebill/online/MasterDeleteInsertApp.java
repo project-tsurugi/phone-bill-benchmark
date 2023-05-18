@@ -56,7 +56,7 @@ public class MasterDeleteInsertApp extends AbstractOnlineApp {
 
     private void insert(ContractDao contractDao, HistoryDao historyDao) {
         int ret = contractDao.insert(deletedContract);
-        LOG.debug("ONLINE APP: Insert {} record to contracts(phoneNumber = {}, startDate = {}).", ret,
+        LOG.debug("ONLINE_APP: Insert {} record to contracts(phoneNumber = {}, startDate = {}).", ret,
                 deletedContract.getPhoneNumber(), deletedContract.getStartDate());
     }
 
@@ -64,13 +64,17 @@ public class MasterDeleteInsertApp extends AbstractOnlineApp {
         Key key = keySelector.getAndRemove();
         deletingContact = contractDao.getContract(key);
         int ret = contractDao.delete(key);
-        LOG.debug("ONLINE APP: Delete {} record from  contracts(phoneNumber = {}, startDate = {}).", ret,
+        LOG.debug("ONLINE_APP: Delete {} record from  contracts(phoneNumber = {}, startDate = {}).", ret,
                 key.getPhoneNumber(), key.getStartDate());
     }
 
     @Override
     public TxLabel getTxLabel() {
-        return TxLabel.MASTER_INSERT_APP;
+        if (deletedContract == null) {
+            return TxLabel.ONLINE_MASTER_DELETE;
+        } else {
+            return TxLabel.ONLINE_MASTER_INSERT;
+        }
     }
 
     @Override
@@ -83,6 +87,7 @@ public class MasterDeleteInsertApp extends AbstractOnlineApp {
         if (deletedContract == null) {
             deletedContract = deletingContact;
         } else {
+            keySelector.add(deletingContact.getKey());
             deletedContract = null;
         }
     }

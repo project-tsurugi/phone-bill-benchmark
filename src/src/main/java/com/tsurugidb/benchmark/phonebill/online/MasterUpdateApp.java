@@ -145,7 +145,7 @@ public class MasterUpdateApp extends AbstractOnlineApp {
             throw new RuntimeException("Fail to update contracts: " + updatingContract);
         }
         if (LOG.isDebugEnabled()) {
-            LOG.debug("ONLINE APP: Update 1 record from contracts(phoneNumber = {}, startDate = {}, endDate = {}).",
+            LOG.debug("ONLINE_APP: Update 1 record from contracts(phoneNumber = {}, startDate = {}, endDate = {}).",
                     updatingContract.getPhoneNumber(), updatingContract.getStartDate(), updatingContract.getEndDate());
         }
     }
@@ -188,7 +188,7 @@ public class MasterUpdateApp extends AbstractOnlineApp {
 
     @Override
     public TxLabel getTxLabel() {
-        return TxLabel.MASTER_UPDATE_APP;
+        return TxLabel.ONLINE_MASTER_UPDATE;
     }
 
     @Override

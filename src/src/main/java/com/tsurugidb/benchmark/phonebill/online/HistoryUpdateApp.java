@@ -60,7 +60,7 @@ public class HistoryUpdateApp extends AbstractOnlineApp {
     @Override
     protected void updateDatabase(ContractDao contractDao, HistoryDao historyDao) {
         historyDao.update(history);
-        LOG.debug("ONLINE APP: Update 1 record from history(callerPhoneNumber = {}, startTime = {}).",
+        LOG.debug("ONLINE_APP: Update 1 record from history(callerPhoneNumber = {}, startTime = {}).",
                 history.getCallerPhoneNumber(), history.getStartTime());
     }
 
@@ -110,7 +110,7 @@ public class HistoryUpdateApp extends AbstractOnlineApp {
 
     @Override
     public TxLabel getTxLabel() {
-        return TxLabel.HISTORY_UPDATE_APP;
+        return TxLabel.ONLINE_HISTORY_UPDATE;
     }
 
     @Override

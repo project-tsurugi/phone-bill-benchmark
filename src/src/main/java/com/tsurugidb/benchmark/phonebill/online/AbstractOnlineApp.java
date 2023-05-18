@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager.CounterName;
+import com.tsurugidb.benchmark.phonebill.db.RetryOverRuntimeException;
 import com.tsurugidb.benchmark.phonebill.db.TxLabel;
 import com.tsurugidb.benchmark.phonebill.db.TxOption;
 import com.tsurugidb.benchmark.phonebill.db.TxOption.Table;
@@ -88,18 +89,6 @@ public abstract class AbstractOnlineApp implements Runnable{
     private Config config;
 
 
-    /**
-     * OCCのTxOption
-     */
-    private TxOption occ;
-
-    /**
-     * LTXのTxOption
-     */
-    private TxOption ltx;
-
-
-
     public AbstractOnlineApp(int execPerMin, Config config, Random random) {
         this.execPerMin = execPerMin;
         this.random = random;
@@ -127,24 +116,30 @@ public abstract class AbstractOnlineApp implements Runnable{
      * @param manager
      */
     final void exec(PhoneBillDbManager manager) {
-        if (occ == null) {
-            occ = TxOption.ofOCC(0, getTxLabel());
-        }
-        boolean occSuccess =	exec(manager, occ, 3, true);
+        TxLabel label = getTxLabel();
+        long start = System.nanoTime();
+        exec(manager, label);
+        long latency = System.nanoTime() - start;
+        TxStatistics.addLatencyFotTxLabel(label, latency);
+    }
+
+    void exec(PhoneBillDbManager manager, TxLabel label) {
+        TxOption occ = TxOption.ofOCC(0, label);
+        boolean occSuccess = exec(manager, occ, 3, true);
         if (occSuccess) {
             return;
         }
         manager.countup(occ, CounterName.OCC_ABANDONED_RETRY);
-        if (ltx == null) {
-            ltx = TxOption.ofLTX(0, getTxLabel(), getWritePreserveTable());
-        }
-        boolean ltxSuccess = 	exec(manager, ltx, 3, false);
+        TxOption ltx = TxOption.ofLTX(0, label, getWritePreserveTable());
+        boolean ltxSuccess = exec(manager, ltx, 1, false);
         if (ltxSuccess) {
             return;
         }
         manager.countup(ltx, CounterName.LTX_ABANDONED_RETRY);
-        return;
     }
+
+
+
 
     /**
      * 指定のDbManager, TxOption, リトライ回数で実行する
@@ -172,11 +167,16 @@ public abstract class AbstractOnlineApp implements Runnable{
                 manager.countup(txOption, isOcc ? CounterName.OCC_SUCC : CounterName.LTX_SUCC);
                 afterCommitSuccess();
                 return true;
+            } catch (RetryOverRuntimeException e) {
+                manager.countup(txOption, isOcc ? CounterName.OCC_ABORT : CounterName.LTX_ABORT);
+                PhoneBillDbManager.addRetringExceptions(e);
+                LOG.debug("Tx aborted by caught a retriable exception: {}", e.getMessage());
+                continue;
             } catch (RuntimeException e) {
                 manager.countup(txOption, isOcc ? CounterName.OCC_ABORT : CounterName.LTX_ABORT);
                 PhoneBillDbManager.addRetringExceptions(e);
-                LOG.debug("Tx aborted by caught an exception: {}", e.getMessage());
-                continue;
+                LOG.debug("Tx aborted by caught a non-retriable exception.", e);
+                return false;
             }
         }
         return false;

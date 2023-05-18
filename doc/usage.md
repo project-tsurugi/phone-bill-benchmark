@@ -127,7 +127,7 @@ dbms.type=POSTGRE_SQL_JDBC
 master.update.records.per.min=0
 master.update.thread.count=1
 master.delete.insert.records.per.min=0
-master.insert.thread.count=1
+master.delete.insert.thread.count=1
 history.update.records.per.min=0
 history.update.thread.count=1
 history.insert.transaction.per.min=0
@@ -235,8 +235,8 @@ listen.port=0
 * master.update.thread.count=1
   * 契約マスタを更新するスレッドのスレッド数。 
 * master.delete.insert.records.per.min
-  * 契約マスタの追加頻度、`master.insert.thread.count`で指定した各スレッドが1分間にこで指定されたレコード数だけ契約マスタを追加する。-1を指定すると連続で契約マスタを追加する。
-* master.insert.thread.count=1
+  * 契約マスタの追加頻度、`master.delete.insert.thread.count`で指定した各スレッドが1分間にこで指定されたレコード数だけ契約マスタを追加する。-1を指定すると連続で契約マスタを追加する。
+* master.delete.insert.thread.count=1
   * 契約マスタを追加するスレッドのスレッド数。 
 * history.update.records.per.min
   * 通話履歴の更新頻度、`history.update.thread.count`で指定した各スレッドが1分間にこで指定されたレコード数だけ契約マスタを更新する。-1を指定すると連続で通話履歴を更新する。

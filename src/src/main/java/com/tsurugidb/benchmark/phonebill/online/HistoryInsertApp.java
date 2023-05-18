@@ -143,7 +143,7 @@ public class HistoryInsertApp extends AbstractOnlineApp {
     @Override
     protected void updateDatabase(ContractDao contractDao, HistoryDao historyDao) {
         historyDao.batchInsert(histories);
-        LOG.debug("ONLINE APP: Insert {} records to history.", historyInsertRecordsPerTransaction);
+        LOG.debug("ONLINE_APP: Insert {} records to history.", historyInsertRecordsPerTransaction);
     }
 
     /**
@@ -174,7 +174,7 @@ public class HistoryInsertApp extends AbstractOnlineApp {
 
     @Override
     public TxLabel getTxLabel() {
-        return TxLabel.HISTORY_INSERT_APP;
+        return TxLabel.ONLINE_HISTORY_INSERT;
     }
 
     @Override

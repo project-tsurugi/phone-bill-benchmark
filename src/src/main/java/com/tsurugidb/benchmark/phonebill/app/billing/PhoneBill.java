@@ -139,10 +139,10 @@ public class PhoneBill extends ExecutableCommand {
 
         RandomKeySelector<Key> keySelector;
         try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
-            List<Key> contracts = manager.execute(TxOption.of(), () -> {
+            List<Key> keys = manager.execute(TxOption.of(), () -> {
                 return manager.getContractDao().getAllPrimaryKeys();
             });
-            keySelector = new RandomKeySelector<>(contracts, random, 0);
+            keySelector = new RandomKeySelector<>(keys, random, 0);
         }
 
 
@@ -158,8 +158,8 @@ public class PhoneBill extends ExecutableCommand {
                 list.add(task);
             }
         }
-        if (config.masterInsertThreadCount > 0 && config.masterDeleteInsertRecordsPerMin != 0) {
-            for (int i = 0; i < config.masterInsertThreadCount; i++) {
+        if (config.masterDeleteInsertThreadCount > 0 && config.masterDeleteInsertRecordsPerMin != 0) {
+            for (int i = 0; i < config.masterDeleteInsertThreadCount; i++) {
                 AbstractOnlineApp task = new MasterDeleteInsertApp(config, new Random(random.nextInt()), keySelector);
                 task.setName(i);
                 list.add(task);

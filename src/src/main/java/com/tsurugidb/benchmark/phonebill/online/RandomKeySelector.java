@@ -9,6 +9,9 @@ import java.util.Random;
 
 import javax.annotation.Nonnull;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
@@ -25,6 +28,9 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  *
  */
 public class RandomKeySelector<T> {
+    private static final Logger LOG = LoggerFactory.getLogger(RandomKeySelector.class);
+
+
     static final String ERROR_NULL_ELEMENTS = "Invalid argument: he 'keys' collection cannot have null elements.";
     static final String ERROR_DUPLICATE_ELEMENTS =  "Invalid argument: The 'keys' collection have duplicate element: ";
     static final String ERROR_RANGE = "Invalid argument: aloSelectRate should be a value between 0 and 1 (inclusive).\"";
@@ -111,6 +117,7 @@ public class RandomKeySelector<T> {
         }
         initKeyPostionMap();
         initAloKeyList();
+        LOG.info("Inialized with {} keys.", keys.size());
     }
 
     /**
@@ -127,7 +134,7 @@ public class RandomKeySelector<T> {
 
 
     /**
-     * keyListからinitKeyListを生成し、keyPositionMapを更新する。
+     * keyListからaloKeyListを生成し、keyPositionMapを更新する。
      */
     private void initAloKeyList() {
         aloKeyList = new ArrayList<>(keyList);
@@ -191,7 +198,8 @@ public class RandomKeySelector<T> {
             }
             keyPositionMap.get(key).aloKeyPostion = -1;
         } else {
-            key = keyList.get(random.nextInt(keyList.size()));
+            int idx = random.nextInt(keyList.size());
+            key = keyList.get(idx);
         }
         return key;
     }
