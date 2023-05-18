@@ -12,50 +12,78 @@ import com.tsurugidb.benchmark.phonebill.db.TxOption.Table;
 import com.tsurugidb.benchmark.phonebill.db.dao.ContractDao;
 import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
-import com.tsurugidb.benchmark.phonebill.testdata.ContractBlockInfoAccessor;
-import com.tsurugidb.benchmark.phonebill.testdata.TestDataGenerator;
+import com.tsurugidb.benchmark.phonebill.db.entity.Contract.Key;
 
 /**
- * 指定の頻度で、契約マスタにレコードをインサートするアプリケーション
+ * 指定の頻度で、契約マスタのレコードをdelete/insertするアプリケーション
  *
  */
 public class MasterDeleteInsertApp extends AbstractOnlineApp {
     private static final Logger LOG = LoggerFactory.getLogger(MasterDeleteInsertApp.class);
 
-    /**
-     * 本アプリケーションが使用するTestDataGenerator
-     */
-    private TestDataGenerator testDataGenerator;
+    private RandomKeySelector<Key> keySelector;
 
     /**
-     * 契約情報
+     * 削除したレコード、次のTXでこのレコードをインサートする
      */
-    private Contract contract;
+    private Contract deletedContract = null;
 
-	public MasterDeleteInsertApp(Config config, Random random, ContractBlockInfoAccessor accessor) throws IOException {
-		super(config.masterDeleteInsertRecordsPerMin, config, random);
-		testDataGenerator = new TestDataGenerator(config, new Random(config.randomSeed), accessor);
-	}
+    /**
+     * 削除しようとしてるレコード
+     */
+    private Contract deletingContact;
 
-	@Override
-	protected void createData(ContractDao contractDao, HistoryDao historyDao) {
-		contract = testDataGenerator.getNewContract();
-	}
 
-	@Override
-	protected void updateDatabase(ContractDao contractDao, HistoryDao historyDao) {
-		int ret = contractDao.insert(contract);
-		LOG.debug("ONLINE APP: Insert {} record to contracts(phoneNumber = {}, startDate = {}).", ret,
-				contract.getPhoneNumber(), contract.getStartDate());
-	}
+    public MasterDeleteInsertApp(Config config, Random random, RandomKeySelector<Key> keySelector) throws IOException {
+        super(config.masterDeleteInsertRecordsPerMin, config, random);
+        this.keySelector = keySelector;
+    }
 
-	@Override
-	public TxLabel getTxLabel() {
-		return TxLabel.MASTER_INSERT_APP;
-	}
+    @Override
+    protected void createData(ContractDao contractDao, HistoryDao historyDao) {
+        // Nothing to do
+    }
 
-	@Override
-	public Table getWritePreserveTable() {
-		return Table.CONTRACTS;
-	}
+    @Override
+    protected void updateDatabase(ContractDao contractDao, HistoryDao historyDao) {
+        if (deletedContract == null) {
+            delete(contractDao, historyDao);
+        } else {
+            insert(contractDao, historyDao);
+        }
+    }
+
+
+    private void insert(ContractDao contractDao, HistoryDao historyDao) {
+        int ret = contractDao.insert(deletedContract);
+        LOG.debug("ONLINE APP: Insert {} record to contracts(phoneNumber = {}, startDate = {}).", ret,
+                deletedContract.getPhoneNumber(), deletedContract.getStartDate());
+    }
+
+    private void delete(ContractDao contractDao, HistoryDao historyDao) {
+        Key key = keySelector.getAndRemove();
+        deletingContact = contractDao.getContract(key);
+        int ret = contractDao.delete(key);
+        LOG.debug("ONLINE APP: Delete {} record from  contracts(phoneNumber = {}, startDate = {}).", ret,
+                key.getPhoneNumber(), key.getStartDate());
+    }
+
+    @Override
+    public TxLabel getTxLabel() {
+        return TxLabel.MASTER_INSERT_APP;
+    }
+
+    @Override
+    public Table getWritePreserveTable() {
+        return Table.CONTRACTS;
+    }
+
+    @Override
+    protected void afterCommitSuccess() {
+        if (deletedContract == null) {
+            deletedContract = deletingContact;
+        } else {
+            deletedContract = null;
+        }
+    }
 }

@@ -6,7 +6,6 @@ import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -106,15 +105,14 @@ public class RunOnlineApp extends ExecutableCommand {
         RandomKeySelector<Contract.Key> keySelector;
         try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
             List<Key> contracts = manager.execute(TxOption.of(), () -> {
-                return manager.getContractDao().getContracts().stream().map(c -> c.getKey())
-                        .collect(Collectors.toList());
+                return manager.getContractDao().getAllPrimaryKeys();
             });
             keySelector = new RandomKeySelector<>(contracts, random, 0);
         }
 
         // MasterDeleteInsertAppの初期化
         for (int i = 0; i < config.masterInsertThreadCount; i++) {
-            AbstractOnlineApp task = new MasterDeleteInsertApp(config, new Random(random.nextInt()), accessor);
+            AbstractOnlineApp task = new MasterDeleteInsertApp(config, new Random(random.nextInt()), keySelector);
             task.setName(i);
             MasterDeleteInsertApps.add(task);
         }

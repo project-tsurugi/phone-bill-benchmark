@@ -10,7 +10,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -52,15 +51,15 @@ class HistoryUpdateAppTest extends AbstractJdbcTestCase {
         // アプリケーションの初期化
         random = new TestRandom();
         manager = PhoneBillDbManager.createPhoneBillDbManager(config);
-        List<Key>  contracts = manager.execute(TxOption.of(), () -> {
-            return manager.getContractDao().getContracts().stream().map(c -> c.getKey()).collect(Collectors.toList());
+        List<Key>  keys = manager.execute(TxOption.of(), () -> {
+            return manager.getContractDao().getAllPrimaryKeys();
         });
-        Integer[] values = new Integer[contracts.size()];
+        Integer[] values = new Integer[keys.size()];
         for(int i = 0; i < values.length; i++) {
             values[i] = Integer.valueOf(0);
         }
         random.setValues(values);
-        RandomKeySelector<Key> keySelector = new RandomKeySelector<>(contracts, random, 0);
+        RandomKeySelector<Key> keySelector = new RandomKeySelector<>(keys, random, 0);
         app = new HistoryUpdateApp(config, random, keySelector);
     }
 

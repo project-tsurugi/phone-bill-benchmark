@@ -485,9 +485,13 @@ class PhoneBillTest extends AbstractJdbcTestCase {
         List<History> historiesAfter = getHistories();
         List<Contract> contractsAfter = getContracts();
 
-        // オンラインアプリによりレコード数が増えていることを確認
+        // オンラインアプリによりHistoryテーブルのレコード数が増えていることを確認
         assertTrue(historiesAfter.size() > historiesBefore.size());
-        assertTrue(contractsAfter.size() > historiesBefore.size());
+
+        // オンラインアプリが動いてもContractsテーブルのレコード数が変わらないか1レコード減っていることを確認する。
+        assertTrue(contractsAfter.size() ==  historiesBefore.size() ||
+                contractsAfter.size() ==  historiesBefore.size() -1
+                );
         System.out.println("historiesBeforeSize = " + historiesBefore.size());
         System.out.println("historiesAfterSize = " + historiesAfter.size());
         System.out.println("contractsBeforeSize = " + contractsBefore.size());

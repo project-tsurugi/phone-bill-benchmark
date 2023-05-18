@@ -30,60 +30,65 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  */
 public class ExampleOnlineApp2 extends AbstractOnlineApp {
     private static final Logger LOG = LoggerFactory.getLogger(ExampleOnlineApp2.class);
-	private final DateFormat DF = new SimpleDateFormat("HH:mm:ss.SSS");
+    private final DateFormat DF = new SimpleDateFormat("HH:mm:ss.SSS");
 
-	public ExampleOnlineApp2() throws SQLException, IOException {
-		super(4, Config.getConfig(), new Random());
-	}
+    public ExampleOnlineApp2() throws SQLException, IOException {
+        super(4, Config.getConfig(), new Random());
+    }
 
-	@SuppressFBWarnings("RV_RETURN_VALUE_IGNORED_BAD_PRACTICE")
-	public static void main(String[] args) throws InterruptedException, SQLException, IOException {
-		ExampleOnlineApp2 app = new ExampleOnlineApp2();
-		ExecutorService service = Executors.newSingleThreadExecutor();
-		service.submit(app);
-		Thread.sleep(60 * 1000 * 5); // 5分実行して終了する。
-		app.terminate();
-		service.shutdown();
-		service.awaitTermination(1, TimeUnit.DAYS);
-	}
+    @SuppressFBWarnings("RV_RETURN_VALUE_IGNORED_BAD_PRACTICE")
+    public static void main(String[] args) throws InterruptedException, SQLException, IOException {
+        ExampleOnlineApp2 app = new ExampleOnlineApp2();
+        ExecutorService service = Executors.newSingleThreadExecutor();
+        service.submit(app);
+        Thread.sleep(60 * 1000 * 5); // 5分実行して終了する。
+        app.terminate();
+        service.shutdown();
+        service.awaitTermination(1, TimeUnit.DAYS);
+    }
 
-	@Override
-	protected void atScheduleListCreated(List<Long> scheduleList) {
-		for(long schedule: scheduleList) {
-			LOG.info("Scheduled at {}", DF.format(new Date(schedule)));
-		}
-	}
+    @Override
+    protected void atScheduleListCreated(List<Long> scheduleList) {
+        for(long schedule: scheduleList) {
+            LOG.info("Scheduled at {}", DF.format(new Date(schedule)));
+        }
+    }
 
-	@Override
-	protected void createData(ContractDao contractDao, HistoryDao historyDao) {
-		LOG.info("createData called.");
-		try {
-			Thread.sleep(10 * 1000);
-		} catch (InterruptedException e) {
-			// Nothing to do
-		}
-		LOG.info("createData Done.");
+    @Override
+    protected void createData(ContractDao contractDao, HistoryDao historyDao) {
+        LOG.info("createData called.");
+        try {
+            Thread.sleep(10 * 1000);
+        } catch (InterruptedException e) {
+            // Nothing to do
+        }
+        LOG.info("createData Done.");
 
-	}
+    }
 
-	@Override
-	protected void updateDatabase(ContractDao contractDao, HistoryDao historyDao) {
-		LOG.info("updateDatabase called.");
-		try {
-			Thread.sleep(10 * 1000);
-		} catch (InterruptedException e) {
-			// Nothing to do
-		}
-		LOG.info("updateDatabase Done.");
-	}
+    @Override
+    protected void updateDatabase(ContractDao contractDao, HistoryDao historyDao) {
+        LOG.info("updateDatabase called.");
+        try {
+            Thread.sleep(10 * 1000);
+        } catch (InterruptedException e) {
+            // Nothing to do
+        }
+        LOG.info("updateDatabase Done.");
+    }
 
-	@Override
-	public TxLabel getTxLabel() {
-		return TxLabel.TEST;
-	}
+    @Override
+    public TxLabel getTxLabel() {
+        return TxLabel.TEST;
+    }
 
-	@Override
-	public Table getWritePreserveTable() {
-		return Table.HISTORY;
-	}
+    @Override
+    public Table getWritePreserveTable() {
+        return Table.HISTORY;
+    }
+
+    @Override
+    protected void afterCommitSuccess() {
+        // Nothing to do
+    }
 }

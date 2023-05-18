@@ -23,77 +23,81 @@ import com.tsurugidb.benchmark.phonebill.online.AbstractOnlineApp;
 
 class OnlineAppClientTest {
 
-	@BeforeAll
-	static void setUpBeforeClass() throws Exception {
-	}
+    @BeforeAll
+    static void setUpBeforeClass() throws Exception {
+    }
 
-	@BeforeEach
-	void setUp() throws Exception {
-	}
+    @BeforeEach
+    void setUp() throws Exception {
+    }
 
-	@Test
-	final void testCreateStatusMessage() throws SQLException, IOException {
-
-
-		List<AbstractOnlineApp> list = Arrays.asList(
-				new TestApp("Name-C", 21),
-				new TestApp("Name-A", 20),
-				new TestApp("Name-B", 9),
-				new TestApp("Name-A", 5),
-				new TestApp("Name-C", 13),
-				new TestApp("Name-C", 44)
-				);
+    @Test
+    final void testCreateStatusMessage() throws SQLException, IOException {
 
 
-			Instant now = Instant.now();
-			Instant start = now.minus(5518, ChronoUnit.MILLIS);
+        List<AbstractOnlineApp> list = Arrays.asList(
+                new TestApp("Name-C", 21),
+                new TestApp("Name-A", 20),
+                new TestApp("Name-B", 9),
+                new TestApp("Name-A", 5),
+                new TestApp("Name-C", 13),
+                new TestApp("Name-C", 44)
+                );
 
 
-			String actual = OnlineAppClient.createStatusMessage(start, now, list);
-			String expected = "uptime = 5.518 sec, exec count(Name-A = 25, Name-B = 9, Name-C = 78)";
-			assertEquals(expected, actual);
-	}
+            Instant now = Instant.now();
+            Instant start = now.minus(5518, ChronoUnit.MILLIS);
 
-	/**
-	 * createStatusMessag()のテストに使うAbstractOnlineAppの実装
-	 */
-	static class TestApp extends AbstractOnlineApp {
-		private String baseName;
-		private int count;
 
-		public TestApp(String baseName, int count) throws SQLException, IOException {
-			super( 0, Config.getConfig(), new Random());
-			this.baseName = baseName;
-			this.count = count;
-		}
+            String actual = OnlineAppClient.createStatusMessage(start, now, list);
+            String expected = "uptime = 5.518 sec, exec count(Name-A = 25, Name-B = 9, Name-C = 78)";
+            assertEquals(expected, actual);
+    }
 
-		@Override
-		public int getExecCount() {
-			return count;
-		}
+    /**
+     * createStatusMessag()のテストに使うAbstractOnlineAppの実装
+     */
+    static class TestApp extends AbstractOnlineApp {
+        private String baseName;
+        private int count;
 
-		@Override
-		public String getBaseName() {
-			return baseName;
-		}
+        public TestApp(String baseName, int count) throws SQLException, IOException {
+            super( 0, Config.getConfig(), new Random());
+            this.baseName = baseName;
+            this.count = count;
+        }
 
-		@Override
-		protected void createData(ContractDao contractDao, HistoryDao historyDao) {
-		}
+        @Override
+        public int getExecCount() {
+            return count;
+        }
 
-		@Override
-		protected void updateDatabase(ContractDao contractDao, HistoryDao historyDao) {
-		}
+        @Override
+        public String getBaseName() {
+            return baseName;
+        }
 
-		@Override
-		public TxLabel getTxLabel() {
-			return TxLabel.TEST;
-		}
+        @Override
+        protected void createData(ContractDao contractDao, HistoryDao historyDao) {
+        }
 
-		@Override
-		public Table getWritePreserveTable() {
-			return Table.HISTORY;
-		}
+        @Override
+        protected void updateDatabase(ContractDao contractDao, HistoryDao historyDao) {
+        }
 
-	}
+        @Override
+        public TxLabel getTxLabel() {
+            return TxLabel.TEST;
+        }
+
+        @Override
+        public Table getWritePreserveTable() {
+            return Table.HISTORY;
+        }
+
+        @Override
+        protected void afterCommitSuccess() {
+            // Nothing to do
+        }
+    }
 }

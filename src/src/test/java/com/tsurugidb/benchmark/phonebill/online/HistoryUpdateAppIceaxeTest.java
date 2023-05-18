@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -54,8 +53,7 @@ class HistoryUpdateAppIceaxeTest {
         random = new TestRandom();
         try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
             List<Key> contracts = manager.execute(TxOption.of(), () -> {
-                return manager.getContractDao().getContracts().stream().map(c -> c.getKey())
-                        .collect(Collectors.toList());
+                return manager.getContractDao().getAllPrimaryKeys();
             });
             Integer[] values = new Integer[contracts.size()];
             for(int i = 0; i < values.length; i++) {

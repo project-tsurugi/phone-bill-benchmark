@@ -117,4 +117,9 @@ public class HistoryUpdateApp extends AbstractOnlineApp {
     public Table getWritePreserveTable() {
         return Table.HISTORY;
     }
+
+    @Override
+    protected void afterCommitSuccess() {
+        // Nothing to do
+    }
 }

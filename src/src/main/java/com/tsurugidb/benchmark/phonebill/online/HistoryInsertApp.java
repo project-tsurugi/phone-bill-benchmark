@@ -34,151 +34,156 @@ import com.tsurugidb.benchmark.phonebill.util.DateUtils;
  */
 public class HistoryInsertApp extends AbstractOnlineApp {
     private static final Logger LOG = LoggerFactory.getLogger(HistoryInsertApp.class);
-	private int historyInsertRecordsPerTransaction;
-	private GenerateHistoryTask generateHistoryTask;
-	private long baseTime;
-	private int duration;
-	private List<History> histories = new ArrayList<>();
-	private Random random;
+    private int historyInsertRecordsPerTransaction;
+    private GenerateHistoryTask generateHistoryTask;
+    private long baseTime;
+    private int duration;
+    private List<History> histories = new ArrayList<>();
+    private Random random;
 
-	/**
-	 * // 同一のPKのレコードを生成しないためにPK値を記録するためのセット
-	 */
-	private Set<HistoryKey> keySet = new HashSet<HistoryKey>();
+    /**
+     * // 同一のPKのレコードを生成しないためにPK値を記録するためのセット
+     */
+    private Set<HistoryKey> keySet = new HashSet<HistoryKey>();
 
-	/**
-	 * コンストラクタ
-	 *
-	 * @param contractInfoReader
-	 * @param config
-	 * @param seed
-	 * @param baseTime
-	 * @param duration
-	 * @throws IOException
-	 */
-	private HistoryInsertApp(ContractBlockInfoAccessor accessor, Config config, Random random, long baseTime,
-			int duration) throws IOException {
-		super(config.historyInsertTransactionPerMin, config, random);
-		this.historyInsertRecordsPerTransaction = config.historyInsertRecordsPerTransaction;
-		this.baseTime = baseTime;
-		this.duration = duration;
-		this.random = random;
-		TestDataGenerator testDataGenerator = new TestDataGenerator(config, random, accessor);
-		generateHistoryTask = testDataGenerator.getGenerateHistoryTaskForOnlineApp();
-	}
+    /**
+     * コンストラクタ
+     *
+     * @param contractInfoReader
+     * @param config
+     * @param seed
+     * @param baseTime
+     * @param duration
+     * @throws IOException
+     */
+    private HistoryInsertApp(ContractBlockInfoAccessor accessor, Config config, Random random, long baseTime,
+            int duration) throws IOException {
+        super(config.historyInsertTransactionPerMin, config, random);
+        this.historyInsertRecordsPerTransaction = config.historyInsertRecordsPerTransaction;
+        this.baseTime = baseTime;
+        this.duration = duration;
+        this.random = random;
+        TestDataGenerator testDataGenerator = new TestDataGenerator(config, random, accessor);
+        generateHistoryTask = testDataGenerator.getGenerateHistoryTaskForOnlineApp();
+    }
 
-	/**
-	 * 指定した数だけ、HistoryInsertAppのインスタンスを作成し、リストで返す.
-	 * <br>
-	 * 複数のHistoryInsertAppを同時に動かしても、キーの重複が起きないように、baseTimeとdurationの値を調整する。
-	 *
-	 * @param contractInfoReader
-	 * @param config
-	 * @param seed
-	 * @param num
-	 * @return
-	 * @throws IOException
-	 */
-	public static List<AbstractOnlineApp> createHistoryInsertApps(Config config, Random random,
-			ContractBlockInfoAccessor accessor, int num) throws IOException {
-		List<AbstractOnlineApp> list = new ArrayList<>();
-		if (num > 0) {
-			int duration = CREATE_SCHEDULE_INTERVAL_MILLS / num;
-			long baseTime = getBaseTime(config);
-			for (int i = 0; i < num; i++) {
-				if (i != 0) {
-					random = new Random(random.nextInt());
-				}
-				AbstractOnlineApp app = new HistoryInsertApp(accessor, config, random, baseTime, duration);
-				app.setName(i);
-				baseTime += duration;
-				list.add(app);
-			}
-		}
-		return list;
-	}
-
-
-	@Override
-	protected void atScheduleListCreated(List<Long> scheduleList) throws IOException {
-		// スケジュールに合わせてbaseTimeをシフトする
-		baseTime = getBaseTime() + CREATE_SCHEDULE_INTERVAL_MILLS;
-		// baseTimeのシフトにより、これ以前のキーとキーが重複することはないので、keySetをクリアする
-		keySet.clear();
-		// スケジュール作成時に、契約マスタのブロック情報をアップデートする
-		generateHistoryTask.reloadActiveBlockNumberList();
-	}
-
-	/**
-	 * baseTimeをセットする。履歴データの通話開始時刻は初期データの通話開始時刻の最後の日の翌日0時にする。
-	 * ただし、既にhistoryInsertAppによるデータが存在する場合は、存在する時刻の最大値を指定する。
-	 *
-	 * @param config
-	 * @return
-	 */
-	static long getBaseTime(Config config) {
-		try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
-			HistoryDao dao = manager.getHistoryDao();
-			long maxStartTime = manager.execute(TxOption.ofRTX(0, TxLabel.INITIALIZE),
-					() -> dao.getMaxStartTime());
-			return Math.max(maxStartTime, DateUtils.nextDate(config.historyMaxDate).getTime());
-		}
-	}
+    /**
+     * 指定した数だけ、HistoryInsertAppのインスタンスを作成し、リストで返す.
+     * <br>
+     * 複数のHistoryInsertAppを同時に動かしても、キーの重複が起きないように、baseTimeとdurationの値を調整する。
+     *
+     * @param contractInfoReader
+     * @param config
+     * @param seed
+     * @param num
+     * @return
+     * @throws IOException
+     */
+    public static List<AbstractOnlineApp> createHistoryInsertApps(Config config, Random random,
+            ContractBlockInfoAccessor accessor, int num) throws IOException {
+        List<AbstractOnlineApp> list = new ArrayList<>();
+        if (num > 0) {
+            int duration = CREATE_SCHEDULE_INTERVAL_MILLS / num;
+            long baseTime = getBaseTime(config);
+            for (int i = 0; i < num; i++) {
+                if (i != 0) {
+                    random = new Random(random.nextInt());
+                }
+                AbstractOnlineApp app = new HistoryInsertApp(accessor, config, random, baseTime, duration);
+                app.setName(i);
+                baseTime += duration;
+                list.add(app);
+            }
+        }
+        return list;
+    }
 
 
-	@Override
-	protected void createData(ContractDao contractDao, HistoryDao historyDao) {
-		histories.clear();
-		for (int i = 0; i < historyInsertRecordsPerTransaction; i++) {
-			HistoryKey key;
-			do {
-				long startTime = getBaseTime() + random.nextInt(duration);
-				key = generateHistoryTask.createkey(startTime);
-			} while (keySet.contains(key));
-			keySet.add(key);
-			histories.add(generateHistoryTask.createHistoryRecord(key));
-		}
-	}
+    @Override
+    protected void atScheduleListCreated(List<Long> scheduleList) throws IOException {
+        // スケジュールに合わせてbaseTimeをシフトする
+        baseTime = getBaseTime() + CREATE_SCHEDULE_INTERVAL_MILLS;
+        // baseTimeのシフトにより、これ以前のキーとキーが重複することはないので、keySetをクリアする
+        keySet.clear();
+        // スケジュール作成時に、契約マスタのブロック情報をアップデートする
+        generateHistoryTask.reloadActiveBlockNumberList();
+    }
 
-	@Override
-	protected void updateDatabase(ContractDao contractDao, HistoryDao historyDao) {
-		historyDao.batchInsert(histories);
-		LOG.debug("ONLINE APP: Insert {} records to history.", historyInsertRecordsPerTransaction);
-	}
-
-	/**
-	 * baseTimeを返す(UT用)
-	 *
-	 * @return
-	 */
-	long getBaseTime() {
-		return baseTime;
-	}
-
-	/**
-	 * keySetを返す(UT用)
-	 *
-	 * @return
-	 */
-	Set<HistoryKey> getKeySet() {
-		return keySet;
-	}
-
-	/**
-	 * ContractInfoReaderを返す(UT用)
-	 */
-	ContractInfoReader getContractInfoReader() {
-		return generateHistoryTask.getContractInfoReader();
-	}
+    /**
+     * baseTimeをセットする。履歴データの通話開始時刻は初期データの通話開始時刻の最後の日の翌日0時にする。
+     * ただし、既にhistoryInsertAppによるデータが存在する場合は、存在する時刻の最大値を指定する。
+     *
+     * @param config
+     * @return
+     */
+    static long getBaseTime(Config config) {
+        try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
+            HistoryDao dao = manager.getHistoryDao();
+            long maxStartTime = manager.execute(TxOption.ofRTX(0, TxLabel.INITIALIZE),
+                    () -> dao.getMaxStartTime());
+            return Math.max(maxStartTime, DateUtils.nextDate(config.historyMaxDate).getTime());
+        }
+    }
 
 
-	@Override
-	public TxLabel getTxLabel() {
-		return TxLabel.HISTORY_INSERT_APP;
-	}
+    @Override
+    protected void createData(ContractDao contractDao, HistoryDao historyDao) {
+        histories.clear();
+        for (int i = 0; i < historyInsertRecordsPerTransaction; i++) {
+            HistoryKey key;
+            do {
+                long startTime = getBaseTime() + random.nextInt(duration);
+                key = generateHistoryTask.createkey(startTime);
+            } while (keySet.contains(key));
+            keySet.add(key);
+            histories.add(generateHistoryTask.createHistoryRecord(key));
+        }
+    }
 
-	@Override
-	public Table getWritePreserveTable() {
-		return Table.HISTORY;
-	}
+    @Override
+    protected void updateDatabase(ContractDao contractDao, HistoryDao historyDao) {
+        historyDao.batchInsert(histories);
+        LOG.debug("ONLINE APP: Insert {} records to history.", historyInsertRecordsPerTransaction);
+    }
+
+    /**
+     * baseTimeを返す(UT用)
+     *
+     * @return
+     */
+    long getBaseTime() {
+        return baseTime;
+    }
+
+    /**
+     * keySetを返す(UT用)
+     *
+     * @return
+     */
+    Set<HistoryKey> getKeySet() {
+        return keySet;
+    }
+
+    /**
+     * ContractInfoReaderを返す(UT用)
+     */
+    ContractInfoReader getContractInfoReader() {
+        return generateHistoryTask.getContractInfoReader();
+    }
+
+
+    @Override
+    public TxLabel getTxLabel() {
+        return TxLabel.HISTORY_INSERT_APP;
+    }
+
+    @Override
+    public Table getWritePreserveTable() {
+        return Table.HISTORY;
+    }
+
+    @Override
+    protected void afterCommitSuccess() {
+        // Nothing to do
+    }
 }

@@ -195,4 +195,9 @@ public class MasterUpdateApp extends AbstractOnlineApp {
     public Table getWritePreserveTable() {
         return Table.CONTRACTS;
     }
+
+    @Override
+    protected void afterCommitSuccess() {
+        // Nothing to do
+    }
 }
