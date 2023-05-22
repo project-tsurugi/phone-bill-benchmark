@@ -245,10 +245,10 @@ public class MultipleExecute extends ExecutableCommand {
      *
      * | application    | Threads | tpm/thread | records/tx | succ | occ-try | occ-abort | occ-succ | occ abandoned retry | ltx-try | ltx-abort | ltx-succ |ltx abandoned retry|
      * |----------------|--------:|-----------:|-----------:|-----:|--------:|----------:|---------:|--------------------:|--------:|----------:|---------:|------------------:|
-     * |master insert|1|-1|1|10137|10137|0|10137|0|0|0|0|0|
-     * |master update|1|-1|1|3747|3747|0|3747|0|0|0|0|0|
-     * |history insert|1|-1|100|354|382|42|340|14|18|4|14|0|
-     * |history update|1|-1|1|798|986|207|779|19|19|0|19|0|
+     * |Master Delete/Insert|1|-1|1|10137|10137|0|10137|0|0|0|0|0|
+     * |Master Update|1|-1|1|3747|3747|0|3747|0|0|0|0|0|
+     * |History Insert|1|-1|100|354|382|42|340|14|18|4|14|0|
+     * |History Update|1|-1|1|798|986|207|779|19|19|0|19|0|
      * </pre>
      *
      * @param config
@@ -268,7 +268,7 @@ public class MultipleExecute extends ExecutableCommand {
 
         // master delete+insert
         OnlineAppRecord masterDeleteInsert = new OnlineAppRecord();
-        masterDeleteInsert.application = "Maseter Delte/Insert";
+        masterDeleteInsert.application = "Master Delete/Insert";
         masterDeleteInsert.threads = config.masterDeleteInsertThreadCount;
         masterDeleteInsert.tpmTthread = config.masterDeleteInsertRecordsPerMin;
         masterDeleteInsert.recordsTx = 1;

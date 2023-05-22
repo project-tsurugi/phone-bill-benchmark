@@ -1,0 +1,68 @@
+# 料金計算に関するパラメータ
+target.month=2020-12-01
+
+# 契約マスタ生成に関するパラメータ
+number.of.contracts.records=1000
+duplicate.phone.number.rate=100
+expiration.date.rate=400
+no.expiration.date.rate=400
+min.date=2010-11-11
+max.date=2021-03-01
+
+# 通話履歴生成に関するパラメータ
+number.of.history.records=3000000
+recipient.phone.number.distribution=UNIFORM
+recipient.phone.number.scale=3.0
+recipient.phone.number.shape=18.0
+caller.phone.number.distribution=UNIFORM
+caller.phone.number.scale=3.0
+caller.phone.number.shape=18.0
+call.time.distribution=UNIFORM
+call.time.scale=4.5
+call.time.shape=1.5
+max.call.time.secs=3600
+statistics.output.dir=
+history.min.date=2020-11-01
+history.max.date=2021-01-10
+
+# JDBCに関するパラメータ
+url=ipc:phone-bill
+user=phonebill
+password=phonebill
+isolation.level=READ_COMMITTED
+
+# DBMSタイプ
+dbms.type=ICEAXE
+
+# オンラインアプリケーションに関するパラメータ
+master.update.records.per.min=-1
+master.update.thread.count=1
+master.delete.insert.records.per.min=-1
+master.delete.insert.thread.count=1
+history.update.records.per.min=-1
+history.update.thread.count=1
+history.insert.transaction.per.min=-1
+history.insert.records.per.transaction=100
+history.insert.thread.count=1
+skip.database.access=false
+
+# スレッドに関するパラメータ
+thread.count=8
+shared.connection=false
+create.test.data.thread.count=64
+
+# CSVに関するパラメータ
+csv.dir=/tmp
+max.number.of.lines.history.csv=10000
+
+# Oracle固有のパラメータ
+oracle.initrans=0
+oracle.sql.loader.path=sqlldr
+oracle.sql.loader.sid=
+oracle.create.index.option=nologging parallel 32
+# Iceaxe固有のパラメータ
+transaction.option=LTX
+# その他のパラメータ
+random.seed=0
+transaction.scope=WHOLE
+listen.port=0
