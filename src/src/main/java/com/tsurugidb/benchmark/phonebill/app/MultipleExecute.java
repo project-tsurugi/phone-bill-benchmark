@@ -217,8 +217,7 @@ public class MultipleExecute extends ExecutableCommand {
      */
     private void writeOnlineAppReport(Config config) {
         // ex: ICEAXE-OCC-
-        String title = config.dbmsType.name() + "-" + config.transactionOption + "-" + config.transactionScope + "-T"
-                + config.threadCount;
+        String title = createTitile(config);
         Path outputPath = Paths.get(config.csvDir).resolve("online-app.md");
         try {
             LOG.debug("Creating an online application report for {}", title);
@@ -232,6 +231,27 @@ public class MultipleExecute extends ExecutableCommand {
         }
     }
 
+    static String createTitile(Config config) {
+        int onlineThreadCount = 0;
+        onlineThreadCount += getThreadCount(config.historyInsertTransactionPerMin, config.historyInsertThreadCount);
+        onlineThreadCount += getThreadCount(config.historyUpdateRecordsPerMin, config.historyUpdateThreadCount);
+        onlineThreadCount += getThreadCount(config.masterDeleteInsertRecordsPerMin, config.masterDeleteInsertThreadCount);
+        onlineThreadCount += getThreadCount(config.masterUpdateRecordsPerMin, config.masterUpdateThreadCount);
+        String title = String.format("%s-%s-%s-ONLINE-T%02d-BATCH-T%02d",
+                config.dbmsType,
+                config.transactionOption,
+                config.transactionScope,
+                onlineThreadCount,
+                config.onlineOnly ? 0 : config.threadCount);
+        return title;
+    }
+
+    private static int getThreadCount(int tpm, int threadCount) {
+        if (tpm != 0 && threadCount > 0) {
+            return threadCount;
+        }
+        return 0;
+    }
 
 
 
