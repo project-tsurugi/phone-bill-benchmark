@@ -8,6 +8,9 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import com.tsurugidb.benchmark.phonebill.app.Config.DbmsType;
+import com.tsurugidb.benchmark.phonebill.app.Config.TransactionOption;
+import com.tsurugidb.benchmark.phonebill.app.Config.TransactionScope;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.TxOption;
 import com.tsurugidb.benchmark.phonebill.db.dao.Ddl;
@@ -92,6 +95,66 @@ class MultipleExecuteTest {
 
     List<String> splitToLines(String str) {
         return Arrays.asList(str.split("\r\n|\r|\n"));
+
+    }
+
+    @Test
+    final void testCreateTitile() throws IOException {
+        // デフォルト(オンラインアプリなし)のパターン
+        Config config = Config.getConfig();
+        assertEquals("POSTGRE_SQL_JDBC-OCC-WHOLE-ONLINE-T00-BATCH-T01", MultipleExecute.createTitile(config));
+
+        // オンラインアプリありのパターン
+        config.historyInsertRecordsPerTransaction = 1;
+        config.historyInsertThreadCount = 1;
+        config.historyInsertTransactionPerMin = 1;
+        config.historyUpdateRecordsPerMin = 2;
+        config.historyUpdateThreadCount = 2;
+        config.masterDeleteInsertRecordsPerMin = 3;
+        config.masterDeleteInsertThreadCount = 3;
+        config.masterUpdateRecordsPerMin = 4;
+        config.masterUpdateThreadCount = 4;
+        config.dbmsType = DbmsType.ICEAXE;
+        config.transactionOption=TransactionOption.LTX;
+        config.transactionScope = TransactionScope.CONTRACT;
+        config.threadCount = 64;
+        assertEquals("ICEAXE-LTX-CONTRACT-ONLINE-T10-BATCH-T64", MultipleExecute.createTitile(config));
+
+        // オンラインアプリなしを指定した場合(ThrradCountが無視される)
+        config.onlineOnly=true;
+        assertEquals("ICEAXE-LTX-CONTRACT-ONLINE-T10-BATCH-T00", MultipleExecute.createTitile(config));
+
+        // tpmを指定する設定に0が指定されるとオンラインのスレッド数にカウントされない
+        config.onlineOnly=false;
+        config.historyInsertTransactionPerMin = 0;
+        assertEquals("ICEAXE-LTX-CONTRACT-ONLINE-T09-BATCH-T64", MultipleExecute.createTitile(config));
+        config.historyUpdateRecordsPerMin = 0;
+        assertEquals("ICEAXE-LTX-CONTRACT-ONLINE-T07-BATCH-T64", MultipleExecute.createTitile(config));
+        config.masterDeleteInsertRecordsPerMin = 0;
+        assertEquals("ICEAXE-LTX-CONTRACT-ONLINE-T04-BATCH-T64", MultipleExecute.createTitile(config));
+        config.masterUpdateRecordsPerMin = 0;
+        assertEquals("ICEAXE-LTX-CONTRACT-ONLINE-T00-BATCH-T64", MultipleExecute.createTitile(config));
+
+        // tpmを指定する設定に-1が指定されるとオンラインのスレッド数にカウントされる
+        // スレッド数に負数をしていしても0とカウントされる
+        config.historyInsertTransactionPerMin = -1;
+        assertEquals("ICEAXE-LTX-CONTRACT-ONLINE-T01-BATCH-T64", MultipleExecute.createTitile(config));
+        config.historyUpdateRecordsPerMin = -1;
+        assertEquals("ICEAXE-LTX-CONTRACT-ONLINE-T03-BATCH-T64", MultipleExecute.createTitile(config));
+        config.masterDeleteInsertRecordsPerMin = -1;
+        assertEquals("ICEAXE-LTX-CONTRACT-ONLINE-T06-BATCH-T64", MultipleExecute.createTitile(config));
+        config.masterUpdateRecordsPerMin = -1;
+        assertEquals("ICEAXE-LTX-CONTRACT-ONLINE-T10-BATCH-T64", MultipleExecute.createTitile(config));
+
+        // スレッド数に負数をしていしても0とカウントされる
+        config.historyInsertThreadCount = -1;
+        assertEquals("ICEAXE-LTX-CONTRACT-ONLINE-T09-BATCH-T64", MultipleExecute.createTitile(config));
+        config.historyUpdateThreadCount = -2;
+        assertEquals("ICEAXE-LTX-CONTRACT-ONLINE-T07-BATCH-T64", MultipleExecute.createTitile(config));
+        config.masterDeleteInsertThreadCount = -3;
+        assertEquals("ICEAXE-LTX-CONTRACT-ONLINE-T04-BATCH-T64", MultipleExecute.createTitile(config));
+        config.masterUpdateThreadCount = -44;
+        assertEquals("ICEAXE-LTX-CONTRACT-ONLINE-T00-BATCH-T64", MultipleExecute.createTitile(config));
 
     }
 }
