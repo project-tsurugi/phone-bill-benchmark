@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Random;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
@@ -87,6 +88,39 @@ class RandomKeySelectorTest {
 
         assertDoesNotThrow(() -> {
             new RandomKeySelector<Integer>(Collections.emptyList(), random, 1d);
+        });
+
+        // coverRateの指定
+        ks = new RandomKeySelector<Integer>(Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10), new Random(), 0d, 1d);
+        assertEquals(10, ks.keyList.size());
+        assertEquals(10, ks.aloKeyList.size());
+
+        ks = new RandomKeySelector<Integer>(Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10), new Random(), 0d, 0.5d);
+        assertEquals(5, ks.keyList.size());
+        assertEquals(5, ks.aloKeyList.size());
+
+        ks = new RandomKeySelector<Integer>(Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10), new Random(), 0d, 0d);
+        assertEquals(0, ks.keyList.size());
+        assertEquals(0, ks.aloKeyList.size());
+
+
+        // coverRateの範囲チェックのテスト
+        ie = assertThrows(IllegalArgumentException.class, () -> {
+            new RandomKeySelector<Integer>(Collections.emptyList(), random, 1d, -1E-99d);
+        });
+        assertEquals(RandomKeySelector.ERROR_RANGE, ie.getMessage());
+
+        ie = assertThrows(IllegalArgumentException.class, () -> {
+            new RandomKeySelector<Integer>(Collections.emptyList(), random, 1d, 1.0000000000001d);
+        });
+        assertEquals(RandomKeySelector.ERROR_RANGE, ie.getMessage());
+
+        assertDoesNotThrow(() -> {
+            new RandomKeySelector<Integer>(Collections.emptyList(), random, 1d, 0d);
+        });
+
+        assertDoesNotThrow(() -> {
+            new RandomKeySelector<Integer>(Collections.emptyList(), random, 1d, 1d);
         });
     }
 

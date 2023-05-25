@@ -227,6 +227,17 @@ public class Config implements Cloneable {
     public boolean skipDatabaseAccess;
     private static final String SKIP_DATABASE_ACCESS = "skip.database.access";
 
+    /**
+     * オンラインアプリケーションがランダムにマスタを選択するときのカバー率
+     */
+    public double onlineAppRandomCoverRate;
+    private static final  String ONLINE_APP_RANDOM_COVER_RATE = "online.app.random.cover.rate";
+
+    /**
+     * オンラインアプリケーションがランダムにマスタを選択するときのAtLeastOnceのロジックを用いる割合
+     */
+    public double onlineAppRandomAtLeastOnceRate;
+    private static final String ONLINE_APP_RANDOM_AT_LEAST_ONCE_RATE = "online.app.random.at.least.once.rate";
 
     /* jdbcのパラメータ */
     public String url;
@@ -486,6 +497,9 @@ public class Config implements Cloneable {
         historyInsertRecordsPerTransaction = getInt(HISTORY_INSERT_RECORDS_PER_TRANSACTION, 1);
 
         skipDatabaseAccess = getBoolean(SKIP_DATABASE_ACCESS, false);
+
+        onlineAppRandomCoverRate = getDouble(ONLINE_APP_RANDOM_COVER_RATE, 1d);
+        onlineAppRandomAtLeastOnceRate = getDouble(ONLINE_APP_RANDOM_AT_LEAST_ONCE_RATE, 0d);
 
         //  CSVデータに関するパラメータ
         csvDir = getString(CSV_DIR, "/var/lib/csv");
@@ -766,9 +780,6 @@ public class Config implements Cloneable {
         return new Config(filename);
     }
 
-
-
-
     /**
      * configオブジェクトの生成.
      * <br>
@@ -849,6 +860,8 @@ public class Config implements Cloneable {
         sb.append(String.format(format, HISTORY_INSERT_RECORDS_PER_TRANSACTION, historyInsertRecordsPerTransaction));
         sb.append(String.format(format, HISTORY_INSERT_THREAD_COUNT, historyInsertThreadCount));
         sb.append(String.format(format, SKIP_DATABASE_ACCESS, skipDatabaseAccess));
+        sb.append(String.format(format, ONLINE_APP_RANDOM_COVER_RATE, onlineAppRandomCoverRate));
+        sb.append(String.format(format, ONLINE_APP_RANDOM_AT_LEAST_ONCE_RATE, onlineAppRandomAtLeastOnceRate));
         sb.append(System.lineSeparator());
         sb.append(String.format(commentFormat, "スレッドに関するパラメータ"));
         sb.append(String.format(format, THREAD_COUNT, threadCount));
