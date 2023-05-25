@@ -12,8 +12,6 @@ import javax.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-
 /**
  * バッチ and/or オンラインアプリで、特定のテーブルから1レコードをランダムに 選択している処理に対して以下の機能を提供する.
  * <p>
@@ -103,7 +101,7 @@ public class RandomKeySelector<T> {
      *
      * @throws IllegalArgumentException keysがnullを含む場合, aloSelectRateの範囲外の値が指定されたとき
      */
-    public RandomKeySelector(@Nonnull Collection<T> keys, @NonNull Random random, double aloSelectRate) throws IllegalArgumentException {
+    public RandomKeySelector(@Nonnull Collection<T> keys, @Nonnull Random random, double aloSelectRate) throws IllegalArgumentException {
         this(keys, random, aloSelectRate, 1d);
     }
 
@@ -115,7 +113,7 @@ public class RandomKeySelector<T> {
      *
      * @throws IllegalArgumentException keysがnullを含む場合, aloSelectRate, coverRateに0d〜1dの範囲外の値が指定されたとき
      */
-    public RandomKeySelector(@Nonnull Collection<T> keys, @NonNull Random random, double aloSelectRate, double coverRate) throws IllegalArgumentException {
+    public RandomKeySelector(@Nonnull Collection<T> keys, @Nonnull Random random, double aloSelectRate, double coverRate) throws IllegalArgumentException {
         if (aloSelectRate < 0d || 1d < aloSelectRate ) {
             throw new IllegalArgumentException(ERROR_RANGE);
         }
@@ -198,7 +196,7 @@ public class RandomKeySelector<T> {
      * <p>
      * inserrtしたレコードのキーを追加するために使用する
      */
-    public synchronized void add(@NonNull T key) {
+    public synchronized void add(@Nonnull T key) {
         keyList.add(key);
         keyPositionMap.put(key, new KeyPositions(keyList.size() -1 , -1));
     }
