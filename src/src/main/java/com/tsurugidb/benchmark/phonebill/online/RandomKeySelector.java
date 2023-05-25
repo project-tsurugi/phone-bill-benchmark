@@ -99,21 +99,43 @@ public class RandomKeySelector<T> {
     /**
      * @param keys RandomKeySelectorに管理させるKeyのコレクション
      * @param random RandomKeySelectorが使用する乱数生成器
-     * @param aloSelectRate get(), getAndRemove()を用いてキーを選択する際にatLeastOnceのリストからキーを選択する割合.0d〜1dの範囲で指定する。
+     * @param aloSelectRate get(), getAndRemove()を用いてキーを選択する際にatLeastOnceのリストからキーを選択する割合。0d〜1dの範囲で指定する。
      *
-     * @throws IllegalArgumentException keysがnullを含む場合, aloSelectRateに0d〜1dの範囲外の値が指定されたとき
+     * @throws IllegalArgumentException keysがnullを含む場合, aloSelectRateの範囲外の値が指定されたとき
      */
     public RandomKeySelector(@Nonnull Collection<T> keys, @NonNull Random random, double aloSelectRate) throws IllegalArgumentException {
+        this(keys, random, aloSelectRate, 1d);
+    }
+
+    /**
+     * @param keys RandomKeySelectorに管理させるKeyのコレクション
+     * @param random RandomKeySelectorが使用する乱数生成器
+     * @param aloSelectRate get(), getAndRemove()を用いてキーを選択する際にatLeastOnceのリストからキーを選択する割合。0d〜1dの範囲で指定する。
+     * @param coverRate カーバ率。RandomKeySelectorはkeysのうちcoverRateで指定した割合の要素を管理する。0d〜1dの範囲で指定する。
+     *
+     * @throws IllegalArgumentException keysがnullを含む場合, aloSelectRate, coverRateに0d〜1dの範囲外の値が指定されたとき
+     */
+    public RandomKeySelector(@Nonnull Collection<T> keys, @NonNull Random random, double aloSelectRate, double coverRate) throws IllegalArgumentException {
         if (aloSelectRate < 0d || 1d < aloSelectRate ) {
+            throw new IllegalArgumentException(ERROR_RANGE);
+        }
+        if (coverRate < 0d || 1d < coverRate ) {
             throw new IllegalArgumentException(ERROR_RANGE);
         }
         this.aloSelectRate = aloSelectRate;
         this.random = random;
-        keyList = new ArrayList<T>(keys);
+        int myKeyListSize = (int) (keys.size() * coverRate);
+
+        keyList = new ArrayList<T>(myKeyListSize);
+        int c = 0;
         for (T key : keys) {
+            if (++c > myKeyListSize) {
+                break;
+            }
             if (key == null) {
                 throw new IllegalArgumentException(ERROR_NULL_ELEMENTS);
             }
+            keyList.add(key);
         }
         initKeyPostionMap();
         initAloKeyList();
