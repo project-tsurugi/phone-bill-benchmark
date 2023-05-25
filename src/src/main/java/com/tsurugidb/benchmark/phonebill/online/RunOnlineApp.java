@@ -104,11 +104,11 @@ public class RunOnlineApp extends ExecutableCommand {
         // KeySelectorの初期化
         RandomKeySelector<Contract.Key> keySelector;
         try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
-            List<Key> contracts = manager.execute(TxOption.of(), () -> {
+            List<Key> keys = manager.execute(TxOption.of(), () -> {
                 return manager.getContractDao().getAllPrimaryKeys();
             });
-            keySelector = new RandomKeySelector<>(contracts, random, 0);
-        }
+            keySelector = new RandomKeySelector<>(keys, random, config.onlineAppRandomAtLeastOnceRate,
+                    config.onlineAppRandomCoverRate);        }
 
         // MasterDeleteInsertAppの初期化
         for (int i = 0; i < config.masterDeleteInsertThreadCount; i++) {

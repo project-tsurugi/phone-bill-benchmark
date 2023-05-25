@@ -142,7 +142,8 @@ public class PhoneBill extends ExecutableCommand {
             List<Key> keys = manager.execute(TxOption.of(), () -> {
                 return manager.getContractDao().getAllPrimaryKeys();
             });
-            keySelector = new RandomKeySelector<>(keys, random, 0);
+            keySelector = new RandomKeySelector<>(keys, random, config.onlineAppRandomAtLeastOnceRate,
+                    config.onlineAppRandomCoverRate);
         }
 
 
