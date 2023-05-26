@@ -67,4 +67,4 @@ random.seed=0
 transaction.scope=WHOLE
 listen.port=0
 online.only=true
-exec.time.limit.secs=120
+exec.time.limit.secs=600
