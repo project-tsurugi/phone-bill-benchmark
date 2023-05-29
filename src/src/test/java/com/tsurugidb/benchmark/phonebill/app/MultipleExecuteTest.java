@@ -76,7 +76,7 @@ class MultipleExecuteTest {
     final void testCreateOnlineAppReport() throws IOException {
         Config config = Config.getConfig();
         MultipleExecute execute = new MultipleExecute();
-        String report = execute.createOnlineAppReport(config, "Example");
+        String report = execute.createOnlineAppReport(config, "Example", "Example");
 
         List<String> lines = splitToLines(report);
         assertEquals(12, lines.size());

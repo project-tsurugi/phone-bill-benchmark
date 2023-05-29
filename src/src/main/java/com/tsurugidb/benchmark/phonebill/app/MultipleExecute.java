@@ -37,6 +37,7 @@ import com.tsurugidb.benchmark.phonebill.db.dao.Ddl;
 import com.tsurugidb.benchmark.phonebill.db.entity.Billing;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
 import com.tsurugidb.benchmark.phonebill.online.TxStatistics;
+import com.tsurugidb.benchmark.phonebill.online.TxStatistics.TxStatisticsBundle;
 import com.tsurugidb.benchmark.phonebill.testdata.CreateTestData;
 
 /**
@@ -218,10 +219,11 @@ public class MultipleExecute extends ExecutableCommand {
     private void writeOnlineAppReport(Config config) {
         // ex: ICEAXE-OCC-
         String title = createTitile(config);
+        String baselineTitle = createBaselineTitile(config);
         Path outputPath = Paths.get(config.csvDir).resolve("online-app.md");
         try {
             LOG.debug("Creating an online application report for {}", title);
-            String newReport = createOnlineAppReport(config, title);
+            String newReport = createOnlineAppReport(config, title, baselineTitle);
             LOG.debug("Online application report: {}", newReport);
             onlineAppReport = onlineAppReport + newReport;
             LOG.debug("Writing online application reports to {}", outputPath.toAbsolutePath().toString());
@@ -244,6 +246,12 @@ public class MultipleExecute extends ExecutableCommand {
                 onlineThreadCount,
                 config.onlineOnly ? 0 : config.threadCount);
         return title;
+    }
+
+    static String createBaselineTitile(Config config) {
+        Config newConfig = config.clone();
+        newConfig.threadCount = 0;
+        return createTitile(newConfig);
     }
 
     private static int getThreadCount(int tpm, int threadCount) {
@@ -273,9 +281,10 @@ public class MultipleExecute extends ExecutableCommand {
      *
      * @param config
      * @param title
+     * @param baselineTitle
      * @return
      */
-    String createOnlineAppReport(Config config, String title) {
+    String createOnlineAppReport(Config config, String title, String baselineTitle) {
         StringBuilder sb = new StringBuilder();
 
         // タイトル
@@ -324,8 +333,11 @@ public class MultipleExecute extends ExecutableCommand {
 
 
         // TxStatistic
+        TxStatistics.saveTxStatisticsBundle(title);
+        TxStatisticsBundle baseline = title.equals(baselineTitle) ? null
+                : TxStatistics.getStatisticsBundle(baselineTitle);
         sb.append("\n\n");
-        sb.append(TxStatistics.getReport());
+        sb.append(TxStatistics.getReport(baseline));
         sb.append("\n");
 
         return sb.toString();

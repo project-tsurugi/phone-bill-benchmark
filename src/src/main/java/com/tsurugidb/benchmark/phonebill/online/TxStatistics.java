@@ -1,5 +1,6 @@
 package com.tsurugidb.benchmark.phonebill.online;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -15,6 +16,13 @@ public class TxStatistics {
      */
     static Map<TxLabel, TxStatistics> map = new ConcurrentHashMap<TxLabel, TxStatistics>();
 
+
+    /**
+     * TxStatisticsBundleに名前をつけて保存するためのMap
+     */
+    static Map<String, TxStatisticsBundle> bundleMap = new HashMap<>();
+
+
     /**
      * 実行時間(単位:ミリ秒)
      */
@@ -22,6 +30,9 @@ public class TxStatistics {
 
     public static void setDedicatedTimeMills(long dedicatedTimeMills) {
         TxStatistics.dedicatedTimeMills = dedicatedTimeMills;
+        map.values().forEach(v -> {
+            v.thisDedicatedTimeMills = dedicatedTimeMills;
+        });
     }
 
     /**
@@ -43,25 +54,68 @@ public class TxStatistics {
     }
 
     /**
-     * レポートを作成する
+     * StatisticsBundleを返す。この値は、{@link TxStatistics#clear()}の呼び出しで失われない。
      *
-     * @param dedicatedTimeMills
+     * @return TxStatisticsBundle
+     */
+    private static TxStatisticsBundle getStatisticsBundle() {
+        return new TxStatisticsBundle(map);
+    }
+
+
+    /**
+     * TxStatisticsBundleを生成し、名前をつけて保存する。
+     *
+     * @param name
+     */
+    public static void saveTxStatisticsBundle(String name) {
+        bundleMap.put(name, getStatisticsBundle());
+    }
+
+
+    /**
+     * 指定の名前のStatisticsBundleを返す。
+     * 本メソッドが返すStatisticsBundleは{@link TxStatistics#getReport()}に使用できる。
+     *
+     * @param name
+     */
+    public static TxStatisticsBundle getStatisticsBundle(String name) {
+        return bundleMap.get(name);
+    }
+
+    /**
+     * レポートを作成する。baselineが指定された場合、latencyの項目に、baselineの値とのパーセンテージが追加される。
+     *
+     * @param baseline 基準となる統計情報
      * @return
      */
-    public static String getReport() {
+    public static String getReport(TxStatisticsBundle baseline) {
         StringBuilder sb = new StringBuilder();
-        // ヘッダ
         sb.append("| title | tx option | dedicated time[ms] | numbers of txs | latency<br>avg[ms] | latency<br>min[ms] | latency<br>max[ms] | committed tx through put[task/s] |");
         sb.append("\n");
         sb.append("|-------|-----------|-------------------:|---------------:|-------------------:|-------------------:|-------------------:|---------------------------------:|");
         sb.append("\n");
         // 各TxLabelごとの統計情報
-        map.keySet().stream().sorted().map(k -> map.get(k)).forEach(s -> {
-            sb.append(s.toString());
+        map.keySet().stream().sorted().forEach(key -> {
+            TxStatistics statistics = map.get(key);
+            TxStatistics baselineStatistics = baseline == null ? null : baseline.map.get(key);
+            sb.append(statistics.toString(baselineStatistics));
             sb.append("\n");
         });
         return sb.toString();
     }
+
+
+    /**
+     * レポートを作成する。
+     *
+     * @return
+     */
+    public static String getReport() {
+        return getReport(null);
+    }
+
+
 
     /**
      * TXのラベル
@@ -84,6 +138,11 @@ public class TxStatistics {
      * 遅延の合計値
      */
     private AtomicLong totalLatency;
+    /**
+     * 実行時間
+     * @param label
+     */
+    private long thisDedicatedTimeMills;
 
     TxStatistics(TxLabel label) {
         this.label = label;
@@ -97,18 +156,22 @@ public class TxStatistics {
         return count.get();
     }
 
-    long getMaxLatency() {
-        return maxLatency.get();
+    double getMaxLatency() {
+        return maxLatency.get() / 1000d / 1000d;
     }
 
-    long getMinLatency() {
-        return minLatency.get();
+    double getMinLatency() {
+        return minLatency.get() / 1000d / 1000d;
+    }
+
+    double getThroughput() {
+        return 1000d * getCount() / thisDedicatedTimeMills;
     }
 
     double getAverageLatency() {
         long totalCount = count.get();
         if (totalCount > 0) {
-            return (double) totalLatency.get() / totalCount;
+            return (double) totalLatency.get() / totalCount / 1000d / 1000d ;
         } else {
             return 0;
         }
@@ -141,8 +204,13 @@ public class TxStatistics {
         }
     }
 
-    @Override
-    public String toString() {
+    /**
+     * 統計情報を文字列化する。
+     *
+     * @param baselineStatistics 基準となる統計情報。
+     * @return
+     */
+    public String toString(TxStatistics baselineStatistics) {
         var sb = new StringBuilder(64);
         sb.append("|");
         sb.append(label);
@@ -160,17 +228,40 @@ public class TxStatistics {
             sb.append("|");
 
             // latency
-            sb.append(String.format("%,.3f", getAverageLatency() / 1000d / 1000d));
+            sb.append(formatWithBaseline(getAverageLatency(), baselineStatistics != null ? baselineStatistics.getAverageLatency() : -1d));
             sb.append("|");
-            sb.append(String.format("%,.3f", getMinLatency() / 1000d / 1000d));
+            sb.append(formatWithBaseline(getMinLatency(), baselineStatistics != null ? baselineStatistics.getMinLatency() : -1d));
             sb.append("|");
-            sb.append(String.format("%,.3f", getMaxLatency() / 1000d / 1000d));
+            sb.append(formatWithBaseline(getMaxLatency(), baselineStatistics != null ? baselineStatistics.getMaxLatency() : -1d));
             sb.append("|");
-
-            // committed tx through put
-            sb.append(String.format("%,.3f", ((double)getCount()) / dedicatedTimeMills * 1000d));
+            sb.append(formatWithBaseline(getThroughput(), baselineStatistics != null ? baselineStatistics.getThroughput() : -1d));
             sb.append("|");
         }
 
         return sb.toString();
-    }}
+    }
+
+    private static String formatWithBaseline(double value, double baseline) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(String.format("%,.3f", value));
+        if (baseline != -1d) {
+            sb.append("<br>(");
+            sb.append(String.format("%,.2f%%", value / baseline * 100));
+            sb.append(")");
+        }
+
+        return sb.toString();
+    }
+
+    /**
+     * 複数の統計情報をまとめて保持するクラス。
+     */
+    public static class TxStatisticsBundle {
+        Map<TxLabel, TxStatistics> map = new ConcurrentHashMap<TxLabel, TxStatistics>();
+
+        public TxStatisticsBundle(Map<TxLabel, TxStatistics> map) {
+            this.map = new HashMap<>(map);
+        }
+    }
+
+}
