@@ -26,10 +26,10 @@ import com.tsurugidb.iceaxe.transaction.TgCommitType;
 import com.tsurugidb.iceaxe.transaction.TsurugiTransaction;
 import com.tsurugidb.iceaxe.transaction.event.TsurugiTransactionEventListener;
 import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionException;
-import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionRetryOverIOException;
 import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionRuntimeException;
 import com.tsurugidb.iceaxe.transaction.manager.TgTmSetting;
 import com.tsurugidb.iceaxe.transaction.manager.TsurugiTransactionManager;
+import com.tsurugidb.iceaxe.transaction.manager.exception.TsurugiTmRetryOverIOException;
 import com.tsurugidb.tsubakuro.sql.SqlServiceException;
 
 public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
@@ -244,7 +244,7 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
 	private boolean isRetriable(Throwable t) {
 		// TODO: これはとりあえず動くコードでしかない。OLTPが返すエラーコードが整理されたら、それを反映したコードにする
 		while (t != null) {
-			if (t instanceof TsurugiTransactionRetryOverIOException) {
+			if (t instanceof TsurugiTmRetryOverIOException) {
 				return true;
 			}
 			if (t instanceof SqlServiceException) {
