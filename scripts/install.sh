@@ -11,4 +11,4 @@ cd ../src
 if [ ! -d $INSTALL_DIR ]; then
   mkdir $INSTALL_DIR
 fi
-tar x -C $INSTALL_DIR -f build/distributions/phone-bill.tar
+tar x -C $INSTALL_DIR -f build/distributions/phone-bill.tar.gz
