@@ -37,14 +37,14 @@ git clone git@github.com:project-tsurugi/phone-bill-benchmark.git
 cd src
 ./gradlew clean distTar
 ```
-ビルドに成功すると、インストール用のアーカイブ`build/distributions/phone-bill.tar`が生成される。
+ビルドに成功すると、インストール用のアーカイブ`build/distributions/phone-bill.tar.gz`が生成される。
 
 ### インストール
 
-実行環境の任意のディレクトリで、生成された`phone-bill.tar` を展開してインストールする。
+実行環境の任意のディレクトリで、生成された`phone-bill.tar.gz` を展開してインストールする。
 
 ```
-tar xf phone-bill.tar
+tar xf phone-bill.tar.gz
 ```
 
 ## 実行
@@ -233,19 +233,19 @@ listen.port=0
 * master.update.records.per.min
   * 契約マスタの更新頻度、`master.update.thread.count`で指定した各スレッドが1分間にこで指定されたレコード数だけ契約マスタを更新する。-1を指定すると連続で契約マスタを更新する。
 * master.update.thread.count=1
-  * 契約マスタを更新するスレッドのスレッド数。 
+  * 契約マスタを更新するスレッドのスレッド数。
 * master.delete.insert.records.per.min
   * 契約マスタの追加頻度、`master.delete.insert.thread.count`で指定した各スレッドが1分間にこで指定されたレコード数だけ契約マスタを追加する。-1を指定すると連続で契約マスタを追加する。
 * master.delete.insert.thread.count=1
-  * 契約マスタを追加するスレッドのスレッド数。 
+  * 契約マスタを追加するスレッドのスレッド数。
 * history.update.records.per.min
   * 通話履歴の更新頻度、`history.update.thread.count`で指定した各スレッドが1分間にこで指定されたレコード数だけ契約マスタを更新する。-1を指定すると連続で通話履歴を更新する。
 * history.update.thread.count=1
-  * 通話履歴マスタを更新するスレッドのスレッド数。 
+  * 通話履歴マスタを更新するスレッドのスレッド数。
 * history.insert.transaction.per.min
   * 通話履歴の追加頻度、`history.insert.thread.count`で指定した各スレッドが1分間にこで指定された回数だけ契約マスタを更新する。-1を指定すると連続で通話履歴を追加する。
 * history.insert.thread.count=1
-  * 通話履歴マスタを追加するスレッドのスレッド数。 
+  * 通話履歴マスタを追加するスレッドのスレッド数。
 * history.insert.records.per.transaction
   * 通話履歴の追加時に1回で追加するレコード数。
 * skip.database.access=false
@@ -286,7 +286,7 @@ listen.port=0
 Tsurugi利用時のみ有効なパラメータです。
 
 * transaction.option
-  - バッチ実行時のTransaction Option, OCCとLTXのいずれかを指定する。 
+  - バッチ実行時のTransaction Option, OCCとLTXのいずれかを指定する。
 * use.prepared.tables=false
   - ツール自体のテスト用のパラメータです。常にfalseを指定して使用してください。
 
@@ -352,7 +352,7 @@ phone-bill/bin/run CreateTable config.properties
 * 生成した値の出現頻度(以降単に頻度と記述)の平均値(相加平均)
 * 頻度が大きい値のTOP10
 * 頻度が小さい値のTOP10
-  
+
 テストデータを生成するコマンド`CreateTestData`の代わりにコマンドを`TestDataStatistics`
 実行すると、テストデータを生成せずに統計情報の出力します。また、コマンド`TestDataStatistics`
 実行時に、Configの`statistics.output.dir`で指定したディレクトリの下に`statistics`という
@@ -375,7 +375,7 @@ phone-bill/bin/run CreateTable config.properties
    * 料金珪砂バッチ用のプロセスは1つだけ実行可能です。2つい上のプロセスを起動してもサーバに接続を拒否され起動に失敗します。
    * オンラインアプリ用のプロセスは任意の数だけ起動可能です。
 1. サーバのステータスを参照し、起動した料金計算バッチ用のプロセスと、オンラインアプリ用のプロセスが実行可能な状態なことを確認後、実行開始します。
-1. サーバのステータスを参照し処理の進捗状況を確認可能です。 
+1. サーバのステータスを参照し処理の進捗状況を確認可能です。
 2. 処理が終了したら、シャットダウンコマンドを実行して、サーバとクライアントプロセスを終了します。
 
 
@@ -383,11 +383,11 @@ phone-bill/bin/run CreateTable config.properties
 
 #### インストール
 
-サーバおよびクライアントプロセスを実行する各ノードの任意のディレクトリで、生成された`phone-bill.tar` を
+サーバおよびクライアントプロセスを実行する各ノードの任意のディレクトリで、生成された`phone-bill.tar.gz` を
 展開してインストールする。
 
 ```
-tar xf phone-bill.tar
+tar xf phone-bill.tar.gz
 ```
 
 ### サーバの起動
