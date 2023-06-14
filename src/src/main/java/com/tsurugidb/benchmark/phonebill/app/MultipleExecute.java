@@ -62,7 +62,7 @@ public class MultipleExecute extends ExecutableCommand {
     @Override
     public void execute(List<ConfigInfo> configInfos) throws Exception {
         ExecutorService service = Executors.newFixedThreadPool(1);
-        TateyamaWatcher task = null;
+        TsurugidbWatcher task = null;
         Future<?> future = null;
         try {
             boolean prevConfigHasOnlineApp = false;
@@ -72,7 +72,7 @@ public class MultipleExecute extends ExecutableCommand {
                         + System.lineSeparator() + "---", info.configPath.toAbsolutePath().toString());
                 if (config.dbmsType.isTsurugi()) {
                     dbiInit();
-                    task = new TateyamaWatcher();
+                    task = new TsurugidbWatcher();
                     future = service.submit(task);
                 }
                 initTestData(config, prevConfigHasOnlineApp);
@@ -87,10 +87,10 @@ public class MultipleExecute extends ExecutableCommand {
                     record.setNumberOfDiffrence(checkResult(config));
                 }
                 if (config.dbmsType.isTsurugi()) {
-                    LOG.info("Sending a request to stop TateyamaWatcher.");
+                    LOG.info("Sending a request to stop TsurugidbWatcher.");
                     task.stop();
                     future.get();
-                    LOG.info("TateyamaWatcher was stopped.");
+                    LOG.info("TsurugidbWatcher was stopped.");
                     record.setMemInfo(task.getVsz(), task.getRss());
                 }
                 writeResult(config);

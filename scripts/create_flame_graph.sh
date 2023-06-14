@@ -11,14 +11,14 @@ BIN_DIR=$(cd $(dirname $0); pwd)
 
 . $BIN_DIR/env.sh
 
-# start oltp server
+# start tsurugidb server
 
-$TSURUGI_DIR/bin/oltp kill --conf=$BIN_DIR/etc/phone-bill.ini && true
+$TSURUGI_DIR/bin/tgctl kill --conf=$BIN_DIR/etc/phone-bill.ini && true
 rm -rf  $TSURUGI_LOG_DIR
 export GLOG_logtostderr=1
 
-$TSURUGI_DIR/bin/oltp start --conf=etc/phone-bill.ini --v=$TSURUGI_LOG_LEVEL &> $LOG_DIR/$LABEL-tateyama-server.log && true
-PID_SERVER=`ps -f -u $USER | grep tateyama-server | grep -v grep | awk '{print $2}'`
+$TSURUGI_DIR/bin/tgctl start --conf=etc/phone-bill.ini --v=$TSURUGI_LOG_LEVEL &> $LOG_DIR/$LABEL-tsurugidb.log && true
+PID_SERVER=`ps -f -u $USER | grep tsurugidb | grep -v grep | awk '{print $2}'`
 
 # create test data
 
@@ -38,11 +38,11 @@ $INSTALL_DIR/phone-bill/bin/run PhoneBill $CONF
 kill %1
 wait
 
-# shutdown oltp server
+# shutdown tsurugidb server
 
-$TSURUGI_DIR/bin/oltp kill --conf=$BIN_DIR/etc/phone-bill.ini && true
+$TSURUGI_DIR/bin/tgctl kill --conf=$BIN_DIR/etc/phone-bill.ini && true
 
-# create flame graph from tateyama-server
+# create flame graph from tsurugidb
 
 /usr/bin/perf script -i perf.data | stackcollapse-perf.pl | flamegraph.pl > $LOG_DIR/$LABEL-server-fg.svg
 

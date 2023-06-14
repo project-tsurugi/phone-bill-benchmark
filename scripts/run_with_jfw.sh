@@ -11,13 +11,13 @@ BIN_DIR=$(cd $(dirname $0); pwd)
 
 . $BIN_DIR/env.sh
 
-# start oltp server
+# start tsurugidb server
 
-$TSURUGI_DIR/bin/oltp kill --conf=$BIN_DIR/etc/phone-bill.ini && true
+$TSURUGI_DIR/bin/tgctl kill --conf=$BIN_DIR/etc/phone-bill.ini && true
 rm -rf  $TSURUGI_LOG_DIR
 export GLOG_logtostderr=1
 
-$TSURUGI_DIR/bin/oltp start --conf=etc/phone-bill.ini --v=$TSURUGI_LOG_LEVEL &> $LOG_DIR/$LABEL-tateyama-server.log && true
+$TSURUGI_DIR/bin/tgctl start --conf=etc/phone-bill.ini --v=$TSURUGI_LOG_LEVEL &> $LOG_DIR/$LABEL-tsurugidb.log && true
 
 # create test data
 
@@ -37,8 +37,8 @@ settings=$BIN_DIR/etc/myprofile"
 $INSTALL_DIR/phone-bill/bin/run PhoneBill $CONF
 
 
-# shutdown oltp server
+# shutdown tsurugidb server
 
-$TSURUGI_DIR/bin/oltp kill --conf=$BIN_DIR/etc/phone-bill.ini && true
+$TSURUGI_DIR/bin/tgctl kill --conf=$BIN_DIR/etc/phone-bill.ini && true
 
 

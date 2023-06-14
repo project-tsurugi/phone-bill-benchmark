@@ -6,12 +6,12 @@ BIN_DIR=$(cd $(dirname $0); pwd)
 . $BIN_DIR/env.sh
 
 
-# start oltp server
+# start tsurugidb server
 
 export GLOG_logtostderr=1
-$TSURUGI_DIR/bin/oltp start --conf=$BIN_DIR/etc/phone-bill.ini --v=$TSURUGI_LOG_LEVEL &> $LOG_DIR/tateyama-server-`date "+%Y%m%d_%H%M%S"`.log && true
+$TSURUGI_DIR/bin/tgctl start --conf=$BIN_DIR/etc/phone-bill.ini --v=$TSURUGI_LOG_LEVEL &> $LOG_DIR/tsurugidb-`date "+%Y%m%d_%H%M%S"`.log && true
 
-while [[ ! "`$TSURUGI_DIR/bin/oltp status --conf=$BIN_DIR/etc/phone-bill.ini`"  == *RUNNING* ]]
+while [[ ! "`$TSURUGI_DIR/bin/tgctl status --conf=$BIN_DIR/etc/phone-bill.ini`"  == *RUNNING* ]]
 do
   sleep 1
 done
