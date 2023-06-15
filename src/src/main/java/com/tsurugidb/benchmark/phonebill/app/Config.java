@@ -369,6 +369,14 @@ public class Config implements Cloneable {
 
 
     /**
+     * レポートの出力ディレクトリ
+     */
+    public String reportDir;
+    private static final String REPORT_DIR = "report.dir";
+
+
+
+    /**
      * コンストラクタ.
      * <br>
      *
@@ -520,6 +528,7 @@ public class Config implements Cloneable {
         listenPort = getInt(LISTEN_PORT, 0);
         onlineOnly = getBoolean(ONLINE_ONLY, false);
         execTimeLimitSecs = getInt(EXEC_TIME_LIMIT_SECS, 0);
+        reportDir = getString(REPORT_DIR, "/tmp");
 
         // パラメータ間の矛盾のチェック
         if (transactionScope == TransactionScope.CONTRACT && sharedConnection) {
@@ -886,6 +895,7 @@ public class Config implements Cloneable {
         sb.append(String.format(format, LISTEN_PORT, listenPort));
         sb.append(String.format(format, ONLINE_ONLY, onlineOnly));
         sb.append(String.format(format, EXEC_TIME_LIMIT_SECS, execTimeLimitSecs));
+        sb.append(String.format(format, REPORT_DIR, reportDir));
         return sb.toString();
     }
 

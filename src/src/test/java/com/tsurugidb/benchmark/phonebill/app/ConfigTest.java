@@ -284,6 +284,7 @@ class ConfigTest {
         assertEquals(0, config.listenPort);
         assertEquals(false, config.onlineOnly);
         assertEquals(0, config.execTimeLimitSecs);
+        assertEquals("/tmp", config.reportDir);
 
         // toStringのチェック
         Path path = Paths.get(DEFALUT_CONFIG_PATH);
@@ -358,6 +359,7 @@ class ConfigTest {
         assertEquals(1967, config.listenPort);
         assertEquals(true, config.onlineOnly);
         assertEquals(1192, config.execTimeLimitSecs);
+        assertEquals("/var/log/report", config.reportDir);
 
         /* スレッドに関するパラメータ */
         assertEquals(10, config.threadCount);

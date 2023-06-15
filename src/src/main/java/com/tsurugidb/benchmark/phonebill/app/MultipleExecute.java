@@ -204,7 +204,7 @@ public class MultipleExecute extends ExecutableCommand {
      * @throws IOException
      */
     private void writeResult(Config config) throws IOException {
-        Path outputPath = Paths.get(config.csvDir).resolve("result.csv");
+        Path outputPath = Paths.get(config.reportDir).resolve("result.csv");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
             pw.println(Record.header());
             records.stream().forEach(r -> pw.println(r.toString()));
@@ -221,7 +221,7 @@ public class MultipleExecute extends ExecutableCommand {
         // ex: ICEAXE-OCC-
         String title = createTitile(config);
         String baselineTitle = createBaselineTitile(config);
-        Path outputPath = Paths.get(config.csvDir).resolve("online-app.md");
+        Path outputPath = Paths.get(config.reportDir).resolve("online-app.md");
         try {
             LOG.debug("Creating an online application report for {}", title);
             String newReport = createOnlineAppReport(config, title, baselineTitle);
