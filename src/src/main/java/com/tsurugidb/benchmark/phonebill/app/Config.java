@@ -416,7 +416,7 @@ public class Config implements Cloneable {
         replaceUrl();
         if (logging) {
             Logger logger = LoggerFactory.getLogger(Config.class);
-            logger.info("Config initialized" + System.lineSeparator() + "--- " + System.lineSeparator()
+            logger.debug("Config initialized" + System.lineSeparator() + "--- " + System.lineSeparator()
                     + this.toString() + System.lineSeparator() + "---");
         }
     }

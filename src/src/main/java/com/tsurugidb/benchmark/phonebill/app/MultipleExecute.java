@@ -68,7 +68,8 @@ public class MultipleExecute extends ExecutableCommand {
             boolean prevConfigHasOnlineApp = false;
             for (ConfigInfo info : configInfos) {
                 Config config = info.config;
-                LOG.info("Using config {} " + System.lineSeparator() + "--- " + System.lineSeparator() + config
+                LOG.info("Using config {} ",info.configPath.toAbsolutePath().toString());
+                LOG.debug("Config is " + System.lineSeparator() + "--- " + System.lineSeparator() + config
                         + System.lineSeparator() + "---", info.configPath.toAbsolutePath().toString());
                 if (config.dbmsType.isTsurugi()) {
                     dbiInit();
