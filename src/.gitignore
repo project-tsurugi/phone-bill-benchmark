@@ -6,7 +6,7 @@ log.dir_IS_UNDEFINED/
 .classpath
 .project
 .settings/
-bin/
+/bin/
 build/
 logs/
 tmp/
