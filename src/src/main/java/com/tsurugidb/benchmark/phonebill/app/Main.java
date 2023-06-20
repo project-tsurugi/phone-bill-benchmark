@@ -1,7 +1,5 @@
 package com.tsurugidb.benchmark.phonebill.app;
 
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -78,12 +76,11 @@ public class Main {
             exec(args, command);
         } catch (Exception e) {
             LOG.error("Caught an unexpected Exception, exiting.", e);
-            throw e;
+            System.exit(1);
         }
     }
 
-    public static void exec(String[] args, Command command) throws AssertionError, InstantiationException,
-            IllegalAccessException, InvocationTargetException, NoSuchMethodException, IOException, Exception {
+    public static void exec(String[] args, Command command) throws Exception {
         ExecutableCommand executableCommand;
         if (command.clazz == null) {
             throw new AssertionError();
@@ -129,7 +126,7 @@ public class Main {
     }
 
     private static void execWithConfig(String[] args, ExecutableCommand executableCommand)
-            throws IOException, Exception {
+            throws Exception {
         if (args.length == 1) {
             System.err.println("Config filename required");
             usage();

@@ -117,7 +117,7 @@ public class PhoneBill extends ExecutableCommand {
                 service.shutdown();
                 service.awaitTermination(5, TimeUnit.MINUTES);
             }
-            LOG.info("Counter infos: \n---\n{}---", PhoneBillDbManager.createCounterReport());
+            LOG.debug("Counter infos: \n---\n{}---", PhoneBillDbManager.createCounterReport());
         }
     }
 
