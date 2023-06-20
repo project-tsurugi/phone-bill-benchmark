@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
 
-class TateyamaWatcherTest {
+class TsurugidbWatcherTest {
 
     @Test
     void testParseMemoryValue() {
@@ -17,14 +17,14 @@ class TateyamaWatcherTest {
         long expected3 = 9012L * 1024 * 1024;
 
         // テストを実行する
-        assertEquals(expected1, TateyamaWatcher.parseMemoryValue(input1));
-        assertEquals(expected2, TateyamaWatcher.parseMemoryValue(input2));
-        assertEquals(expected3, TateyamaWatcher.parseMemoryValue(input3));
+        assertEquals(expected1, TsurugidbWatcher.parseMemoryValue(input1));
+        assertEquals(expected2, TsurugidbWatcher.parseMemoryValue(input2));
+        assertEquals(expected3, TsurugidbWatcher.parseMemoryValue(input3));
 
         // 不正な入力の場合には-1が返ることを確認する
-        assertEquals(-1, TateyamaWatcher.parseMemoryValue(""));
-        assertEquals(-1, TateyamaWatcher.parseMemoryValue("VmSize:"));
-        assertEquals(-1, TateyamaWatcher.parseMemoryValue("VmSize: abc"));
+        assertEquals(-1, TsurugidbWatcher.parseMemoryValue(""));
+        assertEquals(-1, TsurugidbWatcher.parseMemoryValue("VmSize:"));
+        assertEquals(-1, TsurugidbWatcher.parseMemoryValue("VmSize: abc"));
     }
 
 }

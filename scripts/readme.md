@@ -13,7 +13,7 @@ CBで電話料金計算バッチを実行する際に使用することを想定
 * install.sh
   * 電話料金計算バッチをインストールする
 * create_flame_graph.sh
-  * 電話料金計算バッチを実行し、server(tateyama server)と、client(電話料金計算バッチ)のフレームグラフを取得する
+  * 電話料金計算バッチを実行し、server(tsurugidb)と、client(電話料金計算バッチ)のフレームグラフを取得する
 * env.sh
   * 他のスクリプト実行時に参照されるスクリプト
   * 環境依存の設定を記述する
@@ -63,7 +63,7 @@ CBで電話料金計算バッチを実行する際に使用することを想定
   * デフォルト値は `$HOME/async-profiler-2.8.3-linux-x64/`
 * LOG_DIR
   * ログファイル等の出力先
-    * tateyama-serverのログ
+    * tsurugidbのログ
     * 電話料金計算バッチのログ
     * server側のflame graph
     * client側のflame graph
@@ -72,7 +72,7 @@ CBで電話料金計算バッチを実行する際に使用することを想定
   * tsurugiのデータファイルの保存場所
   * デフォルト値は`$TSURUGI_DIR/var/data/log`
 * TSURUGI_LOG_LEVEL
-  * tateyama-serverのログレベル
+  * tsurugidbのログレベル
   * デフォルト値は30
   * 詳細なログが必要なときは50を指定する
   * TSURUGI_LOG_LEVELが既に設定済みの場合は`env.sh`, `$HOME/.phonebill`より既存の設定値を優先する。
@@ -87,11 +87,11 @@ CBで電話料金計算バッチを実行する際に使用することを想定
 * このスクリプトを実行すると以下の処理が実行されます
 
 1. OLTPサーバの起動
-    * tateyama-serverが動いている場合、強制終了する。
+    * tsurugidbが動いている場合、強制終了する。
     * ログファイル、データベースファイルを削除する
-    * tateyama-serverを起動する
+    * tsurugidbを起動する
 1. 電話料金計算バッチのテストデータの生成
-1. perfコマンドによるtateyama-serverのプロファイル情報の収集を開始
+1. perfコマンドによるtsurugidbのプロファイル情報の収集を開始
 1. 電話料金計算バッチを実行
     * 同時にasync profilerによるプロファイル情報の収集を行う
     * バッチ終了時に、client側のフレームグラフが出力される
@@ -116,14 +116,14 @@ CBで電話料金計算バッチを実行する際に使用することを想定
       * サーバ側のflame graph
     * $BASSENAME-T1-client-fg.html
       * クライアント側のflame graph
-    * $BASSENAME-T1-tateyama-server.log
-      * tateyama serverのログ
+    * $BASSENAME-T1-tsurugidb.log
+      * tsurugidbのログ
     * $BASSENAME-T1-client.log
       * 電話料金計算バッチのログ
   
 ## その他、課題など
 
-* create_flame_graph.shはperfコマンドに指定するプロセスIDをpsコマンドの出力から取得している。同一ユーザが別のtateyama-serverを起動している場合に正しくPIDを取得できないので、同一ユーザが他のtateyama-serverを起動していない状態で使用すること
+* create_flame_graph.shはperfコマンドに指定するプロセスIDをpsコマンドの出力から取得している。同一ユーザが別のtsurugidbを起動している場合に正しくPIDを取得できないので、同一ユーザが他のtsurugidbを起動していない状態で使用すること
 * テストデータのデータ量
   * 現在のデータ量だとdbs44で1スレッドの実行で25～50秒程度、スレッド数を増やした場合やtsurugiの性能向上により測定時間が短すぎる場合はデータ量を増やした方が良い。
 * スレッド数
@@ -135,11 +135,11 @@ CBで電話料金計算バッチを実行する際に使用することを想定
 * TXのリトライ回数出力されない
   * 別のテストプログラムでは出力しているが、add hocな対応をしていたので用整理、整理後出力するようにする。
 * CBで使用する場合に、処理時間やTXのリトライ回数などの情報をどのように出力、蓄積するのが良いのか
-* スレッド数を増やした場合に、tateyama-serverの設定を変更する必要があるかもしれない
+* スレッド数を増やした場合に、tsurugidbの設定を変更する必要があるかもしれない
   * `etc/phone-bill.ini` の thread_pool_size
 * perfコマンドが出力するプロファイル情報のファイルサイズが非常に大きい
   * 現状で20GByte程度、処理時間が延びたりスレッド数を増やしたりした場合に問題が起きそう。
     * もっとも簡単な対応方法は、サンプリング間隔を延ばすこと => 測定精度とのトレードオフ
     * 他に方法がないか要調査
-* `create_flame_graph.sh` 実行時に他のtateyama-serverが動いているせいで、tateyama-serverの起動に失敗することがある。この場合、原因となるtateyama-server停止後に`create_flame_graph.sh` を実行すれば良い。
+* `create_flame_graph.sh` 実行時に他のtsurugidbが動いているせいで、tsurugidbの起動に失敗することがある。この場合、原因となるtsurugidb停止後に`create_flame_graph.sh` を実行すれば良い。
 * `create_flame_graph.sh`の出力ファイルは実行ごとに上書きされます。

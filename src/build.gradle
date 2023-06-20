@@ -38,7 +38,9 @@ java {
     mainClassName = 'com.tsurugidb.benchmark.phonebill.app.Main'
 }
 distTar {
-    archiveFileName = "phone-bill.tar"
+    archiveFileName = "phone-bill.tar.gz"
+    archiveExtension = 'tar.gz'
+    compression = Compression.GZIP
 }
 distZip {
     archiveFileName = "phone-bill.zip"
@@ -83,7 +85,7 @@ test {
 
 
 dependencies {
-  implementation 'com.tsurugidb.iceaxe:iceaxe-core:0.0.1-SNAPSHOT' 
+  implementation 'com.tsurugidb.iceaxe:iceaxe-core:0.0.1-SNAPSHOT'
 
   // https://mvnrepository.com/artifact/org.postgresql/postgresql
   implementation group: 'org.postgresql', name: 'postgresql', version: '42.2.16'

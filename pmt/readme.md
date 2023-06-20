@@ -68,12 +68,12 @@ git checkout release-for-pmt
 cd src
 ./gradlew clean distTar
 ```
-ビルドに成功すると、インストール用のアーカイブ`build/distributions/phone-bill.tar`が生成されます。
+ビルドに成功すると、インストール用のアーカイブ`build/distributions/phone-bill.tar.gz`が生成されます。
 
-実行環境の任意のディレクトリで、生成された`phone-bill.tar` を展開してインストールしてください。
+実行環境の任意のディレクトリで、生成された`phone-bill.tar.gz` を展開してインストールしてください。
 
 ```
-tar xf phone-bill.tar
+tar xf phone-bill.tar.gz
 ```
 
 スクリプト`phone-bill/bin/run`で電話料金計算バッチを起動できます。下の例では、引数を与えて
@@ -176,7 +176,7 @@ dbms.type=ICEAXE
 上記設定ファイル(ファイル名: config.exampleを使用してcsvファイルを生成してみる。
 
 ```
-phone-bill/bin/run CreateTestDataCsv config.example 
+phone-bill/bin/run CreateTestDataCsv config.example
 ```
 
 arm02で実行すると約6分でcsvファイルが作成されます。
