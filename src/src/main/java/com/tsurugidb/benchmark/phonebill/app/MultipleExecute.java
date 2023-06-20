@@ -65,6 +65,7 @@ public class MultipleExecute extends ExecutableCommand {
         TateyamaWatcher task = null;
         Future<?> future = null;
         try {
+        	Record.resetBaseElapsedMillis();
             boolean prevConfigHasOnlineApp = false;
             for (ConfigInfo info : configInfos) {
                 Config config = info.config;
@@ -402,6 +403,8 @@ public class MultipleExecute extends ExecutableCommand {
     }
 
     private static class Record {
+    	private static long baseElapsedMillis = -1;
+
         private TransactionOption option;
         private TransactionScope scope;
         private IsolationLevel isolationLevel;
@@ -409,6 +412,7 @@ public class MultipleExecute extends ExecutableCommand {
         private Instant start;
         private DbmsType dbmsType;
         private long elapsedMillis;
+        private double elapsedRate;
         private int tryCount = 0;
         private int abortCount = 0;
         private Integer numberOfDiffrence = null;
@@ -416,6 +420,10 @@ public class MultipleExecute extends ExecutableCommand {
         private long rss = -1;
         private boolean hasOnlineApp;
 
+
+        public static void resetBaseElapsedMillis() {
+        	baseElapsedMillis = -1;
+        }
 
         public Record(Config config) {
             this.option = config.transactionOption;
@@ -433,6 +441,12 @@ public class MultipleExecute extends ExecutableCommand {
 
         public void finish(int tryCount, int abortCount) {
             elapsedMillis = Duration.between(start, Instant.now()).toMillis();
+            if (baseElapsedMillis == -1) {
+            	elapsedRate = 1d;
+            	baseElapsedMillis = elapsedMillis;
+            } else {
+            	elapsedRate = (double)elapsedMillis / baseElapsedMillis;
+            }
             TxStatistics.setDedicatedTimeMills(elapsedMillis);
             LOG.info("Finished phoneBill.exec(), elapsed secs = {}.", elapsedMillis / 1000.0);
             this.tryCount = tryCount;
@@ -479,6 +493,8 @@ public class MultipleExecute extends ExecutableCommand {
             builder.append(",");
             builder.append(String.format("%.3f", elapsedMillis / 1000.0));
             builder.append(",");
+            builder.append(String.format("%.2f%%", elapsedRate * 100));
+            builder.append(",");
             builder.append(tryCount);
             builder.append(",");
             builder.append(abortCount);
@@ -492,7 +508,7 @@ public class MultipleExecute extends ExecutableCommand {
         }
 
         public static String header() {
-            return "dbmsType, option, scope, threadCount, online app, elapsedSeconds, tryCount, abortCount, diffrence, vsz(GB), rss(GB)";
+            return "dbmsType, option, scope, threadCount, online app, elapsedSeconds, elapsedRate, tryCount, abortCount, diffrence, vsz(GB), rss(GB)";
         }
     }
 
