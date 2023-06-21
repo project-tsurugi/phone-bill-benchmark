@@ -36,299 +36,301 @@ public class CalculationTask implements Callable<Exception> {
     private AtomicBoolean abortRequested;
     private AtomicInteger tryCounter;
     private AtomicInteger abortCounter;
-	private int nCalculated = 0;
-	private TxOption txOption = null;
+    private int nCalculated = 0;
+    private TxOption txOption = null;
 
     Calculator calculator;
 
 
-	/**
-	 * 計算対象が格納されているQueue
-	 */
-	private CalculationTargetQueue queue;
+    /**
+     * 計算対象が格納されているQueue
+     */
+    private CalculationTargetQueue queue;
 
-	// DBManagerとDAO
-	private PhoneBillDbManager manager;
-	private BillingDao billingDao;
-	private HistoryDao historyDao;
+    // DBManagerとDAO
+    private PhoneBillDbManager manager;
+    private BillingDao billingDao;
+    private HistoryDao historyDao;
 
-	/**
-	 * コンストラクタ
-	 *
-	 * @param queue
-	 * @param conn
-	 */
-	public CalculationTask(CalculationTargetQueue queue, PhoneBillDbManager manager,  Config config, String batchExecId,
-			AtomicBoolean abortRequested, AtomicInteger tryCounter, AtomicInteger abortCounter) {
-		this.queue = queue;
-		this.config = config;
-		this.batchExecId = batchExecId;
-		this.abortRequested = abortRequested;
-		this.tryCounter = tryCounter;
-		this.abortCounter = abortCounter;
-		this.manager = manager;
-		billingDao = manager.getBillingDao();
-		historyDao = manager.getHistoryDao();
-		calculator = new CalculatorImpl();
-		switch (config.transactionOption) {
-		case OCC:
-			txOption = TxOption.ofOCC(0, TxLabel.BATCH_MAIN);
-			break;
-		case LTX:
-			txOption = TxOption.ofLTX(0, TxLabel.BATCH_MAIN, Table.HISTORY, Table.BILLING);
-			break;
-		}
-	}
+    /**
+     * コンストラクタ
+     *
+     * @param queue
+     * @param conn
+     */
+    public CalculationTask(CalculationTargetQueue queue, PhoneBillDbManager manager,  Config config, String batchExecId,
+            AtomicBoolean abortRequested, AtomicInteger tryCounter, AtomicInteger abortCounter) {
+        this.queue = queue;
+        this.config = config;
+        this.batchExecId = batchExecId;
+        this.abortRequested = abortRequested;
+        this.tryCounter = tryCounter;
+        this.abortCounter = abortCounter;
+        this.manager = manager;
+        billingDao = manager.getBillingDao();
+        historyDao = manager.getHistoryDao();
+        calculator = new CalculatorImpl();
+        switch (config.transactionOption) {
+        case OCC:
+            txOption = TxOption.ofOCC(0, TxLabel.BATCH_MAIN);
+            break;
+        case LTX:
+            txOption = TxOption.ofLTX(0, TxLabel.BATCH_MAIN, Table.HISTORY, Table.BILLING);
+            break;
+        }
+    }
 
-	@Override
-	public Exception call() throws Exception {
-		// TODO スレッド終了時にトランザクションが終了してしまうが、すべてのスレッドの処理終了を待って
-		// commit or rollbackするようにしたい。
-		LOG.info("Calculation task started.");
-		Timer timer = new Timer(txOption);
+    @Override
+    public Exception call() throws Exception {
+        // TODO スレッド終了時にトランザクションが終了してしまうが、すべてのスレッドの処理終了を待って
+        // commit or rollbackするようにしたい。
+        LOG.info("Calculation task started.");
+        Timer timer = new Timer(txOption);
 
-		if (config.transactionScope == TransactionScope.CONTRACT) {
-			while (continueLoop()) {
-				CalculationTarget target = queue.take();
-				if (target == null) {
-					continue;
-				}
-				String phoneNumber = target.getContract().getPhoneNumber();
-				LOG.debug(queue.getStatus());
-				TransactionId tid = new TransactionId();
-				AtomicInteger records = new AtomicInteger(0);
-				try {
-					manager.execute(txOption, () -> {
-						tryCounter.incrementAndGet();
-						tid.set(manager.getTransactionId());
-						timer.setStartTx(tid, phoneNumber);
-						records.addAndGet(calculator.doCalc(target));
-						timer.setStartCommit(phoneNumber);
-					});
-					queue.success(target);
-					timer.setEndCommit(phoneNumber, records.get());
-					nCalculated++;
-				} catch (RuntimeException e) {
-					abortCounter.incrementAndGet();
-					queue.revert(target);
-					PhoneBillDbManager.addRetringExceptions(e);
-					timer.setAbort(phoneNumber, e);
-					if (!(e instanceof RetryOverRuntimeException)) {
-						LOG.debug("Calculation task aborted.", e);
-						return e;
-					}
-				}
-			}
-		} else {
-			while (continueLoop()) {
-				List<CalculationTarget> list = new ArrayList<>();
-				CalculationTarget firstTarget = queue.take();
-				if (firstTarget == null) {
-					continue;
-				}
-				LOG.debug(queue.getStatus());
-				list.add(firstTarget);
-				TransactionId tid = new TransactionId();
-				try {
-					AtomicInteger records = new AtomicInteger(0);
-					manager.execute(txOption, () -> {
-						tid.set(manager.getTransactionId());
-						timer.setStartTx(tid, "-");
-						tryCounter.incrementAndGet();
-						calculator.doCalc(firstTarget);
-						while (abortRequested.get() == false) {
-							CalculationTarget target;
-							target = queue.poll();
-							if (target == null) {
-								break;
-							}
-							LOG.debug(queue.getStatus());
-							list.add(target);
-							tryCounter.incrementAndGet();
-							records.addAndGet(calculator.doCalc(target));
-						}
-						timer.setStartCommit("-");
-					});
-					nCalculated += list.size();
-					timer.setEndCommit("-", records.get());
-					queue.success(list);
-				} catch (RuntimeException e) {
-					abortCounter.incrementAndGet();
-					PhoneBillDbManager.addRetringExceptions(e);
-					// 処理対象をキューに戻す
-					queue.revert(list);
-					timer.setAbort("-", e);
-					if (!(e instanceof RetryOverRuntimeException)) {
-						LOG.error("Calculation task aborting by exception.", e);
-						return e;
-					}
-				}
-			}
-		}
-		return null;
-	}
+        if (config.transactionScope == TransactionScope.CONTRACT) {
+            while (continueLoop()) {
+                CalculationTarget target = queue.take();
+                if (target == null) {
+                    continue;
+                }
+                String phoneNumber = target.getContract().getPhoneNumber();
+                LOG.debug(queue.getStatus());
+                TransactionId tid = new TransactionId();
+                AtomicInteger records = new AtomicInteger(0);
+                try {
+                    manager.execute(txOption, () -> {
+                        tryCounter.incrementAndGet();
+                        tid.set(manager.getTransactionId());
+                        timer.setStartTx(tid, phoneNumber);
+                        records.addAndGet(calculator.doCalc(target));
+                        timer.setStartCommit(phoneNumber);
+                    });
+                    queue.success(target);
+                    timer.setEndCommit(phoneNumber, records.get());
+                    nCalculated++;
+                } catch (RuntimeException e) {
+                    abortCounter.incrementAndGet();
+                    queue.revert(target);
+                    PhoneBillDbManager.addRetringExceptions(e);
+                    timer.setAbort(phoneNumber, e);
+                    if (!(e instanceof RetryOverRuntimeException)) {
+                        LOG.debug("Calculation task aborted.", e);
+                        return e;
+                    }
+                }
+            }
+        } else {
+            while (continueLoop()) {
+                List<CalculationTarget> list = new ArrayList<>();
+                CalculationTarget firstTarget = queue.take();
+                if (firstTarget == null) {
+                    continue;
+                }
+                LOG.debug(queue.getStatus());
+                list.add(firstTarget);
+                TransactionId tid = new TransactionId();
+                try {
+                    AtomicInteger records = new AtomicInteger(0);
+                    manager.execute(txOption, () -> {
+                        tid.set(manager.getTransactionId());
+                        timer.setStartTx(tid, "-");
+                        tryCounter.incrementAndGet();
+                        calculator.doCalc(firstTarget);
+                        while (abortRequested.get() == false) {
+                            CalculationTarget target;
+                            target = queue.poll();
+                            if (target == null) {
+                                break;
+                            }
+                            LOG.debug(queue.getStatus());
+                            list.add(target);
+                            tryCounter.incrementAndGet();
+                            records.addAndGet(calculator.doCalc(target));
+                        }
+                        timer.setStartCommit("-");
+                    });
+                    nCalculated += list.size();
+                    timer.setEndCommit("-", records.get());
+                    queue.success(list);
+                } catch (RuntimeException e) {
+                    abortCounter.incrementAndGet();
+                    PhoneBillDbManager.addRetringExceptions(e);
+                    // 処理対象をキューに戻す
+                    queue.revert(list);
+                    timer.setAbort("-", e);
+                    if (!(e instanceof RetryOverRuntimeException)) {
+                        LOG.error("Calculation task aborting by exception.", e);
+                        return e;
+                    }
+                }
+            }
+        }
+        return null;
+    }
 
-	private boolean continueLoop() {
-		if (abortRequested.get() == true) {
-			LOG.info("Calculation task finished by abort rquest, number of calculated contracts = {}.", nCalculated);
-			return false;
-		}
-		if (queue.finished()) {
-			LOG.info("Calculation task finished normally, number of calculated contracts = {}.", nCalculated);
-			return false;
-		}
-		return true;
-	}
+    private boolean continueLoop() {
+        if (abortRequested.get() == true) {
+            LOG.info("Calculation task finished by abort rquest, number of calculated contracts = {}.", nCalculated);
+            return false;
+        }
+        if (queue.finished()) {
+            LOG.info("Calculation task finished normally, number of calculated contracts = {}.", nCalculated);
+            return false;
+        }
+        return true;
+    }
 
-	static String getPhoneNumbers(List<CalculationTarget> list) {
-		return String.join(",", list.stream().map(t -> t.getContract().getPhoneNumber()).collect(Collectors.toList()));
-	}
-
-
-	/**
-	 * Billingテーブルを更新する
-	 *
-	 * @param contract
-	 * @param billingCalculator
-	 * @param targetMonth
-	 */
-	private void updateBilling(Contract contract, BillingCalculator billingCalculator, Date targetMonth) {
-		LOG.debug(
-				"Inserting to billing table: phone_number = {}, target_month = {}"
-						+ ", basic_charge = {}, metered_charge = {}, billing_amount = {}, batch_exec_id = {} ",
-				contract.getPhoneNumber(), targetMonth, billingCalculator.getBasicCharge(),
-				billingCalculator.getMeteredCharge(), billingCalculator.getBillingAmount(), batchExecId);
-		Billing billing = new Billing();
-		billing.setPhoneNumber(contract.getPhoneNumber());
-		billing.setTargetMonth(targetMonth);
-		billing.setBasicCharge(billingCalculator.getBasicCharge());
-		billing.setMeteredCharge(billingCalculator.getMeteredCharge());
-		billing.setBillingAmount(billingCalculator.getBillingAmount());
-		billing.setBatchExecId(batchExecId);
-		billingDao.insert(billing);
-	}
+    static String getPhoneNumbers(List<CalculationTarget> list) {
+        return String.join(",", list.stream().map(t -> t.getContract().getPhoneNumber()).collect(Collectors.toList()));
+    }
 
 
-	// call()のUTのために、doCalcメソッドを置き換え可能にする。
+    /**
+     * Billingテーブルを更新する
+     *
+     * @param contract
+     * @param billingCalculator
+     * @param targetMonth
+     */
+    private void updateBilling(Contract contract, BillingCalculator billingCalculator, Date targetMonth) {
+        LOG.debug(
+                "Inserting to billing table: phone_number = {}, target_month = {}"
+                        + ", basic_charge = {}, metered_charge = {}, billing_amount = {}, batch_exec_id = {} ",
+                contract.getPhoneNumber(), targetMonth, billingCalculator.getBasicCharge(),
+                billingCalculator.getMeteredCharge(), billingCalculator.getBillingAmount(), batchExecId);
+        Billing billing = new Billing();
+        billing.setPhoneNumber(contract.getPhoneNumber());
+        billing.setTargetMonth(targetMonth);
+        billing.setBasicCharge(billingCalculator.getBasicCharge());
+        billing.setMeteredCharge(billingCalculator.getMeteredCharge());
+        billing.setBillingAmount(billingCalculator.getBillingAmount());
+        billing.setBatchExecId(batchExecId);
+        billingDao.insert(billing);
+    }
 
-	protected void setCalculator(Calculator calculator) {
-		this.calculator = calculator;
-	}
+
+    // call()のUTのために、doCalcメソッドを置き換え可能にする。
+
+    protected void setCalculator(Calculator calculator) {
+        this.calculator = calculator;
+    }
 
 
-	protected static interface Calculator {
-		/**
-		 * 料金計算のメインロジック
-		 *
-		 * @param target
-		 * @return 更新したレコード数
-		 */
-		int doCalc(CalculationTarget target);
-	}
+    protected static interface Calculator {
+        /**
+         * 料金計算のメインロジック
+         *
+         * @param target
+         * @return 更新したレコード数
+         */
+        int doCalc(CalculationTarget target);
+    }
 
-	protected class CalculatorImpl implements Calculator {
-		@Override
-		public int doCalc(CalculationTarget target) {
-			LOG.debug("Start calculation for  contract: {}.", target.getContract());
+    protected class CalculatorImpl implements Calculator {
+        @Override
+        public int doCalc(CalculationTarget target) {
+            LOG.debug("Start calculation for  contract: {}.", target.getContract());
 
-			Contract contract = target.getContract();
-			List<History> histories = historyDao.getHistories(target);
+            Contract contract = target.getContract();
 
-			CallChargeCalculator callChargeCalculator = target.getCallChargeCalculator();
-			BillingCalculator billingCalculator = target.getBillingCalculator();
-			billingCalculator.init();
-			for (History h : histories) {
-				if (h.getTimeSecs() < 0) {
-					throw new RuntimeException("Negative time: " + h.getTimeSecs());
-				}
-				h.setCharge(callChargeCalculator.calc(h.getTimeSecs()));
-				billingCalculator.addCallCharge(h.getCharge());
-			}
-			historyDao.batchUpdate(histories);
-			updateBilling(contract, billingCalculator, target.getStart());
-			return histories.size() + 1; // +1はupdateBillingの分
-		}
-	}
+            List<History> histories = historyDao.getHistories(target);
+            LOG.info("calculation: phone_number = {}, count = {}", target.getContract().getPhoneNumber(), histories.size());
 
-	private static class TransactionId {
-		private String tid ="none";
+            CallChargeCalculator callChargeCalculator = target.getCallChargeCalculator();
+            BillingCalculator billingCalculator = target.getBillingCalculator();
+            billingCalculator.init();
+            for (History h : histories) {
+                if (h.getTimeSecs() < 0) {
+                    throw new RuntimeException("Negative time: " + h.getTimeSecs());
+                }
+                h.setCharge(callChargeCalculator.calc(h.getTimeSecs()));
+                billingCalculator.addCallCharge(h.getCharge());
+            }
+            historyDao.batchUpdate(histories);
+            updateBilling(contract, billingCalculator, target.getStart());
+            return histories.size() + 1; // +1はupdateBillingの分
+        }
+    }
 
-		void set(String tid) {
-			this.tid = tid;
-		}
+    private static class TransactionId {
+        private String tid ="none";
 
-		@Override
-		public String toString() {
-			return tid;
-		}
-	}
+        void set(String tid) {
+            this.tid = tid;
+        }
 
-	/**
-	 * txOptionを取得する(UT用)
-	 *
-	 * @return txOption
-	 */
-	TxOption getTxOption() {
-		return txOption;
-	}
+        @Override
+        public String toString() {
+            return tid;
+        }
+    }
 
-	private static class Timer {
-		private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm:ss.SSS");
+    /**
+     * txOptionを取得する(UT用)
+     *
+     * @return txOption
+     */
+    TxOption getTxOption() {
+        return txOption;
+    }
 
-		private TransactionId tid;
-		private TxOption txOption;
+    private static class Timer {
+        private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm:ss.SSS");
 
-		private Instant startTx = null;
-		private Instant startCommit = null;
-		private Instant endTx = null;
+        private TransactionId tid;
+        private TxOption txOption;
 
-		public Timer(TxOption txOption) {
-			this.txOption = txOption;
-		}
+        private Instant startTx = null;
+        private Instant startCommit = null;
+        private Instant endTx = null;
 
-		public void setStartTx(TransactionId tid, String phoneNumber) {
-			this.tid = tid;
-			LOG.debug("Transaction starting, tid = {}, txOption = {}, key = {}", tid, txOption, phoneNumber);
-			startTx = Instant.now();
-			startCommit = null;
-			endTx = null;
-		}
+        public Timer(TxOption txOption) {
+            this.txOption = txOption;
+        }
 
-		public void setStartCommit(String phoneNumber) {
-			LOG.debug("Transaction committing, tid = {}, txOption = {}, key = {}", tid, txOption, phoneNumber);
-			startCommit = Instant.now();
-		}
+        public void setStartTx(TransactionId tid, String phoneNumber) {
+            this.tid = tid;
+            LOG.debug("Transaction starting, tid = {}, txOption = {}, key = {}", tid, txOption, phoneNumber);
+            startTx = Instant.now();
+            startCommit = null;
+            endTx = null;
+        }
 
-		public void setEndCommit(String phoneNumber, int records) {
-			LOG.debug("Transaction completed, tid = {}, txOption = {}, key = {}, update/insert records = {}", tid,
-					txOption, phoneNumber, records);
-			endTx = Instant.now();
-			Duration d1 = Duration.between(startTx, startCommit);
-			Duration d2 = Duration.between(startCommit, endTx);
-			LOG.debug(
-					"TIME INFO: tx start timestamp = {}, tid = {}, update/insert records = {}, exec time = {}, commit time = {}",
-					TIME_FMT.format(LocalDateTime.ofInstant(startTx, ZoneId.systemDefault())), tid, records,
-					d1.toNanos() / 1000, // Durationをマイクロ秒で表示
-					d2.toNanos() / 1000); // Durationをマイクロ秒で表示
-		}
+        public void setStartCommit(String phoneNumber) {
+            LOG.debug("Transaction committing, tid = {}, txOption = {}, key = {}", tid, txOption, phoneNumber);
+            startCommit = Instant.now();
+        }
 
-		public void setAbort(String phoneNumber, RuntimeException e) {
-			LOG.debug("Transaction aborted, tid = {}, txOption = {}, key = {}, exception = {}", tid, txOption, phoneNumber, e.getMessage());
-			endTx = Instant.now();
-			if (startCommit == null) {
-				Duration d1 = Duration.between(startTx, endTx);
-				LOG.debug("TIME INFO: tid = {}, exec to abort time = {}, commit time = {}", tid,
-						d1.toSeconds() * 1000 * 1000 + d1.toNanos() / 1000, // Durationをマイクロ秒で表示
-						"-");
+        public void setEndCommit(String phoneNumber, int records) {
+            LOG.debug("Transaction completed, tid = {}, txOption = {}, key = {}, update/insert records = {}", tid,
+                    txOption, phoneNumber, records);
+            endTx = Instant.now();
+            Duration d1 = Duration.between(startTx, startCommit);
+            Duration d2 = Duration.between(startCommit, endTx);
+            LOG.debug(
+                    "TIME INFO: tx start timestamp = {}, tid = {}, update/insert records = {}, exec time = {}, commit time = {}",
+                    TIME_FMT.format(LocalDateTime.ofInstant(startTx, ZoneId.systemDefault())), tid, records,
+                    d1.toNanos() / 1000, // Durationをマイクロ秒で表示
+                    d2.toNanos() / 1000); // Durationをマイクロ秒で表示
+        }
 
-			} else {
-				Duration d1 = Duration.between(startTx, startCommit);
-				Duration d2 = Duration.between(startCommit, endTx);
-				LOG.debug("TIME INFO: tid = {}, exec time = {}, commit to abort time = {}", tid,
-						d1.toNanos() / 1000, // Durationをマイクロ秒で表示
-						d2.toNanos() / 1000); // Durationをマイクロ秒で表示
+        public void setAbort(String phoneNumber, RuntimeException e) {
+            LOG.debug("Transaction aborted, tid = {}, txOption = {}, key = {}, exception = {}", tid, txOption, phoneNumber, e.getMessage());
+            endTx = Instant.now();
+            if (startCommit == null) {
+                Duration d1 = Duration.between(startTx, endTx);
+                LOG.debug("TIME INFO: tid = {}, exec to abort time = {}, commit time = {}", tid,
+                        d1.toSeconds() * 1000 * 1000 + d1.toNanos() / 1000, // Durationをマイクロ秒で表示
+                        "-");
 
-			}
-		}
-	}
+            } else {
+                Duration d1 = Duration.between(startTx, startCommit);
+                Duration d2 = Duration.between(startCommit, endTx);
+                LOG.debug("TIME INFO: tid = {}, exec time = {}, commit to abort time = {}", tid,
+                        d1.toNanos() / 1000, // Durationをマイクロ秒で表示
+                        d2.toNanos() / 1000); // Durationをマイクロ秒で表示
+
+            }
+        }
+    }
 }

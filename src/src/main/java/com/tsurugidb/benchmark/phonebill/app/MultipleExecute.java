@@ -65,7 +65,7 @@ public class MultipleExecute extends ExecutableCommand {
         TsurugidbWatcher task = null;
         Future<?> future = null;
         try {
-        	Record.resetBaseElapsedMillis();
+            Record.resetBaseElapsedMillis();
             boolean prevConfigHasOnlineApp = false;
             for (ConfigInfo info : configInfos) {
                 Config config = info.config;
@@ -84,7 +84,7 @@ public class MultipleExecute extends ExecutableCommand {
                 record.start();
                 PhoneBill phoneBill = new PhoneBill();
                 phoneBill.execute(config);
-                record.finish(phoneBill.getTryCount(), phoneBill.getAbortCount());
+                record.finish(config, phoneBill.getTryCount(), phoneBill.getAbortCount());
                 if (!config.hasOnlineApp()) {
                     record.setNumberOfDiffrence(checkResult(config));
                 }
@@ -236,11 +236,7 @@ public class MultipleExecute extends ExecutableCommand {
     }
 
     static String createTitile(Config config) {
-        int onlineThreadCount = 0;
-        onlineThreadCount += getThreadCount(config.historyInsertTransactionPerMin, config.historyInsertThreadCount);
-        onlineThreadCount += getThreadCount(config.historyUpdateRecordsPerMin, config.historyUpdateThreadCount);
-        onlineThreadCount += getThreadCount(config.masterDeleteInsertRecordsPerMin, config.masterDeleteInsertThreadCount);
-        onlineThreadCount += getThreadCount(config.masterUpdateRecordsPerMin, config.masterUpdateThreadCount);
+        int onlineThreadCount = getOnlineAppThreadCount(config);
         String title = String.format("%s-%s-%s-ONLINE-T%02d-BATCH-T%02d",
                 config.dbmsType,
                 config.transactionOption,
@@ -248,6 +244,15 @@ public class MultipleExecute extends ExecutableCommand {
                 onlineThreadCount,
                 config.onlineOnly ? 0 : config.threadCount);
         return title;
+    }
+
+    static int getOnlineAppThreadCount(Config config) {
+        int onlineThreadCount = 0;
+        onlineThreadCount += getThreadCount(config.historyInsertTransactionPerMin, config.historyInsertThreadCount);
+        onlineThreadCount += getThreadCount(config.historyUpdateRecordsPerMin, config.historyUpdateThreadCount);
+        onlineThreadCount += getThreadCount(config.masterDeleteInsertRecordsPerMin, config.masterDeleteInsertThreadCount);
+        onlineThreadCount += getThreadCount(config.masterUpdateRecordsPerMin, config.masterUpdateThreadCount);
+        return onlineThreadCount;
     }
 
     static String createBaselineTitile(Config config) {
@@ -404,7 +409,7 @@ public class MultipleExecute extends ExecutableCommand {
     }
 
     private static class Record {
-    	private static long baseElapsedMillis = -1;
+        private static long baseElapsedMillis = -1;
 
         private TransactionOption option;
         private TransactionScope scope;
@@ -419,11 +424,11 @@ public class MultipleExecute extends ExecutableCommand {
         private Integer numberOfDiffrence = null;
         private long vsz = -1;
         private long rss = -1;
-        private boolean hasOnlineApp;
+        private int onlineAppThreadCount;
 
 
         public static void resetBaseElapsedMillis() {
-        	baseElapsedMillis = -1;
+            baseElapsedMillis = -1;
         }
 
         public Record(Config config) {
@@ -432,7 +437,7 @@ public class MultipleExecute extends ExecutableCommand {
             this.isolationLevel = config.isolationLevel;
             this.threadCount = config.threadCount;
             this.dbmsType = config.dbmsType;
-            this.hasOnlineApp = config.hasOnlineApp();
+            this.onlineAppThreadCount = getOnlineAppThreadCount(config);
         }
 
         public void start() {
@@ -440,13 +445,17 @@ public class MultipleExecute extends ExecutableCommand {
             start = Instant.now();
         }
 
-        public void finish(int tryCount, int abortCount) {
+        public void finish(Config config, int tryCount, int abortCount) {
             elapsedMillis = Duration.between(start, Instant.now()).toMillis();
-            if (baseElapsedMillis == -1) {
-            	elapsedRate = 1d;
-            	baseElapsedMillis = elapsedMillis;
+            if (config.onlineOnly) {
+                elapsedRate = -1d;
             } else {
-            	elapsedRate = (double)elapsedMillis / baseElapsedMillis;
+                if (baseElapsedMillis == -1) {
+                    elapsedRate = 1d;
+                    baseElapsedMillis = elapsedMillis;
+                } else {
+                    elapsedRate = (double) elapsedMillis / baseElapsedMillis;
+                }
             }
             TxStatistics.setDedicatedTimeMills(elapsedMillis);
             LOG.info("Finished phoneBill.exec(), elapsed secs = {}.", elapsedMillis / 1000.0);
@@ -490,11 +499,15 @@ public class MultipleExecute extends ExecutableCommand {
             builder.append(",");
             builder.append(threadCount);
             builder.append(",");
-            builder.append(hasOnlineApp ? "Yes" : "No");
+            builder.append(onlineAppThreadCount);
             builder.append(",");
             builder.append(String.format("%.3f", elapsedMillis / 1000.0));
             builder.append(",");
-            builder.append(String.format("%.2f%%", elapsedRate * 100));
+            if (elapsedRate == -1) {
+                builder.append("---");
+            } else {
+                builder.append(String.format("%.2f%%", elapsedRate * 100));
+            }
             builder.append(",");
             builder.append(tryCount);
             builder.append(",");
@@ -509,7 +522,7 @@ public class MultipleExecute extends ExecutableCommand {
         }
 
         public static String header() {
-            return "dbmsType, option, scope, threadCount, online app, elapsedSeconds, elapsedRate, tryCount, abortCount, diffrence, vsz(GB), rss(GB)";
+            return "dbmsType, option, scope, batchThreads, onlineAppThreads, elapsedSeconds, elapsedRate, tryCount, abortCount, diffrence, vsz(GB), rss(GB)";
         }
     }
 
