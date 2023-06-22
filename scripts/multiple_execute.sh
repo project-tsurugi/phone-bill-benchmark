@@ -15,6 +15,7 @@ BIN_DIR=$(cd $(dirname $0); pwd)
 
 
 ext=`date "+%Y%m%d-%H%M%S"`.log
+export DB_INIT_CMD=$BIN_DIR/tinit.sh
 export JAVA_OPTS="$JAVA_OPTS -Dcom.tsurugidb.tsubakuro.jniverify=false \
  -Dlogback.configurationFile=$BIN_DIR/etc/logback.xml \
  -Dlog.summary=$LOG_DIR/summary-$ext \
