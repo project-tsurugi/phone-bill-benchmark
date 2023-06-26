@@ -233,7 +233,7 @@ public class CalculationTask implements Callable<Exception> {
 
             Contract contract = target.getContract();
 
-            List<History> histories = historyDao.getHistories(target);
+            List<History> histories = target.getHistories();
             LOG.info("calculation: phone_number = {}, count = {}", target.getContract().getPhoneNumber(), histories.size());
 
             CallChargeCalculator callChargeCalculator = target.getCallChargeCalculator();

@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.ExecutableCommand;
+import com.tsurugidb.benchmark.phonebill.app.MultipleExecute.Record;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager.SessionHoldingType;
 import com.tsurugidb.benchmark.phonebill.db.TxLabel;
@@ -34,6 +35,7 @@ import com.tsurugidb.benchmark.phonebill.db.TxOption;
 import com.tsurugidb.benchmark.phonebill.db.TxOption.Table;
 import com.tsurugidb.benchmark.phonebill.db.dao.BillingDao;
 import com.tsurugidb.benchmark.phonebill.db.dao.ContractDao;
+import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract.Key;
 import com.tsurugidb.benchmark.phonebill.db.jdbc.Duration;
@@ -61,6 +63,17 @@ public class PhoneBill extends ExecutableCommand {
     private AtomicInteger abortCounter = new AtomicInteger(0);
 
     Config config; // UTからConfigを書き換え可能にするためにパッケージプライベートにしている
+    private Record record;
+
+
+    public PhoneBill(Record record) {
+        this.record = record;
+    }
+
+    public PhoneBill() {
+        this(null);
+    }
+
 
     public static void main(String[] args) throws Exception {
         Config config = Config.getConfig(args);
@@ -208,11 +221,11 @@ public class PhoneBill extends ExecutableCommand {
         ExecutorService service = null;
         Set<Future<Exception>> futures = new HashSet<>(threadCount);
 
-        long startTime = System.currentTimeMillis();
         PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config,
                 SessionHoldingType.INSTANCE_FIELD);
         List<PhoneBillDbManager> managers = new ArrayList<>();
         managers.add(manager);
+        long startTime = System.currentTimeMillis();
         try {
             BillingDao billingDao = manager.getBillingDao();
             ContractDao contractDao = manager.getContractDao();
@@ -236,7 +249,20 @@ public class PhoneBill extends ExecutableCommand {
                         start, end, false);
                 targets.add(target);
             }
+            manager.execute(TxOption.ofLTX(0, TxLabel.BATCH_INITIALIZE, Table.BILLING), () -> {
+                HistoryDao dao = manager.getHistoryDao();
+                for(CalculationTarget t: targets) {
+                    t.setHistories(dao.getHistories(t));
+                }
+            });
+
+
+
+
             queue = new CalculationTargetQueue(targets);
+            if (record != null) {
+                record.start();
+            }
 
             // 契約毎の計算を行うスレッドを生成する
             service = Executors.newFixedThreadPool(threadCount);

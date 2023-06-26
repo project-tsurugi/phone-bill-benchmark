@@ -82,7 +82,7 @@ public class MultipleExecute extends ExecutableCommand {
                 Record record = new Record(config);
                 records.add(record);
                 record.start();
-                PhoneBill phoneBill = new PhoneBill();
+                PhoneBill phoneBill = new PhoneBill(record);
                 phoneBill.execute(config);
                 record.finish(config, phoneBill.getTryCount(), phoneBill.getAbortCount());
                 if (!config.hasOnlineApp()) {
@@ -408,7 +408,7 @@ public class MultipleExecute extends ExecutableCommand {
         return n;
     }
 
-    private static class Record {
+    public static class Record {
         private static long baseElapsedMillis = -1;
 
         private TransactionOption option;
