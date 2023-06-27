@@ -1,4 +1,4 @@
-#!/bin/bash -ue
+#!/bin/bash -e
 
 if [ $# -eq 0 ]; then
   echo usage: $0 config_files
