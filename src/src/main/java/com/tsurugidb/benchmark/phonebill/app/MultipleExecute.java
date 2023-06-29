@@ -51,7 +51,7 @@ public class MultipleExecute extends ExecutableCommand {
     private List<Record> records = new ArrayList<>();
     private Set<History> expectedHistories;
     private Set<Billing> expectedBillings;
-    private String onlineAppReport = "# Online Application Report \n\n";
+    private static String onlineAppReport = "# Online Application Report \n\n";
 
     public static void main(String[] args) throws Exception {
         MultipleExecute threadBench = new MultipleExecute();
@@ -218,7 +218,7 @@ public class MultipleExecute extends ExecutableCommand {
      * @param config
      * @param record
      */
-    private void writeOnlineAppReport(Config config) {
+    public static void writeOnlineAppReport(Config config) {
         // ex: ICEAXE-OCC-
         String title = createTitile(config);
         String baselineTitle = createBaselineTitile(config);
@@ -291,7 +291,7 @@ public class MultipleExecute extends ExecutableCommand {
      * @param baselineTitle
      * @return
      */
-    String createOnlineAppReport(Config config, String title, String baselineTitle) {
+    static String createOnlineAppReport(Config config, String title, String baselineTitle) {
         StringBuilder sb = new StringBuilder();
 
         // タイトル
