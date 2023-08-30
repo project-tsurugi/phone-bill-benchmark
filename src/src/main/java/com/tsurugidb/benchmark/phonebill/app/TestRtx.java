@@ -1,8 +1,17 @@
 package com.tsurugidb.benchmark.phonebill.app;
 
+import java.math.BigInteger;
 import java.sql.Date;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.SortedSet;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -56,6 +65,7 @@ public class TestRtx extends ExecutableCommand {
         try {
             PhoneBillDbManager.initCounter();
             TxStatistics.clear();
+            Statistics.clear();
             // オンラインアプリを実行する
             list.parallelStream().forEach(task -> service.submit(task));
 
@@ -76,6 +86,7 @@ public class TestRtx extends ExecutableCommand {
             TxStatistics.setDedicatedTimeMills(dedicatedTimeMills);
 
             LOG.info("All TestRtxTask tasks have been completed.");
+            LOG.info("Report:\n{}" + Statistics.createReport());
 
         } finally {
             // オンラインアプリを終了する
@@ -97,6 +108,8 @@ public class TestRtx extends ExecutableCommand {
                 return cDdao.getContracts();
             });
             // 対応する履歴が存在する契約を100抽出する。
+            SortedMap<Integer, List<CalculationTarget>> map = new TreeMap<>();
+            // まず履歴をもつ契約について、履歴の数でソートされた契約のリストを作成する。
             for (Contract c : contracts) {
                 CalculationTarget ct = new CalculationTarget(c, null, null, START_TIME, END_TIME, false);
                 List<History> list = manager.execute(RTX, () -> {
@@ -105,13 +118,20 @@ public class TestRtx extends ExecutableCommand {
                 if (list.size() == 0) {
                     continue;
                 }
-                targets.add(ct);
-                if (targets.size() >= 100) {
-                    break;
-                }
+                map.putIfAbsent(list.size(), new ArrayList<>());
+                map.get(list.size()).add(ct);
+            }
+            List<CalculationTarget> sortedList = new ArrayList<>();
+            for (List<CalculationTarget> list : map.values()) {
+                sortedList.addAll(list);
+            }
+            // 履歴数が多い契約と、少ない契約を取り除き中間の100件の契約を抽出する。
+            if (sortedList.size() < 100) {
+                throw new RuntimeException("sortedListの要素数が100件未満です。");
+            } else {
+                targets = sortedList.subList(sortedList.size() / 2 - 50, sortedList.size() / 2 + 50);
             }
         }
-
     }
 
 
@@ -147,10 +167,64 @@ public class TestRtx extends ExecutableCommand {
                     return dao.getHistories(ct);
                 });
                 long time = System.nanoTime() - start;
+                Statistics.add(time);
                 String fmt = "exec remain = %d , phone_number = %s , count = %d , time[nano] = %d , nao/count = %d ";
                 LOG.debug(String.format(fmt, n, ct.getContract().getPhoneNumber(), list.size(), time,
                         time / list.size()));
             }
         }
     }
+
+    static class Statistics {
+        static List<Long> list = new ArrayList<>();
+
+        static synchronized void add(Long val) {
+            list.add(val);
+        }
+
+        static void clear() {
+            list.clear();
+        }
+
+        static String createReport() {
+            if (list.isEmpty()) {
+                return "No data";
+            }
+
+            StringBuilder sb = new StringBuilder();
+            DecimalFormat decimalFormat = new DecimalFormat("#,###");
+
+            // 最大値・最小値
+            long max = Collections.max(list);
+            long min = Collections.min(list);
+            sb.append("最大値 = " + decimalFormat.format(max) + "\n");
+            sb.append("最小値 = " + decimalFormat.format(min) + "\n");
+
+            // 平均
+            BigInteger sum = BigInteger.ZERO;
+            for (long num : list) {
+                sum = sum.add(BigInteger.valueOf(num));
+            }
+            double avg = sum.doubleValue() / list.size();
+            sb.append("平均値 = " + decimalFormat.format(avg) + '\n');
+
+            // 度数分布
+
+            Map<Long, Integer> frequencyMap = new HashMap<>();
+            for(long val: list) {
+                long key = Long.highestOneBit(val);
+                frequencyMap.put(key, frequencyMap.getOrDefault(key, 0) + 1);
+            }
+            SortedSet<Long> sortedKeys = new TreeSet<>(frequencyMap.keySet());
+
+            sb.append("度数分布\n");
+            for (long key : sortedKeys) {
+                int frequency = frequencyMap.get(key);
+                sb.append(decimalFormat.format(key) + "以上" + decimalFormat.format(key * 2) + "未満: "
+                        + decimalFormat.format(frequency) + "\n");
+            }
+            return sb.toString();
+        }
+    }
+
 }
