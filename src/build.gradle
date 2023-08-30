@@ -63,8 +63,10 @@ java {
 
 test {
     useJUnitPlatform() {
-        excludeTags 'oracle'
-        excludeTags 'copy-command'
+        if (! project.hasProperty("test.all")) {
+            excludeTags 'oracle'
+            excludeTags 'copy-command'
+        }
     }
     testLogging {
         showStandardStreams true
