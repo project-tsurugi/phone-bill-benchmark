@@ -503,7 +503,7 @@ public class MultipleExecute extends ExecutableCommand {
             builder.append(",");
             builder.append(String.format("%.3f", elapsedMillis / 1000.0));
             builder.append(",");
-            if (elapsedRate == -1) {
+            if (elapsedRate < 0) {
                 builder.append("---");
             } else {
                 builder.append(String.format("%.2f%%", elapsedRate * 100));

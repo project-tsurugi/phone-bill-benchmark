@@ -648,7 +648,7 @@ class PhoneBillTest extends AbstractJdbcTestCase {
     /**
      * doCalcの呼び出し状況を確認するためのクラス
      */
-    private class TestPhoneBill extends PhoneBill {
+    private static class TestPhoneBill extends PhoneBill {
         boolean doCalcCalled = false;
 
         @Override
