@@ -37,8 +37,6 @@
     </encoder>
   </appender>
 
-  <logger name="com.nautilus_technologies.tsubakuro.channel.stream.StreamWire" level="trace" />
-
   <root level="DETAIL">
     <appender-ref ref="STDOUT" />
     <appender-ref ref="SUMMARY" />
