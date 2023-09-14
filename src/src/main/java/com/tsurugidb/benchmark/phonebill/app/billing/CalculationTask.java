@@ -252,7 +252,7 @@ public class CalculationTask implements Callable<Exception> {
         }
     }
 
-    private static class TransactionId {
+    static class TransactionId {
         private String tid ="none";
 
         void set(String tid) {
@@ -274,7 +274,10 @@ public class CalculationTask implements Callable<Exception> {
         return txOption;
     }
 
-    private static class Timer {
+    /**
+     * TXの処理時間をログに記録するためのタイマ
+     */
+    static class Timer {
         private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm:ss.SSS");
 
         private TransactionId tid;
@@ -304,6 +307,9 @@ public class CalculationTask implements Callable<Exception> {
         public void setEndCommit(String phoneNumber, int records) {
             LOG.debug("Transaction completed, tid = {}, txOption = {}, key = {}, update/insert records = {}", tid,
                     txOption, phoneNumber, records);
+            if (startTx == null || startCommit == null) {
+                return;
+            }
             endTx = Instant.now();
             Duration d1 = Duration.between(startTx, startCommit);
             Duration d2 = Duration.between(startCommit, endTx);
@@ -316,6 +322,9 @@ public class CalculationTask implements Callable<Exception> {
 
         public void setAbort(String phoneNumber, RuntimeException e) {
             LOG.debug("Transaction aborted, tid = {}, txOption = {}, key = {}, exception = {}", tid, txOption, phoneNumber, e.getMessage());
+            if (startTx == null) {
+                return;
+            }
             endTx = Instant.now();
             if (startCommit == null) {
                 Duration d1 = Duration.between(startTx, endTx);
