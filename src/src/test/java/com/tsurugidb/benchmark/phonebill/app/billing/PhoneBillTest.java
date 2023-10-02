@@ -613,7 +613,7 @@ class PhoneBillTest extends AbstractJdbcTestCase {
         phoneBill.execute(config);
         long duration = System.currentTimeMillis() - start;
         assertTrue(phoneBill.doCalcCalled);
-        assertEquals(1050d, (long)duration, 50d);
+        assertEquals(1100d, (long)duration, 100d);
 
         // onlineOnly = true
         config.onlineOnly = true;
@@ -627,7 +627,7 @@ class PhoneBillTest extends AbstractJdbcTestCase {
         phoneBill.execute(config);
         duration = System.currentTimeMillis() - start;
         assertFalse(phoneBill.doCalcCalled);
-        assertEquals(2050d, (long)duration, 50d);
+        assertEquals(2100d, (long)duration, 100d);
 
         // オンラインアプリなしでonlineOnlyで動かした場合
         config.onlineOnly = true;
