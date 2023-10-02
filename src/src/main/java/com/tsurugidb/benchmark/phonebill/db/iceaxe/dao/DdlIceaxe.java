@@ -12,8 +12,7 @@ import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionRuntimeExcep
 
 /**
  * TODO Tsurguiがまだcreate index, alter table...をサポートしていないため。createIndexes, updateStatistics,
- * afterLoadData, prepareLoadDataは未実装。また、createIndexesで作成していたPKについては、create tableで
- * 作成するように変更
+ * afterLoadData, prepareLoadDataは未実装。また、createIndexesではなくcreate tableでPKを作成している．
  *
  */
 public class DdlIceaxe implements Ddl {
@@ -96,14 +95,10 @@ public class DdlIceaxe implements Ddl {
 
     @Override
     public void updateStatistics() {
-        // TODO 自動生成されたメソッド・スタブ
-
     }
 
     @Override
     public void afterLoadData() {
-        // TODO 自動生成されたメソッド・スタブ
-
     }
 
     @Override

@@ -82,8 +82,6 @@ public class CalculationTask implements Callable<Exception> {
 
     @Override
     public Exception call() throws Exception {
-        // TODO スレッド終了時にトランザクションが終了してしまうが、すべてのスレッドの処理終了を待って
-        // commit or rollbackするようにしたい。
         LOG.info("Calculation task started.");
         Timer timer = new Timer(txOption);
 

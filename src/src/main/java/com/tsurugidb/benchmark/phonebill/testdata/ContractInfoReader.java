@@ -292,11 +292,9 @@ public class ContractInfoReader {
      * @return
      */
     static List<Duration> initDurationList(Config config) {
-        // TODO: この処理をすべてのスレッドでやるのはムダなので、一度作成したものを使い回せるようにする。
-
         Random random = new Random(config.randomSeed);
         List<Duration> list = new ArrayList<Duration>();
-        // TODO: もっとバリエーションが欲しい
+
         // 契約終了日がないduration
         for (int i = 0; i < config.noExpirationDateRate; i++) {
             Date start = getDate(config.minDate, config.maxDate, random);

@@ -38,9 +38,9 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
     private final ThreadLocal<TsurugiTransaction> transactionThreadLocal = new ThreadLocal<>();
     private final Config config;
 
-	public PhoneBillDbManagerIceaxe(Config config) {
-		this.config = config;
-		var endpoint = config.url;
+    public PhoneBillDbManagerIceaxe(Config config) {
+        this.config = config;
+        var endpoint = config.url;
         var connector = TsurugiConnector.of(endpoint);
         try {
             var sessionOption = TgSessionOption.of();
@@ -50,99 +50,99 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
-	}
+    }
 
     public TsurugiSession getSession() {
         return this.session;
     }
 
 
-	private Ddl ddl;
+    private Ddl ddl;
 
-	@Override
-	public Ddl getDdl() {
-		if (ddl == null) {
-			ddl = new DdlIceaxe(this);
-		}
-		return ddl;
-	}
+    @Override
+    public Ddl getDdl() {
+        if (ddl == null) {
+            ddl = new DdlIceaxe(this);
+        }
+        return ddl;
+    }
 
-	private ContractDao contractDao;
+    private ContractDao contractDao;
 
-	@Override
-	public ContractDao getContractDao() {
-		if (contractDao == null) {
-			contractDao = new ContractDaoIceaxe(this);
-		}
-		return contractDao;
-	}
+    @Override
+    public ContractDao getContractDao() {
+        if (contractDao == null) {
+            contractDao = new ContractDaoIceaxe(this);
+        }
+        return contractDao;
+    }
 
-	private HistoryDao historyDao;
+    private HistoryDao historyDao;
 
-	@Override
-	public HistoryDao getHistoryDao() {
-		if (historyDao == null) {
-			historyDao = new HistoryDaoIceaxe(this);
-		}
-		return historyDao;
-	}
+    @Override
+    public HistoryDao getHistoryDao() {
+        if (historyDao == null) {
+            historyDao = new HistoryDaoIceaxe(this);
+        }
+        return historyDao;
+    }
 
-	private BillingDao billingDao;
+    private BillingDao billingDao;
 
-	@Override
-	public BillingDao getBillingDao() {
-		if (billingDao == null) {
-			billingDao = new BillingDaoIceaxe(this);
-		}
-		return billingDao;
-	}
+    @Override
+    public BillingDao getBillingDao() {
+        if (billingDao == null) {
+            billingDao = new BillingDaoIceaxe(this);
+        }
+        return billingDao;
+    }
 
 
 
     @Override
     public void execute(TxOption txOption, Runnable runnable) {
-    	TgTmSetting setting = txOption.getSettingIceaxe();
+        TgTmSetting setting = txOption.getSettingIceaxe();
         try {
             transactionManager.execute(setting, transaction -> {
                 transactionThreadLocal.set(transaction);
                 try {
-                	countup(txOption, CounterName.BEGIN_TX);
+                    countup(txOption, CounterName.BEGIN_TX);
                     runnable.run();
-                	countup(txOption, CounterName.TRY_COMMIT);
+                    countup(txOption, CounterName.TRY_COMMIT);
                 } finally {
                     transactionThreadLocal.remove();
                 }
             });
         } catch (IOException e) {
             countup(txOption, CounterName.ABORTED);
-        	if (isRetriable(e)) {
-            	throw new RetryOverRuntimeException(e);
-        	}
+            if (isRetriable(e)) {
+                throw new RetryOverRuntimeException(e);
+            }
             throw new UncheckedIOException(e);
         } catch (InterruptedException e) {
             countup(txOption, CounterName.ABORTED);
             throw new RuntimeException(e);
         } catch (RuntimeException e) {
             countup(txOption, CounterName.ABORTED);
-        	if (isRetriable(e)) {
-            	throw new RetryOverRuntimeException(e);
-        	}
-        	throw e;
+            if (isRetriable(e)) {
+                throw new RetryOverRuntimeException(e);
+            }
+            throw e;
         }
         countup(txOption, CounterName.SUCCESS);
     }
 
     @Override
     public <T> T execute(TxOption txOption, Supplier<T> supplier) {
-    	TgTmSetting setting = txOption.getSettingIceaxe();
+        TgTmSetting setting = txOption.getSettingIceaxe();
         try {
             return transactionManager.execute(setting, transaction -> {
                 transactionThreadLocal.set(transaction);
                 try {
-                	countup(txOption, CounterName.BEGIN_TX);
+                    countup(txOption, CounterName.BEGIN_TX);
                     var ret =  supplier.get();
-                	countup(txOption, CounterName.TRY_COMMIT);
-                	return ret;
+                    countup(txOption, CounterName.TRY_COMMIT);
+                    return ret;
 
                 } finally {
                     transactionThreadLocal.remove();
@@ -150,19 +150,19 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
             });
         } catch (IOException e) {
             countup(txOption, CounterName.ABORTED);
-        	if (isRetriable(e)) {
-            	throw new RetryOverRuntimeException(e);
-        	}
+            if (isRetriable(e)) {
+                throw new RetryOverRuntimeException(e);
+            }
             throw new UncheckedIOException(e);
         } catch (InterruptedException e) {
             countup(txOption, CounterName.ABORTED);
             throw new RuntimeException(e);
         } catch (RuntimeException e) {
             countup(txOption, CounterName.ABORTED);
-        	if (isRetriable(e)) {
-            	throw new RetryOverRuntimeException(e);
-        	}
-        	throw e;
+            if (isRetriable(e)) {
+                throw new RetryOverRuntimeException(e);
+            }
+            throw e;
         }
     }
 
@@ -170,35 +170,35 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
         return transactionThreadLocal.get();
     }
 
-	@Override
-	public void commit(Consumer<TsurugiTransaction> listener) {
-		if (listener != null) {
-			var transaction = getCurrentTransaction();
-			transaction.addEventListener(new TsurugiTransactionEventListener() {
-				@Override
-				public void commitEnd(TsurugiTransaction transaction, TgCommitType commitType, Throwable occurred) {
-					if (occurred == null) {
-						listener.accept(transaction);
-					}
-				}
-			});
-		}
-	}
+    @Override
+    public void commit(Consumer<TsurugiTransaction> listener) {
+        if (listener != null) {
+            var transaction = getCurrentTransaction();
+            transaction.addEventListener(new TsurugiTransactionEventListener() {
+                @Override
+                public void commitEnd(TsurugiTransaction transaction, TgCommitType commitType, Throwable occurred) {
+                    if (occurred == null) {
+                        listener.accept(transaction);
+                    }
+                }
+            });
+        }
+    }
 
     @Override
     public void rollback(Consumer<TsurugiTransaction> listener) {
-		var transaction = getCurrentTransaction();
-		if (listener != null) {
-			transaction.addEventListener(new TsurugiTransactionEventListener() {
-				@Override
-				public void rollbackEnd(TsurugiTransaction transaction, Throwable occurred) {
-					if (occurred == null) {
-						listener.accept(transaction);
-					}
-				}
-			});
+        var transaction = getCurrentTransaction();
+        if (listener != null) {
+            transaction.addEventListener(new TsurugiTransactionEventListener() {
+                @Override
+                public void rollbackEnd(TsurugiTransaction transaction, Throwable occurred) {
+                    if (occurred == null) {
+                        listener.accept(transaction);
+                    }
+                }
+            });
 
-		}
+        }
         try {
             transaction.rollback();
         } catch (IOException e) {
@@ -221,37 +221,36 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
         }
     }
 
-	/**
-	 * @return config
-	 */
-	public Config getConfig() {
-		return config;
-	}
+    /**
+     * @return config
+     */
+    public Config getConfig() {
+        return config;
+    }
 
-	@Override
-	public String getTransactionId() {
-		try {
-			String txId = getCurrentTransaction().getTransactionId();
-			return txId;
-		} catch (NoSuchElementException | IOException | InterruptedException e) {
-			return "none";
-		}
-	}
+    @Override
+    public String getTransactionId() {
+        try {
+            String txId = getCurrentTransaction().getTransactionId();
+            return txId;
+        } catch (NoSuchElementException | IOException | InterruptedException e) {
+            return "none";
+        }
+    }
 
-	/**
-	 * Throwableがリトライ可能か調べる
-	 */
-	private boolean isRetriable(Throwable t) {
-		// TODO: これはとりあえず動くコードでしかない。OLTPが返すエラーコードが整理されたら、それを反映したコードにする
-		while (t != null) {
-			if (t instanceof TsurugiTmRetryOverIOException) {
-				return true;
-			}
-			if (t instanceof SqlServiceException) {
-				return true;
-			}
-			t = t.getCause();
-		}
-		return false;
-	}
+    /**
+     * Throwableがリトライ可能か調べる
+     */
+    private boolean isRetriable(Throwable t) {
+        while (t != null) {
+            if (t instanceof TsurugiTmRetryOverIOException) {
+                return true;
+            }
+            if (t instanceof SqlServiceException) {
+                return true;
+            }
+            t = t.getCause();
+        }
+        return false;
+    }
 }
