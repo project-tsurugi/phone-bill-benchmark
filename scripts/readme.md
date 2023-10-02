@@ -27,17 +27,11 @@ CBで電話料金計算バッチを実行する際に使用することを想定
   * async profiler
     * 入手方法と、インストール方法
       * [async profiler](https://github.com/jvm-profiling-tools/async-profiler)
-  * tsurugi-distribution
-    * ここから入手したtsurugi-distributionをインストール
-      * https://github.com/project-tsurugi/tsurugi-distribution
-    * 次のバージョンで動作確認済み
-      * tsurugi-0.202210281811-alpha
-      * tsurugi-0.202211041808-alpha
-      * tsurugi-0.202211110938-alpha
+  * Tsurgui
   * git
     * project-tsurugiのリポジトリにアクセスできること
   * perfコマンド
-    * Ubuntu標準のツールです
+    * Ubuntu標準のツール
     * https://github.com/project-tsurugi/sandbox-performance-tools/blob/master/docs/measurement.md
   * server側のフレームグラフ作成用のスクリプト
     * 以下の2つのパールスクリプトに実行権を与え、パスの通ったディレクトリに配置してください
@@ -55,8 +49,8 @@ CBで電話料金計算バッチを実行する際に使用することを想定
   * 電話料金計算バッチのインストールディレクトリ。指定されたディレクトリの下にphone-billというディレクトリが作成され、ディレクトリphone-billに電話料金計算バッチがインストールされる。
   * デフォルト値は`$HOME`
 * TSURUGI_DIR
-  * tsurugi-distributionのインストールディレクトリ
-  * tsurugi-distributionのインストール時にinstall.shでprefixに指定したディレクトリ+そのサブディレクトリを指定してください。
+  * Tsurugiのインストールディレクトリ
+  * Tsurugiにinstall.shでprefixに指定したディレクトリ+そのサブディレクトリを指定してください。
   * デフォルト値は`$HOME/tsurugi/tsurugi`
 * ASYNC_PROFILER_DIR
   * async profilerのインストールディレクトリ
@@ -121,25 +115,3 @@ CBで電話料金計算バッチを実行する際に使用することを想定
     * $BASSENAME-T1-client.log
       * 電話料金計算バッチのログ
   
-## その他、課題など
-
-* create_flame_graph.shはperfコマンドに指定するプロセスIDをpsコマンドの出力から取得している。同一ユーザが別のtsurugidbを起動している場合に正しくPIDを取得できないので、同一ユーザが他のtsurugidbを起動していない状態で使用すること
-* テストデータのデータ量
-  * 現在のデータ量だとdbs44で1スレッドの実行で25～50秒程度、スレッド数を増やした場合やtsurugiの性能向上により測定時間が短すぎる場合はデータ量を増やした方が良い。
-* スレッド数
-  * 現在スレッド数=1でのみ動作確認済み
-* create_flame_graph.shの処理時間は、電話料金計算バッチ以外の処理を多数含むため、電話料金計算バッチの処理時間の目安としても使用できない。現時点では、次のログから処理時間を抽出する必要がある。
-```
-18:03:08.027 [main] INFO  c.t.b.p.app.billing.PhoneBill - Billings calculated in 42.373 sec 
-```
-* TXのリトライ回数出力されない
-  * 別のテストプログラムでは出力しているが、add hocな対応をしていたので用整理、整理後出力するようにする。
-* CBで使用する場合に、処理時間やTXのリトライ回数などの情報をどのように出力、蓄積するのが良いのか
-* スレッド数を増やした場合に、tsurugidbの設定を変更する必要があるかもしれない
-  * `etc/phone-bill.ini` の thread_pool_size
-* perfコマンドが出力するプロファイル情報のファイルサイズが非常に大きい
-  * 現状で20GByte程度、処理時間が延びたりスレッド数を増やしたりした場合に問題が起きそう。
-    * もっとも簡単な対応方法は、サンプリング間隔を延ばすこと => 測定精度とのトレードオフ
-    * 他に方法がないか要調査
-* `create_flame_graph.sh` 実行時に他のtsurugidbが動いているせいで、tsurugidbの起動に失敗することがある。この場合、原因となるtsurugidb停止後に`create_flame_graph.sh` を実行すれば良い。
-* `create_flame_graph.sh`の出力ファイルは実行ごとに上書きされます。
