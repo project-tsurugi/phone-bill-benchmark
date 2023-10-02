@@ -138,7 +138,6 @@ class CalculationTaskTest extends AbstractJdbcTestCase {
     @Test
     final void testTimer() {
         Timer timer;
-        TxOption txOption = TxOption.of();
         TransactionId tid = new TransactionId();
 
         // 通常ケース
