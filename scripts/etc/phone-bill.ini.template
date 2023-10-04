@@ -2,7 +2,6 @@
     log_location=/* Replace with appropriate path. */
 
 [sql]
-    lazy_worker=false
     thread_pool_size=$TSURUGI_THREAD_SIZE
 
 [stream_endpoint]
@@ -13,5 +12,3 @@
     database_name=phone-bill
     threads=140
 
-[fdw]
-    name=phone-bill
