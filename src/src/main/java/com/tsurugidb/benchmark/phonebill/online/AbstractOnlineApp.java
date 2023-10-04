@@ -47,7 +47,12 @@ public abstract class AbstractOnlineApp implements Runnable{
      */
     private AtomicBoolean terminationRequested = new AtomicBoolean(false);
 
-    /*
+    /**
+     * オンラインアプリが終了済みかを表すフラグ
+     */
+    private AtomicBoolean terminated = new AtomicBoolean(false);
+
+    /**
      * 1分間に実行する回数、負数の場合は連続で実行する
      */
     private int execPerMin;
@@ -223,6 +228,8 @@ public abstract class AbstractOnlineApp implements Runnable{
         } catch (RuntimeException | IOException e) {
             LOG.error("Aborting by exception", e);
             System.exit(1);
+        } finally {
+            terminated.set(true);
         }
     }
 
@@ -344,5 +351,12 @@ public abstract class AbstractOnlineApp implements Runnable{
      * @return
      */
     public abstract Table getWritePreserveTable();
+
+    /**
+     * @return terminated
+     */
+    public boolean getTerminated() {
+        return terminated.get();
+    }
 }
 

@@ -1,6 +1,9 @@
 package com.tsurugidb.benchmark.phonebill.app.billing;
 
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadInfo;
+import java.lang.management.ThreadMXBean;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -85,7 +88,7 @@ public class PhoneBill extends ExecutableCommand {
         try {
             PhoneBillDbManager.initCounter();
             // オンラインアプリを実行する
-            list.parallelStream().forEach(task -> service.submit(task));
+            list.stream().forEach(task -> service.submit(task));
 
             // 指定の実行時間になったら停止するためのタイマーをセット
             CountDownLatch latch = new CountDownLatch(1);
@@ -115,12 +118,31 @@ public class PhoneBill extends ExecutableCommand {
             list.stream().forEach(task -> task.terminate());
             if (service != null) {
                 service.shutdown();
-                service.awaitTermination(5, TimeUnit.MINUTES);
+                service.awaitTermination(0, TimeUnit.MINUTES);
+            }
+            // 終了していないオンラインアプリがある場合、スレッドダンプを出力して終了する。
+            boolean allTerminated = list.stream().allMatch(task -> task.getTerminated());
+            if (!allTerminated) {
+                LOG.error("Some online applications have not terminated. Thread dump: \n\n{}", getThreadDump());
+                LOG.error("Aborting...");
+                System.exit(1);
             }
             LOG.debug("Counter infos: \n---\n{}---", PhoneBillDbManager.createCounterReport());
         }
     }
 
+
+    public static String getThreadDump() {
+        StringBuilder dump = new StringBuilder();
+        ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
+        ThreadInfo[] threadInfos = threadMXBean.dumpAllThreads(true, true);
+
+        for (ThreadInfo threadInfo : threadInfos) {
+            dump.append(threadInfo.toString()).append("\n");
+        }
+
+        return dump.toString();
+    }
 
     /**
      * Configに従ってオンラインアプリのインスタンスを生成する
