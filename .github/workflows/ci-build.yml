@@ -15,10 +15,7 @@ jobs:
       checks: write
     timeout-minutes: 30
     container:
-      image:  ghcr.io/project-tsurugi/oltp-sandbox:latest
-      credentials:
-        username: ${{ github.repository_owner }}
-        password: ${{ secrets.GHCR_PAT }}
+      image:  ghcr.io/project-tsurugi/tsurugi-ci:latest
       volumes:
         - ${{ vars.gradle_cache_dir }}:/root/.gradle
     defaults:
@@ -40,10 +37,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
       tsurugi:
-        image: ghcr.io/project-tsurugi/tsurugi:latest
-        credentials:
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GHCR_PAT }}
+        image: ghcr.io/project-tsurugi/tsurugidb:snapshot
 
     steps:
       - name: Setup_Java
@@ -54,8 +48,6 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v3
-        with:
-          token: ${{ secrets.GHA_PAT }}
 
       - name: Assemble
         run: |
