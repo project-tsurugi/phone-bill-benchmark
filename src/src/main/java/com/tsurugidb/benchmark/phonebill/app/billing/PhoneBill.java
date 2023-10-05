@@ -118,7 +118,7 @@ public class PhoneBill extends ExecutableCommand {
             list.stream().forEach(task -> task.terminate());
             if (service != null) {
                 service.shutdown();
-                service.awaitTermination(0, TimeUnit.MINUTES);
+                service.awaitTermination(5, TimeUnit.MINUTES);
             }
             // 終了していないオンラインアプリがある場合、スレッドダンプを出力して終了する。
             boolean allTerminated = list.stream().allMatch(task -> task.getTerminated());

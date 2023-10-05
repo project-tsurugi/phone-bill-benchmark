@@ -163,6 +163,8 @@ public abstract class AbstractOnlineApp implements Runnable{
             }
             try {
                 manager.execute(txOption, () -> {
+                    var tid = manager.getTransactionId();
+                    LOG.debug("Transaction starting, tid = {}, txOption = {}", tid, txOption);
                     manager.countup(txOption, isOcc ? CounterName.OCC_TRY : CounterName.LTX_TRY);
                     createData(contractDao, historyDao);
                     if (!skipDatabaseAccess) {
