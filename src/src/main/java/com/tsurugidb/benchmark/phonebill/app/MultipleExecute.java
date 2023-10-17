@@ -56,7 +56,9 @@ public class MultipleExecute extends ExecutableCommand {
     public static void main(String[] args) throws Exception {
         MultipleExecute threadBench = new MultipleExecute();
         List<ConfigInfo> configInfos = createConfigInfos(args, 0);
+        CrashDumper.enable();
         threadBench.execute(configInfos);
+        CrashDumper.disable();
     }
 
     @Override

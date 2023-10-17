@@ -119,7 +119,8 @@ class MasterUpdateAppTest extends AbstractJdbcTestCase {
                 list.addAll(Arrays.asList(0, 1, 3650));
             }
             random.setValues(list.toArray(new Integer[0]));
-            app.exec(manager); // LOGに警告がでるがエラーにはならない
+
+            assertThrows(RuntimeException.class, () -> app.exec(manager));
             testContracts(expected); // 値が変化していないことを確認する
         }
     }

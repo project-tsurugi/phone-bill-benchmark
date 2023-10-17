@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
+import com.tsurugidb.benchmark.phonebill.app.CrashDumper;
 import com.tsurugidb.benchmark.phonebill.app.ExecutableCommand;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager.SessionHoldingType;
@@ -60,12 +61,15 @@ public class PhoneBill extends ExecutableCommand {
     private AtomicInteger tryCounter = new AtomicInteger(0);
     private AtomicInteger abortCounter = new AtomicInteger(0);
 
+
     Config config; // UTからConfigを書き換え可能にするためにパッケージプライベートにしている
 
     public static void main(String[] args) throws Exception {
         Config config = Config.getConfig(args);
         PhoneBill phoneBill = new PhoneBill();
+        CrashDumper.enable();
         phoneBill.execute(config);
+        CrashDumper.disable();
     }
 
     @Override
@@ -85,7 +89,7 @@ public class PhoneBill extends ExecutableCommand {
         try {
             PhoneBillDbManager.initCounter();
             // オンラインアプリを実行する
-            list.parallelStream().forEach(task -> service.submit(task));
+            list.stream().forEach(task -> service.submit(task));
 
             // 指定の実行時間になったら停止するためのタイマーをセット
             CountDownLatch latch = new CountDownLatch(1);
@@ -117,9 +121,15 @@ public class PhoneBill extends ExecutableCommand {
                 service.shutdown();
                 service.awaitTermination(5, TimeUnit.MINUTES);
             }
+            // 終了していないオンラインアプリがある場合は異常終了する。
+            boolean allTerminated = list.stream().allMatch(task -> task.getTerminated());
+            if (!allTerminated) {
+                System.exit(1);
+            }
             LOG.debug("Counter infos: \n---\n{}---", PhoneBillDbManager.createCounterReport());
         }
     }
+
 
 
     /**

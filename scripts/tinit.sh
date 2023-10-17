@@ -13,8 +13,9 @@ rm -rf  $TSURUGI_LOG_DIR
 # start tsurugidb server
 
 export GLOG_logtostderr=1
+export GLOG_v=$TSURUGI_LOG_LEVEL
 LOGFILE=tsurugidb-`date "+%Y%m%d_%H%M%S"`.log
-$TSURUGI_DIR/bin/tgctl start --conf=$BIN_DIR/etc/phone-bill.ini --v=$TSURUGI_LOG_LEVEL &> $LOG_DIR/$LOGFILE && true
+$TSURUGI_DIR/bin/tgctl start --conf=$BIN_DIR/etc/phone-bill.ini  &> $LOG_DIR/$LOGFILE && true
 ln -snf $LOG_DIR/$LOGFILE $LOG_DIR/tsurugidb.log
 while [[ ! "`$TSURUGI_DIR/bin/tgctl status --conf=$BIN_DIR/etc/phone-bill.ini`"  == *RUNNING* ]]
 do
