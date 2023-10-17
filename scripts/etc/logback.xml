@@ -16,10 +16,10 @@
     <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
       <fileNamePattern>${log.detail.online}_%i</fileNamePattern>
       <minIndex>1</minIndex>
-      <maxIndex>2</maxIndex>
+      <maxIndex>9</maxIndex>
     </rollingPolicy>
     <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
-      <maxFileSize>1MB</maxFileSize>
+      <maxFileSize>10MB</maxFileSize>
     </triggeringPolicy>
     <append>true</append>
     <encoder>

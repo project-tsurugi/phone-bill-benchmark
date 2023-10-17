@@ -118,7 +118,7 @@ class MasterUpdateAppIceaxeTest {
                     list.addAll(Arrays.asList(0, 1, 3650));
                 }
                 random.setValues(list.toArray(new Integer[0]));
-                app.exec(manager); // LOGに警告がでるがエラーにはならない
+                assertThrows(RuntimeException.class, () -> app.exec(manager));
                 testContracts(expected, testTools);
             }
         }

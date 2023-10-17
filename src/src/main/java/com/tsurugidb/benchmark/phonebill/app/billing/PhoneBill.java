@@ -1,9 +1,6 @@
 package com.tsurugidb.benchmark.phonebill.app.billing;
 
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
-import java.lang.management.ThreadInfo;
-import java.lang.management.ThreadMXBean;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -29,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tsurugidb.benchmark.phonebill.app.Config;
+import com.tsurugidb.benchmark.phonebill.app.CrashDumper;
 import com.tsurugidb.benchmark.phonebill.app.ExecutableCommand;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager.SessionHoldingType;
@@ -63,12 +61,15 @@ public class PhoneBill extends ExecutableCommand {
     private AtomicInteger tryCounter = new AtomicInteger(0);
     private AtomicInteger abortCounter = new AtomicInteger(0);
 
+
     Config config; // UTからConfigを書き換え可能にするためにパッケージプライベートにしている
 
     public static void main(String[] args) throws Exception {
         Config config = Config.getConfig(args);
         PhoneBill phoneBill = new PhoneBill();
+        CrashDumper.enable();
         phoneBill.execute(config);
+        CrashDumper.disable();
     }
 
     @Override
@@ -120,11 +121,9 @@ public class PhoneBill extends ExecutableCommand {
                 service.shutdown();
                 service.awaitTermination(5, TimeUnit.MINUTES);
             }
-            // 終了していないオンラインアプリがある場合、スレッドダンプを出力して終了する。
+            // 終了していないオンラインアプリがある場合は異常終了する。
             boolean allTerminated = list.stream().allMatch(task -> task.getTerminated());
             if (!allTerminated) {
-                LOG.error("Some online applications have not terminated. Thread dump: \n\n{}", getThreadDump());
-                LOG.error("Aborting...");
                 System.exit(1);
             }
             LOG.debug("Counter infos: \n---\n{}---", PhoneBillDbManager.createCounterReport());
@@ -132,17 +131,6 @@ public class PhoneBill extends ExecutableCommand {
     }
 
 
-    public static String getThreadDump() {
-        StringBuilder dump = new StringBuilder();
-        ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
-        ThreadInfo[] threadInfos = threadMXBean.dumpAllThreads(true, true);
-
-        for (ThreadInfo threadInfo : threadInfos) {
-            dump.append(threadInfo.toString()).append("\n");
-        }
-
-        return dump.toString();
-    }
 
     /**
      * Configに従ってオンラインアプリのインスタンスを生成する

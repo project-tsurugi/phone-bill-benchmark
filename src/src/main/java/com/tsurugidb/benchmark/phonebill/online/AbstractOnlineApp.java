@@ -183,7 +183,7 @@ public abstract class AbstractOnlineApp implements Runnable{
                 manager.countup(txOption, isOcc ? CounterName.OCC_ABORT : CounterName.LTX_ABORT);
                 PhoneBillDbManager.addRetringExceptions(e);
                 LOG.debug("Tx aborted by caught a non-retriable exception.", e);
-                return false;
+                throw e;
             }
         }
         return false;

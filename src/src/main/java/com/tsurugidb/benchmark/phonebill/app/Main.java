@@ -73,10 +73,13 @@ public class Main {
         }
 
         try {
+            CrashDumper.enable();
             exec(args, command);
         } catch (Exception e) {
             LOG.error("Caught an unexpected Exception, exiting.", e);
             System.exit(1);
+        } finally {
+            CrashDumper.disable();
         }
     }
 
