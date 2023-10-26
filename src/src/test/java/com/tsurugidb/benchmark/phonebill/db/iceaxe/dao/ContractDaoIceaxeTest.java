@@ -138,8 +138,7 @@ class ContractDaoIceaxeTest {
         Contract c = Contract.create("1", "2022-01-01", "2022-12-12", "dummy");
         expectedSet.add(c.clone());
 
-        // TODO: 現在は-1が返るが本来はインサート件数が返る。DB側の対応が完了したら修正する。
-        assertEquals(-1, testTools.execute(() -> {
+        assertEquals(1, testTools.execute(() -> {
             return dao.insert(c);
         }));
 
@@ -149,8 +148,8 @@ class ContractDaoIceaxeTest {
         c.setPhoneNumber("2");
         c.setEndDate((Date) null);
 
-        // TODO: 現在は-1が返るが本来はインサート件数が返る。DB側の対応が完了したら修正する。
-        assertEquals(-1, testTools.execute(() -> {
+
+        assertEquals(1, testTools.execute(() -> {
             return dao.insert(c);
         }));
         expectedSet.add(c.clone());
@@ -168,7 +167,7 @@ class ContractDaoIceaxeTest {
 
         // 空のテーブルに対してアップデート
 
-        assertEquals(-1, testTools.execute(() -> { // TODO update件数が返るようになったら期待値を0にする
+        assertEquals(0, testTools.execute(() -> {
             return dao.update(c1);
         }));
 
@@ -178,19 +177,19 @@ class ContractDaoIceaxeTest {
         assertEquals(testDataSet, testTools.getContractSet());
 
         // 更新対象のレコードがないケース
-        assertEquals(-1, testTools.execute(() -> { // TODO update件数が返るようになったら期待値を0にする
+        assertEquals(0, testTools.execute(() -> {
             return dao.update(c4);
         }));
         assertEquals(testDataSet, testTools.getContractSet());
 
         // 同じ値で更新
-        assertEquals(-1, testTools.execute(() -> { // TODO update件数が返るようになったら期待値を1にする
+        assertEquals(1, testTools.execute(() -> {
             return dao.update(c1);
         }));
         assertEquals(testDataSet, testTools.getContractSet());
 
         // キー値以外を全て更新
-        assertEquals(-1, testTools.execute(() -> { // TODO update件数が返るようになったら期待値を1にする
+        assertEquals(1, testTools.execute(() -> {
             return dao.update(c5);
         }));
         testDataSet.add(c5);
@@ -201,7 +200,7 @@ class ContractDaoIceaxeTest {
     @Test
     final void testDelete() throws SQLException {
         // 空のテーブルに対してdelete
-        assertEquals(-1, testTools.execute(() -> { // TODO update件数が返るようになったら期待値を0にする
+        assertEquals(0, testTools.execute(() -> {
             return dao.delete(C10.getKey());
         }));
 
@@ -211,13 +210,13 @@ class ContractDaoIceaxeTest {
         assertEquals(testDataSet, testTools.getContractSet());
 
         // 削除対象のレコードがないケース
-        assertEquals(-1, testTools.execute(() -> { // TODO update件数が返るようになったら期待値を0にする
+        assertEquals(0, testTools.execute(() -> {
             return dao.delete(C40.getKey());
         }));
         assertEquals(testDataSet, testTools.getContractSet());
 
         // 削除
-        assertEquals(-1, testTools.execute(() -> { // TODO update件数が返るようになったら期待値を0にする
+        assertEquals(1, testTools.execute(() -> {
             return dao.delete(C20.getKey());
         }));
         testDataSet.remove(C20);
