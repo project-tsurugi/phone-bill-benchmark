@@ -139,7 +139,7 @@ public class MasterUpdateApp extends AbstractOnlineApp {
         // 契約を更新
 
         int ret =  contractDao.update(updatingContract);
-        // TODO 現バージョンのIceaxeはupdate件数を返さないので下のチェックの対象外にしている
+
         if (ret != 1 && config.dbmsType != DbmsType.ICEAXE ) {
             // select ～ updateの間に対象レコードが削除されたケース -> 基本的にありえない
             throw new RuntimeException("Fail to update contracts: " + updatingContract);

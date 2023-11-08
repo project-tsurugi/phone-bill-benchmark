@@ -239,7 +239,7 @@ public class PhoneBill extends ExecutableCommand {
             ArrayList<CalculationTarget> targets = new ArrayList<>(list.size());
             for (Contract contract : list) {
                 LOG.debug(contract.toString());
-                // TODO 契約内容に合致した、CallChargeCalculator, BillingCalculatorを生成するようにする。
+
                 CallChargeCalculator callChargeCalculator = new SimpleCallChargeCalculator();
                 BillingCalculator billingCalculator = new SimpleBillingCalculator();
                 CalculationTarget target = new CalculationTarget(contract, billingCalculator, callChargeCalculator,

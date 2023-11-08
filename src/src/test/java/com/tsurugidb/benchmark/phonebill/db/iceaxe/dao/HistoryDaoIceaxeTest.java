@@ -221,7 +221,7 @@ class HistoryDaoIceaxeTest {
 
         // アップデート実行
         List<History> updateDataList = Arrays.asList(h2u, h4u, h3u);
-        assertEquals(3, testTools.execute(() -> { // TODO update件数が返るようになったら期待値を変更する
+        assertEquals(3, testTools.execute(() -> {
             return dao.batchUpdate(updateDataList);
         }));
         testDataSet.remove(h2);
