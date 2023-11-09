@@ -1,12 +1,13 @@
 package com.tsurugidb.benchmark.phonebill.db.entity;
 
+import java.io.Serializable;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import com.tsurugidb.benchmark.phonebill.util.DateUtils;
 
-public class Contract implements Cloneable {
+public class Contract implements Cloneable, Serializable {
     /**
      * 電話番号
      */

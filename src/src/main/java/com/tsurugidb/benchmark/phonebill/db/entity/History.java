@@ -1,12 +1,13 @@
 package com.tsurugidb.benchmark.phonebill.db.entity;
 
+import java.io.Serializable;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 import com.tsurugidb.benchmark.phonebill.util.DateUtils;
 
-public class History implements Cloneable{
+public class History implements Cloneable, Serializable{
     /**
      * SID サロゲートキーを使用しない場合は常に0が入る。
      */
