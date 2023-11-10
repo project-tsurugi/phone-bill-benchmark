@@ -356,12 +356,12 @@ public class MultipleExecute extends ExecutableCommand {
     private int checkResult(Config config) {
         int n = 0;
         try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
-            Set<History> histories = manager.execute(TxOption.ofRTX(0, TxLabel.CHECK_RESULT), () -> {
+            Set<History> histories = manager.execute(TxOption.ofRTX(3, TxLabel.CHECK_RESULT), () -> {
                 List<History> list =manager.getHistoryDao().getHistories();
                 list.stream().forEach(h -> h.setSid(0)); // sidは比較対象でないので0をセット
                 return new HashSet<>(list);
             });
-            Set<Billing> billings = manager.execute(TxOption.ofRTX(0, TxLabel.CHECK_RESULT), () -> {
+            Set<Billing> billings = manager.execute(TxOption.ofRTX(3, TxLabel.CHECK_RESULT), () -> {
                 List<Billing> list = manager.getBillingDao().getBillings();
                 list.stream().forEach(b -> b.setBatchExecId(null)); // batchExecIdは比較対象でないのでnullをセット
                 return new HashSet<>(list);

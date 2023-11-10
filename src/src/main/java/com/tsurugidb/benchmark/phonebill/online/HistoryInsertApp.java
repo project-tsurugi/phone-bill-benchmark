@@ -119,7 +119,7 @@ public class HistoryInsertApp extends AbstractOnlineApp {
     static long getBaseTime(Config config) {
         try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
             HistoryDao dao = manager.getHistoryDao();
-            long maxStartTime = manager.execute(TxOption.ofRTX(0, TxLabel.INITIALIZE),
+            long maxStartTime = manager.execute(TxOption.ofRTX(3, TxLabel.INITIALIZE),
                     () -> dao.getMaxStartTime());
             return Math.max(maxStartTime, DateUtils.nextDate(config.historyMaxDate).getTime());
         }
