@@ -149,7 +149,7 @@ public class PhoneBill extends ExecutableCommand {
 
         RandomKeySelector<Key> keySelector;
         try (PhoneBillDbManager manager = PhoneBillDbManager.createPhoneBillDbManager(config)) {
-            List<Key> keys = manager.execute(TxOption.of(), () -> {
+            List<Key> keys = manager.execute(TxOption.ofRTX(3, TxLabel.BATCH_INITIALIZE), () -> {
                 return manager.getContractDao().getAllPrimaryKeys();
             });
             keySelector = new RandomKeySelector<>(keys, random, config.onlineAppRandomAtLeastOnceRate,
