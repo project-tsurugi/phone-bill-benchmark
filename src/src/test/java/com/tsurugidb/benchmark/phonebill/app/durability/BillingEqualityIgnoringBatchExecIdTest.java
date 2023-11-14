@@ -15,7 +15,7 @@ public class BillingEqualityIgnoringBatchExecIdTest {
     private BillingEqualityIgnoringBatchExecId equalityChecker;
 
     @BeforeEach
-    public void setup() {
+    public void setUp() {
         billing1 = new Billing();
         billing1.setPhoneNumber("123-456-7890");
         billing1.setTargetMonth(LocalDate.of(2023, 4, 1));

@@ -31,6 +31,7 @@ import com.tsurugidb.benchmark.phonebill.db.entity.History;
 
 public class CalculationTask implements Callable<Exception> {
     private static final Logger LOG = LoggerFactory.getLogger(CalculationTask.class);
+    private static final Logger CMT_LOG = LoggerFactory.getLogger(CalculationTask.class.getName() + "-cmt");
     private Config config;
     private String batchExecId;
     private AtomicBoolean abortRequested;
@@ -105,6 +106,7 @@ public class CalculationTask implements Callable<Exception> {
                     });
                     queue.success(target);
                     timer.setEndCommit(phoneNumber, records.get());
+                    timer.setAbort(phoneNumber, new RuntimeException("dummy"));
                     nCalculated++;
                 } catch (RuntimeException e) {
                     abortCounter.incrementAndGet();
@@ -298,12 +300,12 @@ public class CalculationTask implements Callable<Exception> {
         }
 
         public void setStartCommit(String phoneNumber) {
-            LOG.debug("Transaction committing, tid = {}, txOption = {}, key = {}", tid, txOption, phoneNumber);
+            CMT_LOG.debug("Transaction committing, tid = {}, txOption = {}, key = {}", tid, txOption, phoneNumber);
             startCommit = Instant.now();
         }
 
         public void setEndCommit(String phoneNumber, int records) {
-            LOG.debug("Transaction completed, tid = {}, txOption = {}, key = {}, update/insert records = {}", tid,
+            CMT_LOG.debug("Transaction completed, tid = {}, txOption = {}, key = {}, update/insert records = {}", tid,
                     txOption, phoneNumber, records);
             if (startTx == null || startCommit == null) {
                 return;
@@ -319,7 +321,7 @@ public class CalculationTask implements Callable<Exception> {
         }
 
         public void setAbort(String phoneNumber, RuntimeException e) {
-            LOG.debug("Transaction aborted, tid = {}, txOption = {}, key = {}, exception = {}", tid, txOption, phoneNumber, e.getMessage());
+            CMT_LOG.debug("Transaction aborted, tid = {}, txOption = {}, key = {}, exception = {}", tid, txOption, phoneNumber, e.getMessage());
             if (startTx == null) {
                 return;
             }

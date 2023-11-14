@@ -2,6 +2,7 @@ package com.tsurugidb.benchmark.phonebill.app.durability;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,11 +19,11 @@ public class EntityComparator<T, K> {
 
 
     // customEqualityをオプショナルにするためのオーバーロードされたコンストラクタ
-    public EntityComparator(List<T> expected, List<T> actual, Function<T, K> keyExtractor, String name) {
+    public EntityComparator(Collection<T> expected, Collection<T> actual, Function<T, K> keyExtractor, String name) {
         this(expected, actual, keyExtractor, Object::equals, name);
     }
 
-    public EntityComparator(List<T> expected, List<T> actual, Function<T, K> keyExtractor, BiPredicate<T, T> customEquality, String name) {
+    public EntityComparator(Collection<T> expected, Collection<T> actual, Function<T, K> keyExtractor, BiPredicate<T, T> customEquality, String name) {
             Map<K, T> expectedMap = new HashMap<>();
         this.expectedOnly = new ArrayList<>();
         this.actualOnly = new ArrayList<>();
@@ -72,7 +73,7 @@ public class EntityComparator<T, K> {
         return differentInBoth;
     }
 
-    public boolean areListsExactlyEqual() {
+    public boolean areCollectionsExactlyEqual() {
         return expectedOnly.isEmpty() && actualOnly.isEmpty() && differentInBoth.isEmpty();
     }
 

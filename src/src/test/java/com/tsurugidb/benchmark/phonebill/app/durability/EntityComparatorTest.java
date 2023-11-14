@@ -23,7 +23,7 @@ class EntityComparatorTest {
             = new EntityComparator<>(expected, actual, DummyEntity::getKey, "DummyEntity");
         assertEquals(1, comparator.getExpectedOnly().size());
         assertEquals("2", comparator.getExpectedOnly().get(0).getKey());
-        assertFalse(comparator.areListsExactlyEqual());
+        assertFalse(comparator.areCollectionsExactlyEqual());
         String expectedString ="DummyEntity present only expected:\n"+
                 "DummyEntity [key=2, value=B]\n"+
                 "\n"+
@@ -46,7 +46,7 @@ class EntityComparatorTest {
             = new EntityComparator<>(expected, actual, DummyEntity::getKey, "DummyEntity");
         assertEquals(1, comparator.getActualOnly().size());
         assertEquals("3", comparator.getActualOnly().get(0).getKey());
-        assertFalse(comparator.areListsExactlyEqual());
+        assertFalse(comparator.areCollectionsExactlyEqual());
         String expectedString ="DummyEntity present only expected:\n"+
                 "\n"+
                 "DummyEntity present only actual:\n"+
@@ -69,7 +69,7 @@ class EntityComparatorTest {
         EntityComparator<DummyEntity, String> comparator
             = new EntityComparator<>(expected, actual, DummyEntity::getKey, "DummyEntity");
         assertEquals(2, comparator.getSameInBoth().size());
-        assertTrue(comparator.areListsExactlyEqual());
+        assertTrue(comparator.areCollectionsExactlyEqual());
         String expectedString ="DummyEntity present only expected:\n"+
                 "\n"+
                 "DummyEntity present only actual:\n"+
@@ -91,7 +91,7 @@ class EntityComparatorTest {
         assertEquals(1, comparator.getDifferentInBoth().size());
         assertEquals("A", comparator.getDifferentInBoth().get(0).getKey().getValue());
         assertEquals("B", comparator.getDifferentInBoth().get(0).getValue().getValue());
-        assertFalse(comparator.areListsExactlyEqual());
+        assertFalse(comparator.areCollectionsExactlyEqual());
         String expectedString ="DummyEntity present only expected:\n"+
                 "\n"+
                 "DummyEntity present only actual:\n"+
@@ -125,7 +125,7 @@ class EntityComparatorTest {
         assertEquals("1", comparator.getSameInBoth().get(0).getKey());
         assertEquals(1, comparator.getDifferentInBoth().size());
         assertEquals("2", comparator.getDifferentInBoth().get(0).getKey().getKey());
-        assertFalse(comparator.areListsExactlyEqual());
+        assertFalse(comparator.areCollectionsExactlyEqual());
     }
 
     @Test
@@ -148,7 +148,7 @@ class EntityComparatorTest {
         assertEquals(0, comparator.getExpectedOnly().size());
         assertEquals(0, comparator.getActualOnly().size());
         assertEquals(2, comparator.getSameInBoth().size());
-        assertTrue(comparator.areListsExactlyEqual());
+        assertTrue(comparator.areCollectionsExactlyEqual());
     }
 
     public static class DummyEntity {
