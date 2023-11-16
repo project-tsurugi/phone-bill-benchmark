@@ -52,7 +52,7 @@ $PHONE_BILL/bin/create_test_data.sh $PHONE_BILL/conf/batch-only
 ###  Running the Benchmark
 
 ```sh
-$PHONE_BILL/bin/run_benchmark.sh $PHONE_BILL/conf/batch-only
+$PHONE_BILL/bin/execute.sh $PHONE_BILL/conf/batch-only
 ```
 
 ## License
