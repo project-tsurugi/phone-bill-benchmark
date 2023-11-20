@@ -14,12 +14,12 @@
     class="ch.qos.logback.core.rolling.RollingFileAppender">
     <file>${log.detail.online}</file>
     <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
-      <fileNamePattern>${log.detail.online}_%i</fileNamePattern>
+      <fileNamePattern>${log.detail.online}_%i.gz</fileNamePattern>
       <minIndex>1</minIndex>
-      <maxIndex>9</maxIndex>
+      <maxIndex>20</maxIndex>
     </rollingPolicy>
     <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
-      <maxFileSize>10MB</maxFileSize>
+      <maxFileSize>100MB</maxFileSize>
     </triggeringPolicy>
     <append>true</append>
     <encoder>
