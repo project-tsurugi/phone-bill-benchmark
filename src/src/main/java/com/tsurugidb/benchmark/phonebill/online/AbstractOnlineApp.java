@@ -123,6 +123,7 @@ public abstract class AbstractOnlineApp implements Runnable{
     final void exec(PhoneBillDbManager manager) {
         TxLabel label = getTxLabel();
         long start = System.nanoTime();
+        execCount.incrementAndGet();
         exec(manager, label);
         long latency = System.nanoTime() - start;
         TxStatistics.addLatencyFotTxLabel(label, latency);
@@ -160,6 +161,9 @@ public abstract class AbstractOnlineApp implements Runnable{
         for (int i = 0; i < maxTry; i++) {
             if (terminationRequested.get()) {
                 return true;
+            }
+            if (i > 0) {
+                retryCount.incrementAndGet();
             }
             try {
                 manager.execute(txOption, () -> {
@@ -262,6 +266,8 @@ public abstract class AbstractOnlineApp implements Runnable{
         if (scheduleList.isEmpty()) {
             // スケジュールリストの最後のエントリはスケジュールを作成する時刻
             creatScheduleList(schedule);
+            // このタイミングで実行回数とリトライ回数をログに出力する。
+            LOG.info("Exec Count: {}, Retry Count: {}", getExecCount(), getRetryCount());
         } else {
             exec(manager);
         }
@@ -292,6 +298,7 @@ public abstract class AbstractOnlineApp implements Runnable{
         scheduleList.add(base + CREATE_SCHEDULE_INTERVAL_MILLS);
         atScheduleListCreated(scheduleList);
     }
+
 
     /**
      * スケジュール作成後に呼び出されるコールバック関数
