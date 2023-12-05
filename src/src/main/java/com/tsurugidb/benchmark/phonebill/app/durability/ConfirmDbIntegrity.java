@@ -395,7 +395,7 @@ public class ConfirmDbIntegrity {
             allTransactionIdKeyMaps.put(logType, new HashMap<>());
         }
 
-        Pattern pattern = Pattern.compile("Transaction (committing|completed|aborted), tid = (.*?), txOption = .*?, key = (\\d+),");
+        Pattern pattern = Pattern.compile("Transaction (committing|completed|aborted), tid = (.*?), txOption = .*?, key = (\\d{11})");
 
         try (BufferedReader br = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
             String line;

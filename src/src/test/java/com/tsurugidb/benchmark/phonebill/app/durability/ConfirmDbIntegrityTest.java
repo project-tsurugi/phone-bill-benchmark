@@ -74,10 +74,10 @@ class ConfirmDbIntegrityTest {
 
     @Test
     public void testGetAllTransactionIdKeyMaps() {
-        String logData = "17:52:18.591 [pool-1-thread-10] DEBUG c.t.b.p.a.b.CalculationTask-cmt - Transaction committing, tid = TID-0000000000000039, txOption = LTX{label=BATCH_MAIN, writePreserve=[history, billing]}, key = 00000000859,\n"
+        String logData = "17:52:18.591 [pool-1-thread-10] DEBUG c.t.b.p.a.b.CalculationTask-cmt - Transaction committing, tid = TID-0000000000000039, txOption = LTX{label=BATCH_MAIN, writePreserve=[history, billing]}, key = 00000000859\n"
                 + "17:52:19.418 [pool-1-thread-7] DEBUG c.t.b.p.app.billing.CalculationTask - TIME INFO: tid = TID-0000000600000025, exec time = 52354, commit to abort time = 105384\n"
                 + "17:52:18.707 [pool-1-thread-10] DEBUG c.t.b.p.a.b.CalculationTask-cmt - Transaction completed, tid = TID-0000000000000039, txOption = LTX{label=BATCH_MAIN, writePreserve=[history, billing]}, key = 00000000859, update/insert records = 238\n"
-                + "17:52:14.962 [pool-1-thread-11] DEBUG c.t.b.p.a.b.CalculationTask-cmt - Transaction committing, tid = TID-0000000000000022, txOption = LTX{label=BATCH_MAIN, writePreserve=[history, billing]}, key = 00000000193,\n"
+                + "17:52:14.962 [pool-1-thread-11] DEBUG c.t.b.p.a.b.CalculationTask-cmt - Transaction committing, tid = TID-0000000000000022, txOption = LTX{label=BATCH_MAIN, writePreserve=[history, billing]}, key = 00000000193\n"
                 + "17:52:15.071 [pool-1-thread-11] DEBUG c.t.b.p.a.b.CalculationTask-cmt - Transaction aborted, tid = TID-0000000000000022, txOption = LTX{label=BATCH_MAIN, writePreserve=[history, billing]}, key = 00000000193, exception = dummy\n"
                 // ↓不完全な行 => 無視される
                 + "17:52:15.075 [pool-1-thread-11] DEBUG c.t.b.p.a.b.CalculationTask-cmt - Transaction aborted, tid = TID-0000000000000023, txOption = LTX{label=BATCH_MAIN, writePreserve=[history, billing]}, key = 0000000019";
