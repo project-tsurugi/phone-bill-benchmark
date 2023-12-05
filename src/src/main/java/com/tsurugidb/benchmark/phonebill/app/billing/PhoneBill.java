@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -141,6 +142,10 @@ public class PhoneBill extends ExecutableCommand {
     @SuppressFBWarnings(value={"DMI_RANDOM_USED_ONLY_ONCE"})
     public static List<AbstractOnlineApp> createOnlineApps(Config config, ContractBlockInfoAccessor accessor)
             throws IOException {
+        if (!config.hasOnlineApp()) {
+            return Collections.emptyList();
+        }
+
         Random random = new Random(config.randomSeed);
         ActiveBlockNumberHolder blockHolder = accessor.getActiveBlockInfo();
         if (blockHolder.getNumberOfActiveBlacks() < 1) {
