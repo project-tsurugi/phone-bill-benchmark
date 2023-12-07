@@ -19,6 +19,7 @@ import com.tsurugidb.benchmark.phonebill.db.entity.Contract.Key;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
 import com.tsurugidb.benchmark.phonebill.db.iceaxe.IceaxeUtils;
 import com.tsurugidb.benchmark.phonebill.db.iceaxe.PhoneBillDbManagerIceaxe;
+import com.tsurugidb.benchmark.phonebill.db.iceaxe.PhoneBillDbManagerIceaxe.InsertType;
 import com.tsurugidb.benchmark.phonebill.db.iceaxe.PhoneBillDbManagerIceaxeSurrogateKey;
 import com.tsurugidb.benchmark.phonebill.util.DateUtils;
 import com.tsurugidb.iceaxe.sql.TgDataType;
@@ -39,6 +40,7 @@ import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionRuntimeExcep
  */
 public class HistoryDaoIceaxeSurrogateKey implements HistoryDao {
     private final IceaxeUtils utils;
+    private final InsertType insertType;
     private final PhoneBillDbManagerIceaxeSurrogateKey manager;
     private static volatile AtomicLong sidCounter = null;
 
@@ -65,6 +67,7 @@ public class HistoryDaoIceaxeSurrogateKey implements HistoryDao {
 
     public HistoryDaoIceaxeSurrogateKey(PhoneBillDbManagerIceaxeSurrogateKey manager) {
         utils = new IceaxeUtils(manager);
+        insertType = manager.getInsertType();
         initSidCounter(utils, manager);
         this.manager = manager;
     }
@@ -117,7 +120,8 @@ public class HistoryDaoIceaxeSurrogateKey implements HistoryDao {
     }
 
     private TsurugiSqlPreparedStatement<History> createInsertPs() {
-        String sql = "insert into history(sid, caller_phone_number, recipient_phone_number, payment_category, start_time, time_secs, charge, df) "
+        String sql = insertType.getSqlInsertMethod()
+                + " into history(sid, caller_phone_number, recipient_phone_number, payment_category, start_time, time_secs, charge, df) "
                 + "values(:sid, :caller_phone_number, :recipient_phone_number, :payment_category, :start_time, :time_secs, :charge, :df)";
         return utils.createPreparedStatement(sql, PARAMETER_MAPPING);
     }

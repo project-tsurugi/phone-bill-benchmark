@@ -176,7 +176,7 @@ class IceaxeUtilsTest {
         TsurugiTransaction transaction = null;
 
         public TestManager(Config config) {
-            super(config);
+            super(config, InsertType.UPSERT);
         }
 
         @Override
