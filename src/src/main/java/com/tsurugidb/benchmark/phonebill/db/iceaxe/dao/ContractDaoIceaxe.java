@@ -11,7 +11,6 @@ import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract.Key;
 import com.tsurugidb.benchmark.phonebill.db.iceaxe.IceaxeUtils;
 import com.tsurugidb.benchmark.phonebill.db.iceaxe.PhoneBillDbManagerIceaxe;
-import com.tsurugidb.benchmark.phonebill.db.iceaxe.PhoneBillDbManagerIceaxe.InsertType;
 import com.tsurugidb.iceaxe.sql.TgDataType;
 import com.tsurugidb.iceaxe.sql.TsurugiSqlPreparedStatement;
 import com.tsurugidb.iceaxe.sql.parameter.TgBindParameters;
@@ -25,11 +24,9 @@ public class ContractDaoIceaxe implements ContractDao {
     // TODO tsurugiがis not nullを使えないため、nullの代わりにLocalDate.MAXを使用している => is not nullサポート後にnullを使用するように変更する
 
     private final IceaxeUtils utils;
-    private final InsertType insertType;
 
     public ContractDaoIceaxe(PhoneBillDbManagerIceaxe manager) {
         utils = new IceaxeUtils(manager);
-        insertType = manager.getInsertType();
     }
 
     private static final TgEntityResultMapping<Contract> RESULT_MAPPING =
@@ -46,7 +43,7 @@ public class ContractDaoIceaxe implements ContractDao {
             .add("charge_rule", TgDataType.STRING, Contract::getRule);
 
     private TsurugiSqlPreparedStatement<Contract> createInsertPs() {
-        String sql = insertType.getSqlInsertMethod() + " into contracts(phone_number, start_date, end_date, charge_rule) "
+        String sql = "insert into contracts(phone_number, start_date, end_date, charge_rule) "
                 + "values(:phone_number, :start_date, :end_date, :charge_rule)";
         return utils.createPreparedStatement(sql, PARAMETER_MAPPING);
     }

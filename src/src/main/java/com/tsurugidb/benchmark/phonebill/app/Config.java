@@ -934,11 +934,10 @@ public class Config implements Cloneable {
         POSTGRE_SQL_JDBC,
         POSTGRE_NO_BATCHUPDATE,
         ICEAXE,
-        ICEAXE_INSERT,
         ICEAXE_SURROGATE_KEY;
 
         public boolean isTsurugi() {
-            return this == ICEAXE || this == ICEAXE_INSERT || this == DbmsType.ICEAXE_SURROGATE_KEY;
+            return this == ICEAXE || this == DbmsType.ICEAXE_SURROGATE_KEY;
         }
     }
 

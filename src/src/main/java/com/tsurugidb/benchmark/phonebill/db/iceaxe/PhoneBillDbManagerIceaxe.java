@@ -37,11 +37,9 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
     private final TsurugiTransactionManager transactionManager;
     private final ThreadLocal<TsurugiTransaction> transactionThreadLocal = new ThreadLocal<>();
     private final Config config;
-    private final InsertType insertType;
 
-    public PhoneBillDbManagerIceaxe(Config config, InsertType insertType) {
+    public PhoneBillDbManagerIceaxe(Config config) {
         this.config = config;
-        this.insertType = insertType;
         var endpoint = config.url;
         var connector = TsurugiConnector.of(endpoint);
         try {
@@ -255,23 +253,4 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
         }
         return false;
     }
-
-    public InsertType getInsertType() {
-        return insertType;
-    }
-
-    public static enum InsertType {
-        INSERT,
-        UPSERT;
-
-        public String getSqlInsertMethod() {
-            switch (this) {
-                case INSERT:
-                    return "insert";
-                case UPSERT:
-                    return "insert or replace";
-                default:
-                    throw new IllegalArgumentException("Unknown InsertType: " + this);
-            }
-        }
-    }}
+}
