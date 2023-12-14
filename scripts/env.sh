@@ -12,7 +12,11 @@ TSURUGI_THREAD_SIZE=80
 LOG_DIR=$HOME/logs
 ASYNC_PROFILER_DIR=$HOME/async-profiler-2.8.3-linux-x64/
 
-export JAVA_OPTS="$JAVA_OPTS -Dcom.tsurugidb.tsubakuro.jniverify=false"
+if [ -n "${JAVA_OPTS-}" ]; then
+  export JAVA_OPTS="${JAVA_OPTS} -Dcom.tsurugidb.tsubakuro.jniverify=false"
+else
+  export JAVA_OPTS="-Dcom.tsurugidb.tsubakuro.jniverify=false"
+fi
 export LD_LIBRARY_PATH=$TSURUGI_DIR/lib
 
 if [ -f $HOME/.phonebill ]; then
