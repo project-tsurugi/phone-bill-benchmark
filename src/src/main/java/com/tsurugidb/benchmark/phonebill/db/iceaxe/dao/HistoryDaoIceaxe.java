@@ -15,6 +15,7 @@ import com.tsurugidb.benchmark.phonebill.db.entity.Contract.Key;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
 import com.tsurugidb.benchmark.phonebill.db.iceaxe.IceaxeUtils;
 import com.tsurugidb.benchmark.phonebill.db.iceaxe.PhoneBillDbManagerIceaxe;
+import com.tsurugidb.benchmark.phonebill.db.iceaxe.PhoneBillDbManagerIceaxe.InsertType;
 import com.tsurugidb.benchmark.phonebill.util.DateUtils;
 import com.tsurugidb.iceaxe.sql.TgDataType;
 import com.tsurugidb.iceaxe.sql.TsurugiSqlPreparedStatement;
@@ -28,6 +29,7 @@ import com.tsurugidb.iceaxe.sql.result.mapping.TgEntityResultMapping;
 
 public class HistoryDaoIceaxe implements HistoryDao {
     private final IceaxeUtils utils;
+    private final InsertType insertType;
 
     private static final TgEntityResultMapping<History> RESULT_MAPPING =
             TgResultMapping.of(History::new)
@@ -50,6 +52,7 @@ public class HistoryDaoIceaxe implements HistoryDao {
 
     public HistoryDaoIceaxe(PhoneBillDbManagerIceaxe manager) {
         utils = new IceaxeUtils(manager);
+        insertType = manager.getInsertType();
     }
 
 
@@ -66,7 +69,8 @@ public class HistoryDaoIceaxe implements HistoryDao {
     }
 
     private TsurugiSqlPreparedStatement<History> createInsertPs() {
-        String sql = "insert into history(caller_phone_number, recipient_phone_number, payment_category, start_time, time_secs, charge, df) "
+        String sql = insertType.getSqlInsertMethod()
+                + " into history(caller_phone_number, recipient_phone_number, payment_category, start_time, time_secs, charge, df) "
                 + "values(:caller_phone_number, :recipient_phone_number, :payment_category, :start_time, :time_secs, :charge, :df)";
         return utils.createPreparedStatement(sql, PARAMETER_MAPPING);
     }

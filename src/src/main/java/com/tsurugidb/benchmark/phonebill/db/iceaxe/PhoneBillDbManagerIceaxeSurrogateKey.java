@@ -8,29 +8,28 @@ import com.tsurugidb.benchmark.phonebill.db.iceaxe.dao.HistoryDaoIceaxeSurrogate
 
 public class PhoneBillDbManagerIceaxeSurrogateKey extends PhoneBillDbManagerIceaxe {
 
-	public PhoneBillDbManagerIceaxeSurrogateKey(Config config) {
-		super(config);
-	}
+    public PhoneBillDbManagerIceaxeSurrogateKey(Config config) {
+        super(config, InsertType.UPSERT);
+    }
 
+    private Ddl ddl;
 
-	private Ddl ddl;
+    @Override
+    public Ddl getDdl() {
+        if (ddl == null) {
+            ddl = new DdlIceaxeSurrogateKey(this);
+        }
+        return ddl;
+    }
 
-	@Override
-	public Ddl getDdl() {
-		if (ddl == null) {
-			ddl = new DdlIceaxeSurrogateKey(this);
-		}
-		return ddl;
-	}
+    private HistoryDao historyDao;
 
-	private HistoryDao historyDao;
-
-	@Override
-	public HistoryDao getHistoryDao() {
-		if (historyDao == null) {
-			historyDao = new HistoryDaoIceaxeSurrogateKey(this);
-		}
-		return historyDao;
-	}
+    @Override
+    public HistoryDao getHistoryDao() {
+        if (historyDao == null) {
+            historyDao = new HistoryDaoIceaxeSurrogateKey(this);
+        }
+        return historyDao;
+    }
 
 }
