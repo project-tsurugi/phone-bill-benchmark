@@ -33,8 +33,8 @@ import com.tsurugidb.iceaxe.transaction.manager.exception.TsurugiTmRetryOverIOEx
 import com.tsurugidb.tsubakuro.sql.SqlServiceException;
 
 public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
-    private final TsurugiSession session;
-    private final TsurugiTransactionManager transactionManager;
+    private TsurugiSession session;
+    private TsurugiTransactionManager transactionManager;
     private final ThreadLocal<TsurugiTransaction> transactionThreadLocal = new ThreadLocal<>();
     private final Config config;
     private final InsertType insertType;
@@ -42,13 +42,17 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
     public PhoneBillDbManagerIceaxe(Config config, InsertType insertType) {
         this.config = config;
         this.insertType = insertType;
-        var endpoint = config.url;
-        var connector = TsurugiConnector.of(endpoint);
+        initSession();
+    }
+
+    void initSession() {
         try {
+            var endpoint = config.url;
+            var connector = TsurugiConnector.of(endpoint);
             var sessionOption = TgSessionOption.of();
-            this.session = connector.createSession(sessionOption);
+            session = connector.createSession(sessionOption);
             session.setConnectTimeout(30, TimeUnit.SECONDS);
-            this.transactionManager = session.createTransactionManager();
+            transactionManager = session.createTransactionManager();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -114,7 +118,7 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
                 } finally {
                     transactionThreadLocal.remove();
                 }
-            });
+            });	
         } catch (IOException e) {
             countup(txOption, CounterName.ABORTED);
             if (isRetriable(e)) {
@@ -274,4 +278,11 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
                     throw new IllegalArgumentException("Unknown InsertType: " + this);
             }
         }
-    }}
+    }
+
+    @Override
+    public void refreshConnection() {
+        doClose();
+        initSession();
+    }
+}

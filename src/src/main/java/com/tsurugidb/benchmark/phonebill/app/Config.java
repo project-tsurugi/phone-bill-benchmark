@@ -239,6 +239,28 @@ public class Config implements Cloneable {
     public double onlineAppRandomAtLeastOnceRate;
     private static final String ONLINE_APP_RANDOM_AT_LEAST_ONCE_RATE = "online.app.random.at.least.once.rate";
 
+    // Altimeter負荷テスト用のパラメータ
+
+    /**
+     *　バーストモードの持続時間、デフォルト値は0でバーストモードなし
+     */
+    public int burstDurationSec;
+    private String BURST_DURATION_SEC = "burst.duration.sec";
+
+
+    /**
+     * ノーマルモードの持続時間デフォルト値は60
+     */
+    public int normalDurationSec;
+    private String NORMAL_DURATION_SEC = "normal.duration.sec";
+
+    /**
+     * 1セッションで実行されるTX数
+     */
+     public int txsPerSession;
+     private String TXS_PER_SESSION = "txs.per.session";
+
+
     /* jdbcのパラメータ */
     public String url;
     public String user;
@@ -521,6 +543,12 @@ public class Config implements Cloneable {
 
         // Iceaxe固有のパラメータ
         transactionOption = getTransactionOption(TRANSACTION_OPTION, TransactionOption.OCC);
+
+
+        // Altimeter負荷テスト用のパラメータ
+        burstDurationSec = getInt(BURST_DURATION_SEC, 0);
+        normalDurationSec = getInt(NORMAL_DURATION_SEC, 30);
+        txsPerSession = getInt(TXS_PER_SESSION, 0);
 
         // その他のパラメータ
         randomSeed = getInt(RANDOM_SEED, 0);
@@ -889,6 +917,10 @@ public class Config implements Cloneable {
         sb.append(String.format(format, ORACLE_CREATE_INDEX_OPTION, oracleCreateIndexOption));
         sb.append(String.format(commentFormat, "Iceaxe固有のパラメータ"));
         sb.append(String.format(format, TRANSACTION_OPTION, transactionOption));
+        sb.append(String.format(commentFormat, "Altimeter負荷テスト用のパラメータ"));
+        sb.append(String.format(format, BURST_DURATION_SEC, burstDurationSec));
+        sb.append(String.format(format, NORMAL_DURATION_SEC, normalDurationSec));
+        sb.append(String.format(format, TXS_PER_SESSION, txsPerSession));
         sb.append(String.format(commentFormat, "その他のパラメータ"));
         sb.append(String.format(format, RANDOM_SEED, randomSeed));
         sb.append(String.format(format, TRANSACTION_SCOPE, transactionScope));

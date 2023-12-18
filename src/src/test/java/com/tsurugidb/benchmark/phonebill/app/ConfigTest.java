@@ -278,6 +278,11 @@ class ConfigTest {
         assertEquals(1d, config.onlineAppRandomCoverRate);
         assertEquals(0d, config.onlineAppRandomAtLeastOnceRate);
 
+        /* Altimeter用のパラメータ */
+        assertEquals(0, config.burstDurationSec);
+        assertEquals(30, config.normalDurationSec);
+        assertEquals(0, config.txsPerSession);
+
         /* その他のパラメータ */
         assertEquals(0, config.randomSeed);
         assertEquals(TransactionScope.WHOLE, config.transactionScope);
@@ -352,6 +357,12 @@ class ConfigTest {
         assertEquals(true, config.skipDatabaseAccess);
         assertEquals(0.125, config.onlineAppRandomCoverRate);
         assertEquals(0.25, config.onlineAppRandomAtLeastOnceRate);
+
+        /* Altimeter用のパラメータ */
+        assertEquals(10, config.burstDurationSec);
+        assertEquals(180, config.normalDurationSec);
+        assertEquals(1000, config.txsPerSession);
+
 
         /* その他のパラメータ */
         assertEquals(1969, config.randomSeed);

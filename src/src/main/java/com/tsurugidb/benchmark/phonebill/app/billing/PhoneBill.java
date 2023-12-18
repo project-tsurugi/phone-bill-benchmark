@@ -92,6 +92,11 @@ public class PhoneBill extends ExecutableCommand {
             // オンラインアプリを実行する
             list.stream().forEach(task -> service.submit(task));
 
+            // オンラインアプリのバーストモードの設定
+            if (config.burstDurationSec > 0) {
+                AbstractOnlineApp.activateBurstCycle(config.burstDurationSec, config.normalDurationSec);
+            }
+
             // 指定の実行時間になったら停止するためのタイマーをセット
             CountDownLatch latch = new CountDownLatch(1);
             if (config.execTimeLimitSecs > 0) {

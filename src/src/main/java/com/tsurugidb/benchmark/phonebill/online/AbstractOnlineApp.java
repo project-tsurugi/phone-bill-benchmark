@@ -6,6 +6,8 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -25,12 +27,22 @@ import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public abstract class AbstractOnlineApp implements Runnable{
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractOnlineApp.class);
+
+    /**
+     * バーストモードを表すフラグ
+     */
+    private static AtomicBoolean burstMode = new AtomicBoolean(false);
+
+    /**
+     * 通常モードとバーストモードを切り替えるタイマ
+     */
+    private static Timer timer = new Timer();
+
     /**
      * スケジュールを生成するインターバル(ミリ秒)
      */
     protected static final int CREATE_SCHEDULE_INTERVAL_MILLS  = 60 * 1000;
-
-    private static final Logger LOG = LoggerFactory.getLogger(AbstractOnlineApp.class);
 
     /**
      * 実行回数
@@ -127,6 +139,10 @@ public abstract class AbstractOnlineApp implements Runnable{
         exec(manager, label);
         long latency = System.nanoTime() - start;
         TxStatistics.addLatencyFotTxLabel(label, latency);
+        if (config.txsPerSession != 0 && execCount.get() % config.txsPerSession == 0) {
+            manager.refreshConnection();
+            LOG.info("Session refreshed.");
+        }
     }
 
     void exec(PhoneBillDbManager manager, TxLabel label) {
@@ -247,25 +263,26 @@ public abstract class AbstractOnlineApp implements Runnable{
     private void schedule(PhoneBillDbManager manager) throws IOException {
         Long schedule = scheduleList.get(0);
         if (System.currentTimeMillis() < schedule ) {
-            if (execPerMin > 0) {
+            if (execPerMin <= 0 || burstMode.get()) {
+                // 連続実行が指定されているケースとバーストモード時
+                exec(manager);
+                return;
+            } else {
                 // 処理の開始時刻になっていなければ、10ミリ秒スリープしてリターンする
                 try {
                     Thread.sleep(10);
                 } catch (InterruptedException e) {
-                    // Nothing to do;
+                    LOG.debug("Unexpected interruption in sleep", e);
                 }
                 return;
-            } else {
-                // 連続実行が指定されているケース
-                exec(manager);
-                return;
             }
+
         }
         // スケジュール時刻になったとき
         scheduleList.remove(0);
         if (scheduleList.isEmpty()) {
             // スケジュールリストの最後のエントリはスケジュールを作成する時刻
-            creatScheduleList(schedule);
+            createScheduleList(schedule);
             // このタイミングで実行回数とリトライ回数をログに出力する。
             LOG.info("Exec Count: {}, Retry Count: {}", getExecCount(), getRetryCount());
         } else {
@@ -280,7 +297,7 @@ public abstract class AbstractOnlineApp implements Runnable{
      * @param base スケジュール生成のスケジュール(時刻)
      * @throws IOException
      */
-    private void creatScheduleList(long base) throws IOException {
+    private void createScheduleList(long base) throws IOException {
         long now = System.currentTimeMillis();
         if (base + CREATE_SCHEDULE_INTERVAL_MILLS < now) {
             // スケジュール生成の呼び出しが、予定よりCREATE_SCHEDULE_INTERVAL_MILLSより遅れた場合は、
@@ -315,6 +332,7 @@ public abstract class AbstractOnlineApp implements Runnable{
      * このオンラインアプリケーションをアボートする
      */
     public void terminate() {
+        timer.cancel();
         terminationRequested.set(true);
     }
 
@@ -367,5 +385,24 @@ public abstract class AbstractOnlineApp implements Runnable{
     public boolean getTerminated() {
         return terminated.get();
     }
+
+    public static void activateBurstCycle(final int burstDurationSeconds, final int normalDurationSeconds) {
+        scheduleNextCycle(burstDurationSeconds, normalDurationSeconds, true);
+    }
+
+    private static void scheduleNextCycle(int burstDuration, int normalDuration, final boolean activateBurstMode) {
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+                burstMode.set(activateBurstMode);
+                LOG.info("Burst mode " + (activateBurstMode ? "enabled" : "disabled"));
+
+                // 次のステータス切り替えのために新しいタスクをスケジュール
+                scheduleNextCycle(burstDuration, normalDuration, !activateBurstMode);
+            }
+        };
+        timer.schedule(task, (activateBurstMode ? normalDuration: burstDuration  ) * 1000L); // ミリ秒単位に変換
+    }
+
 }
 

@@ -399,4 +399,12 @@ public abstract class PhoneBillDbManager implements Closeable {
             LOG.error("A leak has been discovered, stack trace = {}.", stackTrace);
         }
     }
+
+
+    /**
+     * コネクションをリフレッシュする。デフォルト動作はなにも行いません。
+     * 必要に応じてサブクラスで処理を実装して下さい。
+     */
+    public void refreshConnection() {
+    }
 }
