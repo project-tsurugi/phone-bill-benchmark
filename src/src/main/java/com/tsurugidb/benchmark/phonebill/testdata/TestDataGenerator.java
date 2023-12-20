@@ -40,6 +40,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public class TestDataGenerator {
     private static final Logger LOG = LoggerFactory.getLogger(TestDataGenerator.class);
+    private static final int RECORDS_PER_TASK = 10000;
 
     /**
      * 統計情報
@@ -114,7 +115,7 @@ public class TestDataGenerator {
      * @throws IOException
      */
     public GenerateHistoryTask getGenerateHistoryTaskForOnlineApp() throws IOException {
-        Params params = createTaskParams(0, 0, 0,1).get(0);
+        Params params = createTaskParams(0, 0, 0, 1, RECORDS_PER_TASK).get(0);
         params.historyWriter = new DummyHistoryWriter();
         GenerateHistoryTask generateHistoryTask = new GenerateHistoryTask(params);
         generateHistoryTask.init();
@@ -126,10 +127,11 @@ public class TestDataGenerator {
      * @param end 通話開始時刻の最大値 + 1
      * @param numbeOfHistory 作成する履歴数
      * @param numberOfTasks 作成するタスク数
+     * @param recordsPerTask
      * @return
      */
     private List<Params> createTaskParams(long start, long end, long numbeOfHistory,
-            int numberOfTasks) {
+            int numberOfTasks, int recordsPerTask) {
         Params params = new Params();
         params.taskId = 0;
         params.config = config;
@@ -143,7 +145,7 @@ public class TestDataGenerator {
         if (numberOfTasks <= 1) {
             return Collections.singletonList(params);
         } else {
-            return createParams(params, numberOfTasks);
+            return createParams(params, numberOfTasks, recordsPerTask);
         }
     }
 
@@ -152,9 +154,10 @@ public class TestDataGenerator {
      *
      * @param params
      * @param numberOfTasks
+     * @param recordsPerTask
      * @return
      */
-    private List<Params> createParams(Params params, int numberOfTasks) {
+    private List<Params> createParams(Params params, int numberOfTasks, int recordsPerTask) {
         List<Params> list = new ArrayList<>(numberOfTasks);
 
         long firstNumberOfHistory = 0;
@@ -166,15 +169,15 @@ public class TestDataGenerator {
                 // dividedParams.numbeOfHistory = params.numbeOfHistory / numberOfTasks で計算すると端数がでるので、
                 // i == 0 のときに端数を調整した値を入れる
                 firstNumberOfHistory = config.numberOfHistoryRecords
-                        - ((long)config.maxNumberOfLinesHistoryCsv) * (numberOfTasks - 1);
+                        - ((long)recordsPerTask) * (numberOfTasks - 1);
                 dividedParams.numberOfHistory = firstNumberOfHistory;
             } else {
-                dividedParams.numberOfHistory = config.maxNumberOfLinesHistoryCsv;
+                dividedParams.numberOfHistory = recordsPerTask;
                 // 各タスクに異なる乱数発生器を使用する
                 dividedParams.random = new Random(random.nextLong());
                 dividedParams.start = list.get(i - 1).end;
             }
-            double scale = ((double)firstNumberOfHistory + (double)(config.maxNumberOfLinesHistoryCsv) * i)
+            double scale = ((double)firstNumberOfHistory + (double)(recordsPerTask) * i)
             / (double)(config.numberOfHistoryRecords);
             dividedParams.end = params.start + Math.round((params.end - params.start) * scale);
             list.add(dividedParams);
@@ -290,7 +293,7 @@ public class TestDataGenerator {
      * @throws IOException
      */
     public void generateHistoryToDb(Config config) {
-        List<Params> paramsList = createParamsList(10000);
+        List<Params> paramsList = createParamsList(RECORDS_PER_TASK);
         for(Params params: paramsList) {
             params.historyWriter = new DaoHistoryWriter(config);
         }
@@ -337,7 +340,7 @@ public class TestDataGenerator {
         }
 
         List<Params> paramsList = createTaskParams(minDate.getTime(), maxDate.getTime(),
-                config.numberOfHistoryRecords, (int)numberOfTasks);
+                config.numberOfHistoryRecords, (int)numberOfTasks, recordsPerTask);
         return paramsList;
     }
 
@@ -576,9 +579,12 @@ public class TestDataGenerator {
         }
 
         private void insertHistories() {
+            long startTime = System.currentTimeMillis();
             manager.execute(TxOption.ofOCC(Integer.MAX_VALUE, TxLabel.TEST_DATA_GENERATOR), () -> {
                 historyDao.batchInsert(histories);
             });
+            long duration = System.currentTimeMillis() - startTime;
+            LOG.info("{} records were inserted. Duration: {} milliseconds.", histories.size(), duration);
             histories.clear();
         }
     }

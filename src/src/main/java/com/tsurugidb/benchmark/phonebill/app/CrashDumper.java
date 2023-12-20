@@ -53,6 +53,6 @@ public class CrashDumper {
         for (ThreadInfo threadInfo : threadInfos) {
             dump.append(threadInfo.toString()).append("\n");
         }
-        LOG.error("Unexpected application termination. Recording thread state for debugging. \n\n{}", dump.toString());
+        LOG.debug("Unexpected application termination. Recording thread state for debugging. \n\n{}", dump.toString());
     }
 }
