@@ -27,6 +27,7 @@ import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.TxLabel;
 import com.tsurugidb.benchmark.phonebill.db.TxOption;
+import com.tsurugidb.benchmark.phonebill.db.TxOption.Table;
 import com.tsurugidb.benchmark.phonebill.db.dao.ContractDao;
 import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
@@ -580,7 +581,7 @@ public class TestDataGenerator {
 
         private void insertHistories() {
             long startTime = System.currentTimeMillis();
-            manager.execute(TxOption.ofOCC(Integer.MAX_VALUE, TxLabel.TEST_DATA_GENERATOR), () -> {
+            manager.execute(TxOption.ofLTX(Integer.MAX_VALUE, TxLabel.TEST_DATA_GENERATOR, Table.HISTORY), () -> {
                 historyDao.batchInsert(histories);
             });
             long duration = System.currentTimeMillis() - startTime;
