@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  https://spotbugs.readthedocs.io/ja/latest/filter.html
+  https://spotbugs.readthedocs.io/ja/latest/bugDescriptions.html
+-->
+<FindBugsFilter>
+  <Match>
+    <Class name="com.tsurugidb.benchmark.phonebill.app.Config" />
+    <Bug pattern="PA_PUBLIC_PRIMITIVE_ATTRIBUTE" />
+  </Match>
+  <Match>
+    <Or>
+      <Bug pattern="CT_CONSTRUCTOR_THROW" />
+      <Bug pattern="EI_EXPOSE_REP" />
+      <Bug pattern="EI_EXPOSE_REP2" />
+    </Or>
+  </Match>
+</FindBugsFilter>
