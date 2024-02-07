@@ -114,19 +114,20 @@ tasks.withType(JavaCompile) { task ->
 
 
 spotbugsMain {
-    ignoreFailures = true
     reports {
-        html {
-            enabled = !project.hasProperty("ci")
-            destination = file("$buildDir/reports/spotbugs/main/spotbugs.html")
-            stylesheet = 'fancy-hist.xsl'
-        }
         xml {
-            enabled = project.hasProperty("ci")
+            enabled = true
             destination = file("$buildDir/reports/spotbugs/main/spotbugs.xml")
         }
+        html {
+            enabled = true
+            destination = file("$buildDir/reports/spotbugs/main/spotbugs.html")
+        }
     }
+    excludeFilter = project.file('spotbugs-exclude-filter.xml')
 }
+
+spotbugsTest.enabled = false
 
 eclipse {
     classpath {
