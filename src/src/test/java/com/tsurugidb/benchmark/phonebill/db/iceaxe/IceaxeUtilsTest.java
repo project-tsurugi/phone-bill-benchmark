@@ -106,7 +106,7 @@ class IceaxeUtilsTest {
                     }));
 
             assertThrows(UncheckedIOException.class, () -> utils
-                    .execute(new TsurugiSqlPreparedQuery<TgBindParameters, History>(session, "", null, null, null) {
+                    .execute(new TsurugiSqlPreparedQuery<TgBindParameters, History>(session, "", null, null) {
 
                         @Override
                         public TsurugiQueryResult<History> execute(TsurugiTransaction transaction,
@@ -116,7 +116,7 @@ class IceaxeUtilsTest {
                     }, null));
 
             assertThrows(TsurugiTransactionRuntimeException.class, () -> utils
-                    .execute(new TsurugiSqlPreparedQuery<TgBindParameters, History>(session, "", null, null, null) {
+                    .execute(new TsurugiSqlPreparedQuery<TgBindParameters, History>(session, "", null,  null) {
 
                         @Override
                         public TsurugiQueryResult<History> execute(TsurugiTransaction transaction,
@@ -132,7 +132,7 @@ class IceaxeUtilsTest {
         List<History> list = Collections
                 .singletonList(History.create("1", "2", "C", "2022-01-01 00:00:00.000", 10, null, 0));
 
-        manager.transaction = new TsurugiTransaction(session, null, null) {
+        manager.transaction = new TsurugiTransaction(session, null) {
             @Override
             public <P> int executeAndGetCount(TsurugiSqlPreparedStatement<P> ps, P parameter) throws IOException, TsurugiTransactionException {
                 throw IO_EXCEPTION;
@@ -150,7 +150,7 @@ class IceaxeUtilsTest {
         assertThrows(UncheckedIOException.class,
                 () -> utils.executeAndGetCount((TsurugiSqlPreparedStatement<History>) null, list));
 
-        manager.transaction = new TsurugiTransaction(session, null, null) {
+        manager.transaction = new TsurugiTransaction(session, null) {
             @Override
             public <P> int executeAndGetCount(TsurugiSqlPreparedStatement<P> ps, P parameter)
                     throws IOException, TsurugiTransactionException {
