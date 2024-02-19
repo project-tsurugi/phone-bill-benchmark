@@ -94,8 +94,14 @@ public class TestDataGenerator {
      * @param accessor
      * @throws IOException
      */
-    public TestDataGenerator(Config config, Random random, ContractBlockInfoAccessor accessor) throws IOException {
-        this.config = config;
+    public TestDataGenerator(Config c, Random random, ContractBlockInfoAccessor accessor) throws IOException {
+        config = c.clone();
+        if (config.enableUniformContractDuration) {
+            this.config.duplicatePhoneNumberRate = 0;
+            this.config.expirationDateRate = 0;
+            this.config.noExpirationDateRate += c.expirationDateRate + c.duplicatePhoneNumberRate * 2;
+        }
+
         if (config.minDate.getTime() >= config.maxDate.getTime()) {
             throw new RuntimeException("maxDate is less than or equal to minDate, minDate =" + config.minDate + ", maxDate = "
                     + config.maxDate);

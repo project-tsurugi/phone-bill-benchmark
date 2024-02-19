@@ -295,6 +295,16 @@ public class ContractInfoReader {
         Random random = new Random(config.randomSeed);
         List<Duration> list = new ArrayList<Duration>();
 
+        if (config.enableUniformContractDuration) {
+            // config.enableUniformContractDurationがtrueの場合、全てのDurationのStartをConfig.minDate、endをnullに設定
+            int totalPatterns = config.noExpirationDateRate + config.expirationDateRate
+                    + config.duplicatePhoneNumberRate * 2; // duplicatePhoneNumberRateの場合、2つのDurationが追加される
+            for (int i = 0; i < totalPatterns; i++) {
+                list.add(new Duration(config.minDate, null));
+            }
+            return list; // 早期リターン
+        }
+
         // 契約終了日がないduration
         for (int i = 0; i < config.noExpirationDateRate; i++) {
             Date start = getDate(config.minDate, config.maxDate, random);

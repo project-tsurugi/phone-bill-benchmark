@@ -442,4 +442,37 @@ class ContractInfoReaderTest {
             assertNull(d2.end);
         }
     }
+
+    @Test
+    void testInitDurationListWithUniformContractDuration() throws IOException {
+        // enableUniformContractDurationがtrueのケース
+        testInitDurationListSub(true, 5, 5, 10, DateUtils.toDate("2010-11-11"), DateUtils.toDate("2020-01-01"));
+        // enableUniformContractDurationがfalseのケース
+        testInitDurationLisSub(5, 5, 10, DateUtils.toDate("2010-11-11"), DateUtils.toDate("2020-01-01"));
+    }
+
+    void testInitDurationListSub(boolean enableUniformContractDuration, int duplicatePhoneNumberRate, int expirationDateRate, int noExpirationDateRate, Date start, Date end) throws IOException {
+        Config config = Config.getConfig();
+        config.enableUniformContractDuration = enableUniformContractDuration;
+        config.duplicatePhoneNumberRate = duplicatePhoneNumberRate;
+        config.expirationDateRate = expirationDateRate;
+        config.noExpirationDateRate = noExpirationDateRate;
+        config.minDate = start;
+        config.maxDate = end;
+
+        List<Duration> list = ContractInfoReader.initDurationList(config);
+
+        if (enableUniformContractDuration) {
+            // enableUniformContractDurationがtrueの場合の検証
+            assertEquals(duplicatePhoneNumberRate * 2 + expirationDateRate + noExpirationDateRate, list.size());
+            for (Duration d : list) {
+                assertEquals(start, d.start);
+                assertNull(d.end);
+            }
+        } else {
+            // enableUniformContractDurationがfalseの場合の既存のテストケースを再利用
+            testInitDurationLisSub(duplicatePhoneNumberRate, expirationDateRate, noExpirationDateRate, start, end);
+        }
+    }
+
 }
