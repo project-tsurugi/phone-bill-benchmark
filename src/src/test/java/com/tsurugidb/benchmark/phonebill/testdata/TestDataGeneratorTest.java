@@ -321,6 +321,7 @@ class TestDataGeneratorTest extends AbstractJdbcTestCase {
         // === numberOfHistoryRecordsがmaxNumberOfLinesHistoryCsvより大きいケース ===
 
         config.numberOfHistoryRecords = 9123456;
+        generator = new TestDataGenerator(config, new Random(config.randomSeed), accessor);
         List<Params> list =  generator.createParamsList(config.maxNumberOfLinesHistoryCsv);
         assertEquals(10, list.size());;
 
@@ -362,6 +363,7 @@ class TestDataGeneratorTest extends AbstractJdbcTestCase {
         config.numberOfHistoryRecords = 10000000000L;
         config.numberOfContractsRecords = 1000000;
         config.maxNumberOfLinesHistoryCsv = 1000000000;
+        generator = new TestDataGenerator(config, new Random(config.randomSeed), accessor);
         list =  generator.createParamsList(config.maxNumberOfLinesHistoryCsv);
         assertEquals(config.numberOfHistoryRecords / config.maxNumberOfLinesHistoryCsv , list.size());;
 

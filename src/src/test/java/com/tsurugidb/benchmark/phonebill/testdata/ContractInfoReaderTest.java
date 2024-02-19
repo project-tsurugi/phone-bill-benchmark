@@ -466,7 +466,7 @@ class ContractInfoReaderTest {
             // enableUniformContractDurationがtrueの場合の検証
             assertEquals(duplicatePhoneNumberRate * 2 + expirationDateRate + noExpirationDateRate, list.size());
             for (Duration d : list) {
-                assertEquals(start, d.start);
+                assertEquals(start.getTime(), d.start);
                 assertNull(d.end);
             }
         } else {
