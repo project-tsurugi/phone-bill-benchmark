@@ -45,6 +45,12 @@ public class Config implements Cloneable {
     private static final String NUMBER_OF_CONTRACTS_RECORDS = "number.of.contracts.records";
 
     /**
+     * 一様な契約期間のマスタを作成する機能を有効にするフラグ
+     */
+    public boolean enableUniformContractDuration;
+    private static final String ENABLE_UNIFORM_CONTRACT_DURATION = "enable.uniform.contract.duration";
+
+    /**
      *  契約マスタの電話番号が重複する割合
      */
     public int duplicatePhoneNumberRate;
@@ -453,6 +459,7 @@ public class Config implements Cloneable {
 
         // 契約マスタ生成に関するパラメータ
         numberOfContractsRecords = getInt(NUMBER_OF_CONTRACTS_RECORDS, 1000);
+        enableUniformContractDuration = getBoolean(ENABLE_UNIFORM_CONTRACT_DURATION, false);
         duplicatePhoneNumberRate = getInt(DUPLICATE_PHONE_NUMBER_RATIO, 10);
         expirationDateRate = getInt(EXPIRATION_DATE_RATE, 30);
         noExpirationDateRate = getInt(NO_EXPIRATION_DATE_RATE, 50);
@@ -827,6 +834,7 @@ public class Config implements Cloneable {
         sb.append(System.lineSeparator());
         sb.append(String.format(commentFormat, "契約マスタ生成に関するパラメータ"));
         sb.append(String.format(format, NUMBER_OF_CONTRACTS_RECORDS, numberOfContractsRecords));
+        sb.append(String.format(format, ENABLE_UNIFORM_CONTRACT_DURATION, enableUniformContractDuration));
         sb.append(String.format(format, DUPLICATE_PHONE_NUMBER_RATIO, duplicatePhoneNumberRate));
         sb.append(String.format(format, EXPIRATION_DATE_RATE, expirationDateRate));
         sb.append(String.format(format, NO_EXPIRATION_DATE_RATE, noExpirationDateRate));
