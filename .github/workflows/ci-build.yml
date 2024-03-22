@@ -10,14 +10,10 @@ on:
 
 jobs:
   Build:
-    runs-on: [self-hosted, docker]
+    runs-on: ubuntu-latest
     permissions:
       checks: write
     timeout-minutes: 30
-    container:
-      image:  ghcr.io/project-tsurugi/tsurugi-ci:latest
-      volumes:
-        - ${{ vars.gradle_cache_dir }}:/root/.gradle
     defaults:
       run:
         shell: bash
@@ -36,8 +32,12 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+        ports:
+          - 5432:5432
       tsurugi:
         image: ghcr.io/project-tsurugi/tsurugidb:snapshot
+        ports:
+          - 12345:12345
 
     steps:
       - name: Setup_Java
@@ -55,7 +55,7 @@ jobs:
 
       - name: Test
         run: |
-          ./gradlew -i test --warning-mode all -Purl.replace="jdbc:postgresql://127.0.0.1/phonebill|jdbc:postgresql://postgres/phonebill,tcp://localhost:12345|tcp://tsurugi:12345"
+          ./gradlew -i test --warning-mode all
 
       - name: Static_Analysis
         run: |
