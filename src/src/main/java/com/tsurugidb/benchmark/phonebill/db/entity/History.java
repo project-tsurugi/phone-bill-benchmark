@@ -1,7 +1,6 @@
 package com.tsurugidb.benchmark.phonebill.db.entity;
 
 import java.io.Serializable;
-import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
@@ -60,7 +59,7 @@ public class History implements Cloneable, Serializable{
         builder.append(", paymentCategorty=");
         builder.append(paymentCategorty);
         builder.append(", startTime=");
-        builder.append(new Time(startTime));
+        builder.append(new Timestamp(startTime));
         builder.append(", timeSecs=");
         builder.append(timeSecs);
         builder.append(", charge=");
