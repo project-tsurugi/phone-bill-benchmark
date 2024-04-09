@@ -224,6 +224,7 @@ public abstract class AbstractOnlineApp implements Runnable{
                 // txPerMinが0の場合は何もしない
                 return;
             }
+            Thread.sleep(10 * 1000);
             LOG.info("{} started.", name);
             startTime = System.currentTimeMillis();
             scheduleList.add(startTime);
@@ -231,7 +232,7 @@ public abstract class AbstractOnlineApp implements Runnable{
                 schedule(manager);
             }
             LOG.info("{} terminated.", name);
-        } catch (RuntimeException | IOException e) {
+        } catch (RuntimeException | IOException | InterruptedException e) {
             LOG.error("Aborting by exception", e);
             System.exit(1);
         } finally {
