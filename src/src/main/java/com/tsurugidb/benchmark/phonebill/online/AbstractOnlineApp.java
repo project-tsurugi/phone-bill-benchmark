@@ -224,6 +224,12 @@ public abstract class AbstractOnlineApp implements Runnable{
                 // txPerMinが0の場合は何もしない
                 return;
             }
+            String prop = System.getProperty("phonebill.online.delayed.startup.sec");
+            if (prop != null) {
+                int delaySec = Integer.parseInt(prop);
+                LOG.info("Sleep for {} seconds to delay online startup", delaySec);
+                Thread.sleep(delaySec * 1000);
+            }
             LOG.info("{} started.", name);
             startTime = System.currentTimeMillis();
             scheduleList.add(startTime);
@@ -231,7 +237,7 @@ public abstract class AbstractOnlineApp implements Runnable{
                 schedule(manager);
             }
             LOG.info("{} terminated.", name);
-        } catch (RuntimeException | IOException e) {
+        } catch (RuntimeException | IOException | InterruptedException e) {
             LOG.error("Aborting by exception", e);
             System.exit(1);
         } finally {
