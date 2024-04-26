@@ -380,13 +380,7 @@ public class Config implements Cloneable {
     public String reportDir;
     private static final String REPORT_DIR = "report.dir";
 
-    
-    /**
-     * 不要なセカンダリインデックスの更新をしない 
-     */
-    public boolean indexUpdateAvoidance;
-    private static final String INDEX_UPDATE_AVOIDANCE = "index.update.avoidance";
-    
+
 
     /**
      * コンストラクタ.
@@ -542,7 +536,6 @@ public class Config implements Cloneable {
         onlineOnly = getBoolean(ONLINE_ONLY, false);
         execTimeLimitSecs = getInt(EXEC_TIME_LIMIT_SECS, 0);
         reportDir = getString(REPORT_DIR, "/tmp");
-        indexUpdateAvoidance = getBoolean(INDEX_UPDATE_AVOIDANCE, true);
 
         // パラメータ間の矛盾のチェック
         if (transactionScope == TransactionScope.CONTRACT && sharedConnection) {
@@ -911,7 +904,6 @@ public class Config implements Cloneable {
         sb.append(String.format(format, ONLINE_ONLY, onlineOnly));
         sb.append(String.format(format, EXEC_TIME_LIMIT_SECS, execTimeLimitSecs));
         sb.append(String.format(format, REPORT_DIR, reportDir));
-        sb.append(String.format(format, INDEX_UPDATE_AVOIDANCE, indexUpdateAvoidance));
         return sb.toString();
     }
 
