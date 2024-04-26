@@ -21,6 +21,8 @@ public class History implements Cloneable, Serializable{
      * 受信者電話番号
      */
     private String recipientPhoneNumber;
+    private boolean recipientPhoneNumberWasSet = false;
+    private boolean recipientPhoneNumberChanged = false;
 
     /**
      * 料金区分(発信者負担(C)、受信社負担(R))
@@ -158,8 +160,11 @@ public class History implements Cloneable, Serializable{
 
     public void setRecipientPhoneNumber(String recipientPhoneNumber) {
         this.recipientPhoneNumber = recipientPhoneNumber;
+        recipientPhoneNumberChanged = recipientPhoneNumberWasSet ? true: false;
+        recipientPhoneNumberWasSet = true;
     }
 
+    
 
     public String getPaymentCategorty() {
         return paymentCategorty;
@@ -218,6 +223,10 @@ public class History implements Cloneable, Serializable{
 
     public void setSid(long sid) {
         this.sid = sid;
+    }
+
+    public boolean isRecipientPhoneNumberChanged() {
+        return recipientPhoneNumberChanged;
     }
 
     /**

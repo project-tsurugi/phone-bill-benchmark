@@ -353,6 +353,7 @@ class HistoryDaoJdbcTest extends AbstractJdbcTestCase {
 
 		actualSet = new HashSet<History>(dao.getHistories());
 		assertEquals(set, actualSet);
+		actualSet.stream().forEach(h -> assertFalse(h.isRecipientPhoneNumberChanged()));
 	}
 
 	@Test

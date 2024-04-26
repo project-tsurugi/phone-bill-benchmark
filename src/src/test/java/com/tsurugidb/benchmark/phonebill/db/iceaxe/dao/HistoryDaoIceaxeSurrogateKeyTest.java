@@ -482,6 +482,7 @@ class HistoryDaoIceaxeSurrogateKeyTest {
             return dao.getHistories();
         }).stream().collect(Collectors.toSet());
         assertEquals(set, actualSet);
+        actualSet.stream().forEach(h -> assertFalse(h.isRecipientPhoneNumberChanged()));
     }
 
     @Test
