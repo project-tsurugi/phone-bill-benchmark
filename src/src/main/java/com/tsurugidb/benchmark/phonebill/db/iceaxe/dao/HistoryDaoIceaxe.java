@@ -82,6 +82,14 @@ public class HistoryDaoIceaxe implements HistoryDao {
         return utils.createPreparedStatement(sql, PARAMETER_MAPPING);
     }
 
+    private TsurugiSqlPreparedStatement<History> createUpdateNonKeyFieldsPs() {
+        String sql = "update history"
+                + " set time_secs = :time_secs, charge = :charge, df = :df"
+                + " where caller_phone_number = :caller_phone_number and payment_category = :payment_category and start_time = :start_time";
+        return utils.createPreparedStatement(sql, PARAMETER_MAPPING);
+    }
+
+
     @Override
     public long getMaxStartTime() {
         var ps = utils.createPreparedQuery("select max(start_time) as max_start_time from history");
@@ -92,6 +100,12 @@ public class HistoryDaoIceaxe implements HistoryDao {
     @Override
     public int update(History history) {
         var ps = createUpdatePs();
+        return utils.executeAndGetCount(ps, history);
+    }
+
+    @Override
+    public int updateNonKeyFields(History history) {
+        var ps = createUpdateNonKeyFieldsPs();
         return utils.executeAndGetCount(ps, history);
     }
 
@@ -107,6 +121,15 @@ public class HistoryDaoIceaxe implements HistoryDao {
         // TODO アップデートに成功した件数を返すようにする
         // TODO アップデートに失敗した(アップデートの戻り値が0)例外をスローする
         var ps = createUpdatePs();
+        int[] rets = utils.executeAndGetCount(ps, histories);
+        return rets.length;
+    }
+
+    @Override
+    public int batchUpdateNonKeyFields(List<History> histories) {
+        // TODO アップデートに成功した件数を返すようにする
+        // TODO アップデートに失敗した(アップデートの戻り値が0)例外をスローする
+        var ps = createUpdateNonKeyFieldsPs();
         int[] rets = utils.executeAndGetCount(ps, histories);
         return rets.length;
     }
@@ -252,4 +275,5 @@ public class HistoryDaoIceaxe implements HistoryDao {
         var ps = utils.createPreparedStatement(sql);
         return utils.executeAndGetCount(ps);
     }
+
 }

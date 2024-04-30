@@ -23,7 +23,8 @@ import com.tsurugidb.benchmark.phonebill.util.DateUtils;
 
 class HistoryDaoJdbcTest extends AbstractJdbcTestCase {
 
-	@Test void testBatchInsert() throws SQLException {
+	@Test
+	void testBatchInsert() throws SQLException {
 		HistoryDao dao = getManager().getHistoryDao();
 		testBatchInsertSub(dao);
 	}
@@ -78,7 +79,6 @@ class HistoryDaoJdbcTest extends AbstractJdbcTestCase {
 	final void testInsert() throws SQLException {
 		HistoryDao dao = getManager().getHistoryDao();
 
-
 		Set<History> expectedSet = new HashSet<>();
 
 		// 1件インサート
@@ -103,16 +103,16 @@ class HistoryDaoJdbcTest extends AbstractJdbcTestCase {
 		HistoryDao dao = getManager().getHistoryDao();
 
 		// 履歴が空のとき
-		assertEquals(0L,  dao.getMaxStartTime());
+		assertEquals(0L, dao.getMaxStartTime());
 
 		// 履歴が複数存在するとき
-		insertToHistory("Phone-0001", "Phone-0008", "C", "2020-10-31 23:59:59.999", 30,  0);
-		insertToHistory("Phone-0001", "Phone-0008", "C", "2020-11-01 00:00:00.000", 30,  0);
-		insertToHistory("Phone-0001", "Phone-0008", "C", "2021-11-15 12:12:12.000", 90,  1);
-		insertToHistory("Phone-0001", "Phone-0008", "C", "2020-11-30 23:59:59.999", 90,  0);
-		insertToHistory("Phone-0001", "Phone-0008", "C", "2020-12-01 00:00:00.000", 30,  0);
-		insertToHistory("Phone-0005", "Phone-0001", "C", "2020-11-10 00:00:00.000", 25,  0);
-		insertToHistory("Phone-0005", "Phone-0008", "R", "2020-11-30 00:00:00.000", 30,  0);
+		insertToHistory("Phone-0001", "Phone-0008", "C", "2020-10-31 23:59:59.999", 30, 0);
+		insertToHistory("Phone-0001", "Phone-0008", "C", "2020-11-01 00:00:00.000", 30, 0);
+		insertToHistory("Phone-0001", "Phone-0008", "C", "2021-11-15 12:12:12.000", 90, 1);
+		insertToHistory("Phone-0001", "Phone-0008", "C", "2020-11-30 23:59:59.999", 90, 0);
+		insertToHistory("Phone-0001", "Phone-0008", "C", "2020-12-01 00:00:00.000", 30, 0);
+		insertToHistory("Phone-0005", "Phone-0001", "C", "2020-11-10 00:00:00.000", 25, 0);
+		insertToHistory("Phone-0005", "Phone-0008", "R", "2020-11-30 00:00:00.000", 30, 0);
 
 		assertEquals(DateUtils.toTimestamp("2021-11-15 12:12:12.000").getTime(), dao.getMaxStartTime());
 
@@ -126,6 +126,7 @@ class HistoryDaoJdbcTest extends AbstractJdbcTestCase {
 		History h3 = History.create("001", "456", "C", "2022-01-10 15:15:28.314", 5, 2, 1);
 		History h4 = History.create("001", "456", "C", "2022-01-05 00:00:00.000", 5, 2, 0);
 		History h5 = History.create("001", "459", "C", "2022-01-10 15:15:28.312", 3, null, 1);
+		History h6 = History.create("001", "456", "C", "2022-01-10 15:15:28.312", 5, 2, 0);
 
 		// 空のテーブルに対してアップデート
 
@@ -137,22 +138,68 @@ class HistoryDaoJdbcTest extends AbstractJdbcTestCase {
 		assertEquals(testDataSet, getHistorySet());
 
 		// 更新対象のレコードがないケース
-		assertEquals(0,dao.update(h4));
+		assertEquals(0, dao.update(h4));
 		assertEquals(testDataSet, getHistorySet());
 
 		// 同じ値で更新
-		assertEquals(1,dao.update(h1));
+		assertEquals(1, dao.update(h1));
 		assertEquals(testDataSet, getHistorySet());
 
-		// キー値以外を全て更新
-		assertEquals(1,dao.update(h5));
+		// PK以外を全て更新
+		assertEquals(1, dao.update(h5));
 		testDataSet.add(h5);
 		testDataSet.remove(h1);
 		assertEquals(testDataSet, getHistorySet());
 
+		// キー値以外を更新
+		assertEquals(1, dao.update(h6));
+		testDataSet.add(h6);
+		testDataSet.remove(h5);
+		assertEquals(testDataSet, getHistorySet());
 	}
 
-	@Test void testBatchUpdate() throws SQLException {
+	@Test
+	final void testUpdateNonKeyFields() throws SQLException {
+		HistoryDao dao = getManager().getHistoryDao();
+		History h1 = History.create("001", "456", "C", "2022-01-10 15:15:28.312", 5, 2, 0);
+		History h2 = History.create("001", "456", "C", "2022-01-10 15:15:28.313", 5, null, 0);
+		History h3 = History.create("001", "456", "C", "2022-01-10 15:15:28.314", 5, 2, 1);
+		History h4 = History.create("001", "456", "C", "2022-01-05 00:00:00.000", 5, 2, 0);
+		History h5 = History.create("001", "459", "C", "2022-01-10 15:15:28.312", 3, null, 1);
+		History h6 = History.create("001", "456", "C", "2022-01-10 15:15:28.312", 5, 2, 0);
+		History h7 = History.create("001", "456", "C", "2022-01-10 15:15:28.312", 3, null, 1);
+
+		// 空のテーブルに対してアップデート
+		assertEquals(0, dao.updateNonKeyFields(h1));
+
+		// テストデータを入れる
+		Set<History> testDataSet = new HashSet<>(Arrays.asList(h1, h2, h3));
+		dao.batchInsert(testDataSet);
+		assertEquals(testDataSet, getHistorySet());
+
+		// 更新対象のレコードがないケース
+		assertEquals(0, dao.updateNonKeyFields(h4));
+		assertEquals(testDataSet, getHistorySet());
+
+		// 同じ値で更新
+		assertEquals(1, dao.updateNonKeyFields(h1));
+		assertEquals(testDataSet, getHistorySet());
+
+		// PK以外を全て違う値で更新してもキーチ以外は変更されない
+		assertEquals(1, dao.updateNonKeyFields(h5));
+		testDataSet.add(h7);
+		testDataSet.remove(h1);
+		assertEquals(testDataSet, getHistorySet());
+
+		// キー値以外を更新
+		assertEquals(1, dao.updateNonKeyFields(h6));
+		testDataSet.add(h6);
+		testDataSet.remove(h7); 
+		assertEquals(testDataSet, getHistorySet());
+	}
+
+	@Test
+	void testBatchUpdate() throws SQLException {
 		HistoryDao dao = getManager().getHistoryDao();
 		testBatchUpdateSub(dao);
 	}
@@ -168,12 +215,13 @@ class HistoryDaoJdbcTest extends AbstractJdbcTestCase {
 
 		// テストデータを入れる
 		Set<History> testDataSet = new HashSet<>(Arrays.asList(h1, h2, h3));
-		dao.batchInsert(testDataSet);;
+		dao.batchInsert(testDataSet);
+		;
 		assertEquals(testDataSet, getHistorySet());
 
 		// アップデート実行
 		List<History> updateDataList = Arrays.asList(h2u, h4u, h3u);
-		assertEquals(3,  dao.batchUpdate(updateDataList));
+		assertEquals(3, dao.batchUpdate(updateDataList));
 		testDataSet.remove(h2);
 		testDataSet.remove(h3);
 		testDataSet.add(h2u);
@@ -215,7 +263,6 @@ class HistoryDaoJdbcTest extends AbstractJdbcTestCase {
 		History h8 = History.create("004", "001", "C", "2022-01-05 12:10:01.999", 8, null, 0);
 		History h9 = History.create("005", "007", "C", "2022-09-18 12:10:01.999", 9, null, 0);
 		dao.batchInsert(Arrays.asList(h7, h8, h9));
-
 
 		Set<History> expectedSet = new HashSet<>();
 		Set<History> actualSet = new HashSet<>();
@@ -304,7 +351,7 @@ class HistoryDaoJdbcTest extends AbstractJdbcTestCase {
 
 		dao.batchInsert(histories);
 
-		assertEquals(histories , getHistorySet());
+		assertEquals(histories, getHistorySet());
 
 		// 期待通りのレコードがselectされることを確認
 		HashSet<History> actual = new HashSet<>(dao.getHistories(target));
@@ -333,14 +380,13 @@ class HistoryDaoJdbcTest extends AbstractJdbcTestCase {
 
 	}
 
-
 	@Test
 	final void testGetHistories() {
 		HistoryDao dao = getManager().getHistoryDao();
 		Set<History> actualSet;
 
 		// テーブルが空の時
-		assertEquals(Collections.EMPTY_LIST,  dao.getHistories());
+		assertEquals(Collections.EMPTY_LIST, dao.getHistories());
 
 		// テーブルに5レコード追加
 		Set<History> set = new HashSet<>();
@@ -396,7 +442,7 @@ class HistoryDaoJdbcTest extends AbstractJdbcTestCase {
 		History h3 = History.create("003", "456", "C", "2022-01-05 00:00:00.000", 5, 2, 0);
 		History h4 = History.create("004", "459", "C", "2022-01-10 15:15:28.312", 3, null, 1);
 
-		Set<History> set = new HashSet<>(Arrays.asList(h1, h21, h22,  h3, h4));
+		Set<History> set = new HashSet<>(Arrays.asList(h1, h21, h22, h3, h4));
 		dao.batchInsert(set);
 
 		// インサートされた値の確認
@@ -428,7 +474,7 @@ class HistoryDaoJdbcTest extends AbstractJdbcTestCase {
 		History h3 = History.create("003", "456", "C", "2022-01-05 00:00:00.000", 5, 2, 0);
 		History h4 = History.create("004", "459", "C", "2022-01-10 15:15:28.312", 3, null, 1);
 
-		Set<History> set = new HashSet<>(Arrays.asList(h1, h21, h22,  h3, h4));
+		Set<History> set = new HashSet<>(Arrays.asList(h1, h21, h22, h3, h4));
 		dao.batchInsert(set);
 
 		// インサートされた値の確認
@@ -445,19 +491,51 @@ class HistoryDaoJdbcTest extends AbstractJdbcTestCase {
 		HistoryDao dao = getManager().getHistoryDao();
 
 		// 履歴が空のとき
-		assertEquals(0L,  dao.count());
+		assertEquals(0L, dao.count());
 
 		// 履歴が複数存在するとき
-		insertToHistory("Phone-0001", "Phone-0008", "C", "2020-10-31 23:59:59.999", 30,  0);
-		insertToHistory("Phone-0001", "Phone-0008", "C", "2020-11-01 00:00:00.000", 30,  0);
-		insertToHistory("Phone-0001", "Phone-0008", "C", "2021-11-15 12:12:12.000", 90,  1);
-		assertEquals(3L,  dao.count());
+		insertToHistory("Phone-0001", "Phone-0008", "C", "2020-10-31 23:59:59.999", 30, 0);
+		insertToHistory("Phone-0001", "Phone-0008", "C", "2020-11-01 00:00:00.000", 30, 0);
+		insertToHistory("Phone-0001", "Phone-0008", "C", "2021-11-15 12:12:12.000", 90, 1);
+		assertEquals(3L, dao.count());
 
-		insertToHistory("Phone-0001", "Phone-0008", "C", "2020-11-30 23:59:59.999", 90,  0);
-		insertToHistory("Phone-0001", "Phone-0008", "C", "2020-12-01 00:00:00.000", 30,  0);
-		insertToHistory("Phone-0005", "Phone-0001", "C", "2020-11-10 00:00:00.000", 25,  0);
-		insertToHistory("Phone-0005", "Phone-0008", "R", "2020-11-30 00:00:00.000", 30,  0);
-		assertEquals(7L,  dao.count());
+		insertToHistory("Phone-0001", "Phone-0008", "C", "2020-11-30 23:59:59.999", 90, 0);
+		insertToHistory("Phone-0001", "Phone-0008", "C", "2020-12-01 00:00:00.000", 30, 0);
+		insertToHistory("Phone-0005", "Phone-0001", "C", "2020-11-10 00:00:00.000", 25, 0);
+		insertToHistory("Phone-0005", "Phone-0008", "R", "2020-11-30 00:00:00.000", 30, 0);
+		assertEquals(7L, dao.count());
 
 	}
+
+	@Test
+	void testBatchupdateNonKeyFields() throws SQLException {
+		HistoryDao dao = getManager().getHistoryDao();
+		testBatchupdateNonKeyFieldsSub(dao);
+	}
+
+	protected void testBatchupdateNonKeyFieldsSub(HistoryDao dao) throws SQLException {
+		assertEquals(0, getHistorySet().size());
+		History h1 = History.create("001", "456", "C", "2022-01-10 15:15:28.312", 5, 2, 0);
+		History h2 = History.create("001", "456", "C", "2022-01-10 15:15:28.313", 5, null, 0);
+		History h3 = History.create("001", "456", "C", "2022-01-10 15:15:28.314", 5, 2, 1);
+
+		History h2u = History.create("001", "456", "C", "2022-01-10 15:15:28.313", 15, 5, 1);
+		History h3u = History.create("001", "459", "C", "2022-01-10 15:15:28.314", 15, null, 0);
+		History h3r = History.create("001", "456", "C", "2022-01-10 15:15:28.314", 15, null, 0); //キー項目はアップデートされない
+		History h4u = History.create("001", "456", "C", "2022-01-05 00:00:00.000", 5, 2, 0); // 同一キーのデータがないのでアップデートされない
+		// テストデータを入れる
+		Set<History> testDataSet = new HashSet<>(Arrays.asList(h1, h2, h3));
+		dao.batchInsert(testDataSet);
+		assertEquals(testDataSet, getHistorySet());
+
+		// アップデート実行
+		List<History> updateDataList = Arrays.asList(h2u, h4u, h3u);
+		assertEquals(3, dao.batchUpdateNonKeyFields(updateDataList));
+		testDataSet.remove(h2);
+		testDataSet.remove(h3);
+		testDataSet.add(h2u);
+		testDataSet.add(h3r);
+		assertEquals(testDataSet, getHistorySet());
+	}
+
 }

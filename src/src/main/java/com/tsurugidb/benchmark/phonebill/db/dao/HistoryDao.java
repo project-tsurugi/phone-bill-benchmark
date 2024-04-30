@@ -20,6 +20,10 @@ public interface HistoryDao {
 
 	int batchUpdate(List<History> histories);
 
+    int updateNonKeyFields(History history);
+
+    int batchUpdateNonKeyFields(List<History> histories);
+
 	List<History> getHistories(Key key);
 
 	List<History> getHistories(CalculationTarget target);

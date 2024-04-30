@@ -246,7 +246,7 @@ public class CalculationTask implements Callable<Exception> {
                 h.setCharge(callChargeCalculator.calc(h.getTimeSecs()));
                 billingCalculator.addCallCharge(h.getCharge());
             }
-            historyDao.batchUpdate(histories);
+            historyDao.batchUpdateNonKeyFields(histories);
             updateBilling(contract, billingCalculator, target.getStart());
             return histories.size() + 1; // +1はupdateBillingの分
         }
