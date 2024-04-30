@@ -64,14 +64,12 @@ public class HistoryDaoIceaxeSurrogateKey implements HistoryDao {
             .add("time_secs", TgDataType.INT, History::getTimeSecs)
             .add("charge", TgDataType.INT, History::getCharge).add("df", TgDataType.INT, History::getDf);
 
-
     public HistoryDaoIceaxeSurrogateKey(PhoneBillDbManagerIceaxeSurrogateKey manager) {
         utils = new IceaxeUtils(manager);
         insertType = manager.getInsertType();
         initSidCounter(utils, manager);
         this.manager = manager;
     }
-
 
     /**
      *　sidCountを現在のテーブルデータの最大値に設定する
@@ -134,6 +132,13 @@ public class HistoryDaoIceaxeSurrogateKey implements HistoryDao {
         return utils.createPreparedStatement(sql, PARAMETER_MAPPING);
     }
 
+    private TsurugiSqlPreparedStatement<History> createUpdateNonKeyFieldsPs() {
+        String sql = "update history"
+                + " set time_secs = :time_secs, charge = :charge, df = :df"
+                + " where  sid = :sid";
+        return utils.createPreparedStatement(sql, PARAMETER_MAPPING);
+    }
+
     @Override
     public long getMaxStartTime() {
         var ps = utils.createPreparedQuery("select max(start_time) as max_start_time from history");
@@ -148,11 +153,17 @@ public class HistoryDaoIceaxeSurrogateKey implements HistoryDao {
     }
 
     @Override
+    public int updateNonKeyFields(History history) {
+        var ps = createUpdateNonKeyFieldsPs();
+        return utils.executeAndGetCount(ps, history);
+    }
+    
+
+    @Override
     public int updateChargeNull() {
         var ps = utils.createPreparedStatement("update history set charge = null");
         return utils.executeAndGetCount(ps);
     }
-
 
     @Override
     public int batchUpdate(List<History> histories) {
@@ -161,6 +172,16 @@ public class HistoryDaoIceaxeSurrogateKey implements HistoryDao {
         int[] rets = utils.executeAndGetCount(ps, histories);
         return rets.length;
     }
+
+    @Override
+    public int batchUpdateNonKeyFields(List<History> histories) {
+        // TODO アップデートに成功した件数を返すようにする
+        var ps = createUpdateNonKeyFieldsPs();
+        int[] rets = utils.executeAndGetCount(ps, histories);
+        return rets.length;
+    }
+
+
 
     /**
      * 指定の契約に紐付く通話履歴を取得する
@@ -217,8 +238,6 @@ public class HistoryDaoIceaxeSurrogateKey implements HistoryDao {
         return utils.execute(ps, parameter);
     }
 
-
-
     @Override
     public List<History> getHistories(CalculationTarget target) {
         Contract contract = target.getContract();
@@ -254,7 +273,7 @@ public class HistoryDaoIceaxeSurrogateKey implements HistoryDao {
         var param1 = TgBindParameters.of()
                 .add("start", start)
                 .add("end", end.plusDays(1))
-                .add("recipient_phone_number",contract.getPhoneNumber());
+                .add("recipient_phone_number", contract.getPhoneNumber());
         var param2 = TgBindParameters.of()
                 .add("start", start)
                 .add("end", end.plusDays(1))
@@ -271,7 +290,6 @@ public class HistoryDaoIceaxeSurrogateKey implements HistoryDao {
         return utils.execute(ps);
     }
 
-
     @Override
     public int delete(String phoneNumber) {
         String sql = "delete from history where  caller_phone_number = :caller_phone_number";
@@ -279,7 +297,6 @@ public class HistoryDaoIceaxeSurrogateKey implements HistoryDao {
         var ps = utils.createPreparedStatement(sql, parameterMapping);
         return utils.executeAndGetCount(ps, phoneNumber);
     }
-
 
     @Override
     public List<String> getAllPhoneNumbers() {
@@ -295,7 +312,6 @@ public class HistoryDaoIceaxeSurrogateKey implements HistoryDao {
         List<TsurugiResultEntity> list = utils.execute(ps);
         return list.get(0).findLong("cnt").orElse(0L);
     }
-
 
     @Override
     public int delete() {
@@ -326,5 +342,4 @@ public class HistoryDaoIceaxeSurrogateKey implements HistoryDao {
     static long getSidCounter() {
         return sidCounter.get();
     }
-
 }

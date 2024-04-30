@@ -110,6 +110,15 @@ public class HistoryDaoJdbc implements HistoryDao {
 		}
 	}
 
+	@Override
+	public int updateNonKeyFields(History history) {
+		try (PreparedStatement ps = createUpdateNonKeyFieldsPs()) {
+			setHistroryToUpdateNonKeyFieldsPs(history, ps);
+			return ps.executeUpdate();
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+	}
 
 	@Override
 	public int updateChargeNull() {
@@ -141,6 +150,25 @@ public class HistoryDaoJdbc implements HistoryDao {
 	}
 
 
+	@Override
+	public int batchUpdateNonKeyFields(List<History> list) {
+		try (PreparedStatement ps = createUpdateNonKeyFieldsPs()) {
+			for(History h: list) {
+				setHistroryToUpdateNonKeyFieldsPs(h, ps);
+				ps.addBatch();
+			}
+			int[] rets = ps.executeBatch();
+			for (int ret : rets) {
+				if (ret < 0 && ret != PreparedStatement.SUCCESS_NO_INFO) {
+					throw new RuntimeException("Fail to update history.");
+				}
+			}
+			return rets.length;
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 	/**
 	 * @param history
 	 * @param ps
@@ -168,7 +196,31 @@ public class HistoryDaoJdbc implements HistoryDao {
 		return ps;
 	}
 
+		/**
+	 * @param history
+	 * @param ps
+	 * @throws SQLException
+	 */
+	protected void setHistroryToUpdateNonKeyFieldsPs(History history, PreparedStatement ps) throws SQLException {
+		ps.setInt(1, history.getTimeSecs());
+		if (history.getCharge() == null) {
+			ps.setNull(2, Types.INTEGER);
+		} else {
+			ps.setInt(2, history.getCharge());
+		}
+		ps.setInt(3, history.getDf());
+		ps.setString(4, history.getCallerPhoneNumber());
+		ps.setString(5, history.getPaymentCategorty());
+		ps.setTimestamp(6, history.getStartTime());
+	}
 
+	protected PreparedStatement createUpdateNonKeyFieldsPs() throws SQLException {
+		PreparedStatement ps = manager.getConnection().prepareStatement(
+				"update history"
+				+ " set time_secs = ?, charge = ?, df = ?"
+				+ " where caller_phone_number = ? and payment_category = ?  and start_time = ?");
+		return ps;
+	}
 
 	@Override
 	public List<History> getHistories(Key key) {

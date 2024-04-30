@@ -97,4 +97,15 @@ public class HistoryDaoDebug implements HistoryDao {
 	public int delete() {
 		return dao.delete();
 	}
+
+
+	@Override
+	public int updateNonKeyFields(History history) {
+		return dao.updateNonKeyFields(history);
+	}
+
+	@Override
+	public int batchUpdateNonKeyFields(List<History> histories) {
+		return dao.batchUpdateNonKeyFields(histories);
+	}
 }
