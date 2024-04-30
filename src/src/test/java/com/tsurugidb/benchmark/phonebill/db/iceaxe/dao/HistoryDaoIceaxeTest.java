@@ -3,6 +3,7 @@ package com.tsurugidb.benchmark.phonebill.db.iceaxe.dao;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.sql.Date;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -22,6 +23,7 @@ import com.tsurugidb.benchmark.phonebill.app.Config;
 import com.tsurugidb.benchmark.phonebill.app.CreateTable;
 import com.tsurugidb.benchmark.phonebill.app.billing.CalculationTarget;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
+import com.tsurugidb.benchmark.phonebill.db.dao.HistoryDao;
 import com.tsurugidb.benchmark.phonebill.db.entity.Contract;
 import com.tsurugidb.benchmark.phonebill.db.entity.History;
 import com.tsurugidb.benchmark.phonebill.db.iceaxe.IceaxeTestTools;
@@ -194,12 +196,92 @@ class HistoryDaoIceaxeTest {
         }));
         assertEquals(testDataSet, testTools.getHistorySet());
 
-        // キー値以外を全て更新
+        // PK以外を全て更新
         assertEquals(1, testTools.execute(() -> {
             return dao.update(h5);
         }));
         testDataSet.add(h5);
         testDataSet.remove(h1);
+        assertEquals(testDataSet, testTools.getHistorySet());
+
+    }
+
+    @Test
+    final void testUpdateNonKeyFields() throws SQLException {
+        History h1 = History.create("001", "456", "C", "2022-01-10 15:15:28.312", 5, 2, 0);
+        History h2 = History.create("001", "456", "C", "2022-01-10 15:15:28.313", 5, null, 0);
+        History h3 = History.create("001", "456", "C", "2022-01-10 15:15:28.314", 5, 2, 1);
+        History h4 = History.create("001", "456", "C", "2022-01-05 00:00:00.000", 5, 2, 0);
+        History h5 = History.create("001", "459", "C", "2022-01-10 15:15:28.312", 3, null, 1);
+        History h6 = History.create("001", "456", "C", "2022-01-10 15:15:28.312", 5, 2, 0);
+        History h7 = History.create("001", "456", "C", "2022-01-10 15:15:28.312", 3, null, 1);
+
+        // 空のテーブルに対してアップデート
+
+        assertEquals(0, testTools.execute(() -> {
+            return dao.updateNonKeyFields(h1);
+        }));
+
+        // テストデータを入れる
+        Set<History> testDataSet = new HashSet<>(Arrays.asList(h1, h2, h3));
+        testTools.insertToHistory(testDataSet);
+        assertEquals(testDataSet, testTools.getHistorySet());
+
+        // 更新対象のレコードがないケース
+        assertEquals(0, testTools.execute(() -> {
+            return dao.updateNonKeyFields(h4);
+        }));
+        assertEquals(testDataSet, testTools.getHistorySet());
+
+        // 同じ値で更新
+        assertEquals(1, testTools.execute(() -> {
+            return dao.updateNonKeyFields(h1);
+        }));
+        assertEquals(testDataSet, testTools.getHistorySet());
+
+        // PK以外を全て違う値で更新してもキーチ以外は変更されない
+        assertEquals(1, testTools.execute(() -> {
+            return dao.updateNonKeyFields(h5);
+        }));
+        testDataSet.add(h7);
+        testDataSet.remove(h1);
+        assertEquals(testDataSet, testTools.getHistorySet());
+
+        // キー値以外を更新
+        assertEquals(1, testTools.execute(() -> {
+            return dao.updateNonKeyFields(h6);
+        }));
+        testDataSet.add(h6);
+        testDataSet.remove(h7);
+        assertEquals(testDataSet, testTools.getHistorySet());
+    }
+
+    @Test
+    final void testBatchUpdateNonKeyFields() {
+        History h1 = History.create("001", "456", "C", "2022-01-10 15:15:28.312", 5, 2, 0);
+        History h2 = History.create("001", "456", "C", "2022-01-10 15:15:28.313", 5, null, 0);
+        History h3 = History.create("001", "456", "C", "2022-01-10 15:15:28.314", 5, 2, 1);
+
+        History h2u = History.create("001", "456", "C", "2022-01-10 15:15:28.313", 15, 5, 1);
+        History h3u = History.create("001", "459", "C", "2022-01-10 15:15:28.314", 15, null, 0);
+        History h3r = History.create("001", "456", "C", "2022-01-10 15:15:28.314", 15, null, 0); // キー項目はアップデートされない
+        History h4u = History.create("001", "456", "C", "2022-01-05 00:00:00.000", 5, 2, 0); // 同一キーのデータがないのでアップデートされない
+
+        // テストデータを入れる
+        Set<History> testDataSet = new HashSet<>(Arrays.asList(h1, h2, h3));
+        testTools.insertToHistory(testDataSet);
+        ;
+        assertEquals(testDataSet, testTools.getHistorySet());
+
+        // アップデート実行
+        List<History> updateDataList = Arrays.asList(h2u, h4u, h3u);
+        assertEquals(3, testTools.execute(() -> {
+            return dao.batchUpdateNonKeyFields(updateDataList);
+        }));
+        testDataSet.remove(h2);
+        testDataSet.remove(h3);
+        testDataSet.add(h2u);
+        testDataSet.add(h3r);
         assertEquals(testDataSet, testTools.getHistorySet());
 
     }
@@ -216,7 +298,8 @@ class HistoryDaoIceaxeTest {
 
         // テストデータを入れる
         Set<History> testDataSet = new HashSet<>(Arrays.asList(h1, h2, h3));
-        testTools.insertToHistory(testDataSet);;
+        testTools.insertToHistory(testDataSet);
+        ;
         assertEquals(testDataSet, testTools.getHistorySet());
 
         // アップデート実行
@@ -229,7 +312,6 @@ class HistoryDaoIceaxeTest {
         testDataSet.add(h2u);
         testDataSet.add(h3u);
         assertEquals(testDataSet, testTools.getHistorySet());
-
 
     }
 
@@ -266,7 +348,6 @@ class HistoryDaoIceaxeTest {
         History h8 = History.create("004", "001", "C", "2022-01-05 12:10:01.999", 8, null, 0);
         History h9 = History.create("005", "007", "C", "2022-09-18 12:10:01.999", 9, null, 0);
         testTools.insertToHistory(h7, h8, h9);
-
 
         Set<History> expectedSet = new HashSet<>();
         Set<History> actualSet = new HashSet<>();
@@ -363,7 +444,7 @@ class HistoryDaoIceaxeTest {
 
         testTools.insertToHistory(histories);
 
-        assertEquals(histories , testTools.getHistorySet());
+        assertEquals(histories, testTools.getHistorySet());
 
         // 期待通りのレコードがselectされることを確認
         HashSet<History> actual = testTools.execute(() -> {
@@ -393,7 +474,6 @@ class HistoryDaoIceaxeTest {
         assertFalse(actual.contains(h110));
 
     }
-
 
     @Test
     final void testGetHistories() {
@@ -462,7 +542,7 @@ class HistoryDaoIceaxeTest {
         History h3 = History.create("003", "456", "C", "2022-01-05 00:00:00.000", 5, 2, 0);
         History h4 = History.create("004", "459", "C", "2022-01-10 15:15:28.312", 3, null, 1);
 
-        Set<History> set = new HashSet<>(Arrays.asList(h1, h21, h22,  h3, h4));
+        Set<History> set = new HashSet<>(Arrays.asList(h1, h21, h22, h3, h4));
         testTools.execute(() -> {
             dao.batchInsert(set);
         });
@@ -505,7 +585,7 @@ class HistoryDaoIceaxeTest {
         History h3 = History.create("003", "456", "C", "2022-01-05 00:00:00.000", 5, 2, 0);
         History h4 = History.create("004", "459", "C", "2022-01-10 15:15:28.312", 3, null, 1);
 
-        Set<History> set = new HashSet<>(Arrays.asList(h1, h21, h22,  h3, h4));
+        Set<History> set = new HashSet<>(Arrays.asList(h1, h21, h22, h3, h4));
         testTools.execute(() -> {
             dao.batchInsert(set);
         });

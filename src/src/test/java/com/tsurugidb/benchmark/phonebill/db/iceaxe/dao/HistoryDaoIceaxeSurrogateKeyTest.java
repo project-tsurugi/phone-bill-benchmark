@@ -3,6 +3,7 @@ package com.tsurugidb.benchmark.phonebill.db.iceaxe.dao;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.sql.Date;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,7 +31,6 @@ import com.tsurugidb.benchmark.phonebill.db.iceaxe.PhoneBillDbManagerIceaxeSurro
 import com.tsurugidb.benchmark.phonebill.util.DateUtils;
 
 class HistoryDaoIceaxeSurrogateKeyTest {
-
 
     private static final String ICEAXE_CONFIG_PATH = "src/test/config/iceaxe.properties";
     private static IceaxeTestTools testTools;
@@ -258,6 +258,63 @@ class HistoryDaoIceaxeSurrogateKeyTest {
     }
 
     @Test
+    final void testUpdateNonKeyFields() throws SQLException {
+        History h1 = History.create("001", "456", "C", "2022-01-10 15:15:28.312", 5, 2, 0);
+        History h2 = History.create("001", "456", "C", "2022-01-10 15:15:28.313", 5, null, 0);
+        History h3 = History.create("001", "456", "C", "2022-01-10 15:15:28.314", 5, 2, 1);
+        History h4 = History.create("001", "456", "C", "2022-01-05 00:00:00.000", 5, 2, 0);
+        History h5 = History.create("001", "459", "C", "2022-01-10 15:15:28.312", 3, null, 1);
+        History h6 = History.create("001", "456", "C", "2022-01-10 15:15:28.312", 5, 2, 0);
+        History h7 = History.create("001", "456", "C", "2022-01-10 15:15:28.312", 3, null, 1);
+        h1.setSid(1);
+        h2.setSid(2);
+        h3.setSid(3);
+        h4.setSid(4);
+        h5.setSid(1);
+        h6.setSid(1);
+        h7.setSid(1);
+
+        // 空のテーブルに対してアップデート
+
+        assertEquals(0, testTools.execute(() -> {
+            return dao.updateNonKeyFields(h1);
+        }));
+
+        // テストデータを入れる
+        Set<History> testDataSet = new HashSet<>(Arrays.asList(h1, h2, h3));
+        testTools.insertToHistoryWsk(testDataSet);
+        assertEquals(testDataSet, testTools.getHistorySetWsk());
+
+        // 更新対象のレコードがないケース
+        assertEquals(0, testTools.execute(() -> {
+            return dao.updateNonKeyFields(h4);
+        }));
+        assertEquals(testDataSet, testTools.getHistorySetWsk());
+
+        // 同じ値で更新
+        assertEquals(1, testTools.execute(() -> {
+            return dao.updateNonKeyFields(h1);
+        }));
+        assertEquals(testDataSet, testTools.getHistorySetWsk());
+
+        // PK以外を全て違う値で更新してもキーチ以外は変更されない
+        assertEquals(1, testTools.execute(() -> {
+            return dao.updateNonKeyFields(h5);
+        }));
+        testDataSet.add(h7);
+        testDataSet.remove(h1);
+        assertEquals(testDataSet, testTools.getHistorySetWsk());
+
+        // キー値以外を更新
+        assertEquals(1, testTools.execute(() -> {
+            return dao.updateNonKeyFields(h6);
+        }));
+        testDataSet.add(h6);
+        testDataSet.remove(h7);
+        assertEquals(testDataSet, testTools.getHistorySetWsk());
+    }
+
+    @Test
     final void testBatchUpdate() {
         History h1 = History.create("001", "456", "C", "2022-01-10 15:15:28.312", 5, 2, 0);
         History h2 = History.create("001", "456", "C", "2022-01-10 15:15:28.313", 5, null, 0);
@@ -275,7 +332,8 @@ class HistoryDaoIceaxeSurrogateKeyTest {
 
         // テストデータを入れる
         Set<History> testDataSet = new HashSet<>(Arrays.asList(h1, h2, h3));
-        testTools.insertToHistoryWsk(testDataSet);;
+        testTools.insertToHistoryWsk(testDataSet);
+        ;
         assertEquals(testDataSet, testTools.getHistorySetWsk());
 
         // アップデート実行
@@ -289,6 +347,42 @@ class HistoryDaoIceaxeSurrogateKeyTest {
         testDataSet.add(h3u);
         assertEquals(testDataSet, testTools.getHistorySetWsk());
 
+    }
+
+    @Test
+    final void testBatchUpdateNonKeyFields() {
+        History h1 = History.create("001", "456", "C", "2022-01-10 15:15:28.312", 5, 2, 0);
+        History h2 = History.create("001", "456", "C", "2022-01-10 15:15:28.313", 5, null, 0);
+        History h3 = History.create("001", "456", "C", "2022-01-10 15:15:28.314", 5, 2, 1);
+        h1.setSid(1);
+        h2.setSid(2);
+        h3.setSid(3);
+
+        History h2u = History.create("001", "456", "C", "2022-01-10 15:15:28.313", 15, 5, 1);
+        History h3u = History.create("001", "459", "C", "2022-01-10 15:15:28.314", 15, null, 0);
+        History h3r = History.create("001", "456", "C", "2022-01-10 15:15:28.314", 15, null, 0); // キー項目はアップデートされない
+        History h4u = History.create("001", "456", "C", "2022-01-05 00:00:00.000", 5, 2, 0); // 同一キーのデータがないのでアップデートされない
+        h2u.setSid(2);
+        h3u.setSid(3);
+        h3r.setSid(3);
+        h4u.setSid(4);
+
+        // テストデータを入れる
+        Set<History> testDataSet = new HashSet<>(Arrays.asList(h1, h2, h3));
+        testTools.insertToHistoryWsk(testDataSet);
+        ;
+        assertEquals(testDataSet, testTools.getHistorySetWsk());
+
+        // アップデート実行
+        List<History> updateDataList = Arrays.asList(h2u, h4u, h3u);
+        assertEquals(3, testTools.execute(() -> {
+            return dao.batchUpdateNonKeyFields(updateDataList);
+        }));
+        testDataSet.remove(h2);
+        testDataSet.remove(h3);
+        testDataSet.add(h2u);
+        testDataSet.add(h3r);
+        assertEquals(testDataSet, testTools.getHistorySetWsk());
 
     }
 
@@ -340,7 +434,6 @@ class HistoryDaoIceaxeSurrogateKeyTest {
         h8.setSid(8);
         h9.setSid(9);
         testTools.insertToHistoryWsk(h7, h8, h9);
-
 
         Set<History> expectedSet = new HashSet<>();
         Set<History> actualSet = new HashSet<>();
@@ -415,15 +508,14 @@ class HistoryDaoIceaxeSurrogateKeyTest {
         List<History> list = Arrays.asList(h001, h002, h003, h004, h005, h006, h007, h008, h009, h010, h101, h102, h103,
                 h104, h105, h106, h107, h108, h109, h110);
         int sid = 0;
-        for(History h: list) {
+        for (History h : list) {
             h.setSid(++sid);
         }
-
 
         // テストデータを投入
         testTools.insertToHistoryWsk(list);
 
-        assertEquals(new HashSet<History>(list) , testTools.getHistorySetWsk());
+        assertEquals(new HashSet<History>(list), testTools.getHistorySetWsk());
 
         // 期待通りのレコードがselectされることを確認
         HashSet<History> actual = testTools.execute(() -> {
@@ -453,7 +545,6 @@ class HistoryDaoIceaxeSurrogateKeyTest {
         assertFalse(actual.contains(h110));
 
     }
-
 
     @Test
     final void testGetHistories() {
@@ -538,10 +629,9 @@ class HistoryDaoIceaxeSurrogateKeyTest {
         h3.setSid(++sid);
         h4.setSid(++sid);
 
-
-        Set<History> set = new HashSet<>(Arrays.asList(h1, h21, h22,  h3, h4));
+        Set<History> set = new HashSet<>(Arrays.asList(h1, h21, h22, h3, h4));
         testTools.execute(() -> {
-            dao.batchInsert(Arrays.asList(h1, h21, h22,  h3, h4));
+            dao.batchInsert(Arrays.asList(h1, h21, h22, h3, h4));
         });
 
         // インサートされた値の確認
@@ -588,7 +678,7 @@ class HistoryDaoIceaxeSurrogateKeyTest {
         h3.setSid(++sid);
         h4.setSid(++sid);
 
-        List<History> list = Arrays.asList(h1, h21, h22,  h3, h4);
+        List<History> list = Arrays.asList(h1, h21, h22, h3, h4);
         Set<History> set = new HashSet<>(list);
         testTools.execute(() -> {
             dao.batchInsert(list);
