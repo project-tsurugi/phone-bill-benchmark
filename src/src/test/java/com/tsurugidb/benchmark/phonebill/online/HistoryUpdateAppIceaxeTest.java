@@ -182,7 +182,6 @@ class HistoryUpdateAppIceaxeTest {
         // 最初のレコードを書き換える
         {
             History history = expected.get(0);
-            history.setRecipientPhoneNumber("RECV");
             history.setCharge(999);
             history.setDf(1);
             history.setTimeSecs(221);
@@ -195,7 +194,6 @@ class HistoryUpdateAppIceaxeTest {
         // 12番目のレコードを書き換える
         {
             History history = expected.get(12);
-            history.setRecipientPhoneNumber("TEST_NUMBER");
             history.setCharge(55899988);
             history.setDf(0);
             history.setTimeSecs(22551);

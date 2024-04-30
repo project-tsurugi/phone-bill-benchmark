@@ -59,7 +59,7 @@ public class HistoryUpdateApp extends AbstractOnlineApp {
 
     @Override
     protected void updateDatabase(ContractDao contractDao, HistoryDao historyDao) {
-        historyDao.update(history);
+        historyDao.updateNonKeyFields(history);
         LOG.debug("ONLINE_APP: Update 1 record from history(callerPhoneNumber = {}, startTime = {}).",
                 history.getCallerPhoneNumber(), history.getStartTime());
     }

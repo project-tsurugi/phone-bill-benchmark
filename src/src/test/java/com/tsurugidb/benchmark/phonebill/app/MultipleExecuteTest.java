@@ -14,6 +14,7 @@ import com.tsurugidb.benchmark.phonebill.app.Config.TransactionScope;
 import com.tsurugidb.benchmark.phonebill.db.PhoneBillDbManager;
 import com.tsurugidb.benchmark.phonebill.db.TxOption;
 import com.tsurugidb.benchmark.phonebill.db.dao.Ddl;
+import com.tsurugidb.benchmark.phonebill.online.TxStatistics;
 
 class MultipleExecuteTest {
     private static final String ICEAXE_CONFIG_PATH = "src/test/config/iceaxe.properties";
@@ -74,6 +75,8 @@ class MultipleExecuteTest {
 
     @Test
     final void testCreateOnlineAppReport() throws IOException {
+        TxStatistics.clear();
+        PhoneBillDbManager.initCounter();
         Config config = Config.getConfig();
         MultipleExecute execute = new MultipleExecute();
         String report = execute.createOnlineAppReport(config, "Example", "Example");
