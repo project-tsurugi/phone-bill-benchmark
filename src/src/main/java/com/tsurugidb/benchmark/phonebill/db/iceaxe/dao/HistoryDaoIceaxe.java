@@ -49,6 +49,14 @@ public class HistoryDaoIceaxe implements HistoryDao {
             .add("time_secs", TgDataType.INT, History::getTimeSecs)
             .add("charge", TgDataType.INT, History::getCharge).add("df", TgDataType.INT, History::getDf);
 
+            private static final TgParameterMapping<History> PARAMETER_MAPPING_UPDATE_NON_KEY_FIELDS = TgParameterMapping.of(History.class)
+            .add("caller_phone_number", TgDataType.STRING, History::getCallerPhoneNumber)
+            .add("payment_category", TgDataType.STRING, History::getPaymentCategorty)
+            .add("start_time", TgDataType.DATE_TIME, History::getStartTimeAsLocalDateTime)
+            .add("time_secs", TgDataType.INT, History::getTimeSecs)
+            .add("charge", TgDataType.INT, History::getCharge).add("df", TgDataType.INT, History::getDf);
+
+
 
     public HistoryDaoIceaxe(PhoneBillDbManagerIceaxe manager) {
         utils = new IceaxeUtils(manager);
@@ -86,7 +94,7 @@ public class HistoryDaoIceaxe implements HistoryDao {
         String sql = "update history"
                 + " set time_secs = :time_secs, charge = :charge, df = :df"
                 + " where caller_phone_number = :caller_phone_number and payment_category = :payment_category and start_time = :start_time";
-        return utils.createPreparedStatement(sql, PARAMETER_MAPPING);
+        return utils.createPreparedStatement(sql, PARAMETER_MAPPING_UPDATE_NON_KEY_FIELDS);
     }
 
 
