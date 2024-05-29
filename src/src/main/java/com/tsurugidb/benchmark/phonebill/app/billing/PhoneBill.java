@@ -62,7 +62,6 @@ public class PhoneBill extends ExecutableCommand {
     private AtomicInteger tryCounter = new AtomicInteger(0);
     private AtomicInteger abortCounter = new AtomicInteger(0);
 
-
     Config config; // UTからConfigを書き換え可能にするためにパッケージプライベートにしている
 
     public static void main(String[] args) throws Exception {
@@ -91,6 +90,9 @@ public class PhoneBill extends ExecutableCommand {
             PhoneBillDbManager.initCounter();
             // オンラインアプリを実行する
             list.stream().forEach(task -> service.submit(task));
+            if (service != null) {
+                service.shutdown();
+            }
 
             // 指定の実行時間になったら停止するためのタイマーをセット
             CountDownLatch latch = new CountDownLatch(1);
@@ -106,11 +108,20 @@ public class PhoneBill extends ExecutableCommand {
                 timer.schedule(timerTask, config.execTimeLimitSecs * 1000L);
             }
 
-            // バッチの実行
             if (config.onlineOnly) {
-                // online onlyが指定された場合は、タイマーが呼び出されるまで待つ
-                latch.await();
+                // online onlyが指定された場合
+                if (config.execTimeLimitSecs > 0) {
+                    // タイマーが呼び出されるまで待つ
+                    latch.await();
+                } else {
+                    // オンラインアプリのスレッドが生きている限り無限に待ち続ける
+                    while (service != null && !service.awaitTermination(5, TimeUnit.MINUTES)) {
+                        // do nothing
+                    }
+                    LOG.warn("All online applications have been terminated. Exiting.");
+                }
             } else {
+                // バッチの実行
                 Duration d = toDuration(config.targetMonth);
                 doCalc(d.getStatDate(), d.getEndDate());
             }
@@ -119,7 +130,6 @@ public class PhoneBill extends ExecutableCommand {
             // オンラインアプリを終了する
             list.stream().forEach(task -> task.terminate());
             if (service != null) {
-                service.shutdown();
                 service.awaitTermination(5, TimeUnit.MINUTES);
             }
             // 終了していないオンラインアプリがある場合は異常終了する。
@@ -131,15 +141,13 @@ public class PhoneBill extends ExecutableCommand {
         }
     }
 
-
-
     /**
      * Configに従ってオンラインアプリのインスタンスを生成する
      *
      * @return オンラインアプリのインスタンスのリスト
      * @throws IOException
      */
-    @SuppressFBWarnings(value={"DMI_RANDOM_USED_ONLY_ONCE"})
+    @SuppressFBWarnings(value = { "DMI_RANDOM_USED_ONLY_ONCE" })
     public static List<AbstractOnlineApp> createOnlineApps(Config config, ContractBlockInfoAccessor accessor)
             throws IOException {
         if (!config.hasOnlineApp()) {
@@ -160,7 +168,6 @@ public class PhoneBill extends ExecutableCommand {
             keySelector = new RandomKeySelector<>(keys, random, config.onlineAppRandomAtLeastOnceRate,
                     config.onlineAppRandomCoverRate);
         }
-
 
         List<AbstractOnlineApp> list = new ArrayList<AbstractOnlineApp>();
         if (config.historyInsertThreadCount > 0 && config.historyInsertTransactionPerMin != 0) {
@@ -191,7 +198,6 @@ public class PhoneBill extends ExecutableCommand {
         return list;
     }
 
-
     /**
      * 指定の日付の一日から月の最終日までのDurationを作成する
      *
@@ -204,7 +210,6 @@ public class PhoneBill extends ExecutableCommand {
         Date end = Date.valueOf(localDate.withDayOfMonth(1).plusMonths(1).minusDays(1));
         return new Duration(start, end);
     }
-
 
     /**
      * 料金計算のメイン処理
@@ -264,7 +269,8 @@ public class PhoneBill extends ExecutableCommand {
                             SessionHoldingType.INSTANCE_FIELD);
                     managers.add(managerForTask);
                 }
-                CalculationTask task = new CalculationTask(queue, managerForTask, config, batchExecId, abortRequested, tryCounter, abortCounter);
+                CalculationTask task = new CalculationTask(queue, managerForTask, config, batchExecId, abortRequested,
+                        tryCounter, abortCounter);
                 futures.add(service.submit(task));
             }
         } catch (RuntimeException e) {
@@ -284,10 +290,8 @@ public class PhoneBill extends ExecutableCommand {
     }
 
     public String getStatus() {
-        return queue == null ? "Initializing": queue.getStatus();
+        return queue == null ? "Initializing" : queue.getStatus();
     }
-
-
 
     /**
      * @param conn
@@ -330,7 +334,7 @@ public class PhoneBill extends ExecutableCommand {
                 }
             }
         }
-        managers.stream().forEach(m->m.close());
+        managers.stream().forEach(m -> m.close());
         if (cause != null) {
             LOG.error("Phone bill batch aborting by exception.");
             throw cause;
