@@ -74,7 +74,7 @@ public class MultipleExecute extends ExecutableCommand {
                 LOG.info("Using config {} ",info.configPath.toAbsolutePath().toString());
                 LOG.debug("Config is " + System.lineSeparator() + "--- " + System.lineSeparator() + config
                         + System.lineSeparator() + "---", info.configPath.toAbsolutePath().toString());
-                if (config.dbmsType.isTsurugi()) {
+                if (config.dbmsType.isTsurugi() && config.enableTsurugiWatcher) {
                     dbiInit();
                     task = new TsurugidbWatcher();
                     future = service.submit(task);
@@ -90,7 +90,7 @@ public class MultipleExecute extends ExecutableCommand {
                 if (!config.hasOnlineApp()) {
                     record.setNumberOfDiffrence(checkResult(config));
                 }
-                if (config.dbmsType.isTsurugi()) {
+                if (task != null) {
                     LOG.info("Sending a request to stop TsurugidbWatcher.");
                     task.stop();
                     future.get();

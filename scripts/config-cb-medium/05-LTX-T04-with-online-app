@@ -67,3 +67,4 @@ random.seed=0
 transaction.scope=WHOLE
 listen.port=0
 
+enable.tsurugi.watcher=true

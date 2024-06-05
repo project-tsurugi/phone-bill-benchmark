@@ -355,6 +355,12 @@ public class Config implements Cloneable {
     private static final String SYSPROP_URL_REPLACE = "url.replace";
 
     /**
+     *  TsurugiWatcherの有効・無効を切り替えるためのプロパティ
+     */
+    public boolean enableTsurugiWatcher;
+    private static final String ENABLE_TSURUGI_WATCHER = "enable.tsurugi.watcher";
+
+    /**
      * 複数ノード構成時のサーバのリッスンポート
      */
     public int listenPort;
@@ -536,6 +542,7 @@ public class Config implements Cloneable {
         onlineOnly = getBoolean(ONLINE_ONLY, false);
         execTimeLimitSecs = getInt(EXEC_TIME_LIMIT_SECS, 0);
         reportDir = getString(REPORT_DIR, "/tmp");
+        enableTsurugiWatcher = getBoolean(ENABLE_TSURUGI_WATCHER, false);
 
         // パラメータ間の矛盾のチェック
         if (transactionScope == TransactionScope.CONTRACT && sharedConnection) {
@@ -904,6 +911,7 @@ public class Config implements Cloneable {
         sb.append(String.format(format, ONLINE_ONLY, onlineOnly));
         sb.append(String.format(format, EXEC_TIME_LIMIT_SECS, execTimeLimitSecs));
         sb.append(String.format(format, REPORT_DIR, reportDir));
+        sb.append(String.format(format, ENABLE_TSURUGI_WATCHER , enableTsurugiWatcher));
         return sb.toString();
     }
 

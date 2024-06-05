@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TsurugidbWatcher implements Runnable  {
+public class TsurugidbWatcher implements Runnable {
     private static final Logger LOG = LoggerFactory.getLogger(TsurugidbWatcher.class);
 
     private static final String SERVER_NAME = "libexec/tsurugidb";
@@ -24,7 +24,6 @@ public class TsurugidbWatcher implements Runnable  {
 
     private long vsz = -1;
     private long rss = -1;
-
 
     @Override
     public void run() {
@@ -38,7 +37,6 @@ public class TsurugidbWatcher implements Runnable  {
         }
         Path path = PROC.resolve(Integer.toString(pid)).resolve("status");
 
-
         // 1秒に1回サーバのメモリ容量を出力する
         for (;;) {
             try {
@@ -50,7 +48,10 @@ public class TsurugidbWatcher implements Runnable  {
                     }
                 }
             } catch (IOException e) {
-                String msg = "Unable to retrieve memory info for tsurugidb. It is possible that the server has crashed.";
+                String msg = String.format(
+                        "Failed to access the process status file for tsurugidb at %s: " +
+                                "The server might be shut down. Check server status and logs.",
+                        path.toString());
                 LOG.error(msg, e);
                 throw new UncheckedIOException(e);
             }
@@ -67,7 +68,6 @@ public class TsurugidbWatcher implements Runnable  {
         }
     }
 
-
     /**
      * /procを調べてサーバのプロセスIDを取得する
      *
@@ -78,7 +78,7 @@ public class TsurugidbWatcher implements Runnable  {
 
         List<Path> procDirs = null;
         try {
-            if(!Files.exists(PROC)) {
+            if (!Files.exists(PROC)) {
                 LOG.debug("Directory not found: {}", PROC.toString());
                 return -1;
             }
@@ -88,7 +88,7 @@ public class TsurugidbWatcher implements Runnable  {
             LOG.warn("IOError", e);
             return -1;
         }
-        for (Path dir: procDirs) {
+        for (Path dir : procDirs) {
             Path cmdline = dir.resolve("cmdline");
             LOG.trace("Checking direcory: {}", dir.toAbsolutePath().toString());
             try {
@@ -96,7 +96,7 @@ public class TsurugidbWatcher implements Runnable  {
                     continue;
                 }
                 Path p = dir.getFileName();
-                int pid =  p == null ? -1 : Integer.parseInt(p.toString());
+                int pid = p == null ? -1 : Integer.parseInt(p.toString());
                 if (pid == -1) {
                     continue;
                 }
@@ -114,8 +114,6 @@ public class TsurugidbWatcher implements Runnable  {
         }
         return -1;
     }
-
-
 
     public void stop() {
         stopRequested.set(true);
@@ -152,14 +150,12 @@ public class TsurugidbWatcher implements Runnable  {
         return value;
     }
 
-
     /**
      * @return vsz
      */
     public long getVsz() {
         return vsz;
     }
-
 
     /**
      * @return rss

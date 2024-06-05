@@ -68,3 +68,4 @@ transaction.scope=WHOLE
 listen.port=0
 online.only=true
 exec.time.limit.secs=600
+enable.tsurugi.watcher=true
