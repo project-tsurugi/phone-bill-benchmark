@@ -7,6 +7,7 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Collections;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -76,7 +77,7 @@ public class ExportDb {
         Path path = FileNameUtil.buildFilePathWithClass(filePrefix, clazz);
         List<T> list = supplier.get();
         Collections.sort(list, (a, b) -> a.toString().compareTo(b.toString()));
-        try (FileWriter writer = new FileWriter(path.toFile())) {
+        try (FileWriter writer = new FileWriter(path.toFile(), StandardCharsets.UTF_8)) {
             for (T record : list) {
                 writer.write(record.toString() + "\n"); // Assuming T has a meaningful toString method
             }
