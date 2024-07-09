@@ -77,8 +77,12 @@ class ConfirmDbIntegrityTest {
         String logData = "17:52:18.591 [pool-1-thread-10] DEBUG c.t.b.p.a.b.CalculationTask-cmt - Transaction committing, tid = TID-0000000000000039, txOption = LTX{label=BATCH_MAIN, writePreserve=[history, billing]}, key = 00000000859\n"
                 + "17:52:19.418 [pool-1-thread-7] DEBUG c.t.b.p.app.billing.CalculationTask - TIME INFO: tid = TID-0000000600000025, exec time = 52354, commit to abort time = 105384\n"
                 + "17:52:18.707 [pool-1-thread-10] DEBUG c.t.b.p.a.b.CalculationTask-cmt - Transaction completed, tid = TID-0000000000000039, txOption = LTX{label=BATCH_MAIN, writePreserve=[history, billing]}, key = 00000000859, update/insert records = 238\n"
+                + "17:52:18.708 [pool-1-thread-10] DEBUG c.t.b.p.a.b.CalculationTask-cmt - Transaction committing, tid = TID-0000000000000139, txOption = LTX{label=BATCH_MAIN, writePreserve=[history, billing]}, key = 00000000860\n"
+                // ↓スレッドの最後の行がabortedの場合無視される => ログ上ではabortしていてもサーバ上でTXが成功している可能性がある
+                + "17:52:18.709 [pool-1-thread-10] DEBUG c.t.b.p.a.b.CalculationTask-cmt - Transaction aborted, tid = TID-0000000000000139, txOption = LTX{label=BATCH_MAIN, writePreserve=[history, billing]}, key = 00000000860, exception = dummy\n"
                 + "17:52:14.962 [pool-1-thread-11] DEBUG c.t.b.p.a.b.CalculationTask-cmt - Transaction committing, tid = TID-0000000000000022, txOption = LTX{label=BATCH_MAIN, writePreserve=[history, billing]}, key = 00000000193\n"
                 + "17:52:15.071 [pool-1-thread-11] DEBUG c.t.b.p.a.b.CalculationTask-cmt - Transaction aborted, tid = TID-0000000000000022, txOption = LTX{label=BATCH_MAIN, writePreserve=[history, billing]}, key = 00000000193, exception = dummy\n"
+                + "17:52:18.708 [pool-1-thread-11] DEBUG c.t.b.p.a.b.CalculationTask-cmt - Transaction committing, tid = TID-0000000000001139, txOption = LTX{label=BATCH_MAIN, writePreserve=[history, billing]}, key = 00000000865\n"
                 // ↓不完全な行 => 無視される
                 + "17:52:15.075 [pool-1-thread-11] DEBUG c.t.b.p.a.b.CalculationTask-cmt - Transaction aborted, tid = TID-0000000000000023, txOption = LTX{label=BATCH_MAIN, writePreserve=[history, billing]}, key = 0000000019";
 
@@ -87,14 +91,16 @@ class ConfirmDbIntegrityTest {
         Map<LogType, Map<String, String>> result = confirmDbIntegrity.getAllTransactionIdKeyMaps(inputStream);
 
         // 基本的な検証
-        assertEquals(2, result.get(LogType.COMMITTING).size());
+        assertEquals(4, result.get(LogType.COMMITTING).size());
         assertEquals(1, result.get(LogType.COMPLETED).size());
         assertEquals(1, result.get(LogType.ABORTED).size());
 
         // より詳細な検証
         assertEquals("00000000859", result.get(LogType.COMMITTING).get("TID-0000000000000039"));
+        assertEquals("00000000860", result.get(LogType.COMMITTING).get("TID-0000000000000139"));
         assertEquals("00000000859", result.get(LogType.COMPLETED).get("TID-0000000000000039"));
         assertEquals("00000000193", result.get(LogType.COMMITTING).get("TID-0000000000000022"));
+        assertEquals("00000000865", result.get(LogType.COMMITTING).get("TID-0000000000001139"));
         assertEquals("00000000193", result.get(LogType.ABORTED).get("TID-0000000000000022"));
     }
 

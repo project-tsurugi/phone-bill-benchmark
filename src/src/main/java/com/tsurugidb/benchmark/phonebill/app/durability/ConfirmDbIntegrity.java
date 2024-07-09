@@ -395,17 +395,21 @@ public class ConfirmDbIntegrity {
             allTransactionIdKeyMaps.put(logType, new HashMap<>());
         }
 
-        Pattern pattern = Pattern.compile("Transaction (committing|completed|aborted), tid = (.*?), txOption = .*?, key = (\\d{11})");
+        Map<String, String[]> lastLogMap = new HashMap<>();  // 各スレッドの最後のログ行を追跡するマップ
+
+        Pattern pattern = Pattern.compile("\\[(.*?)\\] .*? - Transaction (committing|completed|aborted), tid = (.*?), txOption = .*?, key = (\\d{11})");
 
         try (BufferedReader br = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
             String line;
             while ((line = br.readLine()) != null) {
                 Matcher matcher = pattern.matcher(line);
                 if (matcher.find()) {
-                    LogType logType = LogType.valueOf(matcher.group(1).toUpperCase(Locale.ENGLISH));
-                    String tid = matcher.group(2);
-                    String key = matcher.group(3);
-
+                    String threadName = matcher.group(1);
+                    String logTypeStr = matcher.group(2).toUpperCase(Locale.ENGLISH);
+                    String tid = matcher.group(3);
+                    String key = matcher.group(4);
+                    lastLogMap.put(threadName, new String[]{logTypeStr, tid, key});
+                    LogType logType = LogType.valueOf(matcher.group(2).toUpperCase(Locale.ENGLISH));
                     Map<String, String> transactionIdKeyMap = allTransactionIdKeyMaps.get(logType);
                     if (transactionIdKeyMap.containsKey(tid)) {
                         throw new RuntimeException("Duplicate transaction ID found: " + tid);
@@ -415,6 +419,16 @@ public class ConfirmDbIntegrity {
             }
         } catch (IOException e) {
             throw new UncheckedIOException(e);
+        }
+
+        // Abort行をチェックして必要に応じてマップから削除
+        for (String[] logData : lastLogMap.values()) {
+            String logTypeStr = logData[0];
+            String tid = logData[1];
+            LogType logType = LogType.valueOf(logTypeStr);
+            if (logType == LogType.ABORTED) {
+                allTransactionIdKeyMaps.get(LogType.ABORTED).remove(tid);
+            }
         }
         return allTransactionIdKeyMaps;
     }
