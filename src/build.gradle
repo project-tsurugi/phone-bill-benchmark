@@ -3,6 +3,7 @@ plugins {
     id 'application'
     id 'com.diffplug.eclipse.apt' version '3.44.0'
     id 'com.github.spotbugs' version '5.2.5'
+    id "com.github.hierynomus.license" version "0.16.1"
 }
 
 group "com.tsurugidb.benchmark.phonebill"
@@ -163,3 +164,18 @@ task showIceaxeManifest {
         print(version.asString())
     }
 }
+
+license {
+    header rootProject.file("source-header.txt")
+    mapping {
+        java = 'SLASHSTAR_STYLE'
+        sh = 'SCRIPT_STYLE'
+        properties = 'SCRIPT_STYLE'
+    }
+    includes(['**/*.java', '**/*.sh', '**/*.properties'])
+}
+
+task licenseFormatDist(type: com.hierynomus.gradle.license.tasks.LicenseFormat) {
+    source = fileTree(dir: "src/dist")
+}
+licenseFormat.dependsOn licenseFormatDist
