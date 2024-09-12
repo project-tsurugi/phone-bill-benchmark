@@ -67,6 +67,7 @@ public class MultipleExecute extends ExecutableCommand {
     private Set<History> expectedHistories;
     private Set<Billing> expectedBillings;
     private String onlineAppReport = "# Online Application Report \n\n";
+    private String onlineAppCsvReport = "title,tx label,tx option,dedicated time[ms],numbers of txs,latency<br>avg[ms],latency<br>min[ms],latency<br>max[ms],committed tx through put[task/s]\n";
 
     public static void main(String[] args) throws Exception {
         MultipleExecute threadBench = new MultipleExecute();
@@ -115,6 +116,7 @@ public class MultipleExecute extends ExecutableCommand {
                 writeResult(config);
                 if (config.hasOnlineApp()) {
                     writeOnlineAppReport(config);
+                    writeOnlineAppCsvReport(config);
                 }
 
                 prevConfigHasOnlineApp = config.hasOnlineApp();
@@ -233,7 +235,6 @@ public class MultipleExecute extends ExecutableCommand {
      * オンラインアプリのレポートを出力する
      *
      * @param config
-     * @param record
      */
     private void writeOnlineAppReport(Config config) {
         // ex: ICEAXE-OCC-
@@ -251,6 +252,20 @@ public class MultipleExecute extends ExecutableCommand {
             throw new UncheckedIOException(e);
         }
     }
+
+    private void writeOnlineAppCsvReport(Config config) {
+        String title = createTitile(config);
+        Path outputPath = Paths.get(config.reportDir).resolve("online-app.csv");
+        try {
+            LOG.debug("Creating an online application csv report for {}", title);
+            onlineAppCsvReport = onlineAppCsvReport +TxStatistics.getCsvReport(title);
+            LOG.debug("Writing online application csv reports to {}", outputPath.toAbsolutePath().toString());
+            Files.writeString(outputPath, onlineAppCsvReport);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
 
     static String createTitile(Config config) {
         int onlineThreadCount = getOnlineAppThreadCount(config);

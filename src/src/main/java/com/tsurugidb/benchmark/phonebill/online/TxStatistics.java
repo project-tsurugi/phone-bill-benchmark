@@ -120,6 +120,22 @@ public class TxStatistics {
         return sb.toString();
     }
 
+    /**
+     * Retrieves a CSV report containing transaction statistics.
+     * 
+     * @return A string representation of the CSV report.
+     */
+    public static String getCsvReport(String title) {
+        StringBuilder sb = new StringBuilder();
+        // 各TxLabelごとの統計情報
+        map.keySet().stream().sorted().forEach(key -> {
+            TxStatistics statistics = map.get(key);
+            sb.append(statistics.toCsvString(title));
+            sb.append("\n");
+        });
+        return sb.toString();
+    }
+
 
     /**
      * レポートを作成する。
@@ -252,6 +268,41 @@ public class TxStatistics {
             sb.append(formatWithBaseline(getThroughput(), baselineStatistics != null ? baselineStatistics.getThroughput() : -1d));
             sb.append("|");
         }
+
+        return sb.toString();
+    }
+
+
+    /**
+     * Converts the object to a CSV string representation.
+     * 
+     * @return The CSV string representation of the object.
+     */
+    public String toCsvString(String title) {
+        var sb = new StringBuilder(64);
+        sb.append(title);
+        sb.append(",");
+        sb.append(label);
+        sb.append(",");
+        sb.append("OCC3-LTX1");
+        sb.append(",");
+
+        // dedicated time
+        sb.append(String.format("%d", dedicatedTimeMills));
+        sb.append(",");
+
+        // numbers of txs
+        sb.append(String.format("%d", getCount()));
+        sb.append(",");
+
+        // latency
+        sb.append(String.format("%.3f", getAverageLatency()));
+        sb.append(",");
+        sb.append(String.format("%.3f", (getMinLatency())));
+        sb.append(",");
+        sb.append(String.format("%.3f", (getMaxLatency())));
+        sb.append(",");
+        sb.append(String.format("%.3f", (getThroughput())));
 
         return sb.toString();
     }
