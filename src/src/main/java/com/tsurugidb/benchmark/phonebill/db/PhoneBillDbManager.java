@@ -73,7 +73,7 @@ public abstract class PhoneBillDbManager implements Closeable {
     public static final Collection<Exception> retryingExceptions = new ConcurrentLinkedQueue<>();
 
     // リトライするExceptionを記録するかを表すフラグ
-    public static AtomicBoolean addRetringExceptionsEnabled = new AtomicBoolean(false);
+    public static final AtomicBoolean addRetringExceptionsEnabled = new AtomicBoolean(false);
 
 
     // クローズ漏れチェック用のマップ
