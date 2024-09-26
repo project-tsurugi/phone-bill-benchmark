@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -58,7 +59,6 @@ import com.tsurugidb.benchmark.phonebill.db.oracle.PhoneBillDbManagerOracle;
 import com.tsurugidb.benchmark.phonebill.db.postgresql.PhoneBillDbManagerPostgresql;
 import com.tsurugidb.benchmark.phonebill.db.postgresql.PhoneBillDbManagerPostgresqlNoBatchUpdate;
 import com.tsurugidb.iceaxe.transaction.TsurugiTransaction;
-
 /**
  *
  */
@@ -71,6 +71,9 @@ public abstract class PhoneBillDbManager implements Closeable {
     // リトライするExceptionを集計するためのコレクション
 
     public static final Collection<Exception> retryingExceptions = new ConcurrentLinkedQueue<>();
+
+    // リトライするExceptionを記録するかを表すフラグ
+    public static AtomicBoolean addRetringExceptionsEnabled = new AtomicBoolean(false);
 
 
     // クローズ漏れチェック用のマップ
@@ -388,7 +391,9 @@ public abstract class PhoneBillDbManager implements Closeable {
      * @param e
      */
     public static void addRetringExceptions(Exception e) {
-        retryingExceptions.add(e);
+        if (addRetringExceptionsEnabled.get()) {
+            retryingExceptions.add(e);
+        }
     }
 
 
