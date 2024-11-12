@@ -36,7 +36,7 @@ public class Contract implements Cloneable, Serializable {
     /**
      * 契約終了日
      */
-    private Long endDate; // Null可のフィールドのためlongでなくLongを使用する。
+    private Long endDate;
 
     /**
      * 料金計算ルール
@@ -231,10 +231,9 @@ public class Contract implements Cloneable, Serializable {
         return endDate == null ? null : new Date(endDate);
     }
 
-    // Tsurugiがis not nullを未サポートなのでNULL代わりにLocalDate.MAXを使う。
     public LocalDate getEndDateAsLocalDate() {
         if (endDate == null) {
-            return LocalDate.MAX;
+            return null;
         }
         return DateUtils.toLocalDate(endDate);
     }
@@ -243,9 +242,8 @@ public class Contract implements Cloneable, Serializable {
         this.endDate = endDate == null ? null : endDate.getTime();
     }
 
-    // Tsurugiがis not nullを未サポートなので代わりにLocalDate.MAXを使う。
     public void setEndDate(LocalDate endDate) {
-        this.endDate = endDate.equals(LocalDate.MAX)  ? null : DateUtils.toEpocMills(endDate);
+        this.endDate = endDate == null ? null : DateUtils.toEpocMills(endDate);
     }
 
 
