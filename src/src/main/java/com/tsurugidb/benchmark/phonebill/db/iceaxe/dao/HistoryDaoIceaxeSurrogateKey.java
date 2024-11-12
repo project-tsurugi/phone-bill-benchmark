@@ -218,20 +218,17 @@ public class HistoryDaoIceaxeSurrogateKey implements HistoryDao {
             return Collections.emptyList();
         }
 
-        LocalDate endDate = list.get(0).getDateOrNull("end_date");
+        LocalDate endDate = list.get(0).getDate("end_date");
         String sql2 = "select sid, caller_phone_number, recipient_phone_number, payment_category, start_time,"
-                + " time_secs, charge, df from history where start_time >= :start_date"
+                + " time_secs, charge, df from history where start_time >= :start_date and start_time < :end_date"
                 + " and caller_phone_number = :phone_number";
-        var variable2 = TgBindVariables.of().addString("phone_number").addDateTime("start_date");
+        var variable2 = TgBindVariables.of().addString("phone_number").addDateTime("start_date").addDateTime("end_date");
+        var ps = utils.createPreparedQuery(sql2, TgParameterMapping.of(variable2), RESULT_MAPPING);
         var param2 = TgBindParameters.of()
                 .add("phone_number", key.getPhoneNumber())
-                .add("start_date", key.getStartDateAsLocalDateTime());
-        if (endDate != null) {
-            sql2 += " and start_time < :end_date";
-            variable2.addDateTime("end_date");
-            param2.add("end_date", LocalDateTime.of(endDate.plusDays(1), LocalTime.MIDNIGHT));
-        }
-        var ps = utils.createPreparedQuery(sql2, TgParameterMapping.of(variable2), RESULT_MAPPING);
+                .add("start_date", key.getStartDateAsLocalDateTime())
+                .add("end_date", LocalDateTime.of(
+                        endDate.equals(LocalDate.MAX) ? LocalDate.MAX: endDate.plusDays(1), LocalTime.MIDNIGHT));
         return utils.execute(ps, param2);
     }
 
