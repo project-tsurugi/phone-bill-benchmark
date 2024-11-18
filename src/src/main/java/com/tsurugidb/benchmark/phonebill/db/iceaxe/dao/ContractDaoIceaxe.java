@@ -37,8 +37,6 @@ import com.tsurugidb.iceaxe.sql.result.TsurugiResultEntity;
 import com.tsurugidb.iceaxe.sql.result.mapping.TgEntityResultMapping;
 
 public class ContractDaoIceaxe implements ContractDao {
-    // TODO tsurugiがis not nullを使えないため、nullの代わりにLocalDate.MAXを使用している => is not nullサポート後にnullを使用するように変更する
-
     private final IceaxeUtils utils;
     private final InsertType insertType;
 
@@ -128,13 +126,9 @@ public class ContractDaoIceaxe implements ContractDao {
 
     @Override
     public List<Contract> getContracts(Date start, Date end) {
-// TODO: is not nullが使用可能になった後に使用するSQL
-//		String sql = "select phone_number, start_date, end_date, charge_rule"
-//				+ " from contracts where start_date <= :start_date and ( end_date is null or end_date >= :end_date)"
-//				+ " order by phone_number";
-        String sql = "select phone_number, start_date, end_date, charge_rule"
-                + " from contracts where start_date <= :start_date and end_date >= :end_date"
-                + " order by phone_number";
+		String sql = "select phone_number, start_date, end_date, charge_rule"
+				+ " from contracts where start_date <= :start_date and ( end_date is null or end_date >= :end_date)"
+				+ " order by phone_number";
         var variables = TgBindVariables.of().addDate("start_date").addDate("end_date");
         var ps = utils.createPreparedQuery(sql, TgParameterMapping.of(variables), RESULT_MAPPING);
         var parameter = TgBindParameters.of().add("end_date", start.toLocalDate() ).add("start_date", end.toLocalDate());
