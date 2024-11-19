@@ -126,10 +126,19 @@ public class ContractDaoIceaxe implements ContractDao {
 
     @Override
     public List<Contract> getContracts(Date start, Date end) {
-		String sql = "select phone_number, start_date, end_date, charge_rule"
-				+ " from contracts where start_date <= :start_date and ( end_date is null or end_date >= :end_date)"
-				+ " order by phone_number";
-        var variables = TgBindVariables.of().addDate("start_date").addDate("end_date");
+        // where条件にorを使うとfull scanになるので、このコードを or を使わず union all を使うコードに変更している。
+		// String sql = "select phone_number, start_date, end_date, charge_rule"
+		// 		+ " from contracts where start_date <= :start_date and ( end_date is null or end_date >= :end_date)"
+		// 		+ " order by phone_number";
+        String sql = "select phone_number, start_date, end_date, charge_rule "
+                + "from contracts "
+                + "where start_date <= :start_date and end_date is null "
+                + "union all "
+                + "select phone_number, start_date, end_date, charge_rule "
+                + "from contracts "
+                + "where start_date <= :start_date and end_date >= :end_date "
+                + "order by phone_number";
+     var variables = TgBindVariables.of().addDate("start_date").addDate("end_date");
         var ps = utils.createPreparedQuery(sql, TgParameterMapping.of(variables), RESULT_MAPPING);
         var parameter = TgBindParameters.of().add("end_date", start.toLocalDate() ).add("start_date", end.toLocalDate());
         return utils.execute(ps, parameter);

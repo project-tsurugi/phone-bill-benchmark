@@ -223,12 +223,30 @@ public class HistoryDaoIceaxe implements HistoryDao {
         LocalDateTime start = LocalDateTime.of(target.getStart().toLocalDate(), LocalTime.MIDNIGHT);
         LocalDateTime end =  LocalDateTime.of(target.getEnd().toLocalDate(), LocalTime.MIDNIGHT) ;
 
-		String sql = "select caller_phone_number, recipient_phone_number, payment_category, start_time, time_secs,"
-				+ " charge, df" + " from history "
-				+ "where start_time >= :start and start_time < :end"
-				+ " and ((caller_phone_number = :caller_phone_number  and payment_category = 'C') "
-				+ "  or (recipient_phone_number = :recipient_phone_number and payment_category = 'R'))"
-				+ " and df = 0";
+        // where条件にorを使うとfull scanになるので、このコードを or を使わず union all を使うコードに変更している。
+        //
+		// String sql = "select caller_phone_number, recipient_phone_number, payment_category, start_time, time_secs,"
+		// 		+ " charge, df" + " from history "
+		// 		+ "where start_time >= :start and start_time < :end"
+		// 		+ " and ((caller_phone_number = :caller_phone_number  and payment_category = 'C') "
+		// 		+ "  or (recipient_phone_number = :recipient_phone_number and payment_category = 'R'))"
+		// 		+ " and df = 0";
+
+        String sql = "select caller_phone_number, recipient_phone_number, payment_category, start_time, time_secs, "
+                + "charge, df "
+                + "from history "
+                + "where start_time >= :start and start_time < :end "
+                + "and caller_phone_number = :caller_phone_number "
+                + "and payment_category = 'C' "
+                + "and df = 0 "
+                + "union all "
+                + "select caller_phone_number, recipient_phone_number, payment_category, start_time, time_secs, "
+                + "charge, df "
+                + "from history "
+                + "where start_time >= :start and start_time < :end "
+                + "and recipient_phone_number = :recipient_phone_number "
+                + "and payment_category = 'R' "
+                + "and df = 0";
 
         var variable = TgBindVariables.of().addDateTime("start").addDateTime("end").addString("recipient_phone_number")
                 .addString("caller_phone_number");
