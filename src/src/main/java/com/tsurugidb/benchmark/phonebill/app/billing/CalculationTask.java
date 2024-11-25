@@ -121,7 +121,6 @@ public class CalculationTask implements Callable<Exception> {
                     });
                     queue.success(target);
                     timer.setEndCommit(phoneNumber, records.get());
-                    timer.setAbort(phoneNumber, new RuntimeException("dummy"));
                     nCalculated++;
                 } catch (RuntimeException e) {
                     abortCounter.incrementAndGet();
