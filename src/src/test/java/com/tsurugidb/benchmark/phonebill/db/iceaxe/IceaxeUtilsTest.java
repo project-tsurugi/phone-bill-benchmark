@@ -44,6 +44,7 @@ import com.tsurugidb.iceaxe.sql.result.mapping.TgEntityResultMapping;
 import com.tsurugidb.iceaxe.transaction.TsurugiTransaction;
 import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionException;
 import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionRuntimeException;
+import com.tsurugidb.iceaxe.transaction.option.TgTxOption;
 import com.tsurugidb.tsubakuro.exception.DiagnosticCode;
 import com.tsurugidb.tsubakuro.exception.ServerException;
 
@@ -147,7 +148,7 @@ class IceaxeUtilsTest {
         List<History> list = Collections
                 .singletonList(History.create("1", "2", "C", "2022-01-01 00:00:00.000", 10, null, 0));
 
-        manager.transaction = new TsurugiTransaction(session, null) {
+        manager.transaction = new TsurugiTransaction(session, TgTxOption.ofOCC()) {
             @Override
             public <P> int executeAndGetCount(TsurugiSqlPreparedStatement<P> ps, P parameter) throws IOException, TsurugiTransactionException {
                 throw IO_EXCEPTION;
@@ -165,7 +166,7 @@ class IceaxeUtilsTest {
         assertThrows(UncheckedIOException.class,
                 () -> utils.executeAndGetCount((TsurugiSqlPreparedStatement<History>) null, list));
 
-        manager.transaction = new TsurugiTransaction(session, null) {
+        manager.transaction = new TsurugiTransaction(session, TgTxOption.ofOCC()) {
             @Override
             public <P> int executeAndGetCount(TsurugiSqlPreparedStatement<P> ps, P parameter)
                     throws IOException, TsurugiTransactionException {
