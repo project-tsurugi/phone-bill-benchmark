@@ -1,4 +1,6 @@
 <configuration>
+
+  <!-- DETAIL: general debug log file -->
   <appender name="DETAIL"
     class="ch.qos.logback.core.FileAppender">
     <file>${log.detail}</file>
@@ -6,10 +8,11 @@
     <encoder>
       <pattern>
         %d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n
-     </pattern>
+      </pattern>
     </encoder>
   </appender>
 
+  <!-- DETAIL-ONLINE: rolling debug log for online module -->
   <appender name="DETAIL-ONLINE"
     class="ch.qos.logback.core.rolling.RollingFileAppender">
     <file>${log.detail.online}</file>
@@ -25,10 +28,11 @@
     <encoder>
       <pattern>
         %d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n
-     </pattern>
+      </pattern>
     </encoder>
   </appender>
 
+  <!-- SUMMARY: info+ summary log -->
   <appender name="SUMMARY"
     class="ch.qos.logback.core.FileAppender">
     <file>${log.summary}</file>
@@ -36,25 +40,40 @@
     <encoder>
       <pattern>
         %d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n
-     </pattern>
+      </pattern>
     </encoder>
     <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-    <level>INFO</level>
+      <level>INFO</level>
     </filter>
   </appender>
 
+  <!-- STDOUT: general console output (INFO and above) -->
   <appender name="STDOUT"
     class="ch.qos.logback.core.ConsoleAppender">
     <encoder>
       <pattern>
         %d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n
-     </pattern>
+      </pattern>
     </encoder>
     <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-    <level>INFO</level>
+      <level>INFO</level>
     </filter>
   </appender>
 
+  <!-- STDOUT-BILLING-DEBUG: for billing progress/debug output -->
+  <appender name="STDOUT-BILLING-DEBUG"
+    class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>
+        %d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n
+      </pattern>
+    </encoder>
+    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+      <level>DEBUG</level>
+    </filter>
+  </appender>
+
+  <!-- logger for online package -->
   <logger name="com.tsurugidb.benchmark.phonebill.online" level="info">
     <appender-ref ref="SUMMARY" />
     <appender-ref ref="STDOUT" />
@@ -64,9 +83,18 @@
     <appender-ref ref="DETAIL-ONLINE" />
   </logger>
 
-  <root level="DETAIL">
+  <!-- logger for app.billing package (progress + result output to console) -->
+  <logger name="com.tsurugidb.benchmark.phonebill.app.billing" level="debug" additivity="false">
+    <appender-ref ref="STDOUT-BILLING-DEBUG" />
+    <appender-ref ref="DETAIL" />
+  </logger>
+
+  <!-- root logger -->
+  <root level="INFO">
     <appender-ref ref="SUMMARY" />
     <appender-ref ref="STDOUT" />
     <appender-ref ref="DETAIL" />
   </root>
+
 </configuration>
+

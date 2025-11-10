@@ -41,7 +41,7 @@ master.delete.insert.records.per.min=0
 master.delete.insert.thread.count=1
 history.update.records.per.min=0
 history.update.thread.count=1
-history.insert.transaction.per.min=60
+history.insert.transaction.per.min=0
 history.insert.records.per.transaction=100
 history.insert.thread.count=16
 skip.database.access=false
@@ -64,7 +64,7 @@ oracle.create.index.option=nologging parallel 32
 transaction.option=LTX
 # その他のパラメータ
 random.seed=0
-transaction.scope=WHOLE
+transaction.scope=CONTRACT
 listen.port=0
 
 enable.tsurugi.watcher=true

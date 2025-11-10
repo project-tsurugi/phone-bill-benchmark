@@ -63,7 +63,7 @@ oracle.create.index.option=nologging parallel 32
 transaction.option=LTX
 # その他のパラメータ
 random.seed=0
-transaction.scope=WHOLE
+transaction.scope=CONTRACT
 listen.port=0
 
 enable.tsurugi.watcher=true
