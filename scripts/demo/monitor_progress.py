@@ -4,17 +4,17 @@ import os
 import re
 import sys
 import time
+import shutil  # for terminal size
 
-# Regex for progress lines
 LINE_RE = re.compile(
     r"(?P<time>\d{2}:\d{2}:\d{2}\.\d+).*total size = (?P<total>\d+), in queue = (?P<queue>\d+), running = (?P<running>\d+)"
 )
-# Regex for "done" line (customizable via CLI)
+
 def build_done_re(pattern):
     return re.compile(rf"(?P<time>\d{{2}}:\d{{2}}:\d{{2}}\.\d+).*(?:{pattern})")
 
 def parse_progress(line):
-    """Parse a progress line and return (time, total, queue, running, completed, pct) or None."""
+    """Parse a progress line and return (total, completed, pct) or None."""
     m = LINE_RE.search(line)
     if not m:
         return None
@@ -23,25 +23,34 @@ def parse_progress(line):
     running = int(m.group("running"))
     completed = max(0, total - queue - running)
     pct = (completed / total * 100) if total > 0 else 0.0
-    return (m.group("time"), total, queue, running, completed, pct)
+    return (total, completed, pct)
 
 def make_bar(pct, width):
-    """Build ASCII progress bar using '#' and '.'."""
     pct_clamped = max(0.0, min(100.0, pct))
     filled = int(round((pct_clamped / 100.0) * width))
     return "#" * filled + "." * (width - filled)
 
-def format_line(time_s, total, queue, running, completed, pct, bar_width):
+def format_line(elapsed_sec, total, completed, pct, bar_width):
     bar = make_bar(pct, bar_width)
-    return f"{time_s}  [{bar}] {pct:6.2f}%  completed={completed}/{total}  queue={queue}  running={running}"
+    return f"+{elapsed_sec:6.1f}s  [{bar}] {pct:6.2f}%  completed={completed}/{total}"
 
 def print_single_line(msg):
-    """Print a single updatable console line."""
-    sys.stdout.write("\r" + msg.ljust(140))
+    """Print a single updatable console line with terminal-resize safety."""
+    if not sys.stdout.isatty():
+        # When stdout is not a TTY (e.g., piped/recorded), fall back to newline
+        sys.stdout.write(msg + "\n")
+        sys.stdout.flush()
+        return
+
+    cols = shutil.get_terminal_size(fallback=(80, 24)).columns
+    maxw = max(1, cols - 1)
+    safe = msg if len(msg) <= maxw else msg[:maxw]
+
+    # Move to start of line and clear below to erase any previous wrap remnants
+    sys.stdout.write("\r\x1b[0J" + safe)
     sys.stdout.flush()
 
 def follow_file(fp):
-    """Yield new lines appended to an open file (tail -f)."""
     fp.seek(0, os.SEEK_END)
     buf = ""
     while True:
@@ -59,7 +68,6 @@ def follow_file(fp):
             yield line
 
 def stream_lines(args):
-    """Iterate lines from stdin or a file, optionally following."""
     if args.path == "-" or (not args.path and not args.follow):
         for line in sys.stdin:
             yield line
@@ -73,7 +81,7 @@ def stream_lines(args):
 
 def main():
     ap = argparse.ArgumentParser(
-        description="Monitor app log, show single-line progress bar, and mark 100% on done pattern."
+        description="Monitor app log and show progress bar with elapsed seconds (resizes safely)."
     )
     ap.add_argument("path", nargs="?", default="-", help="Log file path or '-' for stdin")
     ap.add_argument("-f", "--follow", action="store_true", help="Follow file like tail -f")
@@ -87,36 +95,38 @@ def main():
     done_re = build_done_re(args.done_pattern)
 
     last_total = None
-    last_time = None
+    first_log_time = None  # start time set when first progress appears
 
     try:
         for line in stream_lines(args):
-            # Update progress if a progress line
             rec = parse_progress(line)
             if rec:
-                t, total, q, r, c, pct = rec
+                total, c, pct = rec
                 last_total = total
-                last_time = t
-                print_single_line(format_line(t, total, q, r, c, pct, args.bar_width))
+
+                # initialize timer on first progress
+                if first_log_time is None:
+                    first_log_time = time.monotonic()
+
+                elapsed = time.monotonic() - first_log_time
+                print_single_line(format_line(elapsed, total, c, pct, args.bar_width))
                 continue
 
-            # If done-pattern appears, force 100%
             m_done = done_re.search(line)
             if m_done:
-                t = m_done.group("time") if "time" in m_done.groupdict() else (last_time or "--:--:--.---")
+                now = time.monotonic()
+                elapsed = (now - first_log_time) if first_log_time else 0.0
                 if last_total and last_total > 0:
                     total = last_total
-                    msg = format_line(t, total, 0, 0, total, 100.0, args.bar_width)
+                    msg = format_line(elapsed, total, total, 100.0, args.bar_width)
                 else:
-                    # Fallback if total was never seen; show 100% with unknown totals
                     bar = make_bar(100.0, args.bar_width)
-                    msg = f"{t}  [{bar}] 100.00%  completed=?/?  queue=0  running=0"
+                    msg = f"+{elapsed:6.1f}s  [{bar}] 100.00%  completed=?/?"
                 print_single_line(msg)
                 if args.exit_on_done:
                     sys.stdout.write("\n")
                     sys.stdout.flush()
                     return
-        # Finish cleanly when input ends (non-follow case)
         sys.stdout.write("\n")
         sys.stdout.flush()
     except KeyboardInterrupt:
