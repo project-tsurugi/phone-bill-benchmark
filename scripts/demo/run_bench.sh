@@ -27,4 +27,4 @@ ln -sf detail-online-$ext $LOG_DIR/detail-online.log
 
 # ---- measure and display nicely formatted elapsed time ----
 /usr/bin/time -f "\nElapsed time: %E (user %Us, sys %Ss)" \
-  "$INSTALL_DIR/phone-bill/bin/run" MultipleExecute "$1" | python3 monitor_progress.py
+  "$INSTALL_DIR/phone-bill/bin/run" MultipleExecute "$*" | python3 monitor_progress.py

@@ -40,13 +40,13 @@ master.delete.insert.records.per.min=0
 master.delete.insert.thread.count=1
 history.update.records.per.min=0
 history.update.thread.count=1
-history.insert.transaction.per.min=-1
+history.insert.transaction.per.min=200
 history.insert.records.per.transaction=100
-history.insert.thread.count=16
+history.insert.thread.count=64
 skip.database.access=false
 
 # スレッドに関するパラメータ
-thread.count=16
+thread.count=64
 shared.connection=false
 create.test.data.thread.count=64
 

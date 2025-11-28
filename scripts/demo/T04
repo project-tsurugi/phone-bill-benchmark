@@ -8,8 +8,9 @@ expiration.date.rate=400
 no.expiration.date.rate=400
 min.date=2010-11-11
 max.date=2021-03-01
+
 # 通話履歴生成に関するパラメータ
-number.of.history.records=300000
+number.of.history.records=1000000
 recipient.phone.number.distribution=UNIFORM
 recipient.phone.number.scale=3.0
 recipient.phone.number.shape=18.0
@@ -40,13 +41,13 @@ master.delete.insert.records.per.min=0
 master.delete.insert.thread.count=1
 history.update.records.per.min=0
 history.update.thread.count=1
-history.insert.transaction.per.min=60
+history.insert.transaction.per.min=200
 history.insert.records.per.transaction=100
 history.insert.thread.count=4
 skip.database.access=false
 
 # スレッドに関するパラメータ
-thread.count=4
+thread.count=64
 shared.connection=false
 create.test.data.thread.count=64
 
