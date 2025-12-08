@@ -95,7 +95,7 @@ public class MultipleExecute extends ExecutableCommand {
                     task = new TsurugidbWatcher();
                     future = service.submit(task);
                 }
-                initTestData(config, prevConfigHasOnlineApp);
+                // initTestData(config, prevConfigHasOnlineApp);
                 TxStatistics.clear();
                 Record record = new Record(config);
                 records.add(record);
