@@ -7,7 +7,7 @@ plugins {
 }
 
 group "com.tsurugidb.benchmark.phonebill"
-version "1.13.0"
+version "1.14.0-SNAPSHOT"
 
 if (hasProperty('mavenLocal')) {
     repositories {
@@ -78,7 +78,7 @@ test {
 
 
 dependencies {
-  implementation 'com.tsurugidb.iceaxe:iceaxe-core:1.13.0'
+  implementation 'com.tsurugidb.iceaxe:iceaxe-core:1.14.0-SNAPSHOT'
 
   // https://mvnrepository.com/artifact/org.postgresql/postgresql
   implementation group: 'org.postgresql', name: 'postgresql', version: '42.2.16'
