@@ -37,7 +37,7 @@ import com.tsurugidb.benchmark.phonebill.db.iceaxe.dao.HistoryDaoIceaxe;
 import com.tsurugidb.iceaxe.TsurugiConnector;
 import com.tsurugidb.iceaxe.session.TgSessionOption;
 import com.tsurugidb.iceaxe.session.TsurugiSession;
-import com.tsurugidb.iceaxe.transaction.TgCommitType;
+import com.tsurugidb.iceaxe.transaction.TgCommitOption;
 import com.tsurugidb.iceaxe.transaction.TsurugiTransaction;
 import com.tsurugidb.iceaxe.transaction.event.TsurugiTransactionEventListener;
 import com.tsurugidb.iceaxe.transaction.exception.TsurugiTransactionException;
@@ -193,7 +193,7 @@ public class PhoneBillDbManagerIceaxe extends PhoneBillDbManager {
             var transaction = getCurrentTransaction();
             transaction.addEventListener(new TsurugiTransactionEventListener() {
                 @Override
-                public void commitEnd(TsurugiTransaction transaction, TgCommitType commitType, Throwable occurred) {
+                public void commitEnd(TsurugiTransaction transaction, TgCommitOption commitOption, Throwable occurred) {
                     if (occurred == null) {
                         listener.accept(transaction);
                     }
