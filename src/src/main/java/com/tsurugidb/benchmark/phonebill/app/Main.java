@@ -34,6 +34,7 @@ import com.tsurugidb.benchmark.phonebill.multinode.client.PhoneBillClient;
 import com.tsurugidb.benchmark.phonebill.multinode.server.Server;
 import com.tsurugidb.benchmark.phonebill.testdata.CreateTestData;
 import com.tsurugidb.benchmark.phonebill.testdata.CreateTestDataCsv;
+import com.tsurugidb.benchmark.phonebill.testdata.CreateTestDataParquet;
 import com.tsurugidb.benchmark.phonebill.testdata.TestDataStatistics;
 
 public class Main {
@@ -54,6 +55,8 @@ public class Main {
         addCommand("TestDataStatistics", "Create test data statistics without test data.", TestDataStatistics.class,
                 ArgType.CONFIG);
         addCommand("CreateTestDataCsv", "Create test data to csv files.", CreateTestDataCsv.class, ArgType.CONFIG);
+        addCommand("CreateTestDataParquet", "Create test data to parquet files.", CreateTestDataParquet.class,
+                ArgType.CONFIG);
         addCommand("LoadTestDataCsvToOracle", "Load csv test data to oracle.", LoadTestDataCsvToOracle.class,
                 ArgType.CONFIG);
         addCommand("LoadTestDataCsvToPostgreSql", "Load csv test data to PostgreSQL.",

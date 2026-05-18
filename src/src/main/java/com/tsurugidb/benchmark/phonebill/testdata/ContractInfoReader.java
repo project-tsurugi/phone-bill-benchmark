@@ -67,6 +67,13 @@ public class ContractInfoReader {
     private List<Duration> durationList;
 
     /**
+     * uniform duration mode avoids materializing a huge duration list.
+     */
+    private boolean uniformContractDuration;
+    private Duration uniformDuration;
+    private boolean uniformStatus;
+
+    /**
      * 「MasterDeleteInsertAppが生成する履歴の開始時刻」に当該契約が有効/無効を表すリスト
      */
     private List<Boolean> statusList;
@@ -115,10 +122,24 @@ public class ContractInfoReader {
      * @throws IOException
      */
     public static ContractInfoReader create(Config config, ContractBlockInfoAccessor accessor, Random random) throws IOException {
+        long time = getHistoryInsertAppStartTimeDate(config).getTime();
+        if (config.enableUniformContractDuration) {
+            int blockSize = getContractBlockSize(config);
+            Duration duration = new Duration(config.minDate, null);
+            boolean status = duration.start <= time;
+            ContractInfoReader reader = new ContractInfoReader(blockSize, duration, status, accessor,
+                    new PhoneNumberGenerator(config), random);
+            long cs = config.numberOfContractsRecords;
+            if (cs < blockSize) {
+                String format = "numberOfContractsRecords(%d) must be larger than contract block size(%d).";
+                throw new RuntimeException(String.format(format, cs, blockSize));
+            }
+            return reader;
+        }
+
         // すべてのContractInfoReaderインスタンスが同じdurationListを持つように、
         // configで指定された乱数のシードの乱数生成器でdurationListを作成する
         List<Duration> durationList = initDurationList(config);
-        long time = getHistoryInsertAppStartTimeDate(config).getTime();
         List<Boolean> statusList = new ArrayList<>(durationList.size());
         for (int i = 0; i < durationList.size(); i++) {
             Duration d = durationList.get(i);
@@ -169,6 +190,25 @@ public class ContractInfoReader {
             throw new IllegalArgumentException("Array size mismatch.");
         }
         blockSize = durationList.size();
+        loadActiveBlockNumberList();
+        posInBlock = 0;
+        blockNumber = -1;
+        retContract = new Contract();
+        retContract.setRule("dummy");
+    }
+
+    ContractInfoReader(int blockSize, Duration uniformDuration, boolean uniformStatus,
+            ContractBlockInfoAccessor contractBlockInfoAccessor, PhoneNumberGenerator phoneNumberGenerator,
+            Random random) throws IOException {
+        this.durationList = List.of();
+        this.statusList = List.of();
+        this.uniformContractDuration = true;
+        this.uniformDuration = uniformDuration;
+        this.uniformStatus = uniformStatus;
+        this.contractBlockInfoAccessor = contractBlockInfoAccessor;
+        this.phoneNumberGenerator = phoneNumberGenerator;
+        this.random = random;
+        this.blockSize = blockSize;
         loadActiveBlockNumberList();
         posInBlock = 0;
         blockNumber = -1;
@@ -236,6 +276,9 @@ public class ContractInfoReader {
      * @return 有効な契約の場合true
      */
     public boolean isActive(long n) {
+        if (uniformContractDuration) {
+            return uniformStatus;
+        }
         int s = (int) (n % getBlockSize());
         return statusList.get(s);
     }
@@ -248,6 +291,9 @@ public class ContractInfoReader {
      * @return
      */
     public Duration getInitialDuration(long n) {
+        if (uniformContractDuration) {
+            return uniformDuration;
+        }
         return durationList.get((int) (n % getBlockSize()));
     }
 

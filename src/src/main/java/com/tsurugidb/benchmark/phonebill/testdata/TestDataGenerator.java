@@ -349,9 +349,16 @@ public class TestDataGenerator {
 
         statistics = new Statistics(minDate, maxDate);
 
-        List<Duration> durationList = ContractInfoReader.initDurationList(config);
-        if (!isValidDurationList(durationList, minDate, maxDate)) {
-            throw new RuntimeException("Invalid duration list.");
+        if (config.enableUniformContractDuration) {
+            int blockSize = ContractInfoReader.getContractBlockSize(config);
+            if (blockSize < 2 || config.minDate.getTime() > minDate.getTime()) {
+                throw new RuntimeException("Invalid duration list.");
+            }
+        } else {
+            List<Duration> durationList = ContractInfoReader.initDurationList(config);
+            if (!isValidDurationList(durationList, minDate, maxDate)) {
+                throw new RuntimeException("Invalid duration list.");
+            }
         }
 
         long numberOfTasks = (config.numberOfHistoryRecords + recordsPerTask - 1)
@@ -363,6 +370,23 @@ public class TestDataGenerator {
         List<Params> paramsList = createTaskParams(minDate.getTime(), maxDate.getTime(),
                 config.numberOfHistoryRecords, (int)numberOfTasks, recordsPerTask);
         return paramsList;
+    }
+
+    public void generateHistory(HistoryWriterFactory factory) {
+        List<Params> paramsList = createParamsList(RECORDS_PER_TASK);
+        generateHistory(factory, paramsList);
+    }
+
+    public void generateHistory(HistoryWriterFactory factory, int recordsPerTask) {
+        List<Params> paramsList = createParamsList(recordsPerTask);
+        generateHistory(factory, paramsList);
+    }
+
+    private void generateHistory(HistoryWriterFactory factory, List<Params> paramsList) {
+        for (Params params: paramsList) {
+            params.historyWriter = factory.create(params);
+        }
+        generateHistory(paramsList);
     }
 
 
@@ -502,6 +526,10 @@ public class TestDataGenerator {
          * @throws IOException
          */
         abstract void cleanup() throws IOException;
+    }
+
+    public interface HistoryWriterFactory {
+        HistoryWriter create(Params params);
     }
 
     /**

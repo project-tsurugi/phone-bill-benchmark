@@ -46,7 +46,7 @@ configurations.all {
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(11)
+        languageVersion = JavaLanguageVersion.of(17)
     }
 }
 
@@ -94,6 +94,9 @@ dependencies {
   implementation "ch.qos.logback:logback-classic:1.2.3"
   implementation "org.apache.commons:commons-math3:3.6.1"
   implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.0'
+  implementation 'org.apache.parquet:parquet-hadoop:1.13.1'
+  implementation 'org.apache.hadoop:hadoop-common:3.3.6'
+  implementation 'org.apache.hadoop:hadoop-mapreduce-client-core:3.3.6'
   compileOnly"com.github.spotbugs:spotbugs-annotations:4.2.3"
   testCompileOnly"com.github.spotbugs:spotbugs-annotations:4.2.3"
 }
@@ -101,6 +104,8 @@ dependencies {
 
 configurations.implementation {
     exclude group: 'org.slf4j', module: 'slf4j-simple'
+    exclude group: 'org.slf4j', module: 'slf4j-reload4j'
+    exclude group: 'org.slf4j', module: 'slf4j-log4j12'
 }
 
 application {
